@@ -1,0 +1,10 @@
+.DS_Store
+*.o
+*.d
+Makefile
+mac32
+mac64
+win32
+win64
+lin32
+lin64
