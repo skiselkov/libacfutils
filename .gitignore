@@ -8,3 +8,4 @@ win32
 win64
 lin32
 lin64
+.qmake.stash
