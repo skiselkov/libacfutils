@@ -225,6 +225,19 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream);
  * return x rounded up to the nearest power-of-2.
  */
 #define	P2ROUNDUP(x)	(-(-(x) & -(1 << highbit64(x))))
+/* Round `x' to the nearest multiple of `y' */
+static inline double
+roundmul(double x, double y)
+{
+	return (round(x / y) * y);
+}
+/* Round `x' DOWN to the nearest multiple of `y' */
+static inline double
+floormul(double x, double y)
+{
+	return (floor(x / y) * y);
+}
+
 #if	!defined(MIN) && !defined(MAX) && !defined(AVG)
 #define	MIN(x, y)	((x) < (y) ? (x) : (y))
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))

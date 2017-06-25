@@ -51,6 +51,8 @@ extern "C" {
 #define	MET2NM(x)	((x) / 1852.0)		/* meters to nautical miles */
 #define	KT2MPS(k)	(NM2MET(k) / 3600)	/* knots to m/s */
 #define	MPS2KT(k)	(MET2NM(k) * 3600)	/* m/s to knots */
+#define	FPM2MPS(f)	FEET2MET((f) / 60.0)	/* ft.min^-1 to m.s^-1 */
+#define	MPS2FPM(m)	MET2FEET((m) * 60.0)	/* m.s^-1 to ft.min^-1 */
 
 /*
  * Other unit conversions

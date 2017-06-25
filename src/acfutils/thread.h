@@ -64,7 +64,7 @@ extern "C" {
 		uint64_t t = (microtime); \
 		struct timespec ts = { .tv_sec = t / 1000000, \
 		    .tv_nsec = (t % 1000000) * 1000 }; \
-		return (pthread_cond_timedwait((cond), (mtx), &ts) == 0); \
+		(void) pthread_cond_timedwait((cond), (mtx), &ts); \
 	} while (0)
 #define	cv_init(cv)		pthread_cond_init((cv), NULL)
 #define	cv_destroy(cv)		pthread_cond_destroy((cv))
