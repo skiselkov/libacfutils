@@ -602,24 +602,6 @@ filesz(const char *filename)
 	return (s);
 }
 
-/*
- * Returns the current UNIX time in microseconds.
- */
-long long
-microclock(void)
-{
-#if	IBM
-	LARGE_INTEGER val, freq;
-	VERIFY(QueryPerformanceFrequency(&freq));
-	VERIFY(QueryPerformanceCounter(&val));
-	return ((val.QuadPart * 1000000ll) / freq.QuadPart);
-#else	/* !IBM */
-	struct timeval tv;
-	VERIFY(gettimeofday(&tv, NULL) == 0);
-	return ((tv.tv_sec * 1000000ll) + tv.tv_usec);
-#endif	/* !IBM */
-}
-
 #if	IBM
 
 static void win_perror(DWORD err, const char *fmt, ...) PRINTF_ATTR(2);

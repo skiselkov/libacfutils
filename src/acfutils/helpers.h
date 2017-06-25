@@ -157,6 +157,16 @@ is_valid_hdg(double hdg)
 
 double rel_hdg(double hdg1, double hdg2);
 
+static inline double
+normalize_hdg(double hdg)
+{
+	while (hdg < 0)
+		hdg += 360;
+	while (hdg >= 360)
+		hdg -= 360;
+	return (hdg);
+}
+
 static inline bool_t
 is_valid_arc_radius(double radius)
 {
@@ -220,10 +230,6 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))
 #define	AVG(x, y)	(((x) + (y)) / 2)
 #endif	/* MIN or MAX */
-
-long long microclock(void);
-#define	USEC2SEC(usec)	(usec / 1000000ll)
-#define	SEC2USEC(sec)	(sec * 1000000ll)
 
 /* file/directory manipulation */
 bool_t file_exists(const char *path, bool_t *isdir);
