@@ -51,7 +51,7 @@ win32:contains(CROSS_COMPILE, i686-w64-mingw32-) {
 	DEFINES += __MIDL_user_allocate_free_DEFINED__
 }
 
-linux-g++ {
+linux-g++-64 {
 	DEFINES += APL=0 IBM=0 LIN=1
 	# The stack protector forces us to depend on libc,
 	# but we'd prefer to be static.

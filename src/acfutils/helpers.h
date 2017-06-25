@@ -209,8 +209,10 @@ void fix_pathsep(char *str);
 char *file2str(const char *comp, ...);
 ssize_t filesz(const char *filename);
 
-#if	IBM
+#if	IBM || LIN
 void strlcpy(char *restrict dest, const char *restrict src, size_t cap);
+#endif	/* IBM || LIN */
+#if	IBM
 ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 #endif	/* IBM */
 

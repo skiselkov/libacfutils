@@ -122,7 +122,7 @@ log_backtrace(void)
 	line->SizeOfStruct = sizeof (*line);
 
 	backtrace_buf[0] = '\0';
-	my_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
+	strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
 	for (unsigned i = 0; i < frames; i++) {
 		/*

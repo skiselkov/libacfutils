@@ -115,13 +115,14 @@ errout:
 		if (ncomps != 2 || (var) != 0.0) { \
 			logMsg("Error parsing acft perf file %s:%lu: " \
 			    "malformed or duplicate " name " line.", \
-			    filename, line_num); \
+			    filename, (unsigned long)line_num); \
 			goto errout; \
 		} \
 		(var) = atof(comps[1]); \
 		if ((var) <= 0.0) { \
 			logMsg("Error parsing acft perf file %s:%lu: " \
-			    "invalid value for " name, filename, line_num); \
+			    "invalid value for " name, filename, \
+			    (unsigned long)line_num); \
 			goto errout; \
 		} \
 	}
@@ -135,13 +136,13 @@ errout:
 		if (ncomps != 2 || atoi(comps[1]) < 2 || (var) != NULL) { \
 			logMsg("Error parsing acft perf file %s:%lu: " \
 			    "malformed or duplicate " name " line.", \
-			    filename, line_num); \
+			    filename, (unsigned long)line_num); \
 			goto errout; \
 		} \
 		if (!parse_curves(fp, &(var), atoi(comps[1]), &line_num)) { \
 			logMsg("Error parsing acft perf file %s:%lu: " \
 			    "malformed or missing lines.", filename, \
-			    line_num); \
+			    (unsigned long)line_num); \
 			goto errout; \
 		} \
 	}
@@ -169,7 +170,7 @@ acft_perf_parse(const char *filename)
 		if (ncomps < 0) {
 			logMsg("Error parsing acft perf file %s:%lu: "
 			    "malformed line, too many line components.",
-			    filename, line_num);
+			    filename, (unsigned long)line_num);
 			goto errout;
 		}
 		ASSERT(ncomps > 0);
@@ -179,13 +180,13 @@ acft_perf_parse(const char *filename)
 			if (version_check_completed) {
 				logMsg("Error parsing acft perf file %s:%lu: "
 				    "duplicate VERSION line.", filename,
-				    line_num);
+				    (unsigned long)line_num);
 				goto errout;
 			}
 			if (ncomps != 2) {
 				logMsg("Error parsing acft perf file %s:%lu: "
 				    "malformed VERSION line.", filename,
-				    line_num);
+				    (unsigned long)line_num);
 				goto errout;
 			}
 			vers = atoi(comps[1]);
@@ -193,7 +194,7 @@ acft_perf_parse(const char *filename)
 			    vers > ACFT_PERF_MAX_VERSION) {
 				logMsg("Error parsing acft perf file %s:%lu: "
 				    "unsupported file version %d.", filename,
-				    line_num, vers);
+				    (unsigned long)line_num, vers);
 				goto errout;
 			}
 			version_check_completed = B_TRUE;
@@ -201,14 +202,15 @@ acft_perf_parse(const char *filename)
 		}
 		if (!version_check_completed) {
 			logMsg("Error parsing acft perf file %s:%lu: first "
-			    "line was not VERSION.", filename, line_num);
+			    "line was not VERSION.", filename,
+			    (unsigned long)line_num);
 			goto errout;
 		}
 		if (strcmp(comps[0], "ACFTTYPE") == 0) {
 			if (ncomps != 2 || acft->acft_type != NULL) {
 				logMsg("Error parsing acft perf file %s:%lu: "
 				    "malformed or duplicate ACFTTYPE line.",
-				    filename, line_num);
+				    filename, (unsigned long)line_num);
 				goto errout;
 			}
 			acft->acft_type = strdup(comps[1]);
@@ -216,7 +218,7 @@ acft_perf_parse(const char *filename)
 			if (ncomps != 2 || acft->eng_type != NULL) {
 				logMsg("Error parsing acft perf file %s:%lu: "
 				    "malformed or duplicate ENGTYPE line.",
-				    filename, line_num);
+				    filename, (unsigned long)line_num);
 				goto errout;
 			}
 			acft->eng_type = strdup(comps[1]);
@@ -251,8 +253,8 @@ acft_perf_parse(const char *filename)
 		else PARSE_CURVE("CD", acft->cd_curve)
 		else PARSE_CURVE("CDFLAP", acft->cd_flap_curve)
 		else {
-			logMsg("Error parsing acft perf file %s:%lu: "
-			    "unknown line", filename, line_num);
+			logMsg("Error parsing acft perf file %s:%lu: unknown "
+			    "line", filename, (unsigned long)line_num);
 			goto errout;
 		}
 	}

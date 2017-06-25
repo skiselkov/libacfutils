@@ -40,7 +40,7 @@ const char *log_basename(const char *filename);
 #endif	/* !__GNUC__ && !__clang__ */
 
 #define	logMsg(...) \
-	log_impl(NULL, 0, log_basename(__FILE__), __LINE__, __VA_ARGS__)
+	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
 void log_impl(const char *filename, int line, const char *fmt, ...) 
     PRINTF_ATTR(3);
 void log_impl_v(const char *filename, int line, const char *fmt, va_list ap);

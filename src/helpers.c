@@ -422,8 +422,7 @@ unescape_percent(char *str)
 	}
 }
 
-#if	IBM
-
+#if	IBM || LIN
 /*
  * strlcpy is a BSD function not available on Windows, so we roll a simple
  * version of it ourselves.
@@ -434,7 +433,9 @@ strlcpy(char *restrict dest, const char *restrict src, size_t cap)
 	dest[cap - 1] = '\0';
 	strncpy(dest, src, cap - 1);
 }
+#endif	/* IBM || LIN */
 
+#if	IBM
 /*
  * C getline is a POSIX function, so on Windows, we need to roll our own.
  */
@@ -471,7 +472,6 @@ getline(char **line_p, size_t *cap_p, FILE *fp)
 
 	return (n);
 }
-
 #endif	/* IBM */
 
 /*

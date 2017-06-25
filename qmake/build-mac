@@ -19,8 +19,8 @@
 # for one make instance to be blocking on disk.
 NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 
-rm -rf mac{32,64}
-mkdir -p mac{32,64}
+rm -rf mac32 mac64
+mkdir -p mac32 mac64
 
 make distclean > /dev/null
 qmake -spec macx-clang && make -j $NCPUS && mv libacfutils.a mac64

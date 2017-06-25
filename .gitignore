@@ -9,3 +9,5 @@ win64
 lin32
 lin64
 .qmake.stash
+object_script.libacfutils.Debug
+object_script.libacfutils.Release
