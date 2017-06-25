@@ -18,8 +18,8 @@
 
 #include <math.h>
 
-#include "helpers.h"
-#include "math.h"
+#include <acfutils/helpers.h>
+#include <acfutils/math.h>
 
 /*
  * Solves quadratic equation ax^2 + bx + c = 0. Solutions are placed in 'x'.

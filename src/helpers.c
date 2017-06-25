@@ -41,9 +41,9 @@
 #include <unistd.h>
 #endif	/* !IBM */
 
-#include "assert.h"
-#include "helpers.h"
-#include "log.h"
+#include <acfutils/assert.h>
+#include <acfutils/helpers.h>
+#include <acfutils/log.h>
 
 /*
  * The single-letter versions of the IDs need to go after the two-letter ones

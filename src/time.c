@@ -23,7 +23,7 @@
 #endif	/* !IBM */
 #include <stdlib.h>
 
-#include "time.h"
+#include <acfutils/time.h>
 
 uint64_t
 microclock(void)

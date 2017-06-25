@@ -26,8 +26,9 @@
  * Generic doubly-linked list implementation
  */
 
-#include "list.h"
-#include "list_impl.h"
+#include <acfutils/list.h>
+#include <acfutils/list_impl.h>
+
 #include <sys/types.h>
 #include <stdlib.h>
 #ifdef _KERNEL

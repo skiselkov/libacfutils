@@ -28,10 +28,10 @@
 #include <execinfo.h>   /* used for stack tracing */
 #endif	/* !IBM */
 
-#include "acf_utils.h"
-#include "assert.h"
-#include "helpers.h"
-#include "log.h"
+#include <acfutils/acfutils.h>
+#include <acfutils/assert.h>
+#include <acfutils/helpers.h>
+#include <acfutils/log.h>
 
 #define	PREFIX		"acfutils"
 #define	DATE_FMT	"%Y-%m-%d %H:%M:%S"

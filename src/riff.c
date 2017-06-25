@@ -29,9 +29,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "assert.h"
-#include "list.h"
-#include "riff.h"
+#include <acfutils/assert.h>
+#include <acfutils/list.h>
+#include <acfutils/riff.h>
 
 #define	RIFF_ID	FOURCC("RIFF")
 #define	LIST_ID	FOURCC("LIST")

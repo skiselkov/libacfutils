@@ -31,13 +31,12 @@
 
 #include <alc.h>
 
-#include "assert.h"
-#include "list.h"
-#include "log.h"
-#include "riff.h"
-#include "types.h"
-
-#include "wav.h"
+#include <acfutils/assert.h>
+#include <acfutils/list.h>
+#include <acfutils/log.h>
+#include <acfutils/riff.h>
+#include <acfutils/types.h>
+#include <acfutils/wav.h>
 
 #define	WAVE_ID	FOURCC("WAVE")
 #define	FMT_ID	FOURCC("fmt ")

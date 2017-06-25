@@ -28,11 +28,11 @@
 #include <math.h>
 #include <string.h>
 
-#include "assert.h"
-#include "math.h"
-#include "log.h"
-#include "helpers.h"
-#include "perf.h"
+#include <acfutils/assert.h>
+#include <acfutils/math.h>
+#include <acfutils/log.h>
+#include <acfutils/helpers.h>
+#include <acfutils/perf.h>
 
 #define	SECS_PER_HR	3600		/* Number of seconds in an hour */
 

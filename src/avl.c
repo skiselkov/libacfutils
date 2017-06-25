@@ -89,9 +89,10 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "assert.h"
-#include "avl.h"
-#include "helpers.h"
+
+#include <acfutils/assert.h>
+#include <acfutils/avl.h>
+#include <acfutils/helpers.h>
 
 /*
  * Small arrays to translate between balance (or diff) values and child indeces.
