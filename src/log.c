@@ -70,6 +70,10 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
 	(void) vsnprintf(&buf[prefix_len], len + 1, fmt, ap);
 	(void) sprintf(&buf[strlen(buf)], "\n");
 
+	if (acfutils_logfunc == NULL)
+		abort();
+	acfutils_logfunc(buf);
+
 	free(buf);
 }
 

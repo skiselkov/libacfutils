@@ -41,7 +41,7 @@ const char *log_basename(const char *filename);
 
 #define	logMsg(...) \
 	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
-void log_impl(const char *filename, int line, const char *fmt, ...) 
+void log_impl(const char *filename, int line, const char *fmt, ...)
     PRINTF_ATTR(3);
 void log_impl_v(const char *filename, int line, const char *fmt, va_list ap);
 void log_backtrace(void);
