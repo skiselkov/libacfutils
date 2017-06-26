@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-typedef void (*logfunc_t)(const char *);
-extern logfunc_t acfutils_logfunc;
+typedef void (*acfutils_logfunc_t)(const char *);
+extern acfutils_logfunc_t acfutils_logfunc;
 
 #ifdef	__cplusplus
 }

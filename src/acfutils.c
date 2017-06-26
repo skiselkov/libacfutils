@@ -26,4 +26,4 @@
 #include <stdlib.h>
 #include <acfutils/acfutils.h>
 
-logfunc_t acfutils_logfunc = NULL;
+acfutils_logfunc_t acfutils_logfunc = NULL;
