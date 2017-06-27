@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <al.h>
 
+#include "geom.h"
 #include "types.h"
 
 #ifdef	__cplusplus
@@ -60,6 +61,10 @@ wav_t *wav_load(const char *filename, const char *descr_name);
 void wav_free(wav_t *wav);
 
 void wav_set_gain(wav_t *wav, float gain);
+void wav_set_loop(wav_t *wav, bool_t loop);
+void wav_set_pitch(wav_t *wav, float pitch);
+void wav_set_position(wav_t *wav, vect3_t pos);
+
 bool_t wav_play(wav_t *wav);
 void wav_stop(wav_t *wav);
 

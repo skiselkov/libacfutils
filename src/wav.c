@@ -360,6 +360,21 @@ wav_free(wav_t *wav)
 	free(wav);
 }
 
+#define	WAV_SET_PARAM(al_op, al_param_name, ...) \
+	do { \
+		ALuint err; \
+		if (wav == NULL || wav->alsrc == 0) \
+			return; \
+		ASSERT(openal_inited); \
+		VERIFY(ctx_save()); \
+		al_op(wav->alsrc, al_param_name, __VA_ARGS__); \
+		if ((err = alGetError()) != AL_NO_ERROR) { \
+			logMsg("Error changing " #al_param_name " of WAV %s, " \
+			    "error 0x%x.", wav->name, err); \
+		} \
+		VERIFY(ctx_restore()); \
+	} while (0)
+
 /*
  * Sets the audio gain (volume) of a WAV file from 0.0 (silent) to 1.0
  * (full volume).
@@ -367,22 +382,28 @@ wav_free(wav_t *wav)
 void
 wav_set_gain(wav_t *wav, float gain)
 {
-	ALuint err;
+	WAV_SET_PARAM(alSourcef, AL_GAIN, gain);
+}
 
-	if (wav == NULL || wav->alsrc == 0)
-		return;
+/*
+ * Sets the whether the WAV will loop continuously while playing.
+ */
+void
+wav_set_loop(wav_t *wav, bool_t loop)
+{
+	WAV_SET_PARAM(alSourcei, AL_LOOPING, loop);
+}
 
-	ASSERT(openal_inited);
+void
+wav_set_pitch(wav_t *wav, float pitch)
+{
+	WAV_SET_PARAM(alSourcef, AL_PITCH, pitch);
+}
 
-	VERIFY(ctx_save());
-
-	alSourcef(wav->alsrc, AL_GAIN, gain);
-	if ((err = alGetError()) != AL_NO_ERROR) {
-		logMsg("Error changing gain of WAV %s, error 0x%x.",
-		    wav->name, err);
-	}
-
-	VERIFY(ctx_restore());
+void
+wav_set_position(wav_t *wav, vect3_t pos)
+{
+	WAV_SET_PARAM(alSource3f, AL_POSITION, pos.x, pos.y, pos.z);
 }
 
 /*
