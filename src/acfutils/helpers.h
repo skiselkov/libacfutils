@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
+#if	MAC || LIN
+#include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
+#endif
 
 #if	IBM
 #include <windows.h>
