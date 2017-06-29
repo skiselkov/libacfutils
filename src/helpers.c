@@ -847,3 +847,47 @@ remove_file(const char *filename, bool_t notfound_ok)
 	return (B_TRUE);
 #endif	/* !IBM */
 }
+
+#if	IBM
+
+DIR *
+opendir(const char *path)
+{
+	DIR	*dirp = calloc(1, sizeof (*dirp));
+	TCHAR	pathT[strlen(path) + 3];	/* For '\*' at the end */
+
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, sizeof (pathT));
+	StringCchCat(pathT, sizeof (pathT), TEXT("\\*"));
+	dirp->handle = FindFirstFile(pathT, &dirp->find_data);
+	if (dirp->handle == INVALID_HANDLE_VALUE) {
+		win_perror(GetLastError(), "Cannot open directory %s", path);
+		free(dirp);
+		return (NULL);
+	}
+	dirp->first = B_TRUE;
+	return (dirp);
+}
+
+struct dirent *
+readdir(DIR *dirp)
+{
+	/* First call to readdir retrieves what we got from FindFirstFile */
+	if (!dirp->first) {
+		if (FindNextFile(dirp->handle, &dirp->find_data) == 0)
+			return (NULL);
+	} else {
+		dirp->first = B_FALSE;
+	}
+	WideCharToMultiByte(CP_UTF8, 0, dirp->find_data.cFileName, -1,
+	    dirp->de.d_name, sizeof (dirp->de.d_name), NULL, NULL);
+	return (&dirp->de);
+}
+
+void
+closedir(DIR *dirp)
+{
+	FindClose(dirp->handle);
+	free(dirp);
+}
+
+#endif	/* IBM */

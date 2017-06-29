@@ -252,6 +252,25 @@ bool_t create_directory(const char *dirname);
 bool_t remove_directory(const char *dirname);
 bool_t remove_file(const char *filename, bool_t notfound_ok);
 
+#if	IBM
+
+/* A minimally compatible POSIX-style directory reading implementation */
+struct dirent {
+	char		d_name[256];
+};
+typedef struct {
+	HANDLE		handle;
+	WIN32_FIND_DATA	find_data;
+	bool_t		first;
+	struct dirent	de;
+} DIR;
+
+DIR *opendir(const char *path);
+struct dirent *readdir(DIR *dirp);
+void closedir(DIR *dirp);
+
+#endif	/* IBM */
+
 #ifdef	__cplusplus
 }
 #endif
