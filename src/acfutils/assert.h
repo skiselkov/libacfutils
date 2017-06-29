@@ -75,6 +75,7 @@ extern "C" {
 #define	VERIFY3U(x, op, y)	VERIFY3_impl(x, op, y, unsigned long, "0x%lx")
 #define	VERIFY3F(x, op, y)	VERIFY3_impl(x, op, y, double, "%f")
 #define	VERIFY3P(x, op, y)	VERIFY3_impl(x, op, y, void *, "%p")
+#define	VERIFY0(x)		VERIFY3S((x), ==, 0)
 
 #ifdef	DEBUG
 #define	ASSERT(x)		VERIFY(x)
@@ -82,6 +83,7 @@ extern "C" {
 #define	ASSERT3U(x, op, y)	VERIFY3U(x, op, y)
 #define	ASSERT3F(x, op, y)	VERIFY3F(x, op, y)
 #define	ASSERT3P(x, op, y)	VERIFY3P(x, op, y)
+#define	ASSERT0(x)		VERIFY0(x)
 #define	ASSERT_MSG(x, fmt, ...)	VERIFY_MSG(x, fmt, __VA_ARGS__)
 #else	/* !DEBUG */
 #define	ASSERT(x)		UNUSED(x)
@@ -89,6 +91,7 @@ extern "C" {
 #define	ASSERT3U(x, op, y)	UNUSED((x) op (y))
 #define	ASSERT3F(x, op, y)	UNUSED((x) op (y))
 #define	ASSERT3P(x, op, y)	UNUSED((x) op (y))
+#define	ASSERT0(x)		UNUSED(x)
 #define	ASSERT_MSG(x, fmt, ...)	UNUSED(x)
 #endif	/* !DEBUG */
 
