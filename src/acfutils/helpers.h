@@ -87,6 +87,8 @@ extern "C" {
 #endif	/* BSWAP32 */
 #endif	/* !__GNUC__ && !__clang__ */
 
+#define	DESTROY(x)	do { free(x); (x) = NULL; } while (0)
+
 #ifdef	WINDOWS
 #define	PATHSEP	"\\"
 #else
