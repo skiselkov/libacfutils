@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
-#if	MAC || LIN
+#if	APL || LIN
 #include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
 #endif
 
