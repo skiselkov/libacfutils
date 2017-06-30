@@ -298,6 +298,37 @@ vect3_mean(vect3_t a, vect3_t b)
 }
 
 /*
+ * Rotates vector `v' by `a' degrees around a given axis. The `axis' argument
+ * selects which axis to rotate around (clockwise):
+ * axis = 0: rotate around the x axis.
+ * axis = 1: rotate around the y axis.
+ * axis = 2: rotate around the z axis.
+ */
+vect3_t
+vect3_rot(vect3_t v, double a, unsigned axis)
+{
+
+	ASSERT3U(axis, <=, 2);
+	switch (axis) {
+	case 0: {
+		double sin_a = sin(DEG2RAD(-a)), cos_a = cos(DEG2RAD(-a));
+		return (VECT3(v.x, v.y * cos_a - v.z * sin_a,
+		    v.y * sin_a + v.z * cos_a));
+	}
+	case 1: {
+		double sin_a = sin(DEG2RAD(a)), cos_a = cos(DEG2RAD(a));
+		return (VECT3(v.x * cos_a - v.z * sin_a, v.y,
+		    v.x * sin_a + v.z * cos_a));
+	}
+	default: {
+		double sin_a = sin(DEG2RAD(-a)), cos_a = cos(DEG2RAD(-a));
+		return (VECT3(v.x * cos_a - v.y * sin_a,
+		    v.x * sin_a + v.y * cos_a, v.z));
+	}
+	}
+}
+
+/*
  * Rotates vector `v' by 90 degrees either to the right or left. This is
  * faster than doing full trigonometric calculations in vect2_rot.
  */

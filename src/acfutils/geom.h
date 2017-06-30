@@ -28,23 +28,58 @@
 extern "C" {
 #endif
 
+/*
+ * Geographic (spherical) coordinates.
+ */
+typedef struct {
+	double	lat;	/* degrees, increasing north */
+	double	lon;	/* degrees, increasing east */
+	double	elev;	/* meters, increasing away from surface */
+} geo_pos3_t;
+
+/*
+ * Simplified version of geo_pos3_t without an elevation component.
+ */
 typedef struct {
 	double	lat;
 	double	lon;
 } geo_pos2_t;
 
-typedef struct {
-	double	lat;
-	double	lon;
-	double	elev;
-} geo_pos3_t;
-
+/*
+ * Generic 3-space vector. Looking down onto a plane embedded in euclidian
+ * 3-space, the axes are:
+ * x: left-to-right (increasing right)
+ * y: down-to-up (increasing up)
+ * z: away-towards viewer (increasing towards viewer)
+ *
+ *			Y (incr up)
+ *			^
+ *			|
+ *			|
+ *			|
+ *			x-------->
+ *			Z	 X (incr right)
+ *	(incr towards us)
+ */
 typedef struct {
 	double	x;
 	double	y;
 	double	z;
 } vect3_t;
 
+/*
+ * Generic 2-space vector. On euclidian 2-space, axes are:
+ * x: left-to-right (increasing right)
+ * y: down-to-up (increasing up)
+ *
+ *	Y (incr up)
+ *	^
+ *	|
+ *	|
+ *	|
+ *	 -------->
+ *		 X (incr right)
+ */
 typedef struct {
 	double	x;
 	double	y;
@@ -154,6 +189,8 @@ double vect3_dotprod(vect3_t a, vect3_t b);
 double vect2_dotprod(vect2_t a, vect2_t b);
 vect3_t vect3_xprod(vect3_t a, vect3_t b);
 vect3_t vect3_mean(vect3_t a, vect3_t b);
+
+vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
 
 vect2_t vect2_norm(vect2_t v, bool_t right);
 vect2_t vect2_rot(vect2_t v, double angle);
