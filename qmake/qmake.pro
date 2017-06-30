@@ -23,7 +23,7 @@ CONFIG -= thread exceptions qt rtti debug
 
 VERSION = 1.0.0
 
-INCLUDEPATH += ../src ../OpenAL/include
+INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
 
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
@@ -66,5 +66,5 @@ macx {
 	DEFINES += APL=1 IBM=0 LIN=0
 }
 
-HEADERS += ../src/*.h
+HEADERS += ../src/*.h ../src/acfutils/*.h
 SOURCES += ../src/*.c
