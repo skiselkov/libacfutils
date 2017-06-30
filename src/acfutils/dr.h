@@ -34,6 +34,7 @@ typedef struct {
 	XPLMDataRef	dr;
 	XPLMDataTypeID	type;
 	bool_t		writable;
+	void		*value;
 } dr_t;
 
 bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);

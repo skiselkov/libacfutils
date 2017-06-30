@@ -237,43 +237,43 @@ dr_sets(dr_t *dr, char *str)
 static int
 read_int_cb(void *refcon)
 {
-	int *ptr = refcon;
-	return (*(ptr));
+	dr_t *dr = refcon;
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	return (*(int *)dr->value);
 }
 
 static void
 write_int_cb(void *refcon, int value)
 {
-	int *ptr = refcon;
-	*ptr = value;
+	dr_t *dr = refcon;
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	ASSERT_MSG(dr->writable, "%s", dr->name);
+	*(int *)dr->value = value;
 }
 
 static float
 read_float_cb(void *refcon)
 {
-	float *ptr = refcon;
-	return (*(ptr));
+	dr_t *dr = refcon;
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	return (*(float *)dr->value);
 }
 
 static void
 write_float_cb(void *refcon, float value)
 {
-	float *ptr = refcon;
-	*ptr = value;
-}
-
-static void
-dr_create_common(dr_t *dr, void *value, int type, bool_t writable,
-    void *read_cb, void *write_cb, const char *fmt, va_list ap)
-{
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
-	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
-	    read_cb, writable ? write_cb : NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, value,
-	    writable ? value : NULL);
-	VERIFY(dr->dr != NULL);
-	dr->type = type;
-	dr->writable = writable;
+	dr_t *dr = refcon;
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	ASSERT_MSG(dr->writable, "%s", dr->name);
+	*(float *)dr->value = value;
 }
 
 /*
@@ -284,10 +284,18 @@ void
 dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
-	dr_create_common(dr, value, xplmType_Int, writable, read_int_cb,
-	    write_int_cb, fmt, ap);
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
+	dr->dr = XPLMRegisterDataAccessor(dr->name, xplmType_Int, writable,
+	    read_int_cb, writable ? write_int_cb : NULL, NULL, NULL,
+	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dr,
+	    writable ? dr : NULL);
+	VERIFY(dr->dr != NULL);
+	dr->type = xplmType_Int;
+	dr->writable = writable;
+	dr->value = value;
 }
 
 /*
@@ -298,10 +306,18 @@ void
 dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
-	dr_create_common(dr, value, xplmType_Float, writable, read_float_cb,
-	    write_float_cb, fmt, ap);
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
+	dr->dr = XPLMRegisterDataAccessor(dr->name, xplmType_Float, writable,
+	    NULL, NULL, read_float_cb, writable ? write_float_cb : NULL,
+	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dr,
+	    writable ? dr : NULL);
+	VERIFY(dr->dr != NULL);
+	dr->type = xplmType_Float;
+	dr->writable = writable;
+	dr->value = value;
 }
 
 /*
@@ -310,6 +326,7 @@ dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 void
 dr_delete(dr_t *dr)
 {
+	VERIFY_MSG(dr->value != NULL, "%s", dr->name);
 	XPLMUnregisterDataAccessor(dr->dr);
 	memset(dr, 0, sizeof (*dr));
 }
