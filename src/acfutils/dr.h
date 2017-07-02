@@ -35,6 +35,7 @@ typedef struct {
 	XPLMDataTypeID	type;
 	bool_t		writable;
 	void		*value;
+	ssize_t		count;
 } dr_t;
 
 bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
@@ -64,6 +65,12 @@ void dr_sets(dr_t *dr, char *str);
 
 void dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...);
 void dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...);
+void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
+    const char *fmt, ...);
+void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
+    const char *fmt, ...);
+void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
+    const char *fmt, ...);
 void dr_delete(dr_t *dr);
 
 #ifdef	__cplusplus

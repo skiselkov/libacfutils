@@ -276,6 +276,76 @@ write_float_cb(void *refcon, float value)
 	*(float *)dr->value = value;
 }
 
+#define	DEF_READ_ARRAY_CB(typename, xp_typename, type_sz) \
+static int \
+read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
+    int count) \
+{ \
+	dr_t *dr = refcon; \
+ \
+	ASSERT(dr != NULL); \
+	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
+ \
+	if (out_values == NULL) \
+		return (dr->count); \
+	if (off < dr->count) { \
+		count = MIN(count, dr->count - off); \
+		memcpy(out_values, dr->value + (off * type_sz), \
+		    type_sz * count); \
+	} \
+ \
+	return (count); \
+}
+
+#define	DEF_WRITE_ARRAY_CB(typename, xp_typename, type_sz) \
+static void \
+write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
+    int count) \
+{ \
+	dr_t *dr = refcon; \
+ \
+	ASSERT(dr != NULL); \
+	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
+	ASSERT_MSG(dr->writable, "%s", dr->name); \
+ \
+	if (off < dr->count) { \
+		count = MIN(count, dr->count - off); \
+		memcpy(dr->value + (off * type_sz), in_values, \
+		    type_sz * count); \
+	} \
+}
+
+DEF_READ_ARRAY_CB(int, IntArray, sizeof (int))
+DEF_WRITE_ARRAY_CB(int, IntArray, sizeof (int))
+DEF_READ_ARRAY_CB(float, FloatArray, sizeof (int))
+DEF_WRITE_ARRAY_CB(float, FloatArray, sizeof (int))
+DEF_READ_ARRAY_CB(void, Data, sizeof (uint8_t))
+DEF_WRITE_ARRAY_CB(void, Data, sizeof (uint8_t))
+
+#undef	DEF_READ_ARRAY_CB
+#undef	DEF_WRITE_ARRAY_CB
+
+static void
+dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
+    bool_t writable, const char *fmt, va_list ap)
+{
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
+
+	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
+	    read_int_cb, write_int_cb, read_float_cb, write_float_cb,
+	    NULL, NULL, read_int_array_cb, write_int_array_cb,
+	    read_float_array_cb, write_float_array_cb,
+	    read_void_array_cb, write_void_array_cb, dr, dr);
+
+	VERIFY(dr->dr != NULL);
+	dr->type = type;
+	dr->writable = writable;
+	dr->value = value;
+	dr->count = count;
+}
+
 /*
  * Sets up an integer dataref that will read and optionally write to
  * an int*.
@@ -284,18 +354,10 @@ void
 dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Int, value, 1, writable, fmt, ap);
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
-	dr->dr = XPLMRegisterDataAccessor(dr->name, xplmType_Int, writable,
-	    read_int_cb, writable ? write_int_cb : NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dr,
-	    writable ? dr : NULL);
-	VERIFY(dr->dr != NULL);
-	dr->type = xplmType_Int;
-	dr->writable = writable;
-	dr->value = value;
 }
 
 /*
@@ -306,18 +368,43 @@ void
 dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float, value, 1, writable, fmt, ap);
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
-	dr->dr = XPLMRegisterDataAccessor(dr->name, xplmType_Float, writable,
-	    NULL, NULL, read_float_cb, writable ? write_float_cb : NULL,
-	    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, dr,
-	    writable ? dr : NULL);
-	VERIFY(dr->dr != NULL);
-	dr->type = xplmType_Float;
-	dr->writable = writable;
-	dr->value = value;
+}
+
+void
+dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_IntArray, value, n, writable, fmt, ap);
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_FloatArray, value, n, writable, fmt, ap);
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Data, value, n, writable, fmt, ap);
+	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
+	va_end(ap);
 }
 
 /*
