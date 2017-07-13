@@ -110,6 +110,15 @@ vect3_abs(vect3_t a)
 }
 
 /*
+ * Returns the distance between two points defined by vectors `a' and `b'.
+ */
+double
+vect3_dist(vect3_t a, vect3_t b)
+{
+	return (vect3_abs(vect3_sub(a, b)));
+}
+
+/*
  * Same as vect3_abs, but for 2-space vectors.
  */
 double
@@ -119,7 +128,7 @@ vect2_abs(vect2_t a)
 }
 
 /*
- * Returns the distance between two points defined by vectors `a' and `b'.
+ * Same as vect3_dist, but for 2-space vectors.
  */
 double
 vect2_dist(vect2_t a, vect2_t b)

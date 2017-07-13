@@ -172,6 +172,7 @@ bool_t is_on_arc(double angle_x, double angle1, double angle2, bool_t cw);
  * Vector math.
  */
 double vect3_abs(vect3_t a);
+double vect3_dist(vect3_t a, vect3_t b);
 double vect2_abs(vect2_t a);
 double vect2_dist(vect2_t a, vect2_t b);
 vect3_t vect3_set_abs(vect3_t a, double abs);
