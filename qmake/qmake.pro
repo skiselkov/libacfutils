@@ -64,6 +64,7 @@ linux-g++-32 {
 
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
+	QMAKE_CFLAGS += -mmacosx-version-min=10.7
 }
 
 HEADERS += ../src/*.h ../src/acfutils/*.h
