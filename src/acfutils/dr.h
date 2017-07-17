@@ -29,14 +29,18 @@ extern "C" {
 
 #define	DR_MAX_NAME_LEN	128
 
-typedef struct {
+typedef struct dr dr_t;
+
+struct dr {
 	char		name[DR_MAX_NAME_LEN];
 	XPLMDataRef	dr;
 	XPLMDataTypeID	type;
 	bool_t		writable;
 	void		*value;
 	ssize_t		count;
-} dr_t;
+	void		(*read_cb)(dr_t *);
+	void		(*write_cb)(dr_t *);
+};
 
 bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
 #define	fdr_find(dr, ...) \

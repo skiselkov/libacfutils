@@ -42,6 +42,8 @@ dr_find(dr_t *dr, const char *fmt, ...)
 	    xplmType_IntArray | xplmType_FloatArray | xplmType_Data),
 	    "dataref \"%s\" has bad type %x", dr->name, dr->type);
 	dr->writable = XPLMCanWriteDataRef(dr->dr);
+	dr->read_cb = NULL;
+	dr->write_cb = NULL;
 	return (B_TRUE);
 }
 
@@ -241,6 +243,8 @@ read_int_cb(void *refcon)
 	ASSERT(dr != NULL);
 	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	if (dr->read_cb != NULL)
+		dr->read_cb(dr);
 	return (*(int *)dr->value);
 }
 
@@ -253,6 +257,8 @@ write_int_cb(void *refcon, int value)
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	*(int *)dr->value = value;
+	if (dr->write_cb != NULL)
+		dr->write_cb(dr);
 }
 
 static float
@@ -262,6 +268,8 @@ read_float_cb(void *refcon)
 	ASSERT(dr != NULL);
 	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	if (dr->read_cb != NULL)
+		dr->read_cb(dr);
 	return (*(float *)dr->value);
 }
 
@@ -274,6 +282,8 @@ write_float_cb(void *refcon, float value)
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	*(float *)dr->value = value;
+	if (dr->write_cb != NULL)
+		dr->write_cb(dr);
 }
 
 #define	DEF_READ_ARRAY_CB(typename, xp_typename, type_sz) \
@@ -287,6 +297,8 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
  \
+	if (dr->read_cb != NULL) \
+		dr->read_cb(dr); \
 	if (out_values == NULL) \
 		return (dr->count); \
 	if (off < dr->count) { \
@@ -315,6 +327,8 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 		memcpy(dr->value + (off * type_sz), in_values, \
 		    type_sz * count); \
 	} \
+	if (dr->write_cb != NULL) \
+		dr->write_cb(dr); \
 }
 
 DEF_READ_ARRAY_CB(int, IntArray, sizeof (int))
@@ -344,6 +358,8 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->writable = writable;
 	dr->value = value;
 	dr->count = count;
+	dr->read_cb = NULL;
+	dr->write_cb = NULL;
 }
 
 /*
