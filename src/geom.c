@@ -307,6 +307,15 @@ vect3_mean(vect3_t a, vect3_t b)
 }
 
 /*
+ * Same as vect3_mean but for 2-space vectors.
+ */
+vect2_t
+vect2_mean(vect2_t a, vect2_t b)
+{
+	return (VECT2((a.x + b.x) / 2, (a.y + b.y) / 2));
+}
+
+/*
  * Rotates vector `v' by `a' degrees around a given axis. The `axis' argument
  * selects which axis to rotate around (clockwise):
  * axis = 0: rotate around the x axis.

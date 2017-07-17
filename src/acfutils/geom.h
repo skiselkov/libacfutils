@@ -190,6 +190,7 @@ double vect3_dotprod(vect3_t a, vect3_t b);
 double vect2_dotprod(vect2_t a, vect2_t b);
 vect3_t vect3_xprod(vect3_t a, vect3_t b);
 vect3_t vect3_mean(vect3_t a, vect3_t b);
+vect2_t vect2_mean(vect2_t a, vect2_t b);
 
 vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
 
