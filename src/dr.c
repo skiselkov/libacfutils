@@ -372,7 +372,6 @@ dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_Int, value, 1, writable, fmt, ap);
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
 }
 
@@ -386,7 +385,6 @@ dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_Float, value, 1, writable, fmt, ap);
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
 }
 
@@ -397,7 +395,6 @@ dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
 	va_list ap;
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_IntArray, value, n, writable, fmt, ap);
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
 }
 
@@ -408,7 +405,6 @@ dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 	va_list ap;
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_FloatArray, value, n, writable, fmt, ap);
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
 }
 
@@ -419,7 +415,6 @@ dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
 	va_list ap;
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_Data, value, n, writable, fmt, ap);
-	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
 }
 
