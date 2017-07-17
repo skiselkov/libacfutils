@@ -63,14 +63,16 @@ void dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num);
 int dr_gets(dr_t *dr, char *str, size_t cap);
 void dr_sets(dr_t *dr, char *str);
 
-void dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...);
-void dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...);
+void dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
+    PRINTF_ATTR(4);
+void dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
+    PRINTF_ATTR(4);
 void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
-    const char *fmt, ...);
+    const char *fmt, ...) PRINTF_ATTR(5);
 void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
-    const char *fmt, ...);
+    const char *fmt, ...) PRINTF_ATTR(5);
 void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
-    const char *fmt, ...);
+    const char *fmt, ...) PRINTF_ATTR(5);
 void dr_delete(dr_t *dr);
 
 #ifdef	__cplusplus
