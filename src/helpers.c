@@ -251,6 +251,43 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, size_t *linenum)
 	}
 }
 
+char *
+parser_get_next_quoted_str(FILE *fp)
+{
+	char c;
+	char *str = calloc(1, 1);
+	size_t len = 0, cap = 0;
+
+	for (;;) {
+		do {
+			c = fgetc(fp);
+		} while (isspace(c));
+		if (c == EOF)
+			break;
+		if (c != '"') {
+			ungetc(c, fp);
+			break;
+		}
+		while ((c = fgetc(fp)) != EOF) {
+			if (c == '"')
+				break;
+			if (c == '\\')
+				c = fgetc(fp);
+			if (len == cap) {
+				str = realloc(str, cap + 1 + 128);
+				cap += 128;
+			}
+			str[len++] = c;
+		}
+		if (c == EOF)
+			break;
+	}
+
+	str[len] = 0;
+
+	return (str);
+}
+
 /*
  * Breaks up a line into components delimited by a character.
  *

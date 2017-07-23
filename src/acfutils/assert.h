@@ -65,8 +65,8 @@ extern "C" {
 		type tmp_y = (type)(y); \
 		if (!(tmp_x op tmp_y)) { \
 			log_impl(log_basename(__FILE__), __LINE__, \
-			    "assertion " #x " " #op " " #y " failed (" \
-			    fmt " " #op " " fmt ")", tmp_x, tmp_y); \
+			    "assertion %s %s %s failed (" fmt " %s " \
+			    fmt ")", #x, #op, #y, tmp_x, #op, tmp_y); \
 			log_backtrace(); \
 			abort(); \
 		} \

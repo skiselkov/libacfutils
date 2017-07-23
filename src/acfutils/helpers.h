@@ -197,6 +197,7 @@ void copy_rwy_ID(const char *src, char dst[4]);
 /* CSV file & string processing helpers */
 ssize_t parser_get_next_line(FILE *fp, char **linep, size_t *linecap,
     size_t *linenum);
+char *parser_get_next_quoted_str(FILE *fp);
 ssize_t explode_line(char *line, char delim, char **comps, size_t capacity);
 void strip_space(char *line);
 void append_format(char **str, size_t *sz, const char *format, ...)
