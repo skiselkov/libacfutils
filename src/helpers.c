@@ -338,10 +338,12 @@ strip_space(char *line)
 	size_t	len = strlen(line);
 
 	/* strip leading whitespace */
-	for (p = line; *p && isspace(*p); p++)
+	for (p = line; *p != 0 && isspace(*p); p++)
 		;
-	if (p != line)
-		memmove(line, p, (p + len) - p + 1);
+	if (p != line) {
+		memmove(line, p, (len + 1) - (p - line));
+		len -= (p - line);
+	}
 
 	for (p = line + len - 1; p >= line && isspace(*p); p--)
 		;
