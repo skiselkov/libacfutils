@@ -271,8 +271,42 @@ parser_get_next_quoted_str(FILE *fp)
 		while ((c = fgetc(fp)) != EOF) {
 			if (c == '"')
 				break;
-			if (c == '\\')
+			if (c == '\\') {
 				c = fgetc(fp);
+				if (c == 'n') {
+					c = '\n';
+				} else if (c == 'r') {
+					c = '\r';
+				} else if (c == 't') {
+					c = '\t';
+				} else if (c == '\r') {
+					/* skip the next LF char as well */
+					c = fgetc(fp);
+					if (c != '\n' && c != EOF)
+						ungetc(c, fp);
+					continue;
+				} else if (c == '\n') {
+					/* skip LF char */
+					continue;
+				} else if (c >= '0' && c <= '7') {
+					/* 1-3 letter octal codes */
+					char num[4];
+					int val = 0;
+
+					memset(num, 0, sizeof (num));
+					num[0] = c;
+					for (int i = 1; i < 3; i++) {
+						c = fgetc(fp);
+						if (c < '0' || c > '7') {
+							ungetc(c, fp);
+							break;
+						}
+						num[i] = c;
+					}
+					VERIFY(sscanf(num, "%o", &val) == 1);
+					c = val;
+				}
+			}
 			if (len == cap) {
 				str = realloc(str, cap + 1 + 128);
 				cap += 128;
