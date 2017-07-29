@@ -30,6 +30,7 @@
 #include <errno.h>
 
 #include <alc.h>
+#include <opusfile.h>
 
 #include <acfutils/assert.h>
 #include <acfutils/list.h>
@@ -41,6 +42,8 @@
 #define	WAVE_ID	FOURCC("WAVE")
 #define	FMT_ID	FOURCC("fmt ")
 #define	DATA_ID	FOURCC("data")
+
+#define	READ_BUFSZ	((1024 * 1024) / sizeof (opus_int16))	/* bytes */
 
 static ALCdevice *old_dev = NULL, *my_dev = NULL;
 static ALCcontext *old_ctx = NULL, *my_ctx = NULL;
@@ -176,13 +179,149 @@ openal_fini()
 	openal_inited = B_FALSE;
 }
 
-/*
- * Loads a WAV file from a file and returns a buffered representation
- * ready to be passed to OpenAL. Currently we only support mono or
- * stereo raw PCM (uncompressed) WAV files.
- */
-wav_t *
-wav_load(const char *filename, const char *descr_name)
+static bool_t
+check_audio_fmt(const wav_fmt_hdr_t *fmt, const char *filename)
+{
+	/* format support check */
+	if (fmt->datafmt != 1 ||
+	    (fmt->n_channels != 1 && fmt->n_channels != 2) ||
+	    (fmt->bps != 8 && fmt->bps != 16)) {
+		logMsg("Error loading WAV file \"%s\": unsupported audio "
+		    "format.", filename);
+		return (B_FALSE);
+	}
+	return (B_TRUE);
+}
+
+static bool_t
+wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
+{
+	ALuint err;
+	ALfloat zeroes[3] = { 0.0, 0.0, 0.0 };
+
+	if (!ctx_save())
+		return (B_FALSE);
+
+	alGenBuffers(1, &wav->albuf);
+	if ((err = alGetError()) != AL_NO_ERROR) {
+		logMsg("Error loading WAV file %s: alGenBuffers failed (0x%x).",
+		    filename, err);
+		(void) ctx_restore();
+		return (B_FALSE);
+	}
+	if (wav->fmt.bps == 16) {
+		alBufferData(wav->albuf, wav->fmt.n_channels == 2 ?
+		    AL_FORMAT_STEREO16 : AL_FORMAT_MONO16, buf, bufsz,
+		    wav->fmt.srate);
+	} else {
+		alBufferData(wav->albuf, wav->fmt.n_channels == 2 ?
+		    AL_FORMAT_STEREO8 : AL_FORMAT_MONO8, buf, bufsz,
+		    wav->fmt.srate);
+	}
+
+	if ((err = alGetError()) != AL_NO_ERROR) {
+		logMsg("Error loading WAV file %s: alBufferData failed (0x%x).",
+		    filename, err);
+		(void) ctx_restore();
+		return (B_FALSE);
+	}
+
+	alGenSources(1, &wav->alsrc);
+	if ((err = alGetError()) != AL_NO_ERROR) {
+		logMsg("Error loading WAV file %s: alGenSources failed (0x%x).",
+		    filename, err);
+		(void) ctx_restore();
+		return (B_FALSE);
+	}
+#define	CHECK_ERROR(stmt) \
+	do { \
+		stmt; \
+		if ((err = alGetError()) != AL_NO_ERROR) { \
+			logMsg("Error loading WAV file %s, \"%s\" failed " \
+			    "with error 0x%x", filename, #stmt, err); \
+			alDeleteSources(1, &wav->alsrc); \
+			VERIFY3S(alGetError(), ==, AL_NO_ERROR); \
+			wav->alsrc = 0; \
+			(void) ctx_restore(); \
+			return (B_FALSE); \
+		} \
+	} while (0)
+	CHECK_ERROR(alSourcei(wav->alsrc, AL_BUFFER, wav->albuf));
+	CHECK_ERROR(alSourcef(wav->alsrc, AL_PITCH, 1.0));
+	CHECK_ERROR(alSourcef(wav->alsrc, AL_GAIN, 1.0));
+	CHECK_ERROR(alSourcei(wav->alsrc, AL_LOOPING, 0));
+	CHECK_ERROR(alSourcefv(wav->alsrc, AL_POSITION, zeroes));
+	CHECK_ERROR(alSourcefv(wav->alsrc, AL_VELOCITY, zeroes));
+
+	(void) ctx_restore();
+
+	return (B_TRUE);
+}
+
+static wav_t *
+wav_load_opus(const char *filename)
+{
+	wav_t *wav;
+	int error;
+	OggOpusFile *file = op_open_file(filename, &error);
+	const OpusHead *head;
+	int sz = 0, cap = 0;
+	opus_int16 *pcm = NULL;
+
+	if (file == NULL) {
+		logMsg("Error reading OPUS file \"%s\": op_open_file error %d",
+		    filename, error);
+		return (NULL);
+	}
+	head = op_head(file, 0);
+	VERIFY(head != NULL);
+
+	wav = calloc(1, sizeof (*wav));
+
+	/* fake a wav_fmt_hdr_t from the OpusHead object */
+	wav->fmt.datafmt = 1;
+	wav->fmt.n_channels = head->channel_count;
+	wav->fmt.srate = 48000;		/* Opus always outputs 48 kHz! */
+	wav->fmt.bps = 16;
+	wav->fmt.byte_rate = (wav->fmt.srate * wav->fmt.bps *
+	    wav->fmt.n_channels) / 8;
+
+	if (!check_audio_fmt(&wav->fmt, filename))
+		goto errout;
+
+	for (;;) {
+		int op_read_sz;
+
+		if (sz == cap) {
+			cap += READ_BUFSZ;
+			pcm = realloc(pcm, cap * sizeof (*pcm));
+		}
+		op_read_sz = op_read(file, &pcm[sz], cap - sz, 0);
+		if (op_read_sz > 0)
+			sz += op_read_sz * wav->fmt.n_channels;
+		else
+			break;
+	}
+	wav->duration = ((double)(sz / wav->fmt.n_channels)) / wav->fmt.srate;
+
+	VERIFY3S(head->pre_skip, <, sz);
+	wav_gen_al_bufs(wav, &pcm[head->pre_skip],
+	    (sz - head->pre_skip) * sizeof (*pcm), filename);
+
+	free(pcm);
+	op_free(file);
+
+	return (wav);
+errout:
+	if (wav != NULL)
+		wav_free(wav);
+	if (file != NULL)
+		op_free(file);
+	return (NULL);
+}
+
+static wav_t *
+wav_load_wav(const char *filename)
 {
 	wav_t *wav = NULL;
 	FILE *fp;
@@ -191,10 +330,6 @@ wav_load(const char *filename, const char *descr_name)
 	uint8_t *filebuf = NULL;
 	riff_chunk_t *chunk;
 	int sample_sz;
-	ALuint err;
-	ALfloat zeroes[3] = { 0.0, 0.0, 0.0 };
-
-	ASSERT(openal_inited);
 
 	if ((fp = fopen(filename, "rb")) == NULL) {
 		logMsg("Error loading WAV file \"%s\": can't open file: %s",
@@ -218,8 +353,6 @@ wav_load(const char *filename, const char *descr_name)
 		goto errout;
 	}
 
-	wav->name = strdup(descr_name);
-
 	chunk = riff_find_chunk(riff, FMT_ID, 0);
 	if (chunk == NULL || chunk->datasz < sizeof (wav->fmt)) {
 		logMsg("Error loading WAV file \"%s\": file missing or "
@@ -235,14 +368,8 @@ wav_load(const char *filename, const char *descr_name)
 		wav->fmt.bps = BSWAP16(wav->fmt.bps);
 	}
 
-	/* format support check */
-	if (wav->fmt.datafmt != 1 ||
-	    (wav->fmt.n_channels != 1 && wav->fmt.n_channels != 2) ||
-	    (wav->fmt.bps != 8 && wav->fmt.bps != 16)) {
-		logMsg("Error loading WAV file \"%s\": unsupported audio "
-		    "format.", filename);
+	if (!check_audio_fmt(&wav->fmt, filename))
 		goto errout;
-	}
 
 	/*
 	 * Check the DATA chunk is present and contains the correct number
@@ -266,60 +393,8 @@ wav_load(const char *filename, const char *descr_name)
 			*s = BSWAP16(*s);
 	}
 
-	if (!ctx_save())
+	if (!wav_gen_al_bufs(wav, chunk->data, chunk->datasz, filename))
 		goto errout;
-
-	alGenBuffers(1, &wav->albuf);
-	if ((err = alGetError()) != AL_NO_ERROR) {
-		logMsg("Error loading WAV file %s: alGenBuffers failed (0x%x).",
-		    filename, err);
-		(void) ctx_restore();
-		goto errout;
-	}
-	if (wav->fmt.bps == 16)
-		alBufferData(wav->albuf, wav->fmt.n_channels == 2 ?
-		    AL_FORMAT_STEREO16 : AL_FORMAT_MONO16,
-		    chunk->data, chunk->datasz, wav->fmt.srate);
-	else
-		alBufferData(wav->albuf, wav->fmt.n_channels == 2 ?
-		    AL_FORMAT_STEREO8 : AL_FORMAT_MONO8,
-		    chunk->data, chunk->datasz, wav->fmt.srate);
-
-	if ((err = alGetError()) != AL_NO_ERROR) {
-		logMsg("Error loading WAV file %s: alBufferData failed (0x%x).",
-		    filename, err);
-		(void) ctx_restore();
-		goto errout;
-	}
-
-	alGenSources(1, &wav->alsrc);
-	if ((err = alGetError()) != AL_NO_ERROR) {
-		logMsg("Error loading WAV file %s: alGenSources failed (0x%x).",
-		    filename, err);
-		(void) ctx_restore();
-		goto errout;
-	}
-#define	CHECK_ERROR(stmt) \
-	do { \
-		stmt; \
-		if ((err = alGetError()) != AL_NO_ERROR) { \
-			logMsg("Error loading WAV file %s, \"%s\" failed " \
-			    "with error 0x%x", filename, #stmt, err); \
-			alDeleteSources(1, &wav->alsrc); \
-			VERIFY3S(alGetError(), ==, AL_NO_ERROR); \
-			wav->alsrc = 0; \
-			(void) ctx_restore(); \
-			goto errout; \
-		} \
-	} while (0)
-	CHECK_ERROR(alSourcei(wav->alsrc, AL_BUFFER, wav->albuf));
-	CHECK_ERROR(alSourcef(wav->alsrc, AL_PITCH, 1.0));
-	CHECK_ERROR(alSourcef(wav->alsrc, AL_GAIN, 1.0));
-	CHECK_ERROR(alSourcei(wav->alsrc, AL_LOOPING, 0));
-	CHECK_ERROR(alSourcefv(wav->alsrc, AL_POSITION, zeroes));
-	CHECK_ERROR(alSourcefv(wav->alsrc, AL_VELOCITY, zeroes));
-
-	(void) ctx_restore();
 
 	riff_free_chunk(riff);
 	free(filebuf);
@@ -334,6 +409,32 @@ errout:
 	fclose(fp);
 
 	return (NULL);
+}
+
+/*
+ * Loads a WAV file from a file and returns a buffered representation
+ * ready to be passed to OpenAL. Currently we only support mono or
+ * stereo raw PCM (uncompressed) WAV files.
+ */
+wav_t *
+wav_load(const char *filename, const char *descr_name)
+{
+	const char *dot = strrchr(filename, '.');
+	wav_t *wav;
+
+	ASSERT(openal_inited);
+
+	if (dot != NULL && (strcmp(&dot[1], "opus") == 0 ||
+	    strcmp(&dot[1], "OPUS") == 0)) {
+		wav = wav_load_opus(filename);
+	} else {
+		wav = wav_load_wav(filename);
+	}
+	if (wav != NULL) {
+		wav->name = strdup(descr_name);
+	}
+
+	return (wav);
 }
 
 /*

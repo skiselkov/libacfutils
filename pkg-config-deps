@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+# This file needs to be called from your makefile when using libacfutil.
+# It produces the necessary cflags and libs to include all the build-time
+# and link-time dependencies of libacfutils.
+#
+# You should invoke this script in one of the following two ways:
+#
+# 1) to generate CFLAGS:
+#	$ <path_to_libacfutils>/pkg-config-deps 'ARCH' --cflags
+# 1) to generate LDFLAGS:
+#	$ <path_to_libacfutils>/pkg-config-deps 'ARCH' --libs
+#
+# Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
+# 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
+
+ARCH="$1"
+shift
+
+cd "$(dirname "$0")"
+PKG_CONFIG_PATH="\
+$(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
+$(pwd)/opus/opus-$ARCH/lib/pkgconfig:\
+$(pwd)/opus/libogg-$ARCH/install/lib/pkgconfig" \
+    pkg-config $@ opusfile opus ogg

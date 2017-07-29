@@ -45,10 +45,11 @@ win32 {
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
+	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
 }
 
 win32:contains(CROSS_COMPILE, i686-w64-mingw32-) {
-	DEFINES += __MIDL_user_allocate_free_DEFINED__
+	QMAKE_CFLAGS += $$system("../pkg-config-deps win-32 --cflags")
 }
 
 linux-g++-64 {
@@ -56,15 +57,26 @@ linux-g++-64 {
 	# The stack protector forces us to depend on libc,
 	# but we'd prefer to be static.
 	QMAKE_CFLAGS += -fno-stack-protector
+	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
 }
+
 linux-g++-32 {
 	DEFINES += APL=0 IBM=0 LIN=1
 	QMAKE_CFLAGS += -fno-stack-protector
+	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-32 --cflags")
 }
 
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
 	QMAKE_CFLAGS += -mmacosx-version-min=10.7
+}
+
+macx-clang {
+	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
+}
+
+macx-clang-32 {
+	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-32 --cflags")
 }
 
 HEADERS += ../src/*.h ../src/acfutils/*.h
