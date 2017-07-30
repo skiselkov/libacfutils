@@ -22,39 +22,44 @@ LIBOGG="libogg-1.3.2.tar.xz"
 OPUSFILE="opusfile-0.7.tar.xz"
 
 OPUS_CONFOPTS_COMMON="--enable-static --disable-shared \
-    --disable-extra-programs --with-pic"
-LIBOGG_CONFOPTS_COMMON="--enable-static --disable-shared --with-pic"
+    --disable-extra-programs --with-pic --disable-silent-rules"
+LIBOGG_CONFOPTS_COMMON="--enable-static --disable-shared --with-pic \
+    --disable-silent-rules"
 
 if [[ "$(uname)" = "Darwin" ]]; then
 	CFLAGS_COMMON="-mmacosx-version-min=10.6"
 	LDFLAGS_COMMON="-mmacosx-version-min=10.6"
 fi
 
+OPUS_CFLAGS_COMMON="$CFLAGS_COMMON -DOPUS_EXPORT=''"
+
 case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		CFLAGS="$CFLAGS_COMMON -m64" LDFLAGS="$LDFLAGS_COMMON -m64" \
+		CFLAGS="$OPUS_CFLAGS_COMMON -m64" \
+		    LDFLAGS="$LDFLAGS_COMMON -m64" \
 		    build_dep "linux-64" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON -m32" \
+		CFLAGS="$OPUS_CFLAGS_COMMON -m32" \
+		    LDFLAGS="$LDFLAGS_COMMON -m32" \
 		    build_dep "linux-32" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
+		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "win-64" "$OPUS_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
+		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "win-32" "$OPUS_CONFOPTS_COMMON \
 		    --host=i686-w64-mingw32" \
 		    "$OPUS" "opus" ".libs/libopus.a"
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
-		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
+		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "mac-64" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON" \
+		CFLAGS="$OPUS_CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "mac-32" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a"
 		;;
@@ -119,8 +124,8 @@ function build_opusfile() {
 	    $(PKG_CONFIG_PATH=libogg-$ARCH/install/lib/pkgconfig \
 	    pkg-config --libs ogg)"
 	build_dep "$ARCH" "--disable-shared --enable-static --disable-http \
-	    --disable-doc --with-pic $HOST" "$OPUSFILE" "opusfile" \
-	    ".libs/libopusfile.a"
+	    --disable-doc --with-pic --disable-silent-rules $HOST" \
+	    "$OPUSFILE" "opusfile" ".libs/libopusfile.a" "opusfile.patch"
 }
 
 case `uname` in

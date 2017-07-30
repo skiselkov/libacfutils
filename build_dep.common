@@ -21,6 +21,7 @@ function build_dep() {
 	TARBALL="$3"
 	PRODNAME="$4"
 	PRODFILE="$5"
+	PATCHFILE="$6"
 
 	SRCDIR="${TARBALL/%.tar.*/}"
 
@@ -34,6 +35,10 @@ function build_dep() {
 			exit 1
 			;;
 		esac
+
+		if [ -n "$PATCHFILE" ]; then
+			( cd "$SRCDIR" && patch -p1 < "../$PATCHFILE" )
+		fi
 	fi
 	if [ -f "$PRODNAME-$PLATFORM/$PRODFILE" ] && \
 	    [ "$PRODNAME-$PLATFORM/$PRODFILE" -nt "$TARBALL" ]; then
