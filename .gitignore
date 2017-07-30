@@ -14,7 +14,6 @@ object_script.libacfutils.Release
 
 build_opus_deps
 
-libogg-1.3.2.tar.xz
 libogg-1.3.2
 libogg-linux-32
 libogg-linux-64
@@ -23,7 +22,6 @@ libogg-mac-64
 libogg-win-32
 libogg-win-64
 
-opusfile-0.7.tar.xz
 opusfile-0.7
 opusfile-linux-32
 opusfile-linux-64
@@ -32,7 +30,6 @@ opusfile-mac-64
 opusfile-win-32
 opusfile-win-64
 
-opus-1.2.1.tar.xz
 opus-1.2.1
 opus-linux-32
 opus-linux-64
