@@ -1665,7 +1665,7 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 	exists = file_exists(db->cachedir, &isdir);
 	if ((exists && ((isdir && !remove_directory(db->cachedir)) ||
 	    (!isdir && !remove_file(db->cachedir, B_FALSE)))) ||
-	    !create_directory(db->cachedir))
+	    !create_directory_recursive(db->cachedir))
 		return (B_FALSE);
 
 	filename = mkpathname(db->cachedir, "version", NULL);

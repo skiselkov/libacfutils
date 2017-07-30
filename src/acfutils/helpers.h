@@ -255,6 +255,7 @@ floormul(double x, double y)
 /* file/directory manipulation */
 bool_t file_exists(const char *path, bool_t *isdir);
 bool_t create_directory(const char *dirname);
+bool_t create_directory_recursive(const char *dirname);
 bool_t remove_directory(const char *dirname);
 bool_t remove_file(const char *filename, bool_t notfound_ok);
 

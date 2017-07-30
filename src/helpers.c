@@ -769,6 +769,27 @@ create_directory(const char *dirname)
 	return (B_TRUE);
 }
 
+/*
+ * Same as create_directory, but creates all intermediate directories
+ * on the way as well.
+ */
+bool_t
+create_directory_recursive(const char *dirname)
+{
+	char *partname = calloc(1, strlen(dirname) + 1);
+
+	for (const char *start = dirname, *end = strchr(&dirname[1], DIRSEP);
+	    end != NULL; start = end, end = strchr(&start[1], DIRSEP)) {
+		strncat(partname, start, end - start);
+		if (!create_directory(partname))
+			return (B_FALSE);
+	}
+
+	free(partname);
+
+	return (create_directory(dirname));
+}
+
 #if	IBM
 
 static bool_t
