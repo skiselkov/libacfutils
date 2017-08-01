@@ -28,6 +28,13 @@ extern "C" {
 #endif
 
 /*
+ * Before using any of the log_* functionality, be sure to properly
+ * initialize it and pass it a logging function!
+ */
+typedef void (*logfunc_t)(const char *);
+void log_init(logfunc_t func, const char *prefix);
+
+/*
  * This lets us chop out the basename (last path component) from __FILE__
  * at compile time. This works on GCC and Clang. The fallback mechanism
  * below just chops it out at compile time.

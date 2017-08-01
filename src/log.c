@@ -28,14 +28,26 @@
 #include <execinfo.h>   /* used for stack tracing */
 #endif	/* !IBM */
 
-#include <acfutils/acfutils.h>
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
 
-#define	PREFIX		"acfutils"
 #define	DATE_FMT	"%Y-%m-%d %H:%M:%S"
-#define	PREFIX_FMT	"%s %s[%s:%d]: ", timedate, PREFIX, filename, line
+#define	PREFIX_FMT	"%s %s[%s:%d]: ", timedate, log_prefix, filename, line
+
+static logfunc_t log_func = NULL;
+static const char *log_prefix = NULL;
+
+void
+log_init(logfunc_t func, const char *prefix)
+{
+	/* Can't use VERIFY here, since it uses this logging interface. */
+	if (func == NULL || prefix == NULL)
+		abort();
+	log_func = func;
+	log_prefix = prefix;
+}
+
 
 void
 log_impl(const char *filename, int line, const char *fmt, ...)
@@ -60,6 +72,10 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
 	tm = localtime(&t);
 	VERIFY(strftime(timedate, sizeof (timedate), DATE_FMT, tm) != 0);
 
+	/* Can't use VERIFY here, since it uses this logging interface. */
+	if (log_func == NULL || log_prefix == NULL)
+		abort();
+
 	prefix_len = snprintf(NULL, 0, PREFIX_FMT);
 	va_copy(ap_copy, ap);
 	len = vsnprintf(NULL, 0, fmt, ap_copy);
@@ -69,10 +85,7 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
 	(void) snprintf(buf, prefix_len + 1, PREFIX_FMT);
 	(void) vsnprintf(&buf[prefix_len], len + 1, fmt, ap);
 	(void) sprintf(&buf[strlen(buf)], "\n");
-
-	if (acfutils_logfunc == NULL)
-		abort();
-	acfutils_logfunc(buf);
+	log_func(buf);
 
 	free(buf);
 }
@@ -165,9 +178,9 @@ log_backtrace(void)
 		}
 	}
 
-	if (acfutils_logfunc == NULL)
+	if (log_func == NULL)
 		abort();
-	acfutils_logfunc(backtrace_buf);
+	log_func(backtrace_buf);
 	fputs(backtrace_buf, stderr);
 
 #else	/* !IBM */
@@ -189,9 +202,9 @@ log_backtrace(void)
 	for (i = 1, j = BACKTRACE_STRLEN; i < sz; i++)
 		j += sprintf(&msg[j], "%s\n", fnames[i]);
 
-	if (acfutils_logfunc == NULL)
+	if (log_func == NULL)
 		abort();
-	acfutils_logfunc(msg);
+	log_func(msg);
 	fputs(msg, stderr);
 
 	free(msg);
