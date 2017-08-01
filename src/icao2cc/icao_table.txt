@@ -1,0 +1,15221 @@
+ Afghanistan
+ISO 3166-1 numeric
+
+004
+	ISO 3166-1 alpha-3
+
+AFG
+	ISO 3166-1 alpha-2
+
+AF
+	ICAO airport code prefix(es)
+
+OA
+E.164 code(s)
+
++93
+	IOC country code
+
+AFG
+	Country code top-level domain
+
+.af
+	ICAO aircraft regis. prefix(es)
+
+YA-
+E.212 mobile country code(s)
+
+412
+	NATO Three-letter code
+
+AFG
+	NATO Two-letter code (obsolete)
+
+AF
+	LOC MARC code(s)
+
+AF
+ITU Maritime ID(s)
+
+401
+	ITU letter code(s)
+
+AFG
+	FIPS country code(s)
+
+AF
+	License plate code
+
+AFG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+AFG
+	WMO country code(s)
+
+AH
+	ITU callsign prefixes
+
+T6A-T6Z, YAA-YAZ
+ Åland Islands
+ISO 3166-1 numeric
+
+248
+	ISO 3166-1 alpha-3
+
+ALA
+	ISO 3166-1 alpha-2
+
+AX
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++358
+	IOC country code
+
+—
+	Country code top-level domain
+
+.ax
+	ICAO aircraft regis. prefix(es)
+
+OH-
+E.212 mobile country code(s)
+
+244
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+FI-AL
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+—
+	License plate code
+
+AX (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Albania
+ISO 3166-1 numeric
+
+008
+	ISO 3166-1 alpha-3
+
+ALB
+	ISO 3166-1 alpha-2
+
+AL
+	ICAO airport code prefix(es)
+
+LA
+E.164 code(s)
+
++355
+	IOC country code
+
+ALB
+	Country code top-level domain
+
+.al
+	ICAO aircraft regis. prefix(es)
+
+ZA-
+E.212 mobile country code(s)
+
+276
+	NATO Three-letter code
+
+ALB
+	NATO Two-letter code (obsolete)
+
+AL
+	LOC MARC code(s)
+
+AA
+ITU Maritime ID(s)
+
+201
+	ITU letter code(s)
+
+ALB
+	FIPS country code(s)
+
+AL
+	License plate code
+
+AL
+GS1 GTIN prefix(es)
+
+530
+	UNDP country code
+
+ALB
+	WMO country code(s)
+
+AB
+	ITU callsign prefixes
+
+ZAA-ZAZ
+ Alderney
+ISO 3166-1 numeric
+
+—
+	ISO 3166-1 alpha-3
+
+—
+	ISO 3166-1 alpha-2
+
+—
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++44
+	IOC country code
+
+—
+	Country code top-level domain
+
+—
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+—
+	License plate code
+
+GBA
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Algeria
+ISO 3166-1 numeric
+
+012
+	ISO 3166-1 alpha-3
+
+DZA
+	ISO 3166-1 alpha-2
+
+DZ
+	ICAO airport code prefix(es)
+
+DA
+E.164 code(s)
+
++213
+	IOC country code
+
+ALG
+	Country code top-level domain
+
+.dz
+	ICAO aircraft regis. prefix(es)
+
+7T-
+E.212 mobile country code(s)
+
+603
+	NATO Three-letter code
+
+DAZ
+	NATO Two-letter code (obsolete)
+
+AG
+	LOC MARC code(s)
+
+AE
+ITU Maritime ID(s)
+
+605
+	ITU letter code(s)
+
+ALG
+	FIPS country code(s)
+
+AG
+	License plate code
+
+DZ
+GS1 GTIN prefix(es)
+
+316
+	UNDP country code
+
+ALG
+	WMO country code(s)
+
+AL
+	ITU callsign prefixes
+
+7RA-7RZ, 7TA-7YZ
+ American Samoa
+ISO 3166-1 numeric
+
+016
+	ISO 3166-1 alpha-3
+
+ASM
+	ISO 3166-1 alpha-2
+
+AS
+	ICAO airport code prefix(es)
+
+NS
+E.164 code(s)
+
++1684
+	IOC country code
+
+ASA
+	Country code top-level domain
+
+.as
+	ICAO aircraft regis. prefix(es)
+
+N-
+E.212 mobile country code(s)
+
+544
+	NATO Three-letter code
+
+ASM
+	NATO Two-letter code (obsolete)
+
+SS
+	LOC MARC code(s)
+
+AS
+ITU Maritime ID(s)
+
+559
+	ITU letter code(s)
+
+SMA
+	FIPS country code(s)
+
+AQ
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+AMS
+	WMO country code(s)
+
+ZS
+	ITU callsign prefixes
+
+—
+ Andorra
+ISO 3166-1 numeric
+
+020
+	ISO 3166-1 alpha-3
+
+AND
+	ISO 3166-1 alpha-2
+
+AD
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++376
+	IOC country code
+
+AND
+	Country code top-level domain
+
+.ad
+	ICAO aircraft regis. prefix(es)
+
+C3-
+E.212 mobile country code(s)
+
+213
+	NATO Three-letter code
+
+AND
+	NATO Two-letter code (obsolete)
+
+AN
+	LOC MARC code(s)
+
+AN
+ITU Maritime ID(s)
+
+202
+	ITU letter code(s)
+
+AND
+	FIPS country code(s)
+
+AN
+	License plate code
+
+AND
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+AND
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+C3A-C3Z
+ Angola
+ISO 3166-1 numeric
+
+024
+	ISO 3166-1 alpha-3
+
+AGO
+	ISO 3166-1 alpha-2
+
+AO
+	ICAO airport code prefix(es)
+
+FN
+E.164 code(s)
+
++244
+	IOC country code
+
+ANG
+	Country code top-level domain
+
+.ao
+	ICAO aircraft regis. prefix(es)
+
+D2-
+E.212 mobile country code(s)
+
+631
+	NATO Three-letter code
+
+ANG
+	NATO Two-letter code (obsolete)
+
+AO
+	LOC MARC code(s)
+
+AO
+ITU Maritime ID(s)
+
+603
+	ITU letter code(s)
+
+AGL
+	FIPS country code(s)
+
+AO
+	License plate code
+
+ANG (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ANG
+	WMO country code(s)
+
+AN
+	ITU callsign prefixes
+
+D2A-D3Z
+ Anguilla
+ISO 3166-1 numeric
+
+660
+	ISO 3166-1 alpha-3
+
+AIA
+	ISO 3166-1 alpha-2
+
+AI
+	ICAO airport code prefix(es)
+
+TQ
+E.164 code(s)
+
++1 264
+	IOC country code
+
+—
+	Country code top-level domain
+
+.ai
+	ICAO aircraft regis. prefix(es)
+
+VP-LA-
+E.212 mobile country code(s)
+
+365
+	NATO Three-letter code
+
+AIA
+	NATO Two-letter code (obsolete)
+
+AV
+	LOC MARC code(s)
+
+AM
+ITU Maritime ID(s)
+
+301
+	ITU letter code(s)
+
+AIA
+	FIPS country code(s)
+
+AV
+	License plate code
+
+AXA (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ANL
+	WMO country code(s)
+
+AI
+	ITU callsign prefixes
+
+—
+ Antarctica
+ISO 3166-1 numeric
+
+010
+	ISO 3166-1 alpha-3
+
+ATA
+	ISO 3166-1 alpha-2
+
+AQ
+	ICAO airport code prefix(es)
+
+NZ, SA, SC
+E.164 code(s)
+
+672
+	IOC country code
+
+—
+	Country code top-level domain
+
+.aq
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+ATA
+	NATO Two-letter code (obsolete)
+
+AY
+	LOC MARC code(s)
+
+AY
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+ATA
+	FIPS country code(s)
+
+AY
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+AA
+	ITU callsign prefixes
+
+—
+ Antigua and Barbuda
+ISO 3166-1 numeric
+
+028
+	ISO 3166-1 alpha-3
+
+ATG
+	ISO 3166-1 alpha-2
+
+AG
+	ICAO airport code prefix(es)
+
+TA
+E.164 code(s)
+
++1 268
+	IOC country code
+
+ANT
+	Country code top-level domain
+
+.ag
+	ICAO aircraft regis. prefix(es)
+
+V2-
+E.212 mobile country code(s)
+
+344
+	NATO Three-letter code
+
+ATG
+	NATO Two-letter code (obsolete)
+
+AC
+	LOC MARC code(s)
+
+AQ
+ITU Maritime ID(s)
+
+304
+	ITU letter code(s)
+
+ATG
+	FIPS country code(s)
+
+AC
+	License plate code
+
+AG (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ANT
+	WMO country code(s)
+
+AT
+	ITU callsign prefixes
+
+V2A-V2Z
+ Argentina
+ISO 3166-1 numeric
+
+032
+	ISO 3166-1 alpha-3
+
+ARG
+	ISO 3166-1 alpha-2
+
+AR
+	ICAO airport code prefix(es)
+
+SA
+E.164 code(s)
+
++54
+	IOC country code
+
+ARG
+	Country code top-level domain
+
+.ar
+	ICAO aircraft regis. prefix(es)
+
+LQ-, LV-
+E.212 mobile country code(s)
+
+722
+	NATO Three-letter code
+
+ARG
+	NATO Two-letter code (obsolete)
+
+AR
+	LOC MARC code(s)
+
+AG
+ITU Maritime ID(s)
+
+701
+	ITU letter code(s)
+
+ARG
+	FIPS country code(s)
+
+AR
+	License plate code
+
+RA
+GS1 GTIN prefix(es)
+
+778-779
+	UNDP country code
+
+ARG
+	WMO country code(s)
+
+AG
+	ITU callsign prefixes
+
+AYA-AZZ,L2A-L9Z,LOA-LWZ
+ Armenia
+ISO 3166-1 numeric
+
+051
+	ISO 3166-1 alpha-3
+
+ARM
+	ISO 3166-1 alpha-2
+
+AM
+	ICAO airport code prefix(es)
+
+UD
+E.164 code(s)
+
++374
+	IOC country code
+
+ARM
+	Country code top-level domain
+
+.am
+	ICAO aircraft regis. prefix(es)
+
+EK-
+E.212 mobile country code(s)
+
+283
+	NATO Three-letter code
+
+ARM
+	NATO Two-letter code (obsolete)
+
+AM
+	LOC MARC code(s)
+
+AI
+ITU Maritime ID(s)
+
+216
+	ITU letter code(s)
+
+ARM
+	FIPS country code(s)
+
+AM
+	License plate code
+
+AM
+GS1 GTIN prefix(es)
+
+485
+	UNDP country code
+
+ARM
+	WMO country code(s)
+
+AY
+	ITU callsign prefixes
+
+EKA-EKZ
+ Aruba
+ISO 3166-1 numeric
+
+533
+	ISO 3166-1 alpha-3
+
+ABW
+	ISO 3166-1 alpha-2
+
+AW
+	ICAO airport code prefix(es)
+
+TN
+E.164 code(s)
+
++297
+	IOC country code
+
+ARU
+	Country code top-level domain
+
+.aw
+	ICAO aircraft regis. prefix(es)
+
+P4-
+E.212 mobile country code(s)
+
+363
+	NATO Three-letter code
+
+ABW
+	NATO Two-letter code (obsolete)
+
+AA
+	LOC MARC code(s)
+
+AW
+ITU Maritime ID(s)
+
+307
+	ITU letter code(s)
+
+ABW
+	FIPS country code(s)
+
+AA
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ARU
+	WMO country code(s)
+
+AW
+	ITU callsign prefixes
+
+P4A-P4Z
+ Australia
+ISO 3166-1 numeric
+
+036
+	ISO 3166-1 alpha-3
+
+AUS
+	ISO 3166-1 alpha-2
+
+AU
+	ICAO airport code prefix(es)
+
+Y
+E.164 code(s)
+
++61
+	IOC country code
+
+AUS
+	Country code top-level domain
+
+.au
+	ICAO aircraft regis. prefix(es)
+
+VH-
+E.212 mobile country code(s)
+
+505
+	NATO Three-letter code
+
+AUS
+	NATO Two-letter code (obsolete)
+
+AS
+	LOC MARC code(s)
+
+AT
+ITU Maritime ID(s)
+
+503
+	ITU letter code(s)
+
+AUS
+	FIPS country code(s)
+
+AS
+	License plate code
+
+AUS
+GS1 GTIN prefix(es)
+
+930-939
+	UNDP country code
+
+AUL
+	WMO country code(s)
+
+AU
+	ITU callsign prefixes
+
+AXA-AXZ,VHA-VNZ,VZA-VZZ
+ Austria
+ISO 3166-1 numeric
+
+040
+	ISO 3166-1 alpha-3
+
+AUT
+	ISO 3166-1 alpha-2
+
+AT
+	ICAO airport code prefix(es)
+
+LO
+E.164 code(s)
+
++43
+	IOC country code
+
+AUT
+	Country code top-level domain
+
+.at
+	ICAO aircraft regis. prefix(es)
+
+OE-
+E.212 mobile country code(s)
+
+232
+	NATO Three-letter code
+
+AUT
+	NATO Two-letter code (obsolete)
+
+AU
+	LOC MARC code(s)
+
+AU
+ITU Maritime ID(s)
+
+203
+	ITU letter code(s)
+
+AUT
+	FIPS country code(s)
+
+AU
+	License plate code
+
+A
+GS1 GTIN prefix(es)
+
+900-919
+	UNDP country code
+
+AUS
+	WMO country code(s)
+
+OS
+	ITU callsign prefixes
+
+OEA-OEZ
+ Azerbaijan
+ISO 3166-1 numeric
+
+031
+	ISO 3166-1 alpha-3
+
+AZE
+	ISO 3166-1 alpha-2
+
+AZ
+	ICAO airport code prefix(es)
+
+UB
+E.164 code(s)
+
++994
+	IOC country code
+
+AZE
+	Country code top-level domain
+
+.az
+	ICAO aircraft regis. prefix(es)
+
+4K-
+E.212 mobile country code(s)
+
+400
+	NATO Three-letter code
+
+AZE
+	NATO Two-letter code (obsolete)
+
+AJ
+	LOC MARC code(s)
+
+AJ
+ITU Maritime ID(s)
+
+423
+	ITU letter code(s)
+
+AZE
+	FIPS country code(s)
+
+AJ
+	License plate code
+
+AZ
+GS1 GTIN prefix(es)
+
+476
+	UNDP country code
+
+AZE
+	WMO country code(s)
+
+AJ
+	ITU callsign prefixes
+
+4JA-4KZ
+
+ Bahamas
+ISO 3166-1 numeric
+
+044
+	ISO 3166-1 alpha-3
+
+BHS
+	ISO 3166-1 alpha-2
+
+BS
+	ICAO airport code prefix(es)
+
+MY
+E.164 code(s)
+
++1 242
+	IOC country code
+
+BAH
+	Country code top-level domain
+
+.bs
+	ICAO aircraft regis. prefix(es)
+
+C6-
+E.212 mobile country code(s)
+
+364
+	NATO Three-letter code
+
+BHS
+	NATO Two-letter code (obsolete)
+
+BF
+	LOC MARC code(s)
+
+BF
+ITU Maritime ID(s)
+
+308, 309, 311
+	ITU letter code(s)
+
+BAH
+	FIPS country code(s)
+
+BF
+	License plate code
+
+BS
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BHA
+	WMO country code(s)
+
+BA
+	ITU callsign prefixes
+
+C6A-C6Z
+ Bahrain
+ISO 3166-1 numeric
+
+048
+	ISO 3166-1 alpha-3
+
+BHR
+	ISO 3166-1 alpha-2
+
+BH
+	ICAO airport code prefix(es)
+
+OB
+E.164 code(s)
+
++973
+	IOC country code
+
+BRN
+	Country code top-level domain
+
+.bh
+	ICAO aircraft regis. prefix(es)
+
+A9C-
+E.212 mobile country code(s)
+
+426
+	NATO Three-letter code
+
+BHR
+	NATO Two-letter code (obsolete)
+
+BA
+	LOC MARC code(s)
+
+BA
+ITU Maritime ID(s)
+
+408
+	ITU letter code(s)
+
+BHR
+	FIPS country code(s)
+
+BA
+	License plate code
+
+BRN
+GS1 GTIN prefix(es)
+
+608
+	UNDP country code
+
+BAH
+	WMO country code(s)
+
+BN
+	ITU callsign prefixes
+
+A9A-A9Z
+ Bangladesh
+ISO 3166-1 numeric
+
+050
+	ISO 3166-1 alpha-3
+
+BGD
+	ISO 3166-1 alpha-2
+
+BD
+	ICAO airport code prefix(es)
+
+VG
+E.164 code(s)
+
++880
+	IOC country code
+
+BAN
+	Country code top-level domain
+
+.bd
+	ICAO aircraft regis. prefix(es)
+
+S2-
+E.212 mobile country code(s)
+
+470
+	NATO Three-letter code
+
+BGD
+	NATO Two-letter code (obsolete)
+
+BG
+	LOC MARC code(s)
+
+BG
+ITU Maritime ID(s)
+
+405
+	ITU letter code(s)
+
+BGD
+	FIPS country code(s)
+
+BG
+	License plate code
+
+BD
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+BW
+	ITU callsign prefixes
+
+S2A-S3Z
+ Barbados
+ISO 3166-1 numeric
+
+052
+	ISO 3166-1 alpha-3
+
+BRB
+	ISO 3166-1 alpha-2
+
+BB
+	ICAO airport code prefix(es)
+
+TB
+E.164 code(s)
+
++1 246
+	IOC country code
+
+BAR
+	Country code top-level domain
+
+.bb
+	ICAO aircraft regis. prefix(es)
+
+8P-
+E.212 mobile country code(s)
+
+342
+	NATO Three-letter code
+
+BRB
+	NATO Two-letter code (obsolete)
+
+BB
+	LOC MARC code(s)
+
+BB
+ITU Maritime ID(s)
+
+314
+	ITU letter code(s)
+
+BRB
+	FIPS country code(s)
+
+BB
+	License plate code
+
+BDS
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BAR
+	WMO country code(s)
+
+BR
+	ITU callsign prefixes
+
+8PA-8PZ
+ Belarus
+ISO 3166-1 numeric
+
+112
+	ISO 3166-1 alpha-3
+
+BLR
+	ISO 3166-1 alpha-2
+
+BY
+	ICAO airport code prefix(es)
+
+UM
+E.164 code(s)
+
++375
+	IOC country code
+
+BLR
+	Country code top-level domain
+
+.by
+	ICAO aircraft regis. prefix(es)
+
+EW-
+E.212 mobile country code(s)
+
+257
+	NATO Three-letter code
+
+BLR
+	NATO Two-letter code (obsolete)
+
+BO
+	LOC MARC code(s)
+
+BW
+ITU Maritime ID(s)
+
+206
+	ITU letter code(s)
+
+BLR
+	FIPS country code(s)
+
+BO
+	License plate code
+
+BY
+GS1 GTIN prefix(es)
+
+481
+	UNDP country code
+
+BYE
+	WMO country code(s)
+
+BY
+	ITU callsign prefixes
+
+EUA-EWZ
+ Belgium
+ISO 3166-1 numeric
+
+056
+	ISO 3166-1 alpha-3
+
+BEL
+	ISO 3166-1 alpha-2
+
+BE
+	ICAO airport code prefix(es)
+
+EB
+E.164 code(s)
+
++32
+	IOC country code
+
+BEL
+	Country code top-level domain
+
+.be
+	ICAO aircraft regis. prefix(es)
+
+OO-
+E.212 mobile country code(s)
+
+206
+	NATO Three-letter code
+
+BEL
+	NATO Two-letter code (obsolete)
+
+BE
+	LOC MARC code(s)
+
+BE
+ITU Maritime ID(s)
+
+205
+	ITU letter code(s)
+
+BEL
+	FIPS country code(s)
+
+BE
+	License plate code
+
+B
+GS1 GTIN prefix(es)
+
+540-549
+	UNDP country code
+
+BEL
+	WMO country code(s)
+
+BX
+	ITU callsign prefixes
+
+ONA-OTZ
+ Belize
+ISO 3166-1 numeric
+
+084
+	ISO 3166-1 alpha-3
+
+BLZ
+	ISO 3166-1 alpha-2
+
+BZ
+	ICAO airport code prefix(es)
+
+MZ
+E.164 code(s)
+
++501
+	IOC country code
+
+BIZ
+	Country code top-level domain
+
+.bz
+	ICAO aircraft regis. prefix(es)
+
+V3-
+E.212 mobile country code(s)
+
+702
+	NATO Three-letter code
+
+BLZ
+	NATO Two-letter code (obsolete)
+
+BH
+	LOC MARC code(s)
+
+BH
+ITU Maritime ID(s)
+
+312
+	ITU letter code(s)
+
+BLZ
+	FIPS country code(s)
+
+BH
+	License plate code
+
+BH
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BZE
+	WMO country code(s)
+
+BH
+	ITU callsign prefixes
+
+V3A-V3Z
+ Benin
+ISO 3166-1 numeric
+
+204
+	ISO 3166-1 alpha-3
+
+BEN
+	ISO 3166-1 alpha-2
+
+BJ
+	ICAO airport code prefix(es)
+
+DB
+E.164 code(s)
+
++229
+	IOC country code
+
+BEN
+	Country code top-level domain
+
+.bj
+	ICAO aircraft regis. prefix(es)
+
+TY-
+E.212 mobile country code(s)
+
+616
+	NATO Three-letter code
+
+BEN
+	NATO Two-letter code (obsolete)
+
+BN
+	LOC MARC code(s)
+
+DM
+ITU Maritime ID(s)
+
+610
+	ITU letter code(s)
+
+BEN
+	FIPS country code(s)
+
+BN
+	License plate code
+
+DY
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BEN
+	WMO country code(s)
+
+BJ
+	ITU callsign prefixes
+
+TYA-TYZ
+ Bermuda
+ISO 3166-1 numeric
+
+060
+	ISO 3166-1 alpha-3
+
+BMU
+	ISO 3166-1 alpha-2
+
+BM
+	ICAO airport code prefix(es)
+
+TX
+E.164 code(s)
+
++1 441
+	IOC country code
+
+BER
+	Country code top-level domain
+
+.bm
+	ICAO aircraft regis. prefix(es)
+
+VR-B-
+E.212 mobile country code(s)
+
+350
+	NATO Three-letter code
+
+BMU
+	NATO Two-letter code (obsolete)
+
+BD
+	LOC MARC code(s)
+
+BM
+ITU Maritime ID(s)
+
+310
+	ITU letter code(s)
+
+BER
+	FIPS country code(s)
+
+BD
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BER
+	WMO country code(s)
+
+BE
+	ITU callsign prefixes
+
+—
+ Bhutan
+ISO 3166-1 numeric
+
+064
+	ISO 3166-1 alpha-3
+
+BTN
+	ISO 3166-1 alpha-2
+
+BT
+	ICAO airport code prefix(es)
+
+VQ
+E.164 code(s)
+
++975
+	IOC country code
+
+BHU
+	Country code top-level domain
+
+.bt
+	ICAO aircraft regis. prefix(es)
+
+A5-
+E.212 mobile country code(s)
+
+402
+	NATO Three-letter code
+
+BTN
+	NATO Two-letter code (obsolete)
+
+BT
+	LOC MARC code(s)
+
+BT
+ITU Maritime ID(s)
+
+410
+	ITU letter code(s)
+
+BTN
+	FIPS country code(s)
+
+BT
+	License plate code
+
+BHT (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BHU
+	WMO country code(s)
+
+B2
+	ITU callsign prefixes
+
+A5A-A5Z
+ Bolivia
+ISO 3166-1 numeric
+
+068
+	ISO 3166-1 alpha-3
+
+BOL
+	ISO 3166-1 alpha-2
+
+BO
+	ICAO airport code prefix(es)
+
+SL
+E.164 code(s)
+
++591
+	IOC country code
+
+BOL
+	Country code top-level domain
+
+.bo
+	ICAO aircraft regis. prefix(es)
+
+CP-
+E.212 mobile country code(s)
+
+736
+	NATO Three-letter code
+
+BOL
+	NATO Two-letter code (obsolete)
+
+BL
+	LOC MARC code(s)
+
+BO
+ITU Maritime ID(s)
+
+720
+	ITU letter code(s)
+
+BOL
+	FIPS country code(s)
+
+BL
+	License plate code
+
+BOL
+GS1 GTIN prefix(es)
+
+777
+	UNDP country code
+
+BOL
+	WMO country code(s)
+
+BO
+	ITU callsign prefixes
+
+CPA-CPZ
+ Bosnia and Herzegovina
+ISO 3166-1 numeric
+
+070
+	ISO 3166-1 alpha-3
+
+BIH
+	ISO 3166-1 alpha-2
+
+BA
+	ICAO airport code prefix(es)
+
+LQ
+E.164 code(s)
+
++387
+	IOC country code
+
+BIH
+	Country code top-level domain
+
+.ba
+	ICAO aircraft regis. prefix(es)
+
+T9-
+E.212 mobile country code(s)
+
+218
+	NATO Three-letter code
+
+BIH
+	NATO Two-letter code (obsolete)
+
+BK
+	LOC MARC code(s)
+
+BN
+ITU Maritime ID(s)
+
+478
+	ITU letter code(s)
+
+BIH
+	FIPS country code(s)
+
+BK
+	License plate code
+
+BIH
+GS1 GTIN prefix(es)
+
+387
+	UNDP country code
+
+BIH
+	WMO country code(s)
+
+BG
+	ITU callsign prefixes
+
+E7A-E7Z
+ Botswana
+ISO 3166-1 numeric
+
+072
+	ISO 3166-1 alpha-3
+
+BWA
+	ISO 3166-1 alpha-2
+
+BW
+	ICAO airport code prefix(es)
+
+FB
+E.164 code(s)
+
++267
+	IOC country code
+
+BOT
+	Country code top-level domain
+
+.bw
+	ICAO aircraft regis. prefix(es)
+
+A2-
+E.212 mobile country code(s)
+
+652
+	NATO Three-letter code
+
+BWA
+	NATO Two-letter code (obsolete)
+
+BC
+	LOC MARC code(s)
+
+BS
+ITU Maritime ID(s)
+
+611
+	ITU letter code(s)
+
+BOT
+	FIPS country code(s)
+
+BC
+	License plate code
+
+BW
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BOT
+	WMO country code(s)
+
+BC
+	ITU callsign prefixes
+
+8OA-8OZ, A2A-A2Z
+ Bouvet Island
+ISO 3166-1 numeric
+
+074
+	ISO 3166-1 alpha-3
+
+BVT
+	ISO 3166-1 alpha-2
+
+BV
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
+—
+	IOC country code
+
+—
+	Country code top-level domain
+
+.bv
+	ICAO aircraft regis. prefix(es)
+
+LN-
+E.212 mobile country code(s)
+
+242
+	NATO Three-letter code
+
+BVT
+	NATO Two-letter code (obsolete)
+
+BV
+	LOC MARC code(s)
+
+BV
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+BVT
+	FIPS country code(s)
+
+BV
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+BV
+	ITU callsign prefixes
+
+—
+ Brazil
+ISO 3166-1 numeric
+
+076
+	ISO 3166-1 alpha-3
+
+BRA
+	ISO 3166-1 alpha-2
+
+BR
+	ICAO airport code prefix(es)
+
+SB, SD, SN, SS, SW
+E.164 code(s)
+
++55
+	IOC country code
+
+BRA
+	Country code top-level domain
+
+.br
+	ICAO aircraft regis. prefix(es)
+
+PP-, PR-, PT-, PU-
+E.212 mobile country code(s)
+
+724
+	NATO Three-letter code
+
+BRA
+	NATO Two-letter code (obsolete)
+
+BR
+	LOC MARC code(s)
+
+BL
+ITU Maritime ID(s)
+
+710
+	ITU letter code(s)
+
+B
+	FIPS country code(s)
+
+BR
+	License plate code
+
+BR
+GS1 GTIN prefix(es)
+
+789-790
+	UNDP country code
+
+BRA
+	WMO country code(s)
+
+BZ
+	ITU callsign prefixes
+
+PPA-PYZ, ZVA-ZZZ
+ British Indian Ocean Territory
+ISO 3166-1 numeric
+
+086
+	ISO 3166-1 alpha-3
+
+IOT
+	ISO 3166-1 alpha-2
+
+IO
+	ICAO airport code prefix(es)
+
+FJ
+E.164 code(s)
+
++246
+	IOC country code
+
+—
+	Country code top-level domain
+
+.io
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+IOT
+	NATO Two-letter code (obsolete)
+
+IO
+	LOC MARC code(s)
+
+BI
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+BIO
+	FIPS country code(s)
+
+IO
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+BT
+	ITU callsign prefixes
+
+—
+ Brunei
+ISO 3166-1 numeric
+
+096
+	ISO 3166-1 alpha-3
+
+BRN
+	ISO 3166-1 alpha-2
+
+BN
+	ICAO airport code prefix(es)
+
+WB
+E.164 code(s)
+
++673
+	IOC country code
+
+BRU
+	Country code top-level domain
+
+.bn
+	ICAO aircraft regis. prefix(es)
+
+V8-
+E.212 mobile country code(s)
+
+528
+	NATO Three-letter code
+
+BRN
+	NATO Two-letter code (obsolete)
+
+BX
+	LOC MARC code(s)
+
+BX
+ITU Maritime ID(s)
+
+508
+	ITU letter code(s)
+
+BRU
+	FIPS country code(s)
+
+BX
+	License plate code
+
+BRU
+GS1 GTIN prefix(es)
+
+623
+	UNDP country code
+
+BRU
+	WMO country code(s)
+
+BD
+	ITU callsign prefixes
+
+V8A-V8Z
+ Bulgaria
+ISO 3166-1 numeric
+
+100
+	ISO 3166-1 alpha-3
+
+BGR
+	ISO 3166-1 alpha-2
+
+BG
+	ICAO airport code prefix(es)
+
+LB
+E.164 code(s)
+
++359
+	IOC country code
+
+BUL
+	Country code top-level domain
+
+.bg
+	ICAO aircraft regis. prefix(es)
+
+LZ-
+E.212 mobile country code(s)
+
+284
+	NATO Three-letter code
+
+BGR
+	NATO Two-letter code (obsolete)
+
+BU
+	LOC MARC code(s)
+
+BU
+ITU Maritime ID(s)
+
+207
+	ITU letter code(s)
+
+BUL
+	FIPS country code(s)
+
+BU
+	License plate code
+
+BG
+GS1 GTIN prefix(es)
+
+380
+	UNDP country code
+
+BUL
+	WMO country code(s)
+
+BU
+	ITU callsign prefixes
+
+LZA-LZZ
+ Burkina Faso
+ISO 3166-1 numeric
+
+854
+	ISO 3166-1 alpha-3
+
+BFA
+	ISO 3166-1 alpha-2
+
+BF
+	ICAO airport code prefix(es)
+
+DF
+E.164 code(s)
+
++226
+	IOC country code
+
+BUR
+	Country code top-level domain
+
+.bf
+	ICAO aircraft regis. prefix(es)
+
+XT-
+E.212 mobile country code(s)
+
+613
+	NATO Three-letter code
+
+BFA
+	NATO Two-letter code (obsolete)
+
+UV
+	LOC MARC code(s)
+
+UV
+ITU Maritime ID(s)
+
+633
+	ITU letter code(s)
+
+BFA
+	FIPS country code(s)
+
+UV
+	License plate code
+
+BF
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BKF
+	WMO country code(s)
+
+HV
+	ITU callsign prefixes
+
+XTA-XTZ
+ Myanmar
+ISO 3166-1 numeric
+
+104
+	ISO 3166-1 alpha-3
+
+MMR
+	ISO 3166-1 alpha-2
+
+MM
+	ICAO airport code prefix(es)
+
+VB, VY
+E.164 code(s)
+
++95
+	IOC country code
+
+MYA
+	Country code top-level domain
+
+.mm
+	ICAO aircraft regis. prefix(es)
+
+XY-, XZ-
+E.212 mobile country code(s)
+
+414
+	NATO Three-letter code
+
+MMR
+	NATO Two-letter code (obsolete)
+
+BM
+	LOC MARC code(s)
+
+BR
+ITU Maritime ID(s)
+
+506
+	ITU letter code(s)
+
+BRM
+	FIPS country code(s)
+
+BM
+	License plate code
+
+BUR
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MYA
+	WMO country code(s)
+
+BM
+	ITU callsign prefixes
+
+XYA-XZZ
+ Burundi
+ISO 3166-1 numeric
+
+108
+	ISO 3166-1 alpha-3
+
+BDI
+	ISO 3166-1 alpha-2
+
+BI
+	ICAO airport code prefix(es)
+
+HB
+E.164 code(s)
+
++257
+	IOC country code
+
+BDI
+	Country code top-level domain
+
+.bi
+	ICAO aircraft regis. prefix(es)
+
+9U-
+E.212 mobile country code(s)
+
+642
+	NATO Three-letter code
+
+BDI
+	NATO Two-letter code (obsolete)
+
+BY
+	LOC MARC code(s)
+
+BD
+ITU Maritime ID(s)
+
+609
+	ITU letter code(s)
+
+BDI
+	FIPS country code(s)
+
+BY
+	License plate code
+
+RU
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BDI
+	WMO country code(s)
+
+BI
+	ITU callsign prefixes
+
+9UA-9UZ
+
+ Cambodia
+ISO 3166-1 numeric
+
+116
+	ISO 3166-1 alpha-3
+
+KHM
+	ISO 3166-1 alpha-2
+
+KH
+	ICAO airport code prefix(es)
+
+VD
+E.164 code(s)
+
++855
+	IOC country code
+
+CAM
+	Country code top-level domain
+
+.kh
+	ICAO aircraft regis. prefix(es)
+
+XU-
+E.212 mobile country code(s)
+
+456
+	NATO Three-letter code
+
+KHM
+	NATO Two-letter code (obsolete)
+
+CB
+	LOC MARC code(s)
+
+CB
+ITU Maritime ID(s)
+
+514, 515
+	ITU letter code(s)
+
+CBG
+	FIPS country code(s)
+
+CB
+	License plate code
+
+K
+GS1 GTIN prefix(es)
+
+884
+	UNDP country code
+
+CMB
+	WMO country code(s)
+
+KP
+	ITU callsign prefixes
+
+XUA-XUZ
+ Cameroon
+ISO 3166-1 numeric
+
+120
+	ISO 3166-1 alpha-3
+
+CMR
+	ISO 3166-1 alpha-2
+
+CM
+	ICAO airport code prefix(es)
+
+FK
+E.164 code(s)
+
++237
+	IOC country code
+
+CMR
+	Country code top-level domain
+
+.cm
+	ICAO aircraft regis. prefix(es)
+
+TJ-
+E.212 mobile country code(s)
+
+624
+	NATO Three-letter code
+
+CMR
+	NATO Two-letter code (obsolete)
+
+CM
+	LOC MARC code(s)
+
+CM
+ITU Maritime ID(s)
+
+613
+	ITU letter code(s)
+
+CME
+	FIPS country code(s)
+
+CM
+	License plate code
+
+CAM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CMR
+	WMO country code(s)
+
+CM
+	ITU callsign prefixes
+
+TJA-TJZ
+ Canada
+ISO 3166-1 numeric
+
+124
+	ISO 3166-1 alpha-3
+
+CAN
+	ISO 3166-1 alpha-2
+
+CA
+	ICAO airport code prefix(es)
+
+C
+E.164 code(s)
+
++1
+	IOC country code
+
+CAN
+	Country code top-level domain
+
+.ca
+	ICAO aircraft regis. prefix(es)
+
+C-, CF-, CG-
+E.212 mobile country code(s)
+
+302
+	NATO Three-letter code
+
+CAN
+	NATO Two-letter code (obsolete)
+
+CA
+	LOC MARC code(s)
+
+XXC
+ITU Maritime ID(s)
+
+316
+	ITU letter code(s)
+
+CAN
+	FIPS country code(s)
+
+CA
+	License plate code
+
+CDN
+GS1 GTIN prefix(es)
+
+000-139, 754-755
+	UNDP country code
+
+CAN
+	WMO country code(s)
+
+CN
+	ITU callsign prefixes
+
+CFA-CKZ, CYA-CZZ, VAA-VGZ
+VOA-VOZ, VXA-VYZ, XJA-XOZ
+ Cape Verde
+ISO 3166-1 numeric
+
+132
+	ISO 3166-1 alpha-3
+
+CPV
+	ISO 3166-1 alpha-2
+
+CV
+	ICAO airport code prefix(es)
+
+GV
+E.164 code(s)
+
++238
+	IOC country code
+
+CPV
+	Country code top-level domain
+
+.cv
+	ICAO aircraft regis. prefix(es)
+
+D4-
+E.212 mobile country code(s)
+
+625
+	NATO Three-letter code
+
+CPV
+	NATO Two-letter code (obsolete)
+
+CV
+	LOC MARC code(s)
+
+CV
+ITU Maritime ID(s)
+
+617
+	ITU letter code(s)
+
+CPV
+	FIPS country code(s)
+
+CV
+	License plate code
+
+CV (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CVI
+	WMO country code(s)
+
+CV
+	ITU callsign prefixes
+
+D4A-D4Z
+ Caribbean Netherlands
+ISO 3166-1 numeric
+
+535
+	ISO 3166-1 alpha-3
+
+BES
+	ISO 3166-1 alpha-2
+
+BQ
+	ICAO airport code prefix(es)
+
+TN
+E.164 code(s)
+
++599
+	IOC country code
+
+—
+	Country code top-level domain
+
+.bq
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+—
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+PJA-PJZ
+ Cayman Islands
+ISO 3166-1 numeric
+
+136
+	ISO 3166-1 alpha-3
+
+CYM
+	ISO 3166-1 alpha-2
+
+KY
+	ICAO airport code prefix(es)
+
+MW
+E.164 code(s)
+
++1 345
+	IOC country code
+
+CAY
+	Country code top-level domain
+
+.ky
+	ICAO aircraft regis. prefix(es)
+
+VR-C-
+E.212 mobile country code(s)
+
+346
+	NATO Three-letter code
+
+CYM
+	NATO Two-letter code (obsolete)
+
+CJ
+	LOC MARC code(s)
+
+CJ
+ITU Maritime ID(s)
+
+319
+	ITU letter code(s)
+
+CYM
+	FIPS country code(s)
+
+CJ
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CAY
+	WMO country code(s)
+
+GC
+	ITU callsign prefixes
+
+—
+ Central African Republic
+ISO 3166-1 numeric
+
+140
+	ISO 3166-1 alpha-3
+
+CAF
+	ISO 3166-1 alpha-2
+
+CF
+	ICAO airport code prefix(es)
+
+FE
+E.164 code(s)
+
++236
+	IOC country code
+
+CAF
+	Country code top-level domain
+
+.cf
+	ICAO aircraft regis. prefix(es)
+
+TL-
+E.212 mobile country code(s)
+
+623
+	NATO Three-letter code
+
+CAF
+	NATO Two-letter code (obsolete)
+
+CT
+	LOC MARC code(s)
+
+CX
+ITU Maritime ID(s)
+
+612
+	ITU letter code(s)
+
+CAF
+	FIPS country code(s)
+
+CT
+	License plate code
+
+RCA
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CAF
+	WMO country code(s)
+
+CE
+	ITU callsign prefixes
+
+TLA-TLZ
+ Chad
+ISO 3166-1 numeric
+
+148
+	ISO 3166-1 alpha-3
+
+TCD
+	ISO 3166-1 alpha-2
+
+TD
+	ICAO airport code prefix(es)
+
+FT
+E.164 code(s)
+
++235
+	IOC country code
+
+CHA
+	Country code top-level domain
+
+.td
+	ICAO aircraft regis. prefix(es)
+
+TT-
+E.212 mobile country code(s)
+
+622
+	NATO Three-letter code
+
+TCD
+	NATO Two-letter code (obsolete)
+
+CD
+	LOC MARC code(s)
+
+CD
+ITU Maritime ID(s)
+
+670
+	ITU letter code(s)
+
+TCD
+	FIPS country code(s)
+
+CD
+	License plate code
+
+TCH, TD
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CHD
+	WMO country code(s)
+
+CD
+	ITU callsign prefixes
+
+TTA-TTZ
+ Chile
+ISO 3166-1 numeric
+
+152
+	ISO 3166-1 alpha-3
+
+CHL
+	ISO 3166-1 alpha-2
+
+CL
+	ICAO airport code prefix(es)
+
+SC, NE
+E.164 code(s)
+
++56
+	IOC country code
+
+CHI
+	Country code top-level domain
+
+.cl
+	ICAO aircraft regis. prefix(es)
+
+CC-
+E.212 mobile country code(s)
+
+730
+	NATO Three-letter code
+
+CHL
+	NATO Two-letter code (obsolete)
+
+CI
+	LOC MARC code(s)
+
+CL
+ITU Maritime ID(s)
+
+725
+	ITU letter code(s)
+
+CHL
+	FIPS country code(s)
+
+CI
+	License plate code
+
+RCH
+GS1 GTIN prefix(es)
+
+780
+	UNDP country code
+
+CHI
+	WMO country code(s)
+
+CH
+	ITU callsign prefixes
+
+3GA-3GZ,CAA-CEZ,XQA-XRZ
+ China
+ISO 3166-1 numeric
+
+156
+	ISO 3166-1 alpha-3
+
+CHN
+	ISO 3166-1 alpha-2
+
+CN
+	ICAO airport code prefix(es)
+
+ZB, ZG, ZH, ZJ, ZL, ZP
+ZS, ZT, ZU, ZW, ZY[note 1]
+E.164 code(s)
+
++86
+	IOC country code
+
+CHN
+	Country code top-level domain
+
+.cn
+	ICAO aircraft regis. prefix(es)
+
+B-
+E.212 mobile country code(s)
+
+460, 461
+	NATO Three-letter code
+
+CHN
+	NATO Two-letter code (obsolete)
+
+CH
+	LOC MARC code(s)
+
+CC
+ITU Maritime ID(s)
+
+412, 413
+	ITU letter code(s)
+
+CHN
+	FIPS country code(s)
+
+CH
+	License plate code
+
+PRC (unofficial)
+GS1 GTIN prefix(es)
+
+690-695
+	UNDP country code
+
+CPR
+	WMO country code(s)
+
+CI
+	ITU callsign prefixes
+
+3HA-3UZ,BAA-BZZ,XSA-XSZ
+ Christmas Island
+ISO 3166-1 numeric
+
+162
+	ISO 3166-1 alpha-3
+
+CXR
+	ISO 3166-1 alpha-2
+
+CX
+	ICAO airport code prefix(es)
+
+YP
+E.164 code(s)
+
++61
+	IOC country code
+
+—
+	Country code top-level domain
+
+.cx
+	ICAO aircraft regis. prefix(es)
+
+VH-
+E.212 mobile country code(s)
+
+505
+	NATO Three-letter code
+
+CXR
+	NATO Two-letter code (obsolete)
+
+KT
+	LOC MARC code(s)
+
+XA
+ITU Maritime ID(s)
+
+516
+	ITU letter code(s)
+
+CHR
+	FIPS country code(s)
+
+KT
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+KI
+	ITU callsign prefixes
+
+—
+ Cocos (Keeling) Islands
+ISO 3166-1 numeric
+
+166
+	ISO 3166-1 alpha-3
+
+CCK
+	ISO 3166-1 alpha-2
+
+CC
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++61
+	IOC country code
+
+—
+	Country code top-level domain
+
+.cc
+	ICAO aircraft regis. prefix(es)
+
+VH-
+E.212 mobile country code(s)
+
+505
+	NATO Three-letter code
+
+CCK
+	NATO Two-letter code (obsolete)
+
+CK
+	LOC MARC code(s)
+
+XB
+ITU Maritime ID(s)
+
+523
+	ITU letter code(s)
+
+ICO
+	FIPS country code(s)
+
+CK
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+KK
+	ITU callsign prefixes
+
+—
+ Colombia
+ISO 3166-1 numeric
+
+170
+	ISO 3166-1 alpha-3
+
+COL
+	ISO 3166-1 alpha-2
+
+CO
+	ICAO airport code prefix(es)
+
+SK
+E.164 code(s)
+
++57
+	IOC country code
+
+COL
+	Country code top-level domain
+
+.co
+	ICAO aircraft regis. prefix(es)
+
+HJ-, HK-
+E.212 mobile country code(s)
+
+732
+	NATO Three-letter code
+
+COL
+	NATO Two-letter code (obsolete)
+
+CO
+	LOC MARC code(s)
+
+CK
+ITU Maritime ID(s)
+
+730
+	ITU letter code(s)
+
+CLM
+	FIPS country code(s)
+
+CO
+	License plate code
+
+CO
+GS1 GTIN prefix(es)
+
+770-771
+	UNDP country code
+
+COL
+	WMO country code(s)
+
+CO
+	ITU callsign prefixes
+
+5JA-5KZ, HJA-HKZ
+ Comoros
+ISO 3166-1 numeric
+
+174
+	ISO 3166-1 alpha-3
+
+COM
+	ISO 3166-1 alpha-2
+
+KM
+	ICAO airport code prefix(es)
+
+FMC
+E.164 code(s)
+
++269
+	IOC country code
+
+COM
+	Country code top-level domain
+
+.km
+	ICAO aircraft regis. prefix(es)
+
+D6-
+E.212 mobile country code(s)
+
+654
+	NATO Three-letter code
+
+COM
+	NATO Two-letter code (obsolete)
+
+CN
+	LOC MARC code(s)
+
+CQ
+ITU Maritime ID(s)
+
+616
+	ITU letter code(s)
+
+COM
+	FIPS country code(s)
+
+CN
+	License plate code
+
+COM (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+COI
+	WMO country code(s)
+
+IC
+	ITU callsign prefixes
+
+D6A-D6Z
+ Democratic Republic of the Congo
+ISO 3166-1 numeric
+
+180
+	ISO 3166-1 alpha-3
+
+COD
+	ISO 3166-1 alpha-2
+
+CD
+	ICAO airport code prefix(es)
+
+FZ
+E.164 code(s)
+
++243
+	IOC country code
+
+COD
+	Country code top-level domain
+
+.cd
+	ICAO aircraft regis. prefix(es)
+
+9Q-
+E.212 mobile country code(s)
+
+630
+	NATO Three-letter code
+
+COD
+	NATO Two-letter code (obsolete)
+
+CG
+	LOC MARC code(s)
+
+CG
+ITU Maritime ID(s)
+
+676
+	ITU letter code(s)
+
+COD
+	FIPS country code(s)
+
+CG
+	License plate code
+
+ZRE
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ZAI[note 2]
+	WMO country code(s)
+
+ZR
+	ITU callsign prefixes
+
+9OA-9TZ
+ Republic of the Congo
+ISO 3166-1 numeric
+
+178
+	ISO 3166-1 alpha-3
+
+COG
+	ISO 3166-1 alpha-2
+
+CG
+	ICAO airport code prefix(es)
+
+FC
+E.164 code(s)
+
++242
+	IOC country code
+
+CGO
+	Country code top-level domain
+
+.cg
+	ICAO aircraft regis. prefix(es)
+
+TN-
+E.212 mobile country code(s)
+
+629
+	NATO Three-letter code
+
+COG
+	NATO Two-letter code (obsolete)
+
+CF
+	LOC MARC code(s)
+
+CF
+ITU Maritime ID(s)
+
+615
+	ITU letter code(s)
+
+COG
+	FIPS country code(s)
+
+CF
+	License plate code
+
+RCB
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+PRC[note 3]
+	WMO country code(s)
+
+CG
+	ITU callsign prefixes
+
+TNA-TNZ
+ Cook Islands
+ISO 3166-1 numeric
+
+184
+	ISO 3166-1 alpha-3
+
+COK
+	ISO 3166-1 alpha-2
+
+CK
+	ICAO airport code prefix(es)
+
+NC
+E.164 code(s)
+
++682
+	IOC country code
+
+COK
+	Country code top-level domain
+
+.ck
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+548
+	NATO Three-letter code
+
+COK
+	NATO Two-letter code (obsolete)
+
+CW
+	LOC MARC code(s)
+
+CW
+ITU Maritime ID(s)
+
+518
+	ITU letter code(s)
+
+CKH
+	FIPS country code(s)
+
+CW
+	License plate code
+
+COK (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+CKI
+	WMO country code(s)
+
+KU
+	ITU callsign prefixes
+
+E5A-E5Z
+ Costa Rica
+ISO 3166-1 numeric
+
+188
+	ISO 3166-1 alpha-3
+
+CRI
+	ISO 3166-1 alpha-2
+
+CR
+	ICAO airport code prefix(es)
+
+MR
+E.164 code(s)
+
++506
+	IOC country code
+
+CRC
+	Country code top-level domain
+
+.cr
+	ICAO aircraft regis. prefix(es)
+
+TI-
+E.212 mobile country code(s)
+
+712
+	NATO Three-letter code
+
+CRI
+	NATO Two-letter code (obsolete)
+
+CS
+	LOC MARC code(s)
+
+CR
+ITU Maritime ID(s)
+
+321
+	ITU letter code(s)
+
+CTR
+	FIPS country code(s)
+
+CS
+	License plate code
+
+CR
+GS1 GTIN prefix(es)
+
+744
+	UNDP country code
+
+COS
+	WMO country code(s)
+
+CS
+	ITU callsign prefixes
+
+TEA-TEZ, TIA-TIZ
+ Croatia
+ISO 3166-1 numeric
+
+191
+	ISO 3166-1 alpha-3
+
+HRV
+	ISO 3166-1 alpha-2
+
+HR
+	ICAO airport code prefix(es)
+
+LD
+E.164 code(s)
+
++385
+	IOC country code
+
+CRO
+	Country code top-level domain
+
+.hr
+	ICAO aircraft regis. prefix(es)
+
+9A-
+E.212 mobile country code(s)
+
+219
+	NATO Three-letter code
+
+HRV
+	NATO Two-letter code (obsolete)
+
+HR
+	LOC MARC code(s)
+
+CI
+ITU Maritime ID(s)
+
+238
+	ITU letter code(s)
+
+HRV
+	FIPS country code(s)
+
+HR
+	License plate code
+
+HR
+GS1 GTIN prefix(es)
+
+385
+	UNDP country code
+
+CRO
+	WMO country code(s)
+
+HR
+	ITU callsign prefixes
+
+9AA-9AZ
+ Cuba
+ISO 3166-1 numeric
+
+192
+	ISO 3166-1 alpha-3
+
+CUB
+	ISO 3166-1 alpha-2
+
+CU
+	ICAO airport code prefix(es)
+
+MU
+E.164 code(s)
+
++53
+	IOC country code
+
+CUB
+	Country code top-level domain
+
+.cu
+	ICAO aircraft regis. prefix(es)
+
+CU-
+E.212 mobile country code(s)
+
+368
+	NATO Three-letter code
+
+CUB
+	NATO Two-letter code (obsolete)
+
+CU
+	LOC MARC code(s)
+
+CU
+ITU Maritime ID(s)
+
+323
+	ITU letter code(s)
+
+CUB
+	FIPS country code(s)
+
+CU
+	License plate code
+
+CU
+GS1 GTIN prefix(es)
+
+850
+	UNDP country code
+
+CUB
+	WMO country code(s)
+
+CU
+	ITU callsign prefixes
+
+CLA-CMZ,COA-COZ,T4A-T4Z
+ Curaçao
+ISO 3166-1 numeric
+
+531
+	ISO 3166-1 alpha-3
+
+CUW
+	ISO 3166-1 alpha-2
+
+CW
+	ICAO airport code prefix(es)
+
+TN
+E.164 code(s)
+
++599
+	IOC country code
+
+—
+	Country code top-level domain
+
+.cw
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+362
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+NA
+ITU Maritime ID(s)
+
+306
+	ITU letter code(s)
+
+CUW
+	FIPS country code(s)
+
+—
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+NU
+	ITU callsign prefixes
+
+PJA-PJZ
+ Cyprus
+ISO 3166-1 numeric
+
+196
+	ISO 3166-1 alpha-3
+
+CYP
+	ISO 3166-1 alpha-2
+
+CY
+	ICAO airport code prefix(es)
+
+LC
+E.164 code(s)
+
++357
+	IOC country code
+
+CYP
+	Country code top-level domain
+
+.cy
+	ICAO aircraft regis. prefix(es)
+
+5B-
+E.212 mobile country code(s)
+
+280
+	NATO Three-letter code
+
+CYP
+	NATO Two-letter code (obsolete)
+
+CY
+	LOC MARC code(s)
+
+CY
+ITU Maritime ID(s)
+
+209, 210, 212
+	ITU letter code(s)
+
+CYP
+	FIPS country code(s)
+
+CY
+	License plate code
+
+CY
+GS1 GTIN prefix(es)
+
+529
+	UNDP country code
+
+CYP
+	WMO country code(s)
+
+CY
+	ITU callsign prefixes
+
+5BA-5BZ, C4A-C4Z
+H2A-H2Z, P3A-P3Z
+ Czech Republic
+ISO 3166-1 numeric
+
+203
+	ISO 3166-1 alpha-3
+
+CZE
+	ISO 3166-1 alpha-2
+
+CZ
+	ICAO airport code prefix(es)
+
+LK
+E.164 code(s)
+
++420
+	IOC country code
+
+CZE
+	Country code top-level domain
+
+.cz
+	ICAO aircraft regis. prefix(es)
+
+OK-
+E.212 mobile country code(s)
+
+230
+	NATO Three-letter code
+
+CZE
+	NATO Two-letter code (obsolete)
+
+CZ
+	LOC MARC code(s)
+
+XR
+ITU Maritime ID(s)
+
+270
+	ITU letter code(s)
+
+CZE
+	FIPS country code(s)
+
+EZ
+	License plate code
+
+CZ
+GS1 GTIN prefix(es)
+
+859
+	UNDP country code
+
+CEH
+	WMO country code(s)
+
+CZ
+	ITU callsign prefixes
+
+OKA-OLZ
+
+ Denmark
+ISO 3166-1 numeric
+
+208
+	ISO 3166-1 alpha-3
+
+DNK
+	ISO 3166-1 alpha-2
+
+DK
+	ICAO airport code prefix(es)
+
+EK[notes 1]
+E.164 code(s)
+
++45
+	IOC country code
+
+DEN
+	Country code top-level domain
+
+.dk
+	ICAO aircraft regis. prefix(es)
+
+OY-
+E.212 mobile country code(s)
+
+238
+	NATO Three-letter code
+
+DNK
+	NATO Two-letter code (obsolete)
+
+DA
+	LOC MARC code(s)
+
+DK
+ITU Maritime ID(s)
+
+219, 220
+	ITU letter code(s)
+
+DNK
+	FIPS country code(s)
+
+DA
+	License plate code
+
+DK
+GS1 GTIN prefix(es)
+
+570-579
+	UNDP country code
+
+DEN
+	WMO country code(s)
+
+DN
+	ITU callsign prefixes
+
+5PA-5QZ,OUA-OZZ,XPA-XPZ
+ Djibouti
+ISO 3166-1 numeric
+
+262
+	ISO 3166-1 alpha-3
+
+DJI
+	ISO 3166-1 alpha-2
+
+DJ
+	ICAO airport code prefix(es)
+
+HD
+E.164 code(s)
+
++253
+	IOC country code
+
+DJI
+	Country code top-level domain
+
+.dj
+	ICAO aircraft regis. prefix(es)
+
+J2-
+E.212 mobile country code(s)
+
+638
+	NATO Three-letter code
+
+DJI
+	NATO Two-letter code (obsolete)
+
+DJ
+	LOC MARC code(s)
+
+FT
+ITU Maritime ID(s)
+
+621
+	ITU letter code(s)
+
+DJI
+	FIPS country code(s)
+
+DJ
+	License plate code
+
+DJI (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+DJI
+	WMO country code(s)
+
+DJ
+	ITU callsign prefixes
+
+J2A-J2Z
+ Dominica
+ISO 3166-1 numeric
+
+212
+	ISO 3166-1 alpha-3
+
+DMA
+	ISO 3166-1 alpha-2
+
+DM
+	ICAO airport code prefix(es)
+
+TD
+E.164 code(s)
+
++1 767
+	IOC country code
+
+DMA
+	Country code top-level domain
+
+.dm
+	ICAO aircraft regis. prefix(es)
+
+J7-
+E.212 mobile country code(s)
+
+356
+	NATO Three-letter code
+
+DMA
+	NATO Two-letter code (obsolete)
+
+DO
+	LOC MARC code(s)
+
+DQ
+ITU Maritime ID(s)
+
+325
+	ITU letter code(s)
+
+DMA
+	FIPS country code(s)
+
+DO
+	License plate code
+
+WD
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+DMI
+	WMO country code(s)
+
+DO
+	ITU callsign prefixes
+
+J7A-J7Z
+ Dominican Republic
+ISO 3166-1 numeric
+
+214
+	ISO 3166-1 alpha-3
+
+DOM
+	ISO 3166-1 alpha-2
+
+DO
+	ICAO airport code prefix(es)
+
+MD
+E.164 code(s)
+
++1 809, +1 829, +1 849
+	IOC country code
+
+DOM
+	Country code top-level domain
+
+.do
+	ICAO aircraft regis. prefix(es)
+
+HI-
+E.212 mobile country code(s)
+
+370
+	NATO Three-letter code
+
+DOM
+	NATO Two-letter code (obsolete)
+
+DR
+	LOC MARC code(s)
+
+DR
+ITU Maritime ID(s)
+
+327
+	ITU letter code(s)
+
+DOM
+	FIPS country code(s)
+
+DR
+	License plate code
+
+DOM
+GS1 GTIN prefix(es)
+
+746
+	UNDP country code
+
+DOM
+	WMO country code(s)
+
+DR
+	ITU callsign prefixes
+
+HIA-HIZ
+ Ecuador
+ISO 3166-1 numeric
+
+218
+	ISO 3166-1 alpha-3
+
+ECU
+	ISO 3166-1 alpha-2
+
+EC
+	ICAO airport code prefix(es)
+
+SE
+E.164 code(s)
+
++593
+	IOC country code
+
+ECU
+	Country code top-level domain
+
+.ec
+	ICAO aircraft regis. prefix(es)
+
+HC-
+E.212 mobile country code(s)
+
+740
+	NATO Three-letter code
+
+ECU
+	NATO Two-letter code (obsolete)
+
+EC
+	LOC MARC code(s)
+
+EC
+ITU Maritime ID(s)
+
+735
+	ITU letter code(s)
+
+EQA
+	FIPS country code(s)
+
+EC
+	License plate code
+
+EC
+GS1 GTIN prefix(es)
+
+786
+	UNDP country code
+
+ECU
+	WMO country code(s)
+
+EQ
+	ITU callsign prefixes
+
+HCA-HDZ
+ Egypt
+ISO 3166-1 numeric
+
+818
+	ISO 3166-1 alpha-3
+
+EGY
+	ISO 3166-1 alpha-2
+
+EG
+	ICAO airport code prefix(es)
+
+HE
+E.164 code(s)
+
++20
+	IOC country code
+
+EGY
+	Country code top-level domain
+
+.eg
+	ICAO aircraft regis. prefix(es)
+
+SU-
+E.212 mobile country code(s)
+
+602
+	NATO Three-letter code
+
+EGY
+	NATO Two-letter code (obsolete)
+
+EG
+	LOC MARC code(s)
+
+UA
+ITU Maritime ID(s)
+
+622
+	ITU letter code(s)
+
+EGY
+	FIPS country code(s)
+
+EG
+	License plate code
+
+ET
+GS1 GTIN prefix(es)
+
+622
+	UNDP country code
+
+EGY
+	WMO country code(s)
+
+EG
+	ITU callsign prefixes
+
+6AA-6BZ,SSA-SSM,SUA-SUZ
+ El Salvador
+ISO 3166-1 numeric
+
+222
+	ISO 3166-1 alpha-3
+
+SLV
+	ISO 3166-1 alpha-2
+
+SV
+	ICAO airport code prefix(es)
+
+MS
+E.164 code(s)
+
++503
+	IOC country code
+
+ESA
+	Country code top-level domain
+
+.sv
+	ICAO aircraft regis. prefix(es)
+
+YS-
+E.212 mobile country code(s)
+
+706
+	NATO Three-letter code
+
+SLV
+	NATO Two-letter code (obsolete)
+
+ES
+	LOC MARC code(s)
+
+ES
+ITU Maritime ID(s)
+
+359
+	ITU letter code(s)
+
+SLV
+	FIPS country code(s)
+
+ES
+	License plate code
+
+ES
+GS1 GTIN prefix(es)
+
+741
+	UNDP country code
+
+ELS
+	WMO country code(s)
+
+ES
+	ITU callsign prefixes
+
+HUA-HUZ, YSA-YSZ
+
+New Delhi is 011
+ Equatorial Guinea
+ISO 3166-1 numeric
+
+226
+	ISO 3166-1 alpha-3
+
+GNQ
+	ISO 3166-1 alpha-2
+
+GQ
+	ICAO airport code prefix(es)
+
+FG
+E.164 code(s)
+
++240
+	IOC country code
+
+GEQ
+	Country code top-level domain
+
+.gq
+	ICAO aircraft regis. prefix(es)
+
+3C-
+E.212 mobile country code(s)
+
+627
+	NATO Three-letter code
+
+GNQ
+	NATO Two-letter code (obsolete)
+
+EK
+	LOC MARC code(s)
+
+EG
+ITU Maritime ID(s)
+
+631
+	ITU letter code(s)
+
+GNE
+	FIPS country code(s)
+
+EK
+	License plate code
+
+GQ (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+EQG
+	WMO country code(s)
+
+GQ
+	ITU callsign prefixes
+
+3CA-3CZ
+ Eritrea
+ISO 3166-1 numeric
+
+232
+	ISO 3166-1 alpha-3
+
+ERI
+	ISO 3166-1 alpha-2
+
+ER
+	ICAO airport code prefix(es)
+
+HH
+E.164 code(s)
+
++291
+	IOC country code
+
+ERI
+	Country code top-level domain
+
+.er
+	ICAO aircraft regis. prefix(es)
+
+E3-
+E.212 mobile country code(s)
+
+657
+	NATO Three-letter code
+
+ERI
+	NATO Two-letter code (obsolete)
+
+ER
+	LOC MARC code(s)
+
+EA
+ITU Maritime ID(s)
+
+625
+	ITU letter code(s)
+
+ERI
+	FIPS country code(s)
+
+ER
+	License plate code
+
+ER
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ERI
+	WMO country code(s)
+
+E12
+	ITU callsign prefixes
+
+E3A-E3Z
+ Estonia
+ISO 3166-1 numeric
+
+233
+	ISO 3166-1 alpha-3
+
+EST
+	ISO 3166-1 alpha-2
+
+EE
+	ICAO airport code prefix(es)
+
+EE
+E.164 code(s)
+
++372
+	IOC country code
+
+EST
+	Country code top-level domain
+
+.ee
+	ICAO aircraft regis. prefix(es)
+
+ES-
+E.212 mobile country code(s)
+
+248
+	NATO Three-letter code
+
+EST
+	NATO Two-letter code (obsolete)
+
+EN
+	LOC MARC code(s)
+
+ER
+ITU Maritime ID(s)
+
+276
+	ITU letter code(s)
+
+EST
+	FIPS country code(s)
+
+EN
+	License plate code
+
+EST
+GS1 GTIN prefix(es)
+
+474
+	UNDP country code
+
+EST
+	WMO country code(s)
+
+EO
+	ITU callsign prefixes
+
+ESA-ESZ
+ Ethiopia
+ISO 3166-1 numeric
+
+231
+	ISO 3166-1 alpha-3
+
+ETH
+	ISO 3166-1 alpha-2
+
+ET
+	ICAO airport code prefix(es)
+
+HA
+E.164 code(s)
+
++251
+	IOC country code
+
+ETH
+	Country code top-level domain
+
+.et
+	ICAO aircraft regis. prefix(es)
+
+ET-
+E.212 mobile country code(s)
+
+636
+	NATO Three-letter code
+
+ETH
+	NATO Two-letter code (obsolete)
+
+ET
+	LOC MARC code(s)
+
+ET
+ITU Maritime ID(s)
+
+624
+	ITU letter code(s)
+
+ETH
+	FIPS country code(s)
+
+ET
+	License plate code
+
+ETH
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ETH
+	WMO country code(s)
+
+ET
+	ITU callsign prefixes
+
+9EA-9FZ, ETA-ETZ
+
+ Falkland Islands
+ISO 3166-1 numeric
+
+238
+	ISO 3166-1 alpha-3
+
+FLK
+	ISO 3166-1 alpha-2
+
+FK
+	ICAO airport code prefix(es)
+
+SF
+E.164 code(s)
+
++500
+	IOC country code
+
+—
+	Country code top-level domain
+
+.fk
+	ICAO aircraft regis. prefix(es)
+
+VP-F-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+FLK
+	NATO Two-letter code (obsolete)
+
+FK
+	LOC MARC code(s)
+
+FK
+ITU Maritime ID(s)
+
+740
+	ITU letter code(s)
+
+FLK
+	FIPS country code(s)
+
+FK
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+FK
+	ITU callsign prefixes
+
+—
+ Faroe Islands
+ISO 3166-1 numeric
+
+234
+	ISO 3166-1 alpha-3
+
+FRO
+	ISO 3166-1 alpha-2
+
+FO
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++298
+	IOC country code
+
+FAR
+	Country code top-level domain
+
+.fo
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+288
+	NATO Three-letter code
+
+FRO
+	NATO Two-letter code (obsolete)
+
+FO
+	LOC MARC code(s)
+
+FA
+ITU Maritime ID(s)
+
+231
+	ITU letter code(s)
+
+FRO
+	FIPS country code(s)
+
+FO
+	License plate code
+
+FO
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+FA
+	ITU callsign prefixes
+
+—
+ Fiji
+ISO 3166-1 numeric
+
+242
+	ISO 3166-1 alpha-3
+
+FJI
+	ISO 3166-1 alpha-2
+
+FJ
+	ICAO airport code prefix(es)
+
+NF
+E.164 code(s)
+
++679
+	IOC country code
+
+FIJ
+	Country code top-level domain
+
+.fj
+	ICAO aircraft regis. prefix(es)
+
+DQ-
+E.212 mobile country code(s)
+
+542
+	NATO Three-letter code
+
+FJI
+	NATO Two-letter code (obsolete)
+
+FJ
+	LOC MARC code(s)
+
+FJ
+ITU Maritime ID(s)
+
+520
+	ITU letter code(s)
+
+FJI
+	FIPS country code(s)
+
+FJ
+	License plate code
+
+FJI
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+FIJ
+	WMO country code(s)
+
+FJ
+	ITU callsign prefixes
+
+3DN-3DZ
+ Finland
+ISO 3166-1 numeric
+
+246
+	ISO 3166-1 alpha-3
+
+FIN
+	ISO 3166-1 alpha-2
+
+FI
+	ICAO airport code prefix(es)
+
+EF
+E.164 code(s)
+
++358
+	IOC country code
+
+FIN
+	Country code top-level domain
+
+.fi
+	ICAO aircraft regis. prefix(es)
+
+OH-
+E.212 mobile country code(s)
+
+244
+	NATO Three-letter code
+
+FIN
+	NATO Two-letter code (obsolete)
+
+FI
+	LOC MARC code(s)
+
+FI
+ITU Maritime ID(s)
+
+230
+	ITU letter code(s)
+
+FIN
+	FIPS country code(s)
+
+FI
+	License plate code
+
+FIN
+GS1 GTIN prefix(es)
+
+640-649
+	UNDP country code
+
+FIN
+	WMO country code(s)
+
+FI
+	ITU callsign prefixes
+
+OFA-OJZ
+ France
+ISO 3166-1 numeric
+
+250
+	ISO 3166-1 alpha-3
+
+FRA
+	ISO 3166-1 alpha-2
+
+FR
+	ICAO airport code prefix(es)
+
+LF
+E.164 code(s)
+
++33
+	IOC country code
+
+FRA
+	Country code top-level domain
+
+.fr
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+208
+	NATO Three-letter code
+
+FRA
+	NATO Two-letter code (obsolete)
+
+FR
+	LOC MARC code(s)
+
+FR
+ITU Maritime ID(s)
+
+226-228
+	ITU letter code(s)
+
+F
+	FIPS country code(s)
+
+FR
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+300-379
+	UNDP country code
+
+FRA
+	WMO country code(s)
+
+FR
+	ITU callsign prefixes
+
+FAA-FZZ, HWA-HYZ, THA-THZ, TKA-TKZ
+TMA-TMZ, TOA-TQZ, TVA-TXZ
+ French Guiana
+ISO 3166-1 numeric
+
+254
+	ISO 3166-1 alpha-3
+
+GUF
+	ISO 3166-1 alpha-2
+
+GF
+	ICAO airport code prefix(es)
+
+SO
+E.164 code(s)
+
++594
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gf
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+742
+	NATO Three-letter code
+
+GUF
+	NATO Two-letter code (obsolete)
+
+FG
+	LOC MARC code(s)
+
+FG
+ITU Maritime ID(s)
+
+745
+	ITU letter code(s)
+
+GUF
+	FIPS country code(s)
+
+FG
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+FGU
+	WMO country code(s)
+
+FG
+	ITU callsign prefixes
+
+—
+ French Polynesia
+ISO 3166-1 numeric
+
+258
+	ISO 3166-1 alpha-3
+
+PYF
+	ISO 3166-1 alpha-2
+
+PF
+	ICAO airport code prefix(es)
+
+NT
+E.164 code(s)
+
++689
+	IOC country code
+
+—
+	Country code top-level domain
+
+.pf
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+547
+	NATO Three-letter code
+
+PYF
+	NATO Two-letter code (obsolete)
+
+FP
+	LOC MARC code(s)
+
+FP
+ITU Maritime ID(s)
+
+546
+	ITU letter code(s)
+
+OCE
+	FIPS country code(s)
+
+FP
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+FPL
+	WMO country code(s)
+
+PF
+	ITU callsign prefixes
+
+—
+ French Southern and Antarctic Lands
+ISO 3166-1 numeric
+
+260
+	ISO 3166-1 alpha-3
+
+ATF
+	ISO 3166-1 alpha-2
+
+TF
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
+—
+	IOC country code
+
+—
+	Country code top-level domain
+
+.tf
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+ATF
+	NATO Two-letter code (obsolete)
+
+FS
+	LOC MARC code(s)
+
+FS
+ITU Maritime ID(s)
+
+501
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+FS
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+FR
+	ITU callsign prefixes
+
+—
+
+ Gabon
+ISO 3166-1 numeric
+
+266
+	ISO 3166-1 alpha-3
+
+GAB
+	ISO 3166-1 alpha-2
+
+GA
+	ICAO airport code prefix(es)
+
+FO
+E.164 code(s)
+
++241
+	IOC country code
+
+GAB
+	Country code top-level domain
+
+.ga
+	ICAO aircraft regis. prefix(es)
+
+TR-
+E.212 mobile country code(s)
+
+628
+	NATO Three-letter code
+
+GAB
+	NATO Two-letter code (obsolete)
+
+GB
+	LOC MARC code(s)
+
+GO
+ITU Maritime ID(s)
+
+626
+	ITU letter code(s)
+
+GAB
+	FIPS country code(s)
+
+GB
+	License plate code
+
+G
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GAB
+	WMO country code(s)
+
+GO
+	ITU callsign prefixes
+
+TRA-TRZ
+ Gambia
+ISO 3166-1 numeric
+
+270
+	ISO 3166-1 alpha-3
+
+GMB
+	ISO 3166-1 alpha-2
+
+GM
+	ICAO airport code prefix(es)
+
+GB
+E.164 code(s)
+
++220
+	IOC country code
+
+GAM
+	Country code top-level domain
+
+.gm
+	ICAO aircraft regis. prefix(es)
+
+C5-
+E.212 mobile country code(s)
+
+607
+	NATO Three-letter code
+
+GMB
+	NATO Two-letter code (obsolete)
+
+GA
+	LOC MARC code(s)
+
+GM
+ITU Maritime ID(s)
+
+629
+	ITU letter code(s)
+
+GMB
+	FIPS country code(s)
+
+GA
+	License plate code
+
+WAG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GAM
+	WMO country code(s)
+
+GB
+	ITU callsign prefixes
+
+C5A-C5Z
+ Georgia
+ISO 3166-1 numeric
+
+268
+	ISO 3166-1 alpha-3
+
+GEO
+	ISO 3166-1 alpha-2
+
+GE
+	ICAO airport code prefix(es)
+
+UG
+E.164 code(s)
+
++995
+	IOC country code
+
+GEO
+	Country code top-level domain
+
+.ge
+	ICAO aircraft regis. prefix(es)
+
+4L-
+E.212 mobile country code(s)
+
+282
+	NATO Three-letter code
+
+GEO
+	NATO Two-letter code (obsolete)
+
+GG
+	LOC MARC code(s)
+
+GS
+ITU Maritime ID(s)
+
+213
+	ITU letter code(s)
+
+GEO
+	FIPS country code(s)
+
+GG
+	License plate code
+
+GE
+GS1 GTIN prefix(es)
+
+486
+	UNDP country code
+
+GEO
+	WMO country code(s)
+
+GG
+	ITU callsign prefixes
+
+4LA-4LZ
+ Germany
+ISO 3166-1 numeric
+
+276
+	ISO 3166-1 alpha-3
+
+DEU
+	ISO 3166-1 alpha-2
+
+DE
+	ICAO airport code prefix(es)
+
+ED, ET
+E.164 code(s)
+
++49
+	IOC country code
+
+GER
+	Country code top-level domain
+
+.de
+	ICAO aircraft regis. prefix(es)
+
+D-
+E.212 mobile country code(s)
+
+262
+	NATO Three-letter code
+
+DEU
+	NATO Two-letter code (obsolete)
+
+GE
+	LOC MARC code(s)
+
+GW
+ITU Maritime ID(s)
+
+211, 218
+	ITU letter code(s)
+
+D
+	FIPS country code(s)
+
+GM
+	License plate code
+
+D
+GS1 GTIN prefix(es)
+
+400-440
+	UNDP country code
+
+GER
+	WMO country code(s)
+
+DL
+	ITU callsign prefixes
+
+DAA-DRZ, Y2A-Y9Z
+ Ghana
+ISO 3166-1 numeric
+
+288
+	ISO 3166-1 alpha-3
+
+GHA
+	ISO 3166-1 alpha-2
+
+GH
+	ICAO airport code prefix(es)
+
+DG
+E.164 code(s)
+
++233
+	IOC country code
+
+GHA
+	Country code top-level domain
+
+.gh
+	ICAO aircraft regis. prefix(es)
+
+9G-
+E.212 mobile country code(s)
+
+620
+	NATO Three-letter code
+
+GHA
+	NATO Two-letter code (obsolete)
+
+GH
+	LOC MARC code(s)
+
+GH
+ITU Maritime ID(s)
+
+627
+	ITU letter code(s)
+
+GHA
+	FIPS country code(s)
+
+GH
+	License plate code
+
+GH
+GS1 GTIN prefix(es)
+
+603
+	UNDP country code
+
+GHA
+	WMO country code(s)
+
+GH
+	ITU callsign prefixes
+
+9GA-9GZ
+ Gibraltar
+ISO 3166-1 numeric
+
+292
+	ISO 3166-1 alpha-3
+
+GIB
+	ISO 3166-1 alpha-2
+
+GI
+	ICAO airport code prefix(es)
+
+LX
+E.164 code(s)
+
++350
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gi
+	ICAO aircraft regis. prefix(es)
+
+VR-G-
+E.212 mobile country code(s)
+
+266
+	NATO Three-letter code
+
+GIB
+	NATO Two-letter code (obsolete)
+
+GI
+	LOC MARC code(s)
+
+GI
+ITU Maritime ID(s)
+
+236
+	ITU letter code(s)
+
+GIB
+	FIPS country code(s)
+
+GI
+	License plate code
+
+GBZ
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+GI
+	ITU callsign prefixes
+
+—
+ Greece
+ISO 3166-1 numeric
+
+300
+	ISO 3166-1 alpha-3
+
+GRC
+	ISO 3166-1 alpha-2
+
+GR
+	ICAO airport code prefix(es)
+
+LG
+E.164 code(s)
+
++30
+	IOC country code
+
+GRE
+	Country code top-level domain
+
+.gr
+	ICAO aircraft regis. prefix(es)
+
+SX-
+E.212 mobile country code(s)
+
+202
+	NATO Three-letter code
+
+GRC
+	NATO Two-letter code (obsolete)
+
+GR
+	LOC MARC code(s)
+
+GR
+ITU Maritime ID(s)
+
+237, 239, 240, 241
+	ITU letter code(s)
+
+GRC
+	FIPS country code(s)
+
+GR
+	License plate code
+
+GR
+GS1 GTIN prefix(es)
+
+520-521
+	UNDP country code
+
+GRE
+	WMO country code(s)
+
+GR
+	ITU callsign prefixes
+
+J4A-J4Z, SVA-SZZ
+ Greenland
+ISO 3166-1 numeric
+
+304
+	ISO 3166-1 alpha-3
+
+GRL
+	ISO 3166-1 alpha-2
+
+GL
+	ICAO airport code prefix(es)
+
+BG
+E.164 code(s)
+
++299
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gl
+	ICAO aircraft regis. prefix(es)
+
+OY-
+E.212 mobile country code(s)
+
+290
+	NATO Three-letter code
+
+GRL
+	NATO Two-letter code (obsolete)
+
+GL
+	LOC MARC code(s)
+
+GL
+ITU Maritime ID(s)
+
+331
+	ITU letter code(s)
+
+GRL
+	FIPS country code(s)
+
+GL
+	License plate code
+
+KN (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+GL
+	ITU callsign prefixes
+
+—
+ Grenada
+ISO 3166-1 numeric
+
+308
+	ISO 3166-1 alpha-3
+
+GRD
+	ISO 3166-1 alpha-2
+
+GD
+	ICAO airport code prefix(es)
+
+TG
+E.164 code(s)
+
++1 473
+	IOC country code
+
+GRN
+	Country code top-level domain
+
+.gd
+	ICAO aircraft regis. prefix(es)
+
+J3-
+E.212 mobile country code(s)
+
+352
+	NATO Three-letter code
+
+GRD
+	NATO Two-letter code (obsolete)
+
+GJ
+	LOC MARC code(s)
+
+GD
+ITU Maritime ID(s)
+
+330
+	ITU letter code(s)
+
+GRD
+	FIPS country code(s)
+
+GJ
+	License plate code
+
+WG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GRN
+	WMO country code(s)
+
+GD
+	ITU callsign prefixes
+
+J3A-J3Z
+ Guadeloupe
+ISO 3166-1 numeric
+
+312
+	ISO 3166-1 alpha-3
+
+GLP
+	ISO 3166-1 alpha-2
+
+GP
+	ICAO airport code prefix(es)
+
+TF
+E.164 code(s)
+
++590
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gp
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+340
+	NATO Three-letter code
+
+GLP
+	NATO Two-letter code (obsolete)
+
+GP
+	LOC MARC code(s)
+
+GP
+ITU Maritime ID(s)
+
+329
+	ITU letter code(s)
+
+GDL
+	FIPS country code(s)
+
+GP
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GUD
+	WMO country code(s)
+
+MF
+	ITU callsign prefixes
+
+—
+ Guam
+ISO 3166-1 numeric
+
+316
+	ISO 3166-1 alpha-3
+
+GUM
+	ISO 3166-1 alpha-2
+
+GU
+	ICAO airport code prefix(es)
+
+PG
+E.164 code(s)
+
++1 671
+	IOC country code
+
+GUM
+	Country code top-level domain
+
+.gu
+	ICAO aircraft regis. prefix(es)
+
+N-
+E.212 mobile country code(s)
+
+535
+	NATO Three-letter code
+
+GUM
+	NATO Two-letter code (obsolete)
+
+GQ
+	LOC MARC code(s)
+
+GU
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+GUM
+	FIPS country code(s)
+
+GQ
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+GM
+	ITU callsign prefixes
+
+—
+ Guatemala
+ISO 3166-1 numeric
+
+320
+	ISO 3166-1 alpha-3
+
+GTM
+	ISO 3166-1 alpha-2
+
+GT
+	ICAO airport code prefix(es)
+
+MG
+E.164 code(s)
+
++502
+	IOC country code
+
+GUA
+	Country code top-level domain
+
+.gt
+	ICAO aircraft regis. prefix(es)
+
+TG-
+E.212 mobile country code(s)
+
+704
+	NATO Three-letter code
+
+GTM
+	NATO Two-letter code (obsolete)
+
+GT
+	LOC MARC code(s)
+
+GT
+ITU Maritime ID(s)
+
+332
+	ITU letter code(s)
+
+GTM
+	FIPS country code(s)
+
+GT
+	License plate code
+
+GCA
+GS1 GTIN prefix(es)
+
+740
+	UNDP country code
+
+GUA
+	WMO country code(s)
+
+GU
+	ITU callsign prefixes
+
+TDA-TDZ, TGA-TGZ
+ Guernsey
+ISO 3166-1 numeric
+
+831
+	ISO 3166-1 alpha-3
+
+GGY
+	ISO 3166-1 alpha-2
+
+GG
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
+—
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gg
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+—
+	License plate code
+
+GBG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Guinea
+ISO 3166-1 numeric
+
+324
+	ISO 3166-1 alpha-3
+
+GIN
+	ISO 3166-1 alpha-2
+
+GN
+	ICAO airport code prefix(es)
+
+GU
+E.164 code(s)
+
++224
+	IOC country code
+
+GUI
+	Country code top-level domain
+
+.gn
+	ICAO aircraft regis. prefix(es)
+
+3X-
+E.212 mobile country code(s)
+
+611
+	NATO Three-letter code
+
+GIN
+	NATO Two-letter code (obsolete)
+
+GV
+	LOC MARC code(s)
+
+GV
+ITU Maritime ID(s)
+
+632
+	ITU letter code(s)
+
+GUI
+	FIPS country code(s)
+
+GV
+	License plate code
+
+RG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GUI
+	WMO country code(s)
+
+GN
+	ITU callsign prefixes
+
+3XA-3XZ
+ Guinea-Bissau
+ISO 3166-1 numeric
+
+624
+	ISO 3166-1 alpha-3
+
+GNB
+	ISO 3166-1 alpha-2
+
+GW
+	ICAO airport code prefix(es)
+
+GG
+E.164 code(s)
+
++245
+	IOC country code
+
+GBS
+	Country code top-level domain
+
+.gw
+	ICAO aircraft regis. prefix(es)
+
+J5-
+E.212 mobile country code(s)
+
+632
+	NATO Three-letter code
+
+GNB
+	NATO Two-letter code (obsolete)
+
+PU
+	LOC MARC code(s)
+
+PG
+ITU Maritime ID(s)
+
+630
+	ITU letter code(s)
+
+GNB
+	FIPS country code(s)
+
+PU
+	License plate code
+
+GW (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GBS
+	WMO country code(s)
+
+GW
+	ITU callsign prefixes
+
+J5A-J5Z
+ Guyana
+ISO 3166-1 numeric
+
+328
+	ISO 3166-1 alpha-3
+
+GUY
+	ISO 3166-1 alpha-2
+
+GY
+	ICAO airport code prefix(es)
+
+SY
+E.164 code(s)
+
++592
+	IOC country code
+
+GUY
+	Country code top-level domain
+
+.gy
+	ICAO aircraft regis. prefix(es)
+
+8R-
+E.212 mobile country code(s)
+
+738
+	NATO Three-letter code
+
+GUY
+	NATO Two-letter code (obsolete)
+
+GY
+	LOC MARC code(s)
+
+GY
+ITU Maritime ID(s)
+
+750
+	ITU letter code(s)
+
+GUY
+	FIPS country code(s)
+
+GY
+	License plate code
+
+GUY
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+GUY
+	WMO country code(s)
+
+GY
+	ITU callsign prefixes
+
+8RA-8RZ
+
+ Haiti
+ISO 3166-1 numeric
+
+332
+	ISO 3166-1 alpha-3
+
+HTI
+	ISO 3166-1 alpha-2
+
+HT
+	ICAO airport code prefix(es)
+
+MT
+E.164 code(s)
+
++509
+	IOC country code
+
+HAI
+	Country code top-level domain
+
+.ht
+	ICAO aircraft regis. prefix(es)
+
+HH-
+E.212 mobile country code(s)
+
+372
+	NATO Three-letter code
+
+HTI
+	NATO Two-letter code (obsolete)
+
+HA
+	LOC MARC code(s)
+
+HT
+ITU Maritime ID(s)
+
+336
+	ITU letter code(s)
+
+HTI
+	FIPS country code(s)
+
+HA
+	License plate code
+
+RH
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+HAI
+	WMO country code(s)
+
+HA
+	ITU callsign prefixes
+
+4VA-4VZ, HHA-HHZ
+ Heard Island and McDonald Islands
+ISO 3166-1 numeric
+
+334
+	ISO 3166-1 alpha-3
+
+HMD
+	ISO 3166-1 alpha-2
+
+HM
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++672
+	IOC country code
+
+—
+	Country code top-level domain
+
+.hm
+	ICAO aircraft regis. prefix(es)
+
+VH-
+E.212 mobile country code(s)
+
+505
+	NATO Three-letter code
+
+HMD
+	NATO Two-letter code (obsolete)
+
+HM
+	LOC MARC code(s)
+
+HM
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+HMD
+	FIPS country code(s)
+
+HM
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Honduras
+ISO 3166-1 numeric
+
+340
+	ISO 3166-1 alpha-3
+
+HND
+	ISO 3166-1 alpha-2
+
+HN
+	ICAO airport code prefix(es)
+
+MH
+E.164 code(s)
+
++504
+	IOC country code
+
+HON
+	Country code top-level domain
+
+.hn
+	ICAO aircraft regis. prefix(es)
+
+HR-
+E.212 mobile country code(s)
+
+708
+	NATO Three-letter code
+
+HND
+	NATO Two-letter code (obsolete)
+
+HO
+	LOC MARC code(s)
+
+HO
+ITU Maritime ID(s)
+
+334
+	ITU letter code(s)
+
+HND
+	FIPS country code(s)
+
+HO
+	License plate code
+
+HN (unofficial)
+GS1 GTIN prefix(es)
+
+742
+	UNDP country code
+
+HON
+	WMO country code(s)
+
+HO
+	ITU callsign prefixes
+
+HQA-HRZ
+ Hong Kong
+ISO 3166-1 numeric
+
+344
+	ISO 3166-1 alpha-3
+
+HKG
+	ISO 3166-1 alpha-2
+
+HK
+	ICAO airport code prefix(es)
+
+VH
+E.164 code(s)
+
++852
+	IOC country code
+
+HKG
+	Country code top-level domain
+
+.hk
+	ICAO aircraft regis. prefix(es)
+
+B-H/B-K/B-L
+E.212 mobile country code(s)
+
+454
+	NATO Three-letter code
+
+HKG
+	NATO Two-letter code (obsolete)
+
+HK
+	LOC MARC code(s)
+
+HK
+ITU Maritime ID(s)
+
+477
+	ITU letter code(s)
+
+HKG
+	FIPS country code(s)
+
+HK
+	License plate code
+
+HK (officially obsolete)
+GS1 GTIN prefix(es)
+
+489
+	UNDP country code
+
+HOK
+	WMO country code(s)
+
+HK
+	ITU callsign prefixes
+
+VRA-VRZ
+ Hungary
+ISO 3166-1 numeric
+
+348
+	ISO 3166-1 alpha-3
+
+HUN
+	ISO 3166-1 alpha-2
+
+HU
+	ICAO airport code prefix(es)
+
+LH
+E.164 code(s)
+
++36
+	IOC country code
+
+HUN
+	Country code top-level domain
+
+.hu
+	ICAO aircraft regis. prefix(es)
+
+HA-
+E.212 mobile country code(s)
+
+216
+	NATO Three-letter code
+
+HUN
+	NATO Two-letter code (obsolete)
+
+HU
+	LOC MARC code(s)
+
+HU
+ITU Maritime ID(s)
+
+243
+	ITU letter code(s)
+
+HNG
+	FIPS country code(s)
+
+HU
+	License plate code
+
+H
+GS1 GTIN prefix(es)
+
+599
+	UNDP country code
+
+HUN
+	WMO country code(s)
+
+HU
+	ITU callsign prefixes
+
+HAA-HGZ
+ Iceland
+ISO 3166-1 numeric
+
+352
+	ISO 3166-1 alpha-3
+
+ISL
+	ISO 3166-1 alpha-2
+
+IS
+	ICAO airport code prefix(es)
+
+BI
+E.164 code(s)
+
++354
+	IOC country code
+
+ISL
+	Country code top-level domain
+
+.is
+	ICAO aircraft regis. prefix(es)
+
+TF-
+E.212 mobile country code(s)
+
+274
+	NATO Three-letter code
+
+ISL
+	NATO Two-letter code (obsolete)
+
+IC
+	LOC MARC code(s)
+
+IC
+ITU Maritime ID(s)
+
+251
+	ITU letter code(s)
+
+ISL
+	FIPS country code(s)
+
+IC
+	License plate code
+
+IS
+GS1 GTIN prefix(es)
+
+569
+	UNDP country code
+
+ICE
+	WMO country code(s)
+
+IL
+	ITU callsign prefixes
+
+TFA-TFZ
+ India
+ISO 3166-1 numeric
+
+356
+	ISO 3166-1 alpha-3
+
+IND
+	ISO 3166-1 alpha-2
+
+IN
+	ICAO airport code prefix(es)
+
+VA, VE, VI, VO
+E.164 code(s)
+
++91
+	IOC country code
+
+IND
+	Country code top-level domain
+
+.in
+	ICAO aircraft regis. prefix(es)
+
+VT-
+E.212 mobile country code(s)
+
+404
+	NATO Three-letter code
+
+IND
+	NATO Two-letter code (obsolete)
+
+IN
+	LOC MARC code(s)
+
+II
+ITU Maritime ID(s)
+
+419
+	ITU letter code(s)
+
+IND
+	FIPS country code(s)
+
+IN
+	License plate code
+
+IND
+GS1 GTIN prefix(es)
+
+890
+	UNDP country code
+
+IND
+	WMO country code(s)
+
+IN
+	ITU callsign prefixes
+
+8TA-8YZ, ATA-AWZ, VTA-VWZ
+ Indonesia
+ISO 3166-1 numeric
+
+360
+	ISO 3166-1 alpha-3
+
+IDN
+	ISO 3166-1 alpha-2
+
+ID
+	ICAO airport code prefix(es)
+
+WA, WI
+E.164 code(s)
+
++62
+	IOC country code
+
+INA
+	Country code top-level domain
+
+.id
+	ICAO aircraft regis. prefix(es)
+
+PK-
+E.212 mobile country code(s)
+
+510
+	NATO Three-letter code
+
+IDN
+	NATO Two-letter code (obsolete)
+
+ID
+	LOC MARC code(s)
+
+IO
+ITU Maritime ID(s)
+
+525
+	ITU letter code(s)
+
+INS
+	FIPS country code(s)
+
+ID
+	License plate code
+
+RI
+GS1 GTIN prefix(es)
+
+899
+	UNDP country code
+
+INS
+	WMO country code(s)
+
+ID
+	ITU callsign prefixes
+
+7AA-7IZ, 8AA-8IZ, JZA-JZZ,
+PKA-POZ, YBA-YHZ
+ Iran
+ISO 3166-1 numeric
+
+364
+	ISO 3166-1 alpha-3
+
+IRN
+	ISO 3166-1 alpha-2
+
+IR
+	ICAO airport code prefix(es)
+
+OI
+E.164 code(s)
+
++98
+	IOC country code
+
+IRI
+	Country code top-level domain
+
+.ir
+	ICAO aircraft regis. prefix(es)
+
+EP-
+E.212 mobile country code(s)
+
+432
+	NATO Three-letter code
+
+IRN
+	NATO Two-letter code (obsolete)
+
+IR
+	LOC MARC code(s)
+
+IR
+ITU Maritime ID(s)
+
+422
+	ITU letter code(s)
+
+IRN
+	FIPS country code(s)
+
+IR
+	License plate code
+
+IR
+GS1 GTIN prefix(es)
+
+626
+	UNDP country code
+
+IRA
+	WMO country code(s)
+
+IR
+	ITU callsign prefixes
+
+9BA-9DZ, EPA-EQZ
+ Iraq
+ISO 3166-1 numeric
+
+368
+	ISO 3166-1 alpha-3
+
+IRQ
+	ISO 3166-1 alpha-2
+
+IQ
+	ICAO airport code prefix(es)
+
+OR
+E.164 code(s)
+
++964
+	IOC country code
+
+IRQ
+	Country code top-level domain
+
+.iq
+	ICAO aircraft regis. prefix(es)
+
+YI-
+E.212 mobile country code(s)
+
+418
+	NATO Three-letter code
+
+IRQ
+	NATO Two-letter code (obsolete)
+
+IZ
+	LOC MARC code(s)
+
+IQ
+ITU Maritime ID(s)
+
+425
+	ITU letter code(s)
+
+IRQ
+	FIPS country code(s)
+
+IZ
+	License plate code
+
+IRQ
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+IRQ
+	WMO country code(s)
+
+IQ
+	ITU callsign prefixes
+
+HNA-HNZ, YIA-YIZ
+ Ireland
+ISO 3166-1 numeric
+
+372
+	ISO 3166-1 alpha-3
+
+IRL
+	ISO 3166-1 alpha-2
+
+IE
+	ICAO airport code prefix(es)
+
+EI
+E.164 code(s)
+
++353
+	IOC country code
+
+IRL
+	Country code top-level domain
+
+.ie
+	ICAO aircraft regis. prefix(es)
+
+EI-
+E.212 mobile country code(s)
+
+272
+	NATO Three-letter code
+
+IRL
+	NATO Two-letter code (obsolete)
+
+EI
+	LOC MARC code(s)
+
+IE
+ITU Maritime ID(s)
+
+250
+	ITU letter code(s)
+
+IRL
+	FIPS country code(s)
+
+EI
+	License plate code
+
+IRL
+GS1 GTIN prefix(es)
+
+539
+	UNDP country code
+
+IRE
+	WMO country code(s)
+
+IE
+	ITU callsign prefixes
+
+EIA-EJZ
+ Israel
+ISO 3166-1 numeric
+
+376
+	ISO 3166-1 alpha-3
+
+ISR
+	ISO 3166-1 alpha-2
+
+IL
+	ICAO airport code prefix(es)
+
+LL
+E.164 code(s)
+
++972
+	IOC country code
+
+ISR
+	Country code top-level domain
+
+.il
+	ICAO aircraft regis. prefix(es)
+
+4X-
+E.212 mobile country code(s)
+
+425
+	NATO Three-letter code
+
+ISR
+	NATO Two-letter code (obsolete)
+
+IS
+	LOC MARC code(s)
+
+IS
+ITU Maritime ID(s)
+
+428
+	ITU letter code(s)
+
+ISR
+	FIPS country code(s)
+
+IS
+	License plate code
+
+IL
+GS1 GTIN prefix(es)
+
+729
+	UNDP country code
+
+ISR
+	WMO country code(s)
+
+IS
+	ITU callsign prefixes
+
+4XA-4XZ, 4ZA,4ZZ
+ Italy
+ISO 3166-1 numeric
+
+380
+	ISO 3166-1 alpha-3
+
+ITA
+	ISO 3166-1 alpha-2
+
+IT
+	ICAO airport code prefix(es)
+
+LI
+E.164 code(s)
+
++39
+	IOC country code
+
+ITA
+	Country code top-level domain
+
+.it
+	ICAO aircraft regis. prefix(es)
+
+I-
+E.212 mobile country code(s)
+
+222
+	NATO Three-letter code
+
+ITA
+	NATO Two-letter code (obsolete)
+
+IT
+	LOC MARC code(s)
+
+IT
+ITU Maritime ID(s)
+
+247
+	ITU letter code(s)
+
+I
+	FIPS country code(s)
+
+IT
+	License plate code
+
+I
+GS1 GTIN prefix(es)
+
+800-839
+	UNDP country code
+
+ITA
+	WMO country code(s)
+
+IY
+	ITU callsign prefixes
+
+IAA-IZZ
+ Ivory Coast
+ISO 3166-1 numeric
+
+384
+	ISO 3166-1 alpha-3
+
+CIV
+	ISO 3166-1 alpha-2
+
+CI
+	ICAO airport code prefix(es)
+
+DI
+E.164 code(s)
+
++225
+	IOC country code
+
+CIV
+	Country code top-level domain
+
+.ci
+	ICAO aircraft regis. prefix(es)
+
+TU-
+E.212 mobile country code(s)
+
+612
+	NATO Three-letter code
+
+CIV
+	NATO Two-letter code (obsolete)
+
+IV
+	LOC MARC code(s)
+
+IV
+ITU Maritime ID(s)
+
+619
+	ITU letter code(s)
+
+CTI
+	FIPS country code(s)
+
+IV
+	License plate code
+
+CI
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+IVC[notes 1]
+	WMO country code(s)
+
+IV
+	ITU callsign prefixes
+
+TUA-TUZ
+
+ Jamaica
+ISO 3166-1 numeric
+
+388
+	ISO 3166-1 alpha-3
+
+JAM
+	ISO 3166-1 alpha-2
+
+JM
+	ICAO airport code prefix(es)
+
+MK
+E.164 code(s)
+
++1 876
+	IOC country code
+
+JAM
+	Country code top-level domain
+
+.jm
+	ICAO aircraft regis. prefix(es)
+
+6Y-
+E.212 mobile country code(s)
+
+338
+	NATO Three-letter code
+
+JAM
+	NATO Two-letter code (obsolete)
+
+JM
+	LOC MARC code(s)
+
+JM
+ITU Maritime ID(s)
+
+339
+	ITU letter code(s)
+
+JMC
+	FIPS country code(s)
+
+JM
+	License plate code
+
+JA
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+JAM
+	WMO country code(s)
+
+JM
+	ITU callsign prefixes
+
+6YA-6YZ
+ Japan
+ISO 3166-1 numeric
+
+392
+	ISO 3166-1 alpha-3
+
+JPN
+	ISO 3166-1 alpha-2
+
+JP
+	ICAO airport code prefix(es)
+
+RJ, RO
+E.164 code(s)
+
++81
+	IOC country code
+
+JPN
+	Country code top-level domain
+
+.jp
+	ICAO aircraft regis. prefix(es)
+
+JA-
+E.212 mobile country code(s)
+
+441
+	NATO Three-letter code
+
+JPN
+	NATO Two-letter code (obsolete)
+
+JA
+	LOC MARC code(s)
+
+JA
+ITU Maritime ID(s)
+
+431, 432
+	ITU letter code(s)
+
+J
+	FIPS country code(s)
+
+JA
+	License plate code
+
+J
+GS1 GTIN prefix(es)
+
+450-459
+	UNDP country code
+
+JPN
+	WMO country code(s)
+
+JP
+	ITU callsign prefixes
+
+7JA-7NZ,8JA-8NZ,JAA-JSZ
+ Jersey
+ISO 3166-1 numeric
+
+832
+	ISO 3166-1 alpha-3
+
+JEY
+	ISO 3166-1 alpha-2
+
+JE
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++44
+	IOC country code
+
+—
+	Country code top-level domain
+
+.je
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+JE
+	License plate code
+
+GBJ
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Jordan
+ISO 3166-1 numeric
+
+400
+	ISO 3166-1 alpha-3
+
+JOR
+	ISO 3166-1 alpha-2
+
+JO
+	ICAO airport code prefix(es)
+
+OJ
+E.164 code(s)
+
++962
+	IOC country code
+
+JOR
+	Country code top-level domain
+
+.jo
+	ICAO aircraft regis. prefix(es)
+
+JY-
+E.212 mobile country code(s)
+
+416
+	NATO Three-letter code
+
+JOR
+	NATO Two-letter code (obsolete)
+
+JO
+	LOC MARC code(s)
+
+JO
+ITU Maritime ID(s)
+
+438
+	ITU letter code(s)
+
+JOR
+	FIPS country code(s)
+
+JO
+	License plate code
+
+HKJ
+GS1 GTIN prefix(es)
+
+625
+	UNDP country code
+
+JOR
+	WMO country code(s)
+
+JD
+	ITU callsign prefixes
+
+JYA-JYZ
+ Kazakhstan
+ISO 3166-1 numeric
+
+398
+	ISO 3166-1 alpha-3
+
+KAZ
+	ISO 3166-1 alpha-2
+
+KZ
+	ICAO airport code prefix(es)
+
+UA
+E.164 code(s)
+
++7
+	IOC country code
+
+KAZ
+	Country code top-level domain
+
+.kz
+	ICAO aircraft regis. prefix(es)
+
+UN-
+E.212 mobile country code(s)
+
+401
+	NATO Three-letter code
+
+KAZ
+	NATO Two-letter code (obsolete)
+
+KZ
+	LOC MARC code(s)
+
+KZ
+ITU Maritime ID(s)
+
+436
+	ITU letter code(s)
+
+KAZ
+	FIPS country code(s)
+
+KZ
+	License plate code
+
+KZ
+GS1 GTIN prefix(es)
+
+487
+	UNDP country code
+
+KAZ
+	WMO country code(s)
+
+KZ
+	ITU callsign prefixes
+
+UNA-UQZ
+ Kenya
+ISO 3166-1 numeric
+
+404
+	ISO 3166-1 alpha-3
+
+KEN
+	ISO 3166-1 alpha-2
+
+KE
+	ICAO airport code prefix(es)
+
+HK
+E.164 code(s)
+
++254
+	IOC country code
+
+KEN
+	Country code top-level domain
+
+.ke
+	ICAO aircraft regis. prefix(es)
+
+5Y-
+E.212 mobile country code(s)
+
+639
+	NATO Three-letter code
+
+KEN
+	NATO Two-letter code (obsolete)
+
+KE
+	LOC MARC code(s)
+
+KE
+ITU Maritime ID(s)
+
+634
+	ITU letter code(s)
+
+KEN
+	FIPS country code(s)
+
+KE
+	License plate code
+
+EAK
+GS1 GTIN prefix(es)
+
+616
+	UNDP country code
+
+KEN
+	WMO country code(s)
+
+KN
+	ITU callsign prefixes
+
+5YA-5ZZ
+ Kiribati
+ISO 3166-1 numeric
+
+296
+	ISO 3166-1 alpha-3
+
+KIR
+	ISO 3166-1 alpha-2
+
+KI
+	ICAO airport code prefix(es)
+
+NG
+E.164 code(s)
+
++686
+	IOC country code
+
+KIR
+	Country code top-level domain
+
+.ki
+	ICAO aircraft regis. prefix(es)
+
+T3-
+E.212 mobile country code(s)
+
+545
+	NATO Three-letter code
+
+KIR
+	NATO Two-letter code (obsolete)
+
+KR
+	LOC MARC code(s)
+
+GB
+ITU Maritime ID(s)
+
+529
+	ITU letter code(s)
+
+KIR
+	FIPS country code(s)
+
+KR
+	License plate code
+
+KIR (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+KIR
+	WMO country code(s)
+
+KB
+	ITU callsign prefixes
+
+T3A-T3Z
+ North Korea
+ISO 3166-1 numeric
+
+408
+	ISO 3166-1 alpha-3
+
+PRK
+	ISO 3166-1 alpha-2
+
+KP
+	ICAO airport code prefix(es)
+
+ZK
+E.164 code(s)
+
++850
+	IOC country code
+
+PRK
+	Country code top-level domain
+
+.kp
+	ICAO aircraft regis. prefix(es)
+
+P-
+E.212 mobile country code(s)
+
+467
+	NATO Three-letter code
+
+PRK
+	NATO Two-letter code (obsolete)
+
+KN
+	LOC MARC code(s)
+
+KN
+ITU Maritime ID(s)
+
+445
+	ITU letter code(s)
+
+KRE
+	FIPS country code(s)
+
+KN
+	License plate code
+
+KP (unofficial)
+GS1 GTIN prefix(es)
+
+867
+	UNDP country code
+
+DRK[notes 1]
+	WMO country code(s)
+
+KR
+	ITU callsign prefixes
+
+HMA-HMZ, P5A-P9Z
+ South Korea
+ISO 3166-1 numeric
+
+410
+	ISO 3166-1 alpha-3
+
+KOR
+	ISO 3166-1 alpha-2
+
+KR
+	ICAO airport code prefix(es)
+
+RK
+E.164 code(s)
+
++82
+	IOC country code
+
+KOR
+	Country code top-level domain
+
+.kr
+	ICAO aircraft regis. prefix(es)
+
+HL-
+E.212 mobile country code(s)
+
+450
+	NATO Three-letter code
+
+KOR
+	NATO Two-letter code (obsolete)
+
+KS
+	LOC MARC code(s)
+
+KO
+ITU Maritime ID(s)
+
+440, 441
+	ITU letter code(s)
+
+KOR
+	FIPS country code(s)
+
+KS
+	License plate code
+
+ROK
+GS1 GTIN prefix(es)
+
+880
+	UNDP country code
+
+ROK[notes 2]
+	WMO country code(s)
+
+KO
+	ITU callsign prefixes
+
+6KA-6NZ, D7A-D9Z
+DSA-DTZ, HLA-HLZ
+ Kosovo
+ISO 3166-1 numeric
+
+-
+	ISO 3166-1 alpha-3
+
+-
+	ISO 3166-1 alpha-2
+
+XK
+	ICAO airport code prefix(es)
+
+BK
+E.164 code(s)
+
++383
+	IOC country code
+
+KOS
+	Country code top-level domain
+
+-
+	ICAO aircraft regis. prefix(es)
+
+Z6
+E.212 mobile country code(s)
+
+212
+	NATO Three-letter code
+
+-
+	NATO Two-letter code (obsolete)
+
+-
+	LOC MARC code(s)
+
+KV
+ITU Maritime ID(s)
+
+-
+	ITU letter code(s)
+
+-
+	FIPS country code(s)
+
+KV
+	License plate code
+
+RKS
+GS1 GTIN prefix(es)
+
+-
+	UNDP country code
+
+KOS
+	WMO country code(s)
+
+-
+	ITU callsign prefixes
+
+-
+ Kuwait
+ISO 3166-1 numeric
+
+414
+	ISO 3166-1 alpha-3
+
+KWT
+	ISO 3166-1 alpha-2
+
+KW
+	ICAO airport code prefix(es)
+
+OK
+E.164 code(s)
+
++965
+	IOC country code
+
+KUW
+	Country code top-level domain
+
+.kw
+	ICAO aircraft regis. prefix(es)
+
+9K-
+E.212 mobile country code(s)
+
+419
+	NATO Three-letter code
+
+KWT
+	NATO Two-letter code (obsolete)
+
+KU
+	LOC MARC code(s)
+
+KU
+ITU Maritime ID(s)
+
+447
+	ITU letter code(s)
+
+KWT
+	FIPS country code(s)
+
+KU
+	License plate code
+
+KWT
+GS1 GTIN prefix(es)
+
+627
+	UNDP country code
+
+KUW
+	WMO country code(s)
+
+KW
+	ITU callsign prefixes
+
+9KA-9KZ
+ Kyrgyzstan
+ISO 3166-1 numeric
+
+417
+	ISO 3166-1 alpha-3
+
+KGZ
+	ISO 3166-1 alpha-2
+
+KG
+	ICAO airport code prefix(es)
+
+UC
+E.164 code(s)
+
++996
+	IOC country code
+
+KGZ
+	Country code top-level domain
+
+.kg
+	ICAO aircraft regis. prefix(es)
+
+EX-
+E.212 mobile country code(s)
+
+437
+	NATO Three-letter code
+
+KGZ
+	NATO Two-letter code (obsolete)
+
+KG
+	LOC MARC code(s)
+
+KG
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+KGZ
+	FIPS country code(s)
+
+KG
+	License plate code
+
+KS
+GS1 GTIN prefix(es)
+
+470
+	UNDP country code
+
+KYR
+	WMO country code(s)
+
+KY
+	ITU callsign prefixes
+
+EXA-EXZ
+
+ Laos
+ISO 3166-1 numeric
+
+418
+	ISO 3166-1 alpha-3
+
+LAO
+	ISO 3166-1 alpha-2
+
+LA
+	ICAO airport code prefix(es)
+
+VL
+E.164 code(s)
+
++856
+	IOC country code
+
+LAO
+	Country code top-level domain
+
+.la
+	ICAO aircraft regis. prefix(es)
+
+RDPL-
+E.212 mobile country code(s)
+
+457
+	NATO Three-letter code
+
+LAO
+	NATO Two-letter code (obsolete)
+
+LA
+	LOC MARC code(s)
+
+LS
+ITU Maritime ID(s)
+
+531
+	ITU letter code(s)
+
+LAO
+	FIPS country code(s)
+
+LA
+	License plate code
+
+LAO
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+LAO
+	WMO country code(s)
+
+LA
+	ITU callsign prefixes
+
+XWA-XWZ
+ Latvia
+ISO 3166-1 numeric
+
+428
+	ISO 3166-1 alpha-3
+
+LVA
+	ISO 3166-1 alpha-2
+
+LV
+	ICAO airport code prefix(es)
+
+EV
+E.164 code(s)
+
++371
+	IOC country code
+
+LAT
+	Country code top-level domain
+
+.lv
+	ICAO aircraft regis. prefix(es)
+
+YL-
+E.212 mobile country code(s)
+
+247
+	NATO Three-letter code
+
+LVA
+	NATO Two-letter code (obsolete)
+
+LG
+	LOC MARC code(s)
+
+LV
+ITU Maritime ID(s)
+
+275
+	ITU letter code(s)
+
+LVA
+	FIPS country code(s)
+
+LG
+	License plate code
+
+LV
+GS1 GTIN prefix(es)
+
+475
+	UNDP country code
+
+LAT
+	WMO country code(s)
+
+LV
+	ITU callsign prefixes
+
+YLA-YLZ
+ Lebanon
+ISO 3166-1 numeric
+
+422
+	ISO 3166-1 alpha-3
+
+LBN
+	ISO 3166-1 alpha-2
+
+LB
+	ICAO airport code prefix(es)
+
+OL
+E.164 code(s)
+
++961
+	IOC country code
+
+LBN
+	Country code top-level domain
+
+.lb
+	ICAO aircraft regis. prefix(es)
+
+OD-
+E.212 mobile country code(s)
+
+415
+	NATO Three-letter code
+
+LBN
+	NATO Two-letter code (obsolete)
+
+LE
+	LOC MARC code(s)
+
+LE
+ITU Maritime ID(s)
+
+450
+	ITU letter code(s)
+
+LBN
+	FIPS country code(s)
+
+LE
+	License plate code
+
+RL
+GS1 GTIN prefix(es)
+
+528
+	UNDP country code
+
+LEB
+	WMO country code(s)
+
+LB
+	ITU callsign prefixes
+
+ODA-ODZ
+ Lesotho
+ISO 3166-1 numeric
+
+426
+	ISO 3166-1 alpha-3
+
+LSO
+	ISO 3166-1 alpha-2
+
+LS
+	ICAO airport code prefix(es)
+
+FX
+E.164 code(s)
+
++266
+	IOC country code
+
+LES
+	Country code top-level domain
+
+.ls
+	ICAO aircraft regis. prefix(es)
+
+7P-
+E.212 mobile country code(s)
+
+651
+	NATO Three-letter code
+
+LSO
+	NATO Two-letter code (obsolete)
+
+LT
+	LOC MARC code(s)
+
+LO
+ITU Maritime ID(s)
+
+644
+	ITU letter code(s)
+
+LSO
+	FIPS country code(s)
+
+LT
+	License plate code
+
+LS
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+LES
+	WMO country code(s)
+
+LS
+	ITU callsign prefixes
+
+7PA-7PZ
+ Liberia
+ISO 3166-1 numeric
+
+430
+	ISO 3166-1 alpha-3
+
+LBR
+	ISO 3166-1 alpha-2
+
+LR
+	ICAO airport code prefix(es)
+
+GL
+E.164 code(s)
+
++231
+	IOC country code
+
+LBR
+	Country code top-level domain
+
+.lr
+	ICAO aircraft regis. prefix(es)
+
+EL-
+E.212 mobile country code(s)
+
+618
+	NATO Three-letter code
+
+LBR
+	NATO Two-letter code (obsolete)
+
+LI
+	LOC MARC code(s)
+
+LB
+ITU Maritime ID(s)
+
+636, 637
+	ITU letter code(s)
+
+LBR
+	FIPS country code(s)
+
+LI
+	License plate code
+
+LB
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+LIR
+	WMO country code(s)
+
+LI
+	ITU callsign prefixes
+
+5LA-5MZ, 6ZA-6ZZ, A8A-A8Z
+D5A-D5Z, ELA-ELZ
+ Libya
+ISO 3166-1 numeric
+
+434
+	ISO 3166-1 alpha-3
+
+LBY
+	ISO 3166-1 alpha-2
+
+LY
+	ICAO airport code prefix(es)
+
+HL
+E.164 code(s)
+
++218
+	IOC country code
+
+LBA
+	Country code top-level domain
+
+.ly
+	ICAO aircraft regis. prefix(es)
+
+5A-
+E.212 mobile country code(s)
+
+606
+	NATO Three-letter code
+
+LBY
+	NATO Two-letter code (obsolete)
+
+LY
+	LOC MARC code(s)
+
+LY
+ITU Maritime ID(s)
+
+642
+	ITU letter code(s)
+
+LBY
+	FIPS country code(s)
+
+LY
+	License plate code
+
+LAR
+GS1 GTIN prefix(es)
+
+624
+	UNDP country code
+
+LIB
+	WMO country code(s)
+
+LY
+	ITU callsign prefixes
+
+5AA-5AZ
+ Liechtenstein
+ISO 3166-1 numeric
+
+438
+	ISO 3166-1 alpha-3
+
+LIE
+	ISO 3166-1 alpha-2
+
+LI
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++423
+	IOC country code
+
+LIE
+	Country code top-level domain
+
+.li
+	ICAO aircraft regis. prefix(es)
+
+HB-
+E.212 mobile country code(s)
+
+295
+	NATO Three-letter code
+
+LIE
+	NATO Two-letter code (obsolete)
+
+LS
+	LOC MARC code(s)
+
+LH
+ITU Maritime ID(s)
+
+252
+	ITU letter code(s)
+
+LIE
+	FIPS country code(s)
+
+LS
+	License plate code
+
+FL
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+LIE
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+HB / HB0 / HB3Y
+ Lithuania
+ISO 3166-1 numeric
+
+440
+	ISO 3166-1 alpha-3
+
+LTU
+	ISO 3166-1 alpha-2
+
+LT
+	ICAO airport code prefix(es)
+
+EY
+E.164 code(s)
+
++370
+	IOC country code
+
+LTU
+	Country code top-level domain
+
+.lt
+	ICAO aircraft regis. prefix(es)
+
+LY-
+E.212 mobile country code(s)
+
+246
+	NATO Three-letter code
+
+LTU
+	NATO Two-letter code (obsolete)
+
+LH
+	LOC MARC code(s)
+
+LI
+ITU Maritime ID(s)
+
+277
+	ITU letter code(s)
+
+LTU
+	FIPS country code(s)
+
+LH
+	License plate code
+
+LT
+GS1 GTIN prefix(es)
+
+477
+	UNDP country code
+
+LIT
+	WMO country code(s)
+
+LT
+	ITU callsign prefixes
+
+LYA-LYZ
+ Luxembourg
+ISO 3166-1 numeric
+
+442
+	ISO 3166-1 alpha-3
+
+LUX
+	ISO 3166-1 alpha-2
+
+LU
+	ICAO airport code prefix(es)
+
+EL
+E.164 code(s)
+
++352
+	IOC country code
+
+LUX
+	Country code top-level domain
+
+.lu
+	ICAO aircraft regis. prefix(es)
+
+LX-
+E.212 mobile country code(s)
+
+270
+	NATO Three-letter code
+
+LUX
+	NATO Two-letter code (obsolete)
+
+LU
+	LOC MARC code(s)
+
+LU
+ITU Maritime ID(s)
+
+253
+	ITU letter code(s)
+
+LUX
+	FIPS country code(s)
+
+LU
+	License plate code
+
+L
+GS1 GTIN prefix(es)
+
+540-549
+	UNDP country code
+
+LUX
+	WMO country code(s)
+
+BX
+	ITU callsign prefixes
+
+LXA-LXZ
+
+ Macau
+ISO 3166-1 numeric
+
+446
+	ISO 3166-1 alpha-3
+
+MAC
+	ISO 3166-1 alpha-2
+
+MO
+	ICAO airport code prefix(es)
+
+VM
+E.164 code(s)
+
++853
+	IOC country code
+
+—
+	Country code top-level domain
+
+.mo
+	ICAO aircraft regis. prefix(es)
+
+B-M
+E.212 mobile country code(s)
+
+455
+	NATO Three-letter code
+
+MAC
+	NATO Two-letter code (obsolete)
+
+MC
+	LOC MARC code(s)
+
+MH
+ITU Maritime ID(s)
+
+453
+	ITU letter code(s)
+
+MAC
+	FIPS country code(s)
+
+MC
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+958
+	UNDP country code
+
+MAC
+	WMO country code(s)
+
+MU
+	ITU callsign prefixes
+
+XXA-XXZ
+ Macedonia
+ISO 3166-1 numeric
+
+807
+	ISO 3166-1 alpha-3
+
+MKD
+	ISO 3166-1 alpha-2
+
+MK
+	ICAO airport code prefix(es)
+
+LW
+E.164 code(s)
+
++389
+	IOC country code
+
+MKD
+	Country code top-level domain
+
+.mk
+	ICAO aircraft regis. prefix(es)
+
+Z3-
+E.212 mobile country code(s)
+
+294
+	NATO Three-letter code
+
+FYR
+	NATO Two-letter code (obsolete)
+
+FY
+	LOC MARC code(s)
+
+XN
+ITU Maritime ID(s)
+
+274
+	ITU letter code(s)
+
+MKD
+	FIPS country code(s)
+
+MK
+	License plate code
+
+MK
+GS1 GTIN prefix(es)
+
+531
+	UNDP country code
+
+MCD
+	WMO country code(s)
+
+MJ
+	ITU callsign prefixes
+
+Z3A-Z3Z
+ Madagascar
+ISO 3166-1 numeric
+
+450
+	ISO 3166-1 alpha-3
+
+MDG
+	ISO 3166-1 alpha-2
+
+MG
+	ICAO airport code prefix(es)
+
+FMM, FMN, FMS
+E.164 code(s)
+
++261
+	IOC country code
+
+MAD
+	Country code top-level domain
+
+.mg
+	ICAO aircraft regis. prefix(es)
+
+5R-
+E.212 mobile country code(s)
+
+646
+	NATO Three-letter code
+
+MDG
+	NATO Two-letter code (obsolete)
+
+MA
+	LOC MARC code(s)
+
+MG
+ITU Maritime ID(s)
+
+647
+	ITU letter code(s)
+
+MDG
+	FIPS country code(s)
+
+MA
+	License plate code
+
+RM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MAG
+	WMO country code(s)
+
+MG
+	ITU callsign prefixes
+
+5RA-5SZ, 6XA-6XZ
+ Malawi
+ISO 3166-1 numeric
+
+454
+	ISO 3166-1 alpha-3
+
+MWI
+	ISO 3166-1 alpha-2
+
+MW
+	ICAO airport code prefix(es)
+
+FW
+E.164 code(s)
+
++265
+	IOC country code
+
+MAW
+	Country code top-level domain
+
+.mw
+	ICAO aircraft regis. prefix(es)
+
+7Q-
+E.212 mobile country code(s)
+
+650
+	NATO Three-letter code
+
+MWI
+	NATO Two-letter code (obsolete)
+
+MI
+	LOC MARC code(s)
+
+MW
+ITU Maritime ID(s)
+
+655
+	ITU letter code(s)
+
+MWI
+	FIPS country code(s)
+
+MI
+	License plate code
+
+MW
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MLW
+	WMO country code(s)
+
+MW
+	ITU callsign prefixes
+
+7QA-7QZ
+ Malaysia
+ISO 3166-1 numeric
+
+458
+	ISO 3166-1 alpha-3
+
+MYS
+	ISO 3166-1 alpha-2
+
+MY
+	ICAO airport code prefix(es)
+
+WB, WM
+E.164 code(s)
+
++60
+	IOC country code
+
+MAS
+	Country code top-level domain
+
+.my
+	ICAO aircraft regis. prefix(es)
+
+9M-
+E.212 mobile country code(s)
+
+502
+	NATO Three-letter code
+
+MYS
+	NATO Two-letter code (obsolete)
+
+MY
+	LOC MARC code(s)
+
+MY
+ITU Maritime ID(s)
+
+533
+	ITU letter code(s)
+
+MLA
+	FIPS country code(s)
+
+MY
+	License plate code
+
+MAL
+GS1 GTIN prefix(es)
+
+955
+	UNDP country code
+
+MAL
+	WMO country code(s)
+
+MS
+	ITU callsign prefixes
+
+9MA-9MZ, 9WA-9WZ
+ Maldives
+ISO 3166-1 numeric
+
+462
+	ISO 3166-1 alpha-3
+
+MDV
+	ISO 3166-1 alpha-2
+
+MV
+	ICAO airport code prefix(es)
+
+VR
+E.164 code(s)
+
++960
+	IOC country code
+
+MDV
+	Country code top-level domain
+
+.mv
+	ICAO aircraft regis. prefix(es)
+
+8Q-
+E.212 mobile country code(s)
+
+472
+	NATO Three-letter code
+
+MDV
+	NATO Two-letter code (obsolete)
+
+MV
+	LOC MARC code(s)
+
+XC
+ITU Maritime ID(s)
+
+455
+	ITU letter code(s)
+
+MLD
+	FIPS country code(s)
+
+MV
+	License plate code
+
+MV (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MDV
+	WMO country code(s)
+
+MV
+	ITU callsign prefixes
+
+8QA-8QZ
+ Mali
+ISO 3166-1 numeric
+
+466
+	ISO 3166-1 alpha-3
+
+MLI
+	ISO 3166-1 alpha-2
+
+ML
+	ICAO airport code prefix(es)
+
+GA
+E.164 code(s)
+
++223
+	IOC country code
+
+MLI
+	Country code top-level domain
+
+.ml
+	ICAO aircraft regis. prefix(es)
+
+TZ-
+E.212 mobile country code(s)
+
+610
+	NATO Three-letter code
+
+MLI
+	NATO Two-letter code (obsolete)
+
+ML
+	LOC MARC code(s)
+
+ML
+ITU Maritime ID(s)
+
+649
+	ITU letter code(s)
+
+MLI
+	FIPS country code(s)
+
+ML
+	License plate code
+
+RMM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MLI
+	WMO country code(s)
+
+MI
+	ITU callsign prefixes
+
+TZA-TZZ
+ Malta
+ISO 3166-1 numeric
+
+470
+	ISO 3166-1 alpha-3
+
+MLT
+	ISO 3166-1 alpha-2
+
+MT
+	ICAO airport code prefix(es)
+
+LM
+E.164 code(s)
+
++356
+	IOC country code
+
+MLT
+	Country code top-level domain
+
+.mt
+	ICAO aircraft regis. prefix(es)
+
+9H-
+E.212 mobile country code(s)
+
+278
+	NATO Three-letter code
+
+MLT
+	NATO Two-letter code (obsolete)
+
+MT
+	LOC MARC code(s)
+
+MM
+ITU Maritime ID(s)
+
+215, 248, 249, 256
+	ITU letter code(s)
+
+MLT
+	FIPS country code(s)
+
+MT
+	License plate code
+
+M
+GS1 GTIN prefix(es)
+
+535
+	UNDP country code
+
+MAT
+	WMO country code(s)
+
+ML
+	ITU callsign prefixes
+
+9HA-9HZ
+ Marshall Islands
+ISO 3166-1 numeric
+
+584
+	ISO 3166-1 alpha-3
+
+MHL
+	ISO 3166-1 alpha-2
+
+MH
+	ICAO airport code prefix(es)
+
+EN, PK
+E.164 code(s)
+
++692
+	IOC country code
+
+MHL
+	Country code top-level domain
+
+.mh
+	ICAO aircraft regis. prefix(es)
+
+V7-
+E.212 mobile country code(s)
+
+551
+	NATO Three-letter code
+
+MHL
+	NATO Two-letter code (obsolete)
+
+RM
+	LOC MARC code(s)
+
+XE
+ITU Maritime ID(s)
+
+538
+	ITU letter code(s)
+
+MHL
+	FIPS country code(s)
+
+RM
+	License plate code
+
+MH (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MAS
+	WMO country code(s)
+
+MH
+	ITU callsign prefixes
+
+V7A-V7Z
+ Martinique
+ISO 3166-1 numeric
+
+474
+	ISO 3166-1 alpha-3
+
+MTQ
+	ISO 3166-1 alpha-2
+
+MQ
+	ICAO airport code prefix(es)
+
+TF
+E.164 code(s)
+
++596
+	IOC country code
+
+—
+	Country code top-level domain
+
+.mq
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+340
+	NATO Three-letter code
+
+MTQ
+	NATO Two-letter code (obsolete)
+
+MB
+	LOC MARC code(s)
+
+MQ
+ITU Maritime ID(s)
+
+347
+	ITU letter code(s)
+
+MRT
+	FIPS country code(s)
+
+MB
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MAQ
+	WMO country code(s)
+
+MR
+	ITU callsign prefixes
+
+—
+ Mauritania
+ISO 3166-1 numeric
+
+478
+	ISO 3166-1 alpha-3
+
+MRT
+	ISO 3166-1 alpha-2
+
+MR
+	ICAO airport code prefix(es)
+
+GQ
+E.164 code(s)
+
++222
+	IOC country code
+
+MTN
+	Country code top-level domain
+
+.mr
+	ICAO aircraft regis. prefix(es)
+
+5T-
+E.212 mobile country code(s)
+
+609
+	NATO Three-letter code
+
+MRT
+	NATO Two-letter code (obsolete)
+
+MR
+	LOC MARC code(s)
+
+MU
+ITU Maritime ID(s)
+
+654
+	ITU letter code(s)
+
+MTN
+	FIPS country code(s)
+
+MR
+	License plate code
+
+RIM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MAU
+	WMO country code(s)
+
+MT
+	ITU callsign prefixes
+
+5TA-5TZ
+ Mauritius
+ISO 3166-1 numeric
+
+480
+	ISO 3166-1 alpha-3
+
+MUS
+	ISO 3166-1 alpha-2
+
+MU
+	ICAO airport code prefix(es)
+
+FI
+E.164 code(s)
+
++230
+	IOC country code
+
+MRI
+	Country code top-level domain
+
+.mu
+	ICAO aircraft regis. prefix(es)
+
+3B-
+E.212 mobile country code(s)
+
+617
+	NATO Three-letter code
+
+MUS
+	NATO Two-letter code (obsolete)
+
+MP
+	LOC MARC code(s)
+
+MF
+ITU Maritime ID(s)
+
+645
+	ITU letter code(s)
+
+MAU
+	FIPS country code(s)
+
+MP
+	License plate code
+
+MS
+GS1 GTIN prefix(es)
+
+609
+	UNDP country code
+
+MAR
+	WMO country code(s)
+
+MA
+	ITU callsign prefixes
+
+3BA-3BZ
+ Mayotte
+ISO 3166-1 numeric
+
+175
+	ISO 3166-1 alpha-3
+
+MYT
+	ISO 3166-1 alpha-2
+
+YT
+	ICAO airport code prefix(es)
+
+FM
+E.164 code(s)
+
++269
+	IOC country code
+
+—
+	Country code top-level domain
+
+.yt
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+MYT
+	NATO Two-letter code (obsolete)
+
+ME
+	LOC MARC code(s)
+
+OT
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+MYT
+	FIPS country code(s)
+
+MF
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Mexico
+ISO 3166-1 numeric
+
+484
+	ISO 3166-1 alpha-3
+
+MEX
+	ISO 3166-1 alpha-2
+
+MX
+	ICAO airport code prefix(es)
+
+MM
+E.164 code(s)
+
++52
+	IOC country code
+
+MEX
+	Country code top-level domain
+
+.mx
+	ICAO aircraft regis. prefix(es)
+
+XA-, XB-, XC-
+E.212 mobile country code(s)
+
+334
+	NATO Three-letter code
+
+MEX
+	NATO Two-letter code (obsolete)
+
+MX
+	LOC MARC code(s)
+
+MX
+ITU Maritime ID(s)
+
+345
+	ITU letter code(s)
+
+MEX
+	FIPS country code(s)
+
+MX
+	License plate code
+
+MEX
+GS1 GTIN prefix(es)
+
+750
+	UNDP country code
+
+MEX
+	WMO country code(s)
+
+MX
+	ITU callsign prefixes
+
+4AA-4CZ,6DA-6JZ,XAA-XIZ
+ Federated States of Micronesia
+ISO 3166-1 numeric
+
+582
+	ISO 3166-1 alpha-3
+
+FSM
+	ISO 3166-1 alpha-2
+
+FM
+	ICAO airport code prefix(es)
+
+PT
+E.164 code(s)
+
++691
+	IOC country code
+
+FSM
+	Country code top-level domain
+
+.fm
+	ICAO aircraft regis. prefix(es)
+
+V6-
+E.212 mobile country code(s)
+
+550
+	NATO Three-letter code
+
+FSM
+	NATO Two-letter code (obsolete)
+
+FM
+	LOC MARC code(s)
+
+FM
+ITU Maritime ID(s)
+
+510
+	ITU letter code(s)
+
+FSM
+	FIPS country code(s)
+
+FM
+	License plate code
+
+FSM (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MIC
+	WMO country code(s)
+
+KA
+	ITU callsign prefixes
+
+V6A—V6Z
+ Moldova
+ISO 3166-1 numeric
+
+498
+	ISO 3166-1 alpha-3
+
+MDA
+	ISO 3166-1 alpha-2
+
+MD
+	ICAO airport code prefix(es)
+
+LU
+E.164 code(s)
+
++373
+	IOC country code
+
+MDA
+	Country code top-level domain
+
+.md
+	ICAO aircraft regis. prefix(es)
+
+ER-
+E.212 mobile country code(s)
+
+259
+	NATO Three-letter code
+
+MDA
+	NATO Two-letter code (obsolete)
+
+MD
+	LOC MARC code(s)
+
+MV
+ITU Maritime ID(s)
+
+214
+	ITU letter code(s)
+
+MDA
+	FIPS country code(s)
+
+MD
+	License plate code
+
+MD
+GS1 GTIN prefix(es)
+
+484
+	UNDP country code
+
+MOL
+	WMO country code(s)
+
+RM
+	ITU callsign prefixes
+
+ERA-ERZ
+ Monaco
+ISO 3166-1 numeric
+
+492
+	ISO 3166-1 alpha-3
+
+MCO
+	ISO 3166-1 alpha-2
+
+MC
+	ICAO airport code prefix(es)
+
+LN
+E.164 code(s)
+
++377
+	IOC country code
+
+MON
+	Country code top-level domain
+
+.mc
+	ICAO aircraft regis. prefix(es)
+
+3A-
+E.212 mobile country code(s)
+
+212
+	NATO Three-letter code
+
+MCO
+	NATO Two-letter code (obsolete)
+
+MN
+	LOC MARC code(s)
+
+MC
+ITU Maritime ID(s)
+
+254
+	ITU letter code(s)
+
+MCO
+	FIPS country code(s)
+
+MN
+	License plate code
+
+MC
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MNC
+	WMO country code(s)
+
+M3
+	ITU callsign prefixes
+
+3AA-3AZ
+ Mongolia
+ISO 3166-1 numeric
+
+496
+	ISO 3166-1 alpha-3
+
+MNG
+	ISO 3166-1 alpha-2
+
+MN
+	ICAO airport code prefix(es)
+
+ZM
+E.164 code(s)
+
++976
+	IOC country code
+
+MNG
+	Country code top-level domain
+
+.mn
+	ICAO aircraft regis. prefix(es)
+
+JU-
+E.212 mobile country code(s)
+
+428
+	NATO Three-letter code
+
+MNG
+	NATO Two-letter code (obsolete)
+
+MG
+	LOC MARC code(s)
+
+MP
+ITU Maritime ID(s)
+
+457
+	ITU letter code(s)
+
+MNG
+	FIPS country code(s)
+
+MG
+	License plate code
+
+MNG
+GS1 GTIN prefix(es)
+
+865
+	UNDP country code
+
+MON
+	WMO country code(s)
+
+MO
+	ITU callsign prefixes
+
+JTA-JVZ
+ Montenegro
+ISO 3166-1 numeric
+
+499
+	ISO 3166-1 alpha-3
+
+MNE
+	ISO 3166-1 alpha-2
+
+ME
+	ICAO airport code prefix(es)
+
+LY
+E.164 code(s)
+
++382
+	IOC country code
+
+MNE
+	Country code top-level domain
+
+.me
+	ICAO aircraft regis. prefix(es)
+
+4O-
+E.212 mobile country code(s)
+
+297
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+MO
+ITU Maritime ID(s)
+
+262
+	ITU letter code(s)
+
+MNE
+	FIPS country code(s)
+
+MJ
+	License plate code
+
+MNE
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+M4
+	ITU callsign prefixes
+
+4OA-4OZ
+ Montserrat
+ISO 3166-1 numeric
+
+500
+	ISO 3166-1 alpha-3
+
+MSR
+	ISO 3166-1 alpha-2
+
+MS
+	ICAO airport code prefix(es)
+
+TR
+E.164 code(s)
+
++1 664
+	IOC country code
+
+—
+	Country code top-level domain
+
+.ms
+	ICAO aircraft regis. prefix(es)
+
+VP-M-
+E.212 mobile country code(s)
+
+354
+	NATO Three-letter code
+
+MSR
+	NATO Two-letter code (obsolete)
+
+MH
+	LOC MARC code(s)
+
+MJ
+ITU Maritime ID(s)
+
+348
+	ITU letter code(s)
+
+MSR
+	FIPS country code(s)
+
+MH
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MOT
+	WMO country code(s)
+
+M2
+	ITU callsign prefixes
+
+—
+ Morocco
+ISO 3166-1 numeric
+
+504
+	ISO 3166-1 alpha-3
+
+MAR
+	ISO 3166-1 alpha-2
+
+MA
+	ICAO airport code prefix(es)
+
+GM
+E.164 code(s)
+
++212
+	IOC country code
+
+MAR
+	Country code top-level domain
+
+.ma
+	ICAO aircraft regis. prefix(es)
+
+CN-
+E.212 mobile country code(s)
+
+604
+	NATO Three-letter code
+
+MAR
+	NATO Two-letter code (obsolete)
+
+MO
+	LOC MARC code(s)
+
+MR
+ITU Maritime ID(s)
+
+242
+	ITU letter code(s)
+
+MRC
+	FIPS country code(s)
+
+MO
+	License plate code
+
+MA
+GS1 GTIN prefix(es)
+
+611
+	UNDP country code
+
+MOR
+	WMO country code(s)
+
+MC
+	ITU callsign prefixes
+
+5CA-5GZ, CNA-CNZ
+ Mozambique
+ISO 3166-1 numeric
+
+508
+	ISO 3166-1 alpha-3
+
+MOZ
+	ISO 3166-1 alpha-2
+
+MZ
+	ICAO airport code prefix(es)
+
+FQ
+E.164 code(s)
+
++258
+	IOC country code
+
+MOZ
+	Country code top-level domain
+
+.mz
+	ICAO aircraft regis. prefix(es)
+
+C9-
+E.212 mobile country code(s)
+
+643
+	NATO Three-letter code
+
+MOZ
+	NATO Two-letter code (obsolete)
+
+MZ
+	LOC MARC code(s)
+
+MZ
+ITU Maritime ID(s)
+
+650
+	ITU letter code(s)
+
+MOZ
+	FIPS country code(s)
+
+MZ
+	License plate code
+
+MOC
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+MOZ
+	WMO country code(s)
+
+MZ
+	ITU callsign prefixes
+
+C8A-C9Z
+
+ Namibia
+ISO 3166-1 numeric
+
+516
+	ISO 3166-1 alpha-3
+
+NAM
+	ISO 3166-1 alpha-2
+
+NA
+	ICAO airport code prefix(es)
+
+FY
+E.164 code(s)
+
++264
+	IOC country code
+
+NAM
+	Country code top-level domain
+
+.na
+	ICAO aircraft regis. prefix(es)
+
+V5-
+E.212 mobile country code(s)
+
+649
+	NATO Three-letter code
+
+NAM
+	NATO Two-letter code (obsolete)
+
+WA
+	LOC MARC code(s)
+
+SX
+ITU Maritime ID(s)
+
+659
+	ITU letter code(s)
+
+NMB
+	FIPS country code(s)
+
+WA
+	License plate code
+
+NAM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NAM
+	WMO country code(s)
+
+NM
+	ITU callsign prefixes
+
+V5A-V5Z
+ Nauru
+ISO 3166-1 numeric
+
+520
+	ISO 3166-1 alpha-3
+
+NRU
+	ISO 3166-1 alpha-2
+
+NR
+	ICAO airport code prefix(es)
+
+AN
+E.164 code(s)
+
++674
+	IOC country code
+
+NRU
+	Country code top-level domain
+
+.nr
+	ICAO aircraft regis. prefix(es)
+
+C2-
+E.212 mobile country code(s)
+
+536
+	NATO Three-letter code
+
+NRU
+	NATO Two-letter code (obsolete)
+
+NR
+	LOC MARC code(s)
+
+NU
+ITU Maritime ID(s)
+
+544
+	ITU letter code(s)
+
+NRU
+	FIPS country code(s)
+
+NR
+	License plate code
+
+NAU
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NAU
+	WMO country code(s)
+
+NW
+	ITU callsign prefixes
+
+C2A-C2Z
+   Nepal
+ISO 3166-1 numeric
+
+524
+	ISO 3166-1 alpha-3
+
+NPL
+	ISO 3166-1 alpha-2
+
+NP
+	ICAO airport code prefix(es)
+
+VN
+E.164 code(s)
+
++977
+	IOC country code
+
+NEP
+	Country code top-level domain
+
+.np
+	ICAO aircraft regis. prefix(es)
+
+9N-
+E.212 mobile country code(s)
+
+429
+	NATO Three-letter code
+
+NPL
+	NATO Two-letter code (obsolete)
+
+NP
+	LOC MARC code(s)
+
+NP
+ITU Maritime ID(s)
+
+459
+	ITU letter code(s)
+
+NPL
+	FIPS country code(s)
+
+NP
+	License plate code
+
+NEP
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NEP
+	WMO country code(s)
+
+NP
+	ITU callsign prefixes
+
+9NA-9NZ
+ Netherlands
+ISO 3166-1 numeric
+
+528
+	ISO 3166-1 alpha-3
+
+NLD
+	ISO 3166-1 alpha-2
+
+NL
+	ICAO airport code prefix(es)
+
+EH
+E.164 code(s)
+
++31
+	IOC country code
+
+NED
+	Country code top-level domain
+
+.nl
+	ICAO aircraft regis. prefix(es)
+
+PH-
+E.212 mobile country code(s)
+
+204
+	NATO Three-letter code
+
+NLD
+	NATO Two-letter code (obsolete)
+
+NL
+	LOC MARC code(s)
+
+NE
+ITU Maritime ID(s)
+
+244, 245, 246
+	ITU letter code(s)
+
+HOL
+	FIPS country code(s)
+
+NL
+	License plate code
+
+NL
+GS1 GTIN prefix(es)
+
+870-879
+	UNDP country code
+
+NET
+	WMO country code(s)
+
+NL
+	ITU callsign prefixes
+
+PAA-PIZ
+ New Caledonia
+ISO 3166-1 numeric
+
+540
+	ISO 3166-1 alpha-3
+
+NCL
+	ISO 3166-1 alpha-2
+
+NC
+	ICAO airport code prefix(es)
+
+NW
+E.164 code(s)
+
++687
+	IOC country code
+
+—
+	Country code top-level domain
+
+.nc
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+546
+	NATO Three-letter code
+
+NCL
+	NATO Two-letter code (obsolete)
+
+NC
+	LOC MARC code(s)
+
+NL
+ITU Maritime ID(s)
+
+540
+	ITU letter code(s)
+
+NCL
+	FIPS country code(s)
+
+NC
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NCA
+	WMO country code(s)
+
+NC
+	ITU callsign prefixes
+
+—
+ New Zealand
+ISO 3166-1 numeric
+
+554
+	ISO 3166-1 alpha-3
+
+NZL
+	ISO 3166-1 alpha-2
+
+NZ
+	ICAO airport code prefix(es)
+
+NZ, PL
+E.164 code(s)
+
++64
+	IOC country code
+
+NZL
+	Country code top-level domain
+
+.nz
+	ICAO aircraft regis. prefix(es)
+
+ZK-, ZL-, ZM-
+E.212 mobile country code(s)
+
+530
+	NATO Three-letter code
+
+NZL
+	NATO Two-letter code (obsolete)
+
+NZ
+	LOC MARC code(s)
+
+NZ
+ITU Maritime ID(s)
+
+512
+	ITU letter code(s)
+
+NZL
+	FIPS country code(s)
+
+NZ
+	License plate code
+
+NZ
+GS1 GTIN prefix(es)
+
+940-949
+	UNDP country code
+
+NZE
+	WMO country code(s)
+
+NZ
+	ITU callsign prefixes
+
+ZKA-ZMZ
+ Nicaragua
+ISO 3166-1 numeric
+
+558
+	ISO 3166-1 alpha-3
+
+NIC
+	ISO 3166-1 alpha-2
+
+NI
+	ICAO airport code prefix(es)
+
+MN
+E.164 code(s)
+
++505
+	IOC country code
+
+NCA
+	Country code top-level domain
+
+.ni
+	ICAO aircraft regis. prefix(es)
+
+YN-
+E.212 mobile country code(s)
+
+710
+	NATO Three-letter code
+
+NIC
+	NATO Two-letter code (obsolete)
+
+NU
+	LOC MARC code(s)
+
+NQ
+ITU Maritime ID(s)
+
+350
+	ITU letter code(s)
+
+NCG
+	FIPS country code(s)
+
+NU
+	License plate code
+
+NIC
+GS1 GTIN prefix(es)
+
+743
+	UNDP country code
+
+NIC
+	WMO country code(s)
+
+NK
+	ITU callsign prefixes
+
+H6A-H7Z,HTA-HTZ,YNA-YNZ
+ Niger
+ISO 3166-1 numeric
+
+562
+	ISO 3166-1 alpha-3
+
+NER
+	ISO 3166-1 alpha-2
+
+NE
+	ICAO airport code prefix(es)
+
+DR
+E.164 code(s)
+
++227
+	IOC country code
+
+NIG
+	Country code top-level domain
+
+.ne
+	ICAO aircraft regis. prefix(es)
+
+5U-
+E.212 mobile country code(s)
+
+614
+	NATO Three-letter code
+
+NER
+	NATO Two-letter code (obsolete)
+
+NG
+	LOC MARC code(s)
+
+NG
+ITU Maritime ID(s)
+
+656
+	ITU letter code(s)
+
+NGR
+	FIPS country code(s)
+
+NG
+	License plate code
+
+RN
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NER
+	WMO country code(s)
+
+NR
+	ITU callsign prefixes
+
+5UA-5UZ
+ Nigeria
+ISO 3166-1 numeric
+
+566
+	ISO 3166-1 alpha-3
+
+NGA
+	ISO 3166-1 alpha-2
+
+NG
+	ICAO airport code prefix(es)
+
+DN
+E.164 code(s)
+
++234
+	IOC country code
+
+NGR
+	Country code top-level domain
+
+.ng
+	ICAO aircraft regis. prefix(es)
+
+5N-
+E.212 mobile country code(s)
+
+234
+	NATO Three-letter code
+
+NGA
+	NATO Two-letter code (obsolete)
+
+NI
+	LOC MARC code(s)
+
+NR
+ITU Maritime ID(s)
+
+657
+	ITU letter code(s)
+
+NIG
+	FIPS country code(s)
+
+NI
+	License plate code
+
+WAN
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NIR
+	WMO country code(s)
+
+NI
+	ITU callsign prefixes
+
+5NA-5OZ
+ Niue
+ISO 3166-1 numeric
+
+570
+	ISO 3166-1 alpha-3
+
+NIU
+	ISO 3166-1 alpha-2
+
+NU
+	ICAO airport code prefix(es)
+
+NI
+E.164 code(s)
+
++683
+	IOC country code
+
+—
+	Country code top-level domain
+
+.nu
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+555
+	NATO Three-letter code
+
+NIU
+	NATO Two-letter code (obsolete)
+
+NE
+	LOC MARC code(s)
+
+XH
+ITU Maritime ID(s)
+
+542
+	ITU letter code(s)
+
+NIU
+	FIPS country code(s)
+
+NE
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+NIU
+	WMO country code(s)
+
+N1
+	ITU callsign prefixes
+
+—
+ Norfolk Island
+ISO 3166-1 numeric
+
+574
+	ISO 3166-1 alpha-3
+
+NFK
+	ISO 3166-1 alpha-2
+
+NF
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++672
+	IOC country code
+
+—
+	Country code top-level domain
+
+.nf
+	ICAO aircraft regis. prefix(es)
+
+VH-
+E.212 mobile country code(s)
+
+505
+	NATO Three-letter code
+
+NFK
+	NATO Two-letter code (obsolete)
+
+NF
+	LOC MARC code(s)
+
+NX
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+NFK
+	FIPS country code(s)
+
+NF
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Northern Mariana Islands
+ISO 3166-1 numeric
+
+580
+	ISO 3166-1 alpha-3
+
+MNP
+	ISO 3166-1 alpha-2
+
+MP
+	ICAO airport code prefix(es)
+
+PG
+E.164 code(s)
+
++1 670
+	IOC country code
+
+—
+	Country code top-level domain
+
+.mp
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+534
+	NATO Three-letter code
+
+MNP
+	NATO Two-letter code (obsolete)
+
+CQ
+	LOC MARC code(s)
+
+NW
+ITU Maritime ID(s)
+
+536
+	ITU letter code(s)
+
+MRA
+	FIPS country code(s)
+
+CQ
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+MY
+	ITU callsign prefixes
+
+—
+ Norway
+ISO 3166-1 numeric
+
+578
+	ISO 3166-1 alpha-3
+
+NOR
+	ISO 3166-1 alpha-2
+
+NO
+	ICAO airport code prefix(es)
+
+EN
+E.164 code(s)
+
++47
+	IOC country code
+
+NOR
+	Country code top-level domain
+
+.no
+	ICAO aircraft regis. prefix(es)
+
+LN-
+E.212 mobile country code(s)
+
+242
+	NATO Three-letter code
+
+NOR
+	NATO Two-letter code (obsolete)
+
+NO
+	LOC MARC code(s)
+
+NO
+ITU Maritime ID(s)
+
+257, 258, 259
+	ITU letter code(s)
+
+NOR
+	FIPS country code(s)
+
+NO
+	License plate code
+
+N
+GS1 GTIN prefix(es)
+
+700-709
+	UNDP country code
+
+NOR
+	WMO country code(s)
+
+NO
+	ITU callsign prefixes
+
+3YA-3YZ,JWA-JXZ,LAA-LNZ
+
+ Oman
+ISO 3166-1 numeric
+
+512
+	ISO 3166-1 alpha-3
+
+OMN
+	ISO 3166-1 alpha-2
+
+OM
+	ICAO airport code prefix(es)
+
+OO
+E.164 code(s)
+
++968
+	IOC country code
+
+OMA
+	Country code top-level domain
+
+.om
+	ICAO aircraft regis. prefix(es)
+
+A4O-
+E.212 mobile country code(s)
+
+422
+	NATO Three-letter code
+
+OMN
+	NATO Two-letter code (obsolete)
+
+MU
+	LOC MARC code(s)
+
+MK
+ITU Maritime ID(s)
+
+461
+	ITU letter code(s)
+
+OMA
+	FIPS country code(s)
+
+MU
+	License plate code
+
+OM (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+OMA
+	WMO country code(s)
+
+OM
+	ITU callsign prefixes
+
+A4A-A4Z
+ Pakistan
+ISO 3166-1 numeric
+
+586
+	ISO 3166-1 alpha-3
+
+PAK
+	ISO 3166-1 alpha-2
+
+PK
+	ICAO airport code prefix(es)
+
+OP
+E.164 code(s)
+
++92
+	IOC country code
+
+PAK
+	Country code top-level domain
+
+.pk
+	ICAO aircraft regis. prefix(es)
+
+AP-
+E.212 mobile country code(s)
+
+410
+	NATO Three-letter code
+
+PAK
+	NATO Two-letter code (obsolete)
+
+PK
+	LOC MARC code(s)
+
+PK
+ITU Maritime ID(s)
+
+463
+	ITU letter code(s)
+
+PAK
+	FIPS country code(s)
+
+PK
+	License plate code
+
+PK
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+PAK
+	WMO country code(s)
+
+PK
+	ITU callsign prefixes
+
+6PA-6SZ, APA-ASZ
+ Palau
+ISO 3166-1 numeric
+
+585
+	ISO 3166-1 alpha-3
+
+PLW
+	ISO 3166-1 alpha-2
+
+PW
+	ICAO airport code prefix(es)
+
+PT
+E.164 code(s)
+
++680
+	IOC country code
+
+PLW
+	Country code top-level domain
+
+.pw
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+552
+	NATO Three-letter code
+
+PLW
+	NATO Two-letter code (obsolete)
+
+PS
+	LOC MARC code(s)
+
+PW
+ITU Maritime ID(s)
+
+511
+	ITU letter code(s)
+
+PLW
+	FIPS country code(s)
+
+PS
+	License plate code
+
+PAL (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TTP[notes 1]
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+T8A-T8Z
+ Palestine
+ISO 3166-1 numeric
+
+275
+	ISO 3166-1 alpha-3
+
+PSE
+	ISO 3166-1 alpha-2
+
+PS
+	ICAO airport code prefix(es)
+
+OJ, LV
+E.164 code(s)
+
++970
+	IOC country code
+
+PLE
+	Country code top-level domain
+
+.ps
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+PSE
+	NATO Two-letter code (obsolete)
+
+PS[notes 2]
+	LOC MARC code(s)
+
+GZ, WJ
+ITU Maritime ID(s)
+
+443
+	ITU letter code(s)
+
+XGZ, XWB
+	FIPS country code(s)
+
+GZ, WE
+	License plate code
+
+PS (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+PAL
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+E4A-E4Z
+ Panama
+ISO 3166-1 numeric
+
+591
+	ISO 3166-1 alpha-3
+
+PAN
+	ISO 3166-1 alpha-2
+
+PA
+	ICAO airport code prefix(es)
+
+MP
+E.164 code(s)
+
++507
+	IOC country code
+
+PAN
+	Country code top-level domain
+
+.pa
+	ICAO aircraft regis. prefix(es)
+
+HP-
+E.212 mobile country code(s)
+
+714
+	NATO Three-letter code
+
+PAN
+	NATO Two-letter code (obsolete)
+
+PM
+	LOC MARC code(s)
+
+PN
+ITU Maritime ID(s)
+
+351-357
+	ITU letter code(s)
+
+PNR
+	FIPS country code(s)
+
+PM
+	License plate code
+
+PA
+GS1 GTIN prefix(es)
+
+745
+	UNDP country code
+
+PAN
+	WMO country code(s)
+
+PM
+	ITU callsign prefixes
+
+3EA-3FZ, H3A-H3Z
+H8A-H9Z, HOA-HPZ
+ Papua New Guinea
+ISO 3166-1 numeric
+
+598
+	ISO 3166-1 alpha-3
+
+PNG
+	ISO 3166-1 alpha-2
+
+PG
+	ICAO airport code prefix(es)
+
+AY
+E.164 code(s)
+
++675
+	IOC country code
+
+PNG
+	Country code top-level domain
+
+.pg
+	ICAO aircraft regis. prefix(es)
+
+P2-
+E.212 mobile country code(s)
+
+537
+	NATO Three-letter code
+
+PNG
+	NATO Two-letter code (obsolete)
+
+PP
+	LOC MARC code(s)
+
+PP
+ITU Maritime ID(s)
+
+553
+	ITU letter code(s)
+
+PNG
+	FIPS country code(s)
+
+PP
+	License plate code
+
+PNG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+PNG
+	WMO country code(s)
+
+NG
+	ITU callsign prefixes
+
+P2A-P2Z
+ Paraguay
+ISO 3166-1 numeric
+
+600
+	ISO 3166-1 alpha-3
+
+PRY
+	ISO 3166-1 alpha-2
+
+PY
+	ICAO airport code prefix(es)
+
+SG
+E.164 code(s)
+
++595
+	IOC country code
+
+PAR
+	Country code top-level domain
+
+.py
+	ICAO aircraft regis. prefix(es)
+
+ZP-
+E.212 mobile country code(s)
+
+744
+	NATO Three-letter code
+
+PRY
+	NATO Two-letter code (obsolete)
+
+PA
+	LOC MARC code(s)
+
+PY
+ITU Maritime ID(s)
+
+755
+	ITU letter code(s)
+
+PRG
+	FIPS country code(s)
+
+PA
+	License plate code
+
+PY
+GS1 GTIN prefix(es)
+
+784
+	UNDP country code
+
+PAR
+	WMO country code(s)
+
+PY
+	ITU callsign prefixes
+
+ZPA-ZPZ
+ Peru
+ISO 3166-1 numeric
+
+604
+	ISO 3166-1 alpha-3
+
+PER
+	ISO 3166-1 alpha-2
+
+PE
+	ICAO airport code prefix(es)
+
+SP
+E.164 code(s)
+
++51
+	IOC country code
+
+PER
+	Country code top-level domain
+
+.pe
+	ICAO aircraft regis. prefix(es)
+
+OB-
+E.212 mobile country code(s)
+
+716
+	NATO Three-letter code
+
+PER
+	NATO Two-letter code (obsolete)
+
+PE
+	LOC MARC code(s)
+
+PE
+ITU Maritime ID(s)
+
+760
+	ITU letter code(s)
+
+PRU
+	FIPS country code(s)
+
+PE
+	License plate code
+
+PE
+GS1 GTIN prefix(es)
+
+775
+	UNDP country code
+
+PER
+	WMO country code(s)
+
+PR
+	ITU callsign prefixes
+
+4TA-4TZ, OAA-OCZ
+ Philippines
+ISO 3166-1 numeric
+
+608
+	ISO 3166-1 alpha-3
+
+PHL
+	ISO 3166-1 alpha-2
+
+PH
+	ICAO airport code prefix(es)
+
+RP
+E.164 code(s)
+
++63
+	IOC country code
+
+PHI
+	Country code top-level domain
+
+.ph
+	ICAO aircraft regis. prefix(es)
+
+RP-
+E.212 mobile country code(s)
+
+515
+	NATO Three-letter code
+
+PHL
+	NATO Two-letter code (obsolete)
+
+RP
+	LOC MARC code(s)
+
+PH
+ITU Maritime ID(s)
+
+548
+	ITU letter code(s)
+
+PHL
+	FIPS country code(s)
+
+RP
+	License plate code
+
+RP
+GS1 GTIN prefix(es)
+
+480
+	UNDP country code
+
+PHI
+	WMO country code(s)
+
+PH
+	ITU callsign prefixes
+
+4DA-4IZ, DUA-DUZ
+ Pitcairn Islands
+ISO 3166-1 numeric
+
+612
+	ISO 3166-1 alpha-3
+
+PCN
+	ISO 3166-1 alpha-2
+
+PN
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++64
+	IOC country code
+
+—
+	Country code top-level domain
+
+.pn
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+PCN
+	NATO Two-letter code (obsolete)
+
+PC
+	LOC MARC code(s)
+
+PC
+ITU Maritime ID(s)
+
+555
+	ITU letter code(s)
+
+PTC
+	FIPS country code(s)
+
+PC
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+PT
+	ITU callsign prefixes
+
+—
+ Poland
+ISO 3166-1 numeric
+
+616
+	ISO 3166-1 alpha-3
+
+POL
+	ISO 3166-1 alpha-2
+
+PL
+	ICAO airport code prefix(es)
+
+EP
+E.164 code(s)
+
++48
+	IOC country code
+
+POL
+	Country code top-level domain
+
+.pl
+	ICAO aircraft regis. prefix(es)
+
+SP-
+E.212 mobile country code(s)
+
+260
+	NATO Three-letter code
+
+POL
+	NATO Two-letter code (obsolete)
+
+PL
+	LOC MARC code(s)
+
+PL
+ITU Maritime ID(s)
+
+261
+	ITU letter code(s)
+
+POL
+	FIPS country code(s)
+
+PL
+	License plate code
+
+PL
+GS1 GTIN prefix(es)
+
+590
+	UNDP country code
+
+POL
+	WMO country code(s)
+
+PL
+	ITU callsign prefixes
+
+3ZA-3ZZ, HFA-HFZ, SNA-SRZ
+ Portugal
+ISO 3166-1 numeric
+
+620
+	ISO 3166-1 alpha-3
+
+PRT
+	ISO 3166-1 alpha-2
+
+PT
+	ICAO airport code prefix(es)
+
+LP
+E.164 code(s)
+
++351
+	IOC country code
+
+POR
+	Country code top-level domain
+
+.pt
+	ICAO aircraft regis. prefix(es)
+
+CR-, CS-
+E.212 mobile country code(s)
+
+268
+	NATO Three-letter code
+
+PRT
+	NATO Two-letter code (obsolete)
+
+PO
+	LOC MARC code(s)
+
+PO
+ITU Maritime ID(s)
+
+263
+	ITU letter code(s)
+
+POR
+	FIPS country code(s)
+
+PO
+	License plate code
+
+P
+GS1 GTIN prefix(es)
+
+560
+	UNDP country code
+
+POR
+	WMO country code(s)
+
+PO
+	ITU callsign prefixes
+
+CQA-CUZ
+ Puerto Rico
+ISO 3166-1 numeric
+
+630
+	ISO 3166-1 alpha-3
+
+PRI
+	ISO 3166-1 alpha-2
+
+PR
+	ICAO airport code prefix(es)
+
+TJ
+E.164 code(s)
+
++1 787, +1 939
+	IOC country code
+
+PUR
+	Country code top-level domain
+
+.pr
+	ICAO aircraft regis. prefix(es)
+
+N-
+E.212 mobile country code(s)
+
+330
+	NATO Three-letter code
+
+PRI
+	NATO Two-letter code (obsolete)
+
+RQ
+	LOC MARC code(s)
+
+PR
+ITU Maritime ID(s)
+
+358
+	ITU letter code(s)
+
+PTR
+	FIPS country code(s)
+
+RQ
+	License plate code
+
+PR
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+PUE
+	WMO country code(s)
+
+PU
+	ITU callsign prefixes
+
+—
+ Qatar
+ISO 3166-1 numeric
+
+634
+	ISO 3166-1 alpha-3
+
+QAT
+	ISO 3166-1 alpha-2
+
+QA
+	ICAO airport code prefix(es)
+
+OT
+E.164 code(s)
+
++974
+	IOC country code
+
+QAT
+	Country code top-level domain
+
+.qa
+	ICAO aircraft regis. prefix(es)
+
+A7-
+E.212 mobile country code(s)
+
+427
+	NATO Three-letter code
+
+QAT
+	NATO Two-letter code (obsolete)
+
+QA
+	LOC MARC code(s)
+
+QA
+ITU Maritime ID(s)
+
+466
+	ITU letter code(s)
+
+QAT
+	FIPS country code(s)
+
+QA
+	License plate code
+
+Q
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+QAT
+	WMO country code(s)
+
+QT
+	ITU callsign prefixes
+
+A7A-A7Z
+
+ Réunion
+ISO 3166-1 numeric
+
+638
+	ISO 3166-1 alpha-3
+
+REU
+	ISO 3166-1 alpha-2
+
+RE
+	ICAO airport code prefix(es)
+
+FME
+E.164 code(s)
+
++262
+	IOC country code
+
+—
+	Country code top-level domain
+
+.re
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+647
+	NATO Three-letter code
+
+REU
+	NATO Two-letter code (obsolete)
+
+RE
+	LOC MARC code(s)
+
+RE
+ITU Maritime ID(s)
+
+660
+	ITU letter code(s)
+
+REU
+	FIPS country code(s)
+
+RE
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+REU
+	WMO country code(s)
+
+RE
+	ITU callsign prefixes
+
+—
+ Romania
+ISO 3166-1 numeric
+
+642
+	ISO 3166-1 alpha-3
+
+ROU
+	ISO 3166-1 alpha-2
+
+RO
+	ICAO airport code prefix(es)
+
+LR
+E.164 code(s)
+
++40
+	IOC country code
+
+ROU
+	Country code top-level domain
+
+.ro
+	ICAO aircraft regis. prefix(es)
+
+YR-
+E.212 mobile country code(s)
+
+226
+	NATO Three-letter code
+
+ROU
+	NATO Two-letter code (obsolete)
+
+RO
+	LOC MARC code(s)
+
+RM
+ITU Maritime ID(s)
+
+264
+	ITU letter code(s)
+
+ROU
+	FIPS country code(s)
+
+RO
+	License plate code
+
+RO
+GS1 GTIN prefix(es)
+
+594
+	UNDP country code
+
+ROM
+	WMO country code(s)
+
+RO
+	ITU callsign prefixes
+
+YOA-YRZ
+ Russia
+ISO 3166-1 numeric
+
+643
+	ISO 3166-1 alpha-3
+
+RUS
+	ISO 3166-1 alpha-2
+
+RU
+	ICAO airport code prefix(es)
+
+UE, UH, UI, UL, UN
+UO, UR, US, UU, UW
+E.164 code(s)
+
++7
+	IOC country code
+
+RUS
+	Country code top-level domain
+
+.ru
+	ICAO aircraft regis. prefix(es)
+
+RA-
+E.212 mobile country code(s)
+
+250
+	NATO Three-letter code
+
+RUS
+	NATO Two-letter code (obsolete)
+
+RS
+	LOC MARC code(s)
+
+RU
+ITU Maritime ID(s)
+
+273
+	ITU letter code(s)
+
+RUS
+	FIPS country code(s)
+
+RS
+	License plate code
+
+RUS
+GS1 GTIN prefix(es)
+
+460-469
+	UNDP country code
+
+RUS
+	WMO country code(s)
+
+RA, RS
+	ITU callsign prefixes
+
+RAA-RZZ, UAA-UIZ
+ Rwanda
+ISO 3166-1 numeric
+
+646
+	ISO 3166-1 alpha-3
+
+RWA
+	ISO 3166-1 alpha-2
+
+RW
+	ICAO airport code prefix(es)
+
+HR
+E.164 code(s)
+
++250
+	IOC country code
+
+RWA
+	Country code top-level domain
+
+.rw
+	ICAO aircraft regis. prefix(es)
+
+9XR-
+E.212 mobile country code(s)
+
+635
+	NATO Three-letter code
+
+RWA
+	NATO Two-letter code (obsolete)
+
+RW
+	LOC MARC code(s)
+
+RW
+ITU Maritime ID(s)
+
+661
+	ITU letter code(s)
+
+RRW
+	FIPS country code(s)
+
+RW
+	License plate code
+
+RWA
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+RWA
+	WMO country code(s)
+
+RW
+	ITU callsign prefixes
+
+9XA-9XZ
+
+ Saint Barthélemy
+ISO 3166-1 numeric
+
+652
+	ISO 3166-1 alpha-3
+
+BLM
+	ISO 3166-1 alpha-2
+
+BL
+	ICAO airport code prefix(es)
+
+TF
+E.164 code(s)
+
++590
+	IOC country code
+
+—
+	Country code top-level domain
+
+.bl
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+TB
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+S2
+	ITU callsign prefixes
+
+—
+ Saint Helena, Ascension and Tristan da Cunha
+ISO 3166-1 numeric
+
+654
+	ISO 3166-1 alpha-3
+
+SHN
+	ISO 3166-1 alpha-2
+
+SH
+	ICAO airport code prefix(es)
+
+FH
+E.164 code(s)
+
++290
+	IOC country code
+
+—
+	Country code top-level domain
+
+.sh
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+SHN
+	NATO Two-letter code (obsolete)
+
+SH
+	LOC MARC code(s)
+
+XJ
+ITU Maritime ID(s)
+
+665
+	ITU letter code(s)
+
+SHN
+	FIPS country code(s)
+
+SH
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+STH
+	WMO country code(s)
+
+HE
+	ITU callsign prefixes
+
+—
+ Saint Kitts and Nevis
+ISO 3166-1 numeric
+
+659
+	ISO 3166-1 alpha-3
+
+KNA
+	ISO 3166-1 alpha-2
+
+KN
+	ICAO airport code prefix(es)
+
+TK
+E.164 code(s)
+
++1 869
+	IOC country code
+
+SKN
+	Country code top-level domain
+
+.kn
+	ICAO aircraft regis. prefix(es)
+
+V4-
+E.212 mobile country code(s)
+
+356
+	NATO Three-letter code
+
+KNA
+	NATO Two-letter code (obsolete)
+
+SC
+	LOC MARC code(s)
+
+XD
+ITU Maritime ID(s)
+
+341
+	ITU letter code(s)
+
+SCN
+	FIPS country code(s)
+
+SC
+	License plate code
+
+KAN (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+STK
+	WMO country code(s)
+
+AT
+	ITU callsign prefixes
+
+V4A-V4Z
+ Saint Lucia
+ISO 3166-1 numeric
+
+662
+	ISO 3166-1 alpha-3
+
+LCA
+	ISO 3166-1 alpha-2
+
+LC
+	ICAO airport code prefix(es)
+
+TL
+E.164 code(s)
+
++1 758
+	IOC country code
+
+LCA
+	Country code top-level domain
+
+.lc
+	ICAO aircraft regis. prefix(es)
+
+J6-
+E.212 mobile country code(s)
+
+358
+	NATO Three-letter code
+
+LCA
+	NATO Two-letter code (obsolete)
+
+ST
+	LOC MARC code(s)
+
+XK
+ITU Maritime ID(s)
+
+343
+	ITU letter code(s)
+
+LCA
+	FIPS country code(s)
+
+ST
+	License plate code
+
+WL
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+STL
+	WMO country code(s)
+
+LC
+	ITU callsign prefixes
+
+J6A-J6Z
+ Saint Martin
+ISO 3166-1 numeric
+
+663
+	ISO 3166-1 alpha-3
+
+MAF
+	ISO 3166-1 alpha-2
+
+MF
+	ICAO airport code prefix(es)
+
+TF
+E.164 code(s)
+
++590
+	IOC country code
+
+—
+	Country code top-level domain
+
+.mf
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+RN
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Saint Pierre and Miquelon
+ISO 3166-1 numeric
+
+666
+	ISO 3166-1 alpha-3
+
+SPM
+	ISO 3166-1 alpha-2
+
+PM
+	ICAO airport code prefix(es)
+
+LF
+E.164 code(s)
+
++508
+	IOC country code
+
+—
+	Country code top-level domain
+
+.pm
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+308
+	NATO Three-letter code
+
+SPM
+	NATO Two-letter code (obsolete)
+
+SB[notes 1]
+	LOC MARC code(s)
+
+XL
+ITU Maritime ID(s)
+
+361
+	ITU letter code(s)
+
+SPM
+	FIPS country code(s)
+
+SB
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+FOS (?)[notes 2]
+	WMO country code(s)
+
+FP
+	ITU callsign prefixes
+
+—
+ Saint Vincent and the Grenadines
+ISO 3166-1 numeric
+
+670
+	ISO 3166-1 alpha-3
+
+VCT
+	ISO 3166-1 alpha-2
+
+VC
+	ICAO airport code prefix(es)
+
+TV
+E.164 code(s)
+
++1 784
+	IOC country code
+
+VIN
+	Country code top-level domain
+
+.vc
+	ICAO aircraft regis. prefix(es)
+
+J8-
+E.212 mobile country code(s)
+
+360
+	NATO Three-letter code
+
+VCT
+	NATO Two-letter code (obsolete)
+
+VC
+	LOC MARC code(s)
+
+XM
+ITU Maritime ID(s)
+
+375, 376, 377
+	ITU letter code(s)
+
+VCT
+	FIPS country code(s)
+
+VC
+	License plate code
+
+WV
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+STV
+	WMO country code(s)
+
+VG
+	ITU callsign prefixes
+
+J8A-J8Z
+ Samoa
+ISO 3166-1 numeric
+
+882
+	ISO 3166-1 alpha-3
+
+WSM
+	ISO 3166-1 alpha-2
+
+WS
+	ICAO airport code prefix(es)
+
+NS
+E.164 code(s)
+
++685
+	IOC country code
+
+SAM
+	Country code top-level domain
+
+.ws
+	ICAO aircraft regis. prefix(es)
+
+5W-
+E.212 mobile country code(s)
+
+549
+	NATO Three-letter code
+
+WSM
+	NATO Two-letter code (obsolete)
+
+SS†
+	LOC MARC code(s)
+
+WS
+ITU Maritime ID(s)
+
+561
+	ITU letter code(s)
+
+SMO
+	FIPS country code(s)
+
+WS
+	License plate code
+
+WS
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SAM
+	WMO country code(s)
+
+ZM
+	ITU callsign prefixes
+
+5WA-5WZ
+
+† The code is also assigned to American Samoa
+ San Marino
+ISO 3166-1 numeric
+
+674
+	ISO 3166-1 alpha-3
+
+SMR
+	ISO 3166-1 alpha-2
+
+SM
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++378
+	IOC country code
+
+SMR
+	Country code top-level domain
+
+.sm
+	ICAO aircraft regis. prefix(es)
+
+T7-
+E.212 mobile country code(s)
+
+292
+	NATO Three-letter code
+
+SMR
+	NATO Two-letter code (obsolete)
+
+SM
+	LOC MARC code(s)
+
+SM
+ITU Maritime ID(s)
+
+268
+	ITU letter code(s)
+
+SMR
+	FIPS country code(s)
+
+SM
+	License plate code
+
+RSM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SNM
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+T7A-T7Z
+ São Tomé and Príncipe
+ISO 3166-1 numeric
+
+678
+	ISO 3166-1 alpha-3
+
+STP
+	ISO 3166-1 alpha-2
+
+ST
+	ICAO airport code prefix(es)
+
+FP
+E.164 code(s)
+
++239
+	IOC country code
+
+STP
+	Country code top-level domain
+
+.st
+	ICAO aircraft regis. prefix(es)
+
+S9-
+E.212 mobile country code(s)
+
+626
+	NATO Three-letter code
+
+STP
+	NATO Two-letter code (obsolete)
+
+TP
+	LOC MARC code(s)
+
+SF
+ITU Maritime ID(s)
+
+668
+	ITU letter code(s)
+
+STP
+	FIPS country code(s)
+
+TP
+	License plate code
+
+STP (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+STP
+	WMO country code(s)
+
+TP
+	ITU callsign prefixes
+
+S9A-S9Z
+ Saudi Arabia
+ISO 3166-1 numeric
+
+682
+	ISO 3166-1 alpha-3
+
+SAU
+	ISO 3166-1 alpha-2
+
+SA
+	ICAO airport code prefix(es)
+
+OE
+E.164 code(s)
+
++966
+	IOC country code
+
+KSA
+	Country code top-level domain
+
+.sa
+	ICAO aircraft regis. prefix(es)
+
+HZ-
+E.212 mobile country code(s)
+
+420
+	NATO Three-letter code
+
+SAU
+	NATO Two-letter code (obsolete)
+
+SA
+	LOC MARC code(s)
+
+SU
+ITU Maritime ID(s)
+
+403
+	ITU letter code(s)
+
+ARS
+	FIPS country code(s)
+
+SA
+	License plate code
+
+SA
+GS1 GTIN prefix(es)
+
+628
+	UNDP country code
+
+SAU
+	WMO country code(s)
+
+SD
+	ITU callsign prefixes
+
+7ZA-7ZZ,8ZA-8ZZ,HZA-HZZ
+ Senegal
+ISO 3166-1 numeric
+
+686
+	ISO 3166-1 alpha-3
+
+SEN
+	ISO 3166-1 alpha-2
+
+SN
+	ICAO airport code prefix(es)
+
+GO
+E.164 code(s)
+
++221
+	IOC country code
+
+SEN
+	Country code top-level domain
+
+.sn
+	ICAO aircraft regis. prefix(es)
+
+6V-, 6W-
+E.212 mobile country code(s)
+
+608
+	NATO Three-letter code
+
+SEN
+	NATO Two-letter code (obsolete)
+
+SG
+	LOC MARC code(s)
+
+SG
+ITU Maritime ID(s)
+
+663
+	ITU letter code(s)
+
+SEN
+	FIPS country code(s)
+
+SG
+	License plate code
+
+SN
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SEN
+	WMO country code(s)
+
+SG
+	ITU callsign prefixes
+
+6VA-6WZ
+ Serbia
+ISO 3166-1 numeric
+
+688
+	ISO 3166-1 alpha-3
+
+SRB
+	ISO 3166-1 alpha-2
+
+RS
+	ICAO airport code prefix(es)
+
+LY
+E.164 code(s)
+
++381
+	IOC country code
+
+SRB
+	Country code top-level domain
+
+.rs
+	ICAO aircraft regis. prefix(es)
+
+YU-
+E.212 mobile country code(s)
+
+220
+	NATO Three-letter code
+
+SRB
+	NATO Two-letter code (obsolete)
+
+RS
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+279
+	ITU letter code(s)
+
+SRB
+	FIPS country code(s)
+
+RB
+	License plate code
+
+SRB
+GS1 GTIN prefix(es)
+
+860
+	UNDP country code
+
+—
+	WMO country code(s)
+
+RB
+	ITU callsign prefixes
+
+YTA-YUZ
+ Seychelles
+ISO 3166-1 numeric
+
+690
+	ISO 3166-1 alpha-3
+
+SYC
+	ISO 3166-1 alpha-2
+
+SC
+	ICAO airport code prefix(es)
+
+FS
+E.164 code(s)
+
++248
+	IOC country code
+
+SEY
+	Country code top-level domain
+
+.sc
+	ICAO aircraft regis. prefix(es)
+
+S7-
+E.212 mobile country code(s)
+
+633
+	NATO Three-letter code
+
+SYC
+	NATO Two-letter code (obsolete)
+
+SE
+	LOC MARC code(s)
+
+SE
+ITU Maritime ID(s)
+
+664
+	ITU letter code(s)
+
+SEY
+	FIPS country code(s)
+
+SE
+	License plate code
+
+SY
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SEY
+	WMO country code(s)
+
+SC
+	ITU callsign prefixes
+
+S7A-S7Z
+ Sierra Leone
+ISO 3166-1 numeric
+
+694
+	ISO 3166-1 alpha-3
+
+SLE
+	ISO 3166-1 alpha-2
+
+SL
+	ICAO airport code prefix(es)
+
+GF
+E.164 code(s)
+
++232
+	IOC country code
+
+SLE
+	Country code top-level domain
+
+.sl
+	ICAO aircraft regis. prefix(es)
+
+9L-
+E.212 mobile country code(s)
+
+619
+	NATO Three-letter code
+
+SLE
+	NATO Two-letter code (obsolete)
+
+SL
+	LOC MARC code(s)
+
+SL
+ITU Maritime ID(s)
+
+667
+	ITU letter code(s)
+
+SRL
+	FIPS country code(s)
+
+SL
+	License plate code
+
+WAL
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SIL
+	WMO country code(s)
+
+SL
+	ITU callsign prefixes
+
+9LA-9LZ
+ Singapore
+ISO 3166-1 numeric
+
+702
+	ISO 3166-1 alpha-3
+
+SGP
+	ISO 3166-1 alpha-2
+
+SG
+	ICAO airport code prefix(es)
+
+WS
+E.164 code(s)
+
++65
+	IOC country code
+
+SGP
+	Country code top-level domain
+
+.sg
+	ICAO aircraft regis. prefix(es)
+
+9V-
+E.212 mobile country code(s)
+
+525
+	NATO Three-letter code
+
+SGP
+	NATO Two-letter code (obsolete)
+
+SN
+	LOC MARC code(s)
+
+SI
+ITU Maritime ID(s)
+
+563, 564
+	ITU letter code(s)
+
+SNG
+	FIPS country code(s)
+
+SN
+	License plate code
+
+SGP
+GS1 GTIN prefix(es)
+
+888
+	UNDP country code
+
+SIN
+	WMO country code(s)
+
+SR
+	ITU callsign prefixes
+
+9VA-9VZ, S6A-S6Z
+ Sint Maarten
+ISO 3166-1 numeric
+
+534
+	ISO 3166-1 alpha-3
+
+SXM
+	ISO 3166-1 alpha-2
+
+SX
+	ICAO airport code prefix(es)
+
+TN
+E.164 code(s)
+
++1 721
+	IOC country code
+
+—
+	Country code top-level domain
+
+.sx
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+NN
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+PJA-PJZ
+ Slovakia
+ISO 3166-1 numeric
+
+703
+	ISO 3166-1 alpha-3
+
+SVK
+	ISO 3166-1 alpha-2
+
+SK
+	ICAO airport code prefix(es)
+
+LZ
+E.164 code(s)
+
++421
+	IOC country code
+
+SVK
+	Country code top-level domain
+
+.sk
+	ICAO aircraft regis. prefix(es)
+
+OM-
+E.212 mobile country code(s)
+
+231
+	NATO Three-letter code
+
+SVK
+	NATO Two-letter code (obsolete)
+
+LO
+	LOC MARC code(s)
+
+XO
+ITU Maritime ID(s)
+
+267
+	ITU letter code(s)
+
+SVK
+	FIPS country code(s)
+
+LO
+	License plate code
+
+SK
+GS1 GTIN prefix(es)
+
+858
+	UNDP country code
+
+SLO
+	WMO country code(s)
+
+SQ
+	ITU callsign prefixes
+
+OMA-OMZ
+ Slovenia
+ISO 3166-1 numeric
+
+705
+	ISO 3166-1 alpha-3
+
+SVN
+	ISO 3166-1 alpha-2
+
+SI
+	ICAO airport code prefix(es)
+
+LJ
+E.164 code(s)
+
++386
+	IOC country code
+
+SLO
+	Country code top-level domain
+
+.si
+	ICAO aircraft regis. prefix(es)
+
+S5-
+E.212 mobile country code(s)
+
+293
+	NATO Three-letter code
+
+SVN
+	NATO Two-letter code (obsolete)
+
+SI
+	LOC MARC code(s)
+
+XV
+ITU Maritime ID(s)
+
+278
+	ITU letter code(s)
+
+SVN
+	FIPS country code(s)
+
+SI
+	License plate code
+
+SLO
+GS1 GTIN prefix(es)
+
+383
+	UNDP country code
+
+SVN
+	WMO country code(s)
+
+LJ
+	ITU callsign prefixes
+
+S5A-S5Z
+ Solomon Islands
+ISO 3166-1 numeric
+
+090
+	ISO 3166-1 alpha-3
+
+SLB
+	ISO 3166-1 alpha-2
+
+SB
+	ICAO airport code prefix(es)
+
+AG
+E.164 code(s)
+
++677
+	IOC country code
+
+SOL
+	Country code top-level domain
+
+.sb
+	ICAO aircraft regis. prefix(es)
+
+H4-
+E.212 mobile country code(s)
+
+540
+	NATO Three-letter code
+
+SLB
+	NATO Two-letter code (obsolete)
+
+BP
+	LOC MARC code(s)
+
+BP
+ITU Maritime ID(s)
+
+557
+	ITU letter code(s)
+
+SLM
+	FIPS country code(s)
+
+BP
+	License plate code
+
+SOL (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SOI
+	WMO country code(s)
+
+SO
+	ITU callsign prefixes
+
+H4A-H4Z
+ Somalia
+ISO 3166-1 numeric
+
+706
+	ISO 3166-1 alpha-3
+
+SOM
+	ISO 3166-1 alpha-2
+
+SO
+	ICAO airport code prefix(es)
+
+HC
+E.164 code(s)
+
++252
+	IOC country code
+
+SOM
+	Country code top-level domain
+
+.so
+	ICAO aircraft regis. prefix(es)
+
+6O-
+E.212 mobile country code(s)
+
+637
+	NATO Three-letter code
+
+SOM
+	NATO Two-letter code (obsolete)
+
+SO
+	LOC MARC code(s)
+
+SO
+ITU Maritime ID(s)
+
+666
+	ITU letter code(s)
+
+SOM
+	FIPS country code(s)
+
+SO
+	License plate code
+
+SO
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SOM
+	WMO country code(s)
+
+SI
+	ITU callsign prefixes
+
+6OA-6OZ, T5A-T5Z
+ South Africa
+ISO 3166-1 numeric
+
+710
+	ISO 3166-1 alpha-3
+
+ZAF
+	ISO 3166-1 alpha-2
+
+ZA
+	ICAO airport code prefix(es)
+
+FA
+E.164 code(s)
+
++27
+	IOC country code
+
+RSA
+	Country code top-level domain
+
+.za
+	ICAO aircraft regis. prefix(es)
+
+ZS-, ZT-, ZU-
+E.212 mobile country code(s)
+
+655
+	NATO Three-letter code
+
+ZAF
+	NATO Two-letter code (obsolete)
+
+SF
+	LOC MARC code(s)
+
+SA
+ITU Maritime ID(s)
+
+601
+	ITU letter code(s)
+
+AFS
+	FIPS country code(s)
+
+SF
+	License plate code
+
+ZA
+GS1 GTIN prefix(es)
+
+600-601
+	UNDP country code
+
+SAF
+	WMO country code(s)
+
+ZA
+	ITU callsign prefixes
+
+S8A-S8Z, ZRA-ZUZ
+ South Georgia and the South Sandwich Islands
+ISO 3166-1 numeric
+
+239
+	ISO 3166-1 alpha-3
+
+SGS
+	ISO 3166-1 alpha-2
+
+GS
+	ICAO airport code prefix(es)
+
+EG
+E.164 code(s)
+
+500
+	IOC country code
+
+—
+	Country code top-level domain
+
+.gs
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+—
+	NATO Three-letter code
+
+SGS
+	NATO Two-letter code (obsolete)
+
+SX
+	LOC MARC code(s)
+
+XS
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+SX
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ South Sudan
+ISO 3166-1 numeric
+
+728
+	ISO 3166-1 alpha-3
+
+SSD
+	ISO 3166-1 alpha-2
+
+SS
+	ICAO airport code prefix(es)
+
+HS
+E.164 code(s)
+
++211
+	IOC country code
+
+SSD
+	Country code top-level domain
+
+—
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+659
+	NATO Three-letter code
+
+—
+	NATO Two-letter code (obsolete)
+
+—
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+—
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+—
+ Spain
+ISO 3166-1 numeric
+
+724
+	ISO 3166-1 alpha-3
+
+ESP
+	ISO 3166-1 alpha-2
+
+ES
+	ICAO airport code prefix(es)
+
+LE, GC, GE
+E.164 code(s)
+
++34
+	IOC country code
+
+ESP
+	Country code top-level domain
+
+.es
+	ICAO aircraft regis. prefix(es)
+
+EC-
+E.212 mobile country code(s)
+
+214
+	NATO Three-letter code
+
+ESP
+	NATO Two-letter code (obsolete)
+
+SP
+	LOC MARC code(s)
+
+SP
+ITU Maritime ID(s)
+
+224, 225
+	ITU letter code(s)
+
+E
+	FIPS country code(s)
+
+SP
+	License plate code
+
+E
+GS1 GTIN prefix(es)
+
+840-849
+	UNDP country code
+
+SPA
+	WMO country code(s)
+
+SP
+	ITU callsign prefixes
+
+AMA-AOZ, EAA-EHZ
+ Sri Lanka
+ISO 3166-1 numeric
+
+144
+	ISO 3166-1 alpha-3
+
+LKA
+	ISO 3166-1 alpha-2
+
+LK
+	ICAO airport code prefix(es)
+
+VC
+E.164 code(s)
+
++94
+	IOC country code
+
+SRI
+	Country code top-level domain
+
+.lk
+	ICAO aircraft regis. prefix(es)
+
+4R-
+E.212 mobile country code(s)
+
+413
+	NATO Three-letter code
+
+LKA
+	NATO Two-letter code (obsolete)
+
+C
+	LOC MARC code(s)
+
+CE
+ITU Maritime ID(s)
+
+417
+	ITU letter code(s)
+
+CLN
+	FIPS country code(s)
+
+CE
+	License plate code
+
+CL
+GS1 GTIN prefix(es)
+
+479
+	UNDP country code
+
+SRL
+	WMO country code(s)
+
+SB
+	ITU callsign prefixes
+
+4PA-4SZ
+ Sudan
+ISO 3166-1 numeric
+
+736
+	ISO 3166-1 alpha-3
+
+SDN
+	ISO 3166-1 alpha-2
+
+SD
+	ICAO airport code prefix(es)
+
+HS
+E.164 code(s)
+
++249
+	IOC country code
+
+SUD
+	Country code top-level domain
+
+.sd
+	ICAO aircraft regis. prefix(es)
+
+ST-
+E.212 mobile country code(s)
+
+634
+	NATO Three-letter code
+
+SDN
+	NATO Two-letter code (obsolete)
+
+SU
+	LOC MARC code(s)
+
+SJ
+ITU Maritime ID(s)
+
+662
+	ITU letter code(s)
+
+SDN
+	FIPS country code(s)
+
+SU
+	License plate code
+
+SUD
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SUD
+	WMO country code(s)
+
+SU
+	ITU callsign prefixes
+
+6TA-6UZ,SSN-SSZ,STA-STZ
+ Suriname
+ISO 3166-1 numeric
+
+740
+	ISO 3166-1 alpha-3
+
+SUR
+	ISO 3166-1 alpha-2
+
+SR
+	ICAO airport code prefix(es)
+
+SM
+E.164 code(s)
+
++597
+	IOC country code
+
+SUR
+	Country code top-level domain
+
+.sr
+	ICAO aircraft regis. prefix(es)
+
+PZ-
+E.212 mobile country code(s)
+
+746
+	NATO Three-letter code
+
+SUR
+	NATO Two-letter code (obsolete)
+
+NS
+	LOC MARC code(s)
+
+SR
+ITU Maritime ID(s)
+
+765
+	ITU letter code(s)
+
+SUR
+	FIPS country code(s)
+
+NS
+	License plate code
+
+SME
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SUR
+	WMO country code(s)
+
+SM
+	ITU callsign prefixes
+
+PZA-PZZ
+Norway Svalbard and Jan Mayen
+ISO 3166-1 numeric
+
+744
+	ISO 3166-1 alpha-3
+
+SJM
+	ISO 3166-1 alpha-2
+
+SJ
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++47
+	IOC country code
+
+—
+	Country code top-level domain
+
+.sj
+	ICAO aircraft regis. prefix(es)
+
+LN-
+E.212 mobile country code(s)
+
+242
+	NATO Three-letter code
+
+SJM
+	NATO Two-letter code (obsolete)
+
+SV
+	LOC MARC code(s)
+
+—
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+SV, JN
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+—
+	WMO country code(s)
+
+SZ
+	ITU callsign prefixes
+
+—
+ Swaziland
+ISO 3166-1 numeric
+
+748
+	ISO 3166-1 alpha-3
+
+SWZ
+	ISO 3166-1 alpha-2
+
+SZ
+	ICAO airport code prefix(es)
+
+FD
+E.164 code(s)
+
++268
+	IOC country code
+
+SWZ
+	Country code top-level domain
+
+.sz
+	ICAO aircraft regis. prefix(es)
+
+3D-
+E.212 mobile country code(s)
+
+653
+	NATO Three-letter code
+
+SWZ
+	NATO Two-letter code (obsolete)
+
+WZ
+	LOC MARC code(s)
+
+SQ
+ITU Maritime ID(s)
+
+669
+	ITU letter code(s)
+
+SWZ
+	FIPS country code(s)
+
+WZ
+	License plate code
+
+SD
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SWA
+	WMO country code(s)
+
+SV
+	ITU callsign prefixes
+
+3DA-3DM
+ Sweden
+ISO 3166-1 numeric
+
+752
+	ISO 3166-1 alpha-3
+
+SWE
+	ISO 3166-1 alpha-2
+
+SE
+	ICAO airport code prefix(es)
+
+ES
+E.164 code(s)
+
++46
+	IOC country code
+
+SWE
+	Country code top-level domain
+
+.se
+	ICAO aircraft regis. prefix(es)
+
+SE-
+E.212 mobile country code(s)
+
+240
+	NATO Three-letter code
+
+SWE
+	NATO Two-letter code (obsolete)
+
+SW
+	LOC MARC code(s)
+
+SW
+ITU Maritime ID(s)
+
+265, 266
+	ITU letter code(s)
+
+S
+	FIPS country code(s)
+
+SW
+	License plate code
+
+S
+GS1 GTIN prefix(es)
+
+730-739
+	UNDP country code
+
+SWE
+	WMO country code(s)
+
+SN
+	ITU callsign prefixes
+
+7SA-7SZ,8SA-8SZ,SAA-SMZ
+  Switzerland
+ISO 3166-1 numeric
+
+756
+	ISO 3166-1 alpha-3
+
+CHE
+	ISO 3166-1 alpha-2
+
+CH
+	ICAO airport code prefix(es)
+
+LS
+E.164 code(s)
+
++41
+	IOC country code
+
+SUI
+	Country code top-level domain
+
+.ch
+	ICAO aircraft regis. prefix(es)
+
+HB-
+E.212 mobile country code(s)
+
+228
+	NATO Three-letter code
+
+CHE
+	NATO Two-letter code (obsolete)
+
+SZ
+	LOC MARC code(s)
+
+SZ
+ITU Maritime ID(s)
+
+269
+	ITU letter code(s)
+
+SUI
+	FIPS country code(s)
+
+SZ
+	License plate code
+
+CH
+GS1 GTIN prefix(es)
+
+760-769
+	UNDP country code
+
+SWI
+	WMO country code(s)
+
+SW
+	ITU callsign prefixes
+
+HBA-HBZ, HEA-HEZ
+ Syria
+ISO 3166-1 numeric
+
+760
+	ISO 3166-1 alpha-3
+
+SYR
+	ISO 3166-1 alpha-2
+
+SY
+	ICAO airport code prefix(es)
+
+OS
+E.164 code(s)
+
++963
+	IOC country code
+
+SYR
+	Country code top-level domain
+
+.sy
+	ICAO aircraft regis. prefix(es)
+
+YK-
+E.212 mobile country code(s)
+
+417
+	NATO Three-letter code
+
+SYR
+	NATO Two-letter code (obsolete)
+
+SY
+	LOC MARC code(s)
+
+SY
+ITU Maritime ID(s)
+
+468
+	ITU letter code(s)
+
+SYR
+	FIPS country code(s)
+
+SY
+	License plate code
+
+SYR
+GS1 GTIN prefix(es)
+
+621
+	UNDP country code
+
+SYR
+	WMO country code(s)
+
+SY
+	ITU callsign prefixes
+
+6CA-6CZ, YKA-YKZ
+
+ Taiwan
+ISO 3166-1 numeric
+
+158
+	ISO 3166-1 alpha-3
+
+TWN
+	ISO 3166-1 alpha-2
+
+TW
+	ICAO airport code prefix(es)
+
+RC
+E.164 code(s)
+
++886
+	IOC country code
+
+TPE
+	Country code top-level domain
+
+.tw
+	ICAO aircraft regis. prefix(es)
+
+B-
+E.212 mobile country code(s)
+
+466
+	NATO Three-letter code
+
+TWN
+	NATO Two-letter code (obsolete)
+
+TW
+	LOC MARC code(s)
+
+CH
+ITU Maritime ID(s)
+
+416
+	ITU letter code(s)
+
+—
+	FIPS country code(s)
+
+TW
+	License plate code
+
+RC
+GS1 GTIN prefix(es)
+
+471
+	UNDP country code
+
+—
+	WMO country code(s)
+
+TW
+	ITU callsign prefixes
+
+—
+* 	Some codes are assigned to Taiwan or Taiwan, Province of China, while some are assigned to the Republic of China. See also Chinese Taipei, political status of Taiwan and China and the United Nations.
+ Tajikistan
+ISO 3166-1 numeric
+
+762
+	ISO 3166-1 alpha-3
+
+TJK
+	ISO 3166-1 alpha-2
+
+TJ
+	ICAO airport code prefix(es)
+
+UT
+E.164 code(s)
+
++992
+	IOC country code
+
+TJK
+	Country code top-level domain
+
+.tj
+	ICAO aircraft regis. prefix(es)
+
+EY-
+E.212 mobile country code(s)
+
+436
+	NATO Three-letter code
+
+TJK
+	NATO Two-letter code (obsolete)
+
+TI
+	LOC MARC code(s)
+
+TA
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+TJK
+	FIPS country code(s)
+
+TI
+	License plate code
+
+TJ
+GS1 GTIN prefix(es)
+
+488
+	UNDP country code
+
+TAJ
+	WMO country code(s)
+
+TZ
+	ITU callsign prefixes
+
+EYA-EYZ
+ Tanzania
+ISO 3166-1 numeric
+
+834
+	ISO 3166-1 alpha-3
+
+TZA
+	ISO 3166-1 alpha-2
+
+TZ
+	ICAO airport code prefix(es)
+
+HT
+E.164 code(s)
+
++255
+	IOC country code
+
+TAN
+	Country code top-level domain
+
+.tz
+	ICAO aircraft regis. prefix(es)
+
+5H-
+E.212 mobile country code(s)
+
+640
+	NATO Three-letter code
+
+TZN
+	NATO Two-letter code (obsolete)
+
+TZ
+	LOC MARC code(s)
+
+TZ
+ITU Maritime ID(s)
+
+674, 677
+	ITU letter code(s)
+
+TZA
+	FIPS country code(s)
+
+TZ
+	License plate code
+
+EAT
+GS1 GTIN prefix(es)
+
+620
+	UNDP country code
+
+URT[notes 1]
+	WMO country code(s)
+
+TN
+	ITU callsign prefixes
+
+5HA-5IZ
+ Thailand
+ISO 3166-1 numeric
+
+764
+	ISO 3166-1 alpha-3
+
+THA
+	ISO 3166-1 alpha-2
+
+TH
+	ICAO airport code prefix(es)
+
+VT
+E.164 code(s)
+
++66
+	IOC country code
+
+THA
+	Country code top-level domain
+
+.th
+	ICAO aircraft regis. prefix(es)
+
+HS-
+E.212 mobile country code(s)
+
+520
+	NATO Three-letter code
+
+THA
+	NATO Two-letter code (obsolete)
+
+TH
+	LOC MARC code(s)
+
+TH
+ITU Maritime ID(s)
+
+567
+	ITU letter code(s)
+
+THA
+	FIPS country code(s)
+
+TH
+	License plate code
+
+T
+GS1 GTIN prefix(es)
+
+885
+	UNDP country code
+
+THA
+	WMO country code(s)
+
+TH
+	ITU callsign prefixes
+
+E2A-E2Z, HSA-HSZ
+ Timor-Leste
+ISO 3166-1 numeric
+
+626
+	ISO 3166-1 alpha-3
+
+TLS
+	ISO 3166-1 alpha-2
+
+TL
+	ICAO airport code prefix(es)
+
+WP
+E.164 code(s)
+
++670
+	IOC country code
+
+TLS
+	Country code top-level domain
+
+.tl
+	ICAO aircraft regis. prefix(es)
+
+—
+E.212 mobile country code(s)
+
+514
+	NATO Three-letter code
+
+TLS
+	NATO Two-letter code (obsolete)
+
+TM
+	LOC MARC code(s)
+
+EM
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+TMP
+	FIPS country code(s)
+
+TT
+	License plate code
+
+TL (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TIM
+	WMO country code(s)
+
+TM
+	ITU callsign prefixes
+
+4WA-4WZ
+ Togo
+ISO 3166-1 numeric
+
+768
+	ISO 3166-1 alpha-3
+
+TGO
+	ISO 3166-1 alpha-2
+
+TG
+	ICAO airport code prefix(es)
+
+DX
+E.164 code(s)
+
++228
+	IOC country code
+
+TOG
+	Country code top-level domain
+
+.tg
+	ICAO aircraft regis. prefix(es)
+
+5V-
+E.212 mobile country code(s)
+
+615
+	NATO Three-letter code
+
+TGO
+	NATO Two-letter code (obsolete)
+
+TO
+	LOC MARC code(s)
+
+TG
+ITU Maritime ID(s)
+
+671
+	ITU letter code(s)
+
+TGO
+	FIPS country code(s)
+
+TO
+	License plate code
+
+TG
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TOG
+	WMO country code(s)
+
+TG
+	ITU callsign prefixes
+
+5VA-5VZ
+ Tokelau
+ISO 3166-1 numeric
+
+772
+	ISO 3166-1 alpha-3
+
+TKL
+	ISO 3166-1 alpha-2
+
+TK
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++690
+	IOC country code
+
+—
+	Country code top-level domain
+
+.tk
+	ICAO aircraft regis. prefix(es)
+
+ZK-
+E.212 mobile country code(s)
+
+530
+	NATO Three-letter code
+
+TKL
+	NATO Two-letter code (obsolete)
+
+TL
+	LOC MARC code(s)
+
+TL
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+TKL
+	FIPS country code(s)
+
+TL
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TOK
+	WMO country code(s)
+
+TK
+	ITU callsign prefixes
+
+—
+ Tonga
+ISO 3166-1 numeric
+
+776
+	ISO 3166-1 alpha-3
+
+TON
+	ISO 3166-1 alpha-2
+
+TO
+	ICAO airport code prefix(es)
+
+NFT
+E.164 code(s)
+
++676
+	IOC country code
+
+TGA
+	Country code top-level domain
+
+.to
+	ICAO aircraft regis. prefix(es)
+
+A3-
+E.212 mobile country code(s)
+
+539
+	NATO Three-letter code
+
+TON
+	NATO Two-letter code (obsolete)
+
+TN
+	LOC MARC code(s)
+
+TO
+ITU Maritime ID(s)
+
+570
+	ITU letter code(s)
+
+TON
+	FIPS country code(s)
+
+TN
+	License plate code
+
+TO (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TON
+	WMO country code(s)
+
+TO
+	ITU callsign prefixes
+
+A3A-A3Z
+ Trinidad and Tobago
+ISO 3166-1 numeric
+
+780
+	ISO 3166-1 alpha-3
+
+TTO
+	ISO 3166-1 alpha-2
+
+TT
+	ICAO airport code prefix(es)
+
+TT
+E.164 code(s)
+
++1 868
+	IOC country code
+
+TTO
+	Country code top-level domain
+
+.tt
+	ICAO aircraft regis. prefix(es)
+
+9Y-
+E.212 mobile country code(s)
+
+374
+	NATO Three-letter code
+
+TTO
+	NATO Two-letter code (obsolete)
+
+TD
+	LOC MARC code(s)
+
+TR
+ITU Maritime ID(s)
+
+362
+	ITU letter code(s)
+
+TRD
+	FIPS country code(s)
+
+TD
+	License plate code
+
+TT
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TRI
+	WMO country code(s)
+
+TD
+	ITU callsign prefixes
+
+9YA-9ZZ
+ Tunisia
+ISO 3166-1 numeric
+
+788
+	ISO 3166-1 alpha-3
+
+TUN
+	ISO 3166-1 alpha-2
+
+TN
+	ICAO airport code prefix(es)
+
+DT
+E.164 code(s)
+
++216
+	IOC country code
+
+TUN
+	Country code top-level domain
+
+.tn
+	ICAO aircraft regis. prefix(es)
+
+TS-
+E.212 mobile country code(s)
+
+605
+	NATO Three-letter code
+
+TUN
+	NATO Two-letter code (obsolete)
+
+TS
+	LOC MARC code(s)
+
+TI
+ITU Maritime ID(s)
+
+672
+	ITU letter code(s)
+
+TUN
+	FIPS country code(s)
+
+TS
+	License plate code
+
+TN
+GS1 GTIN prefix(es)
+
+619
+	UNDP country code
+
+TUN
+	WMO country code(s)
+
+TS
+	ITU callsign prefixes
+
+3VA-3VZ, TSA-TSZ
+ Turkey
+ISO 3166-1 numeric
+
+792
+	ISO 3166-1 alpha-3
+
+TUR
+	ISO 3166-1 alpha-2
+
+TR
+	ICAO airport code prefix(es)
+
+LT
+E.164 code(s)
+
++90
+	IOC country code
+
+TUR
+	Country code top-level domain
+
+.tr
+	ICAO aircraft regis. prefix(es)
+
+TC-
+E.212 mobile country code(s)
+
+286
+	NATO Three-letter code
+
+TUR
+	NATO Two-letter code (obsolete)
+
+TU
+	LOC MARC code(s)
+
+TU
+ITU Maritime ID(s)
+
+271
+	ITU letter code(s)
+
+TUR
+	FIPS country code(s)
+
+TU
+	License plate code
+
+TR
+GS1 GTIN prefix(es)
+
+868-869
+	UNDP country code
+
+TUR
+	WMO country code(s)
+
+TU
+	ITU callsign prefixes
+
+TAA-TCZ, YMA-YMZ
+ Turkmenistan
+ISO 3166-1 numeric
+
+795
+	ISO 3166-1 alpha-3
+
+TKM
+	ISO 3166-1 alpha-2
+
+TM
+	ICAO airport code prefix(es)
+
+UT
+E.164 code(s)
+
++993
+	IOC country code
+
+TKM
+	Country code top-level domain
+
+.tm
+	ICAO aircraft regis. prefix(es)
+
+EZ-
+E.212 mobile country code(s)
+
+438
+	NATO Three-letter code
+
+TKM
+	NATO Two-letter code (obsolete)
+
+TX
+	LOC MARC code(s)
+
+TK
+ITU Maritime ID(s)
+
+434
+	ITU letter code(s)
+
+TKM
+	FIPS country code(s)
+
+TX
+	License plate code
+
+TM
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TUK
+	WMO country code(s)
+
+TR
+	ITU callsign prefixes
+
+EZA-EZZ
+ Turks and Caicos Islands
+ISO 3166-1 numeric
+
+796
+	ISO 3166-1 alpha-3
+
+TCA
+	ISO 3166-1 alpha-2
+
+TC
+	ICAO airport code prefix(es)
+
+MB
+E.164 code(s)
+
++1 649
+	IOC country code
+
+—
+	Country code top-level domain
+
+.tc
+	ICAO aircraft regis. prefix(es)
+
+VQ-T-
+E.212 mobile country code(s)
+
+376
+	NATO Three-letter code
+
+TCA
+	NATO Two-letter code (obsolete)
+
+TK
+	LOC MARC code(s)
+
+TC
+ITU Maritime ID(s)
+
+364
+	ITU letter code(s)
+
+TCA
+	FIPS country code(s)
+
+TK
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TCI
+	WMO country code(s)
+
+TI
+	ITU callsign prefixes
+
+—
+ Tuvalu
+ISO 3166-1 numeric
+
+798
+	ISO 3166-1 alpha-3
+
+TUV
+	ISO 3166-1 alpha-2
+
+TV
+	ICAO airport code prefix(es)
+
+NGF
+E.164 code(s)
+
++688
+	IOC country code
+
+TUV
+	Country code top-level domain
+
+.tv
+	ICAO aircraft regis. prefix(es)
+
+T2-
+E.212 mobile country code(s)
+
+553
+	NATO Three-letter code
+
+TUV
+	NATO Two-letter code (obsolete)
+
+TV
+	LOC MARC code(s)
+
+TV
+ITU Maritime ID(s)
+
+572
+	ITU letter code(s)
+
+TUV
+	FIPS country code(s)
+
+TV
+	License plate code
+
+TUV (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+TUV
+	WMO country code(s)
+
+TV
+	ITU callsign prefixes
+
+T2A-T2Z
+
+ Uganda
+ISO 3166-1 numeric
+
+800
+	ISO 3166-1 alpha-3
+
+UGA
+	ISO 3166-1 alpha-2
+
+UG
+	ICAO airport code prefix(es)
+
+HU
+E.164 code(s)
+
++256
+	IOC country code
+
+UGA
+	Country code top-level domain
+
+.ug
+	ICAO aircraft regis. prefix(es)
+
+5X-
+E.212 mobile country code(s)
+
+641
+	NATO Three-letter code
+
+UGA
+	NATO Two-letter code (obsolete)
+
+UG
+	LOC MARC code(s)
+
+UG
+ITU Maritime ID(s)
+
+675
+	ITU letter code(s)
+
+UGA
+	FIPS country code(s)
+
+UG
+	License plate code
+
+EAU
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+UGA
+	WMO country code(s)
+
+UG
+	ITU callsign prefixes
+
+5XA-5XZ
+ Ukraine
+ISO 3166-1 numeric
+
+804
+	ISO 3166-1 alpha-3
+
+UKR
+	ISO 3166-1 alpha-2
+
+UA
+	ICAO airport code prefix(es)
+
+UK
+E.164 code(s)
+
++380
+	IOC country code
+
+UKR
+	Country code top-level domain
+
+.ua
+	ICAO aircraft regis. prefix(es)
+
+UR-
+E.212 mobile country code(s)
+
+255
+	NATO Three-letter code
+
+UKR
+	NATO Two-letter code (obsolete)
+
+UP
+	LOC MARC code(s)
+
+UN
+ITU Maritime ID(s)
+
+272
+	ITU letter code(s)
+
+UKR
+	FIPS country code(s)
+
+UP
+	License plate code
+
+UA
+GS1 GTIN prefix(es)
+
+482
+	UNDP country code
+
+UKR
+	WMO country code(s)
+
+UR
+	ITU callsign prefixes
+
+EMA-EOZ, URA-UZZ
+ United Arab Emirates
+ISO 3166-1 numeric
+
+784
+	ISO 3166-1 alpha-3
+
+ARE
+	ISO 3166-1 alpha-2
+
+AE
+	ICAO airport code prefix(es)
+
+OM
+E.164 code(s)
+
++971
+	IOC country code
+
+UAE
+	Country code top-level domain
+
+.ae
+	ICAO aircraft regis. prefix(es)
+
+A6-
+E.212 mobile country code(s)
+
+050, 055, 056, 052
+	NATO Three-letter code
+
+ARE
+	NATO Two-letter code (obsolete)
+
+TC
+	LOC MARC code(s)
+
+TS
+ITU Maritime ID(s)
+
+470
+	ITU letter code(s)
+
+UAE
+	FIPS country code(s)
+
+AE
+	License plate code
+
+UAE
+GS1 GTIN prefix(es)
+
+629
+	UNDP country code
+
+UAE
+	WMO country code(s)
+
+ER
+	ITU callsign prefixes
+
+A6A-A6Z
+ United Kingdom
+ISO 3166-1 numeric
+
+826
+	ISO 3166-1 alpha-3
+
+GBR
+	ISO 3166-1 alpha-2
+
+GB
+	ICAO airport code prefix(es)
+
+EG
+E.164 code(s)
+
++44
+	IOC country code
+
+GBR
+	Country code top-level domain
+
+.uk and .gb
+	ICAO aircraft regis. prefix(es)
+
+G-
+E.212 mobile country code(s)
+
+234, 235
+	NATO Three-letter code
+
+GBR
+	NATO Two-letter code (obsolete)
+
+UK
+	LOC MARC code(s)
+
+XXK
+ITU Maritime ID(s)
+
+232-235
+	ITU letter code(s)
+
+G
+	FIPS country code(s)
+
+UK
+	License plate code
+
+GB
+GS1 GTIN prefix(es)
+
+500-509
+	UNDP country code
+
+UKM
+	WMO country code(s)
+
+UK
+	ITU callsign prefixes
+
+2AA-2ZZ, GAA-GZZ, MAA-MZZ, VPA-VQZ
+VSA-VSZ, ZBA-ZJZ, ZNA-ZOZ, ZQA-ZQZ
+ United States
+ISO 3166-1 numeric
+
+840
+	ISO 3166-1 alpha-3
+
+USA
+	ISO 3166-1 alpha-2
+
+US
+	ICAO airport code prefix(es)
+
+K,  PA, PB, PF, PH, PJ,
+PL, PM, PO, PP, PW
+E.164 code(s)
+
++1
+	IOC country code
+
+USA
+	Country code top-level domain
+
+.us
+	ICAO aircraft regis. prefix(es)
+
+N[note 1]
+E.212 mobile country code(s)
+
+310-316
+	NATO Three-letter code
+
+USA
+	NATO Two-letter code (obsolete)
+
+US
+	LOC MARC code(s)
+
+XXU
+ITU Maritime ID(s)
+
+338, 366-369
+	ITU letter code(s)
+
+USA
+	FIPS country code(s)
+
+US
+	License plate code
+
+USA
+GS1 GTIN prefix(es)
+
+000-139
+	UNDP country code
+
+USA
+	WMO country code(s)
+
+US
+	ITU callsign prefixes
+
+AAA-ALZ, KAA-KZZ
+NAA-NZZ, WAA-WZZ
+ Uruguay
+ISO 3166-1 numeric
+
+858
+	ISO 3166-1 alpha-3
+
+URY
+	ISO 3166-1 alpha-2
+
+UY
+	ICAO airport code prefix(es)
+
+SU
+E.164 code(s)
+
++598
+	IOC country code
+
+URU
+	Country code top-level domain
+
+.uy
+	ICAO aircraft regis. prefix(es)
+
+CX-
+E.212 mobile country code(s)
+
+748
+	NATO Three-letter code
+
+URY
+	NATO Two-letter code (obsolete)
+
+UY
+	LOC MARC code(s)
+
+UY
+ITU Maritime ID(s)
+
+770
+	ITU letter code(s)
+
+URG
+	FIPS country code(s)
+
+UY
+	License plate code
+
+ROU
+GS1 GTIN prefix(es)
+
+773
+	UNDP country code
+
+URU
+	WMO country code(s)
+
+UY
+	ITU callsign prefixes
+
+CVA-CXZ
+ Uzbekistan
+ISO 3166-1 numeric
+
+860
+	ISO 3166-1 alpha-3
+
+UZB
+	ISO 3166-1 alpha-2
+
+UZ
+	ICAO airport code prefix(es)
+
+UT
+E.164 code(s)
+
++998
+	IOC country code
+
+UZB
+	Country code top-level domain
+
+.uz
+	ICAO aircraft regis. prefix(es)
+
+UK-
+E.212 mobile country code(s)
+
+434
+	NATO Three-letter code
+
+UZB
+	NATO Two-letter code (obsolete)
+
+UZ
+	LOC MARC code(s)
+
+UZ
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+UZB
+	FIPS country code(s)
+
+UZ
+	License plate code
+
+UZ
+GS1 GTIN prefix(es)
+
+478
+	UNDP country code
+
+UZB
+	WMO country code(s)
+
+UZ
+	ITU callsign prefixes
+
+UJA-UMZ
+ Vanuatu
+ISO 3166-1 numeric
+
+548
+	ISO 3166-1 alpha-3
+
+VUT
+	ISO 3166-1 alpha-2
+
+VU
+	ICAO airport code prefix(es)
+
+NV
+E.164 code(s)
+
++678
+	IOC country code
+
+VAN
+	Country code top-level domain
+
+.vu
+	ICAO aircraft regis. prefix(es)
+
+YJ-
+E.212 mobile country code(s)
+
+541
+	NATO Three-letter code
+
+VUT
+	NATO Two-letter code (obsolete)
+
+NH
+	LOC MARC code(s)
+
+NN
+ITU Maritime ID(s)
+
+576
+	ITU letter code(s)
+
+VUT
+	FIPS country code(s)
+
+NH
+	License plate code
+
+VU (unofficial)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+VAN
+	WMO country code(s)
+
+NV
+	ITU callsign prefixes
+
+YJA-YJZ
+  Vatican City
+ISO 3166-1 numeric
+
+336
+	ISO 3166-1 alpha-3
+
+VAT
+	ISO 3166-1 alpha-2
+
+VA
+	ICAO airport code prefix(es)
+
+—
+E.164 code(s)
+
++379[note 2]
+	IOC country code
+
+—
+	Country code top-level domain
+
+.va
+	ICAO aircraft regis. prefix(es)
+
+HV-
+E.212 mobile country code(s)
+
+225
+	NATO Three-letter code
+
+VAT
+	NATO Two-letter code (obsolete)
+
+VT
+	LOC MARC code(s)
+
+VC
+ITU Maritime ID(s)
+
+208
+	ITU letter code(s)
+
+CVA
+	FIPS country code(s)
+
+VT
+	License plate code
+
+V
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+HLS[note 3]
+	WMO country code(s)
+
+—
+	ITU callsign prefixes
+
+HVA-HVZ
+ Venezuela
+ISO 3166-1 numeric
+
+862
+	ISO 3166-1 alpha-3
+
+VEN
+	ISO 3166-1 alpha-2
+
+VE
+	ICAO airport code prefix(es)
+
+SV
+E.164 code(s)
+
++58
+	IOC country code
+
+VEN
+	Country code top-level domain
+
+.ve
+	ICAO aircraft regis. prefix(es)
+
+YV-
+E.212 mobile country code(s)
+
+734
+	NATO Three-letter code
+
+VEN
+	NATO Two-letter code (obsolete)
+
+VE
+	LOC MARC code(s)
+
+VE
+ITU Maritime ID(s)
+
+775
+	ITU letter code(s)
+
+VEN
+	FIPS country code(s)
+
+VE
+	License plate code
+
+YV
+GS1 GTIN prefix(es)
+
+759
+	UNDP country code
+
+VEN
+	WMO country code(s)
+
+VN
+	ITU callsign prefixes
+
+4MA-4MZ, YVA-YYZ
+ Vietnam
+ISO 3166-1 numeric
+
+704
+	ISO 3166-1 alpha-3
+
+VNM
+	ISO 3166-1 alpha-2
+
+VN
+	ICAO airport code prefix(es)
+
+VV
+E.164 code(s)
+
++84
+	IOC country code
+
+VIE
+	Country code top-level domain
+
+.vn
+	ICAO aircraft regis. prefix(es)
+
+VN-
+E.212 mobile country code(s)
+
+452
+	NATO Three-letter code
+
+VNM
+	NATO Two-letter code (obsolete)
+
+VM
+	LOC MARC code(s)
+
+VM
+ITU Maritime ID(s)
+
+574
+	ITU letter code(s)
+
+VTN
+	FIPS country code(s)
+
+VM
+	License plate code
+
+VN
+GS1 GTIN prefix(es)
+
+893
+	UNDP country code
+
+VIE
+	WMO country code(s)
+
+VS
+	ITU callsign prefixes
+
+3WA-3WZ, XVA-XVZ
+ British Virgin Islands
+ISO 3166-1 numeric
+
+092
+	ISO 3166-1 alpha-3
+
+VGB
+	ISO 3166-1 alpha-2
+
+VG
+	ICAO airport code prefix(es)
+
+TU
+E.164 code(s)
+
++1 284
+	IOC country code
+
+IVB
+	Country code top-level domain
+
+.vg
+	ICAO aircraft regis. prefix(es)
+
+VP-LV-
+E.212 mobile country code(s)
+
+348
+	NATO Three-letter code
+
+VGB
+	NATO Two-letter code (obsolete)
+
+VS
+	LOC MARC code(s)
+
+VB
+ITU Maritime ID(s)
+
+378
+	ITU letter code(s)
+
+VRG
+	FIPS country code(s)
+
+VI
+	License plate code
+
+BVI
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+BVI
+	WMO country code(s)
+
+VG
+	ITU callsign prefixes
+
+—
+ United States Virgin Islands
+ISO 3166-1 numeric
+
+850
+	ISO 3166-1 alpha-3
+
+VIR
+	ISO 3166-1 alpha-2
+
+VI
+	ICAO airport code prefix(es)
+
+MI, TI
+E.164 code(s)
+
++1 340
+	IOC country code
+
+ISV
+	Country code top-level domain
+
+.vi
+	ICAO aircraft regis. prefix(es)
+
+N-
+E.212 mobile country code(s)
+
+332
+	NATO Three-letter code
+
+VIR
+	NATO Two-letter code (obsolete)
+
+VI
+	LOC MARC code(s)
+
+VI
+ITU Maritime ID(s)
+
+379
+	ITU letter code(s)
+
+VIR
+	FIPS country code(s)
+
+VQ
+	License plate code
+
+—
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+UVI
+	WMO country code(s)
+
+VI
+	ITU callsign prefixes
+
+—
+ Wallis and Futuna
+ISO 3166-1 numeric
+
+876
+	ISO 3166-1 alpha-3
+
+WLF
+	ISO 3166-1 alpha-2
+
+WF
+	ICAO airport code prefix(es)
+
+NL
+E.164 code(s)
+
++681
+	IOC country code
+
+—
+	Country code top-level domain
+
+.wf
+	ICAO aircraft regis. prefix(es)
+
+F-
+E.212 mobile country code(s)
+
+543
+	NATO Three-letter code
+
+WLF
+	NATO Two-letter code (obsolete)
+
+WF
+	LOC MARC code(s)
+
+WF
+ITU Maritime ID(s)
+
+578
+	ITU letter code(s)
+
+WAL
+	FIPS country code(s)
+
+WF
+	License plate code
+
+F
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+WFI
+	WMO country code(s)
+
+FW
+	ITU callsign prefixes
+
+—
+ Western Sahara
+ISO 3166-1 numeric
+
+732
+	ISO 3166-1 alpha-3
+
+ESH
+	ISO 3166-1 alpha-2
+
+EH
+	ICAO airport code prefix(es)
+
+GS
+E.164 code(s)
+
++212
+	IOC country code
+
+—
+	Country code top-level domain
+
+—
+	ICAO aircraft regis. prefix(es)
+
+CN-
+E.212 mobile country code(s)
+
+604
+	NATO Three-letter code
+
+ESH
+	NATO Two-letter code (obsolete)
+
+WI
+	LOC MARC code(s)
+
+SS
+ITU Maritime ID(s)
+
+—
+	ITU letter code(s)
+
+AOE
+	FIPS country code(s)
+
+WI
+	License plate code
+
+ME(?)
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+SAH
+	WMO country code(s)
+
+EH
+	ITU callsign prefixes
+
+—
+ Yemen
+ISO 3166-1 numeric
+
+887
+	ISO 3166-1 alpha-3
+
+YEM
+	ISO 3166-1 alpha-2
+
+YE
+	ICAO airport code prefix(es)
+
+OY
+E.164 code(s)
+
++967
+	IOC country code
+
+YEM
+	Country code top-level domain
+
+.ye
+	ICAO aircraft regis. prefix(es)
+
+7O-
+E.212 mobile country code(s)
+
+421
+	NATO Three-letter code
+
+YEM
+	NATO Two-letter code (obsolete)
+
+YE
+	LOC MARC code(s)
+
+YE
+ITU Maritime ID(s)
+
+473, 475
+	ITU letter code(s)
+
+YEM
+	FIPS country code(s)
+
+YM
+	License plate code
+
+YAR
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+YEM
+	WMO country code(s)
+
+YE
+	ITU callsign prefixes
+
+7OA-7OZ
+ Zambia
+ISO 3166-1 numeric
+
+894
+	ISO 3166-1 alpha-3
+
+ZMB
+	ISO 3166-1 alpha-2
+
+ZM
+	ICAO airport code prefix(es)
+
+FL
+E.164 code(s)
+
++260
+	IOC country code
+
+ZAM
+	Country code top-level domain
+
+.zm
+	ICAO aircraft regis. prefix(es)
+
+9J-
+E.212 mobile country code(s)
+
+645
+	NATO Three-letter code
+
+ZMB
+	NATO Two-letter code (obsolete)
+
+ZA
+	LOC MARC code(s)
+
+ZA
+ITU Maritime ID(s)
+
+678
+	ITU letter code(s)
+
+ZMB
+	FIPS country code(s)
+
+ZA
+	License plate code
+
+RNR
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ZAM
+	WMO country code(s)
+
+ZB
+	ITU callsign prefixes
+
+9IA-9JZ
+ Zimbabwe
+ISO 3166-1 numeric
+
+716
+	ISO 3166-1 alpha-3
+
+ZWE
+	ISO 3166-1 alpha-2
+
+ZW
+	ICAO airport code prefix(es)
+
+FV
+E.164 code(s)
+
++263
+	IOC country code
+
+ZIM
+	Country code top-level domain
+
+.zw
+	ICAO aircraft regis. prefix(es)
+
+Z-
+E.212 mobile country code(s)
+
+648
+	NATO Three-letter code
+
+ZWE
+	NATO Two-letter code (obsolete)
+
+ZI
+	LOC MARC code(s)
+
+RH
+ITU Maritime ID(s)
+
+679
+	ITU letter code(s)
+
+ZWE
+	FIPS country code(s)
+
+ZI
+	License plate code
+
+ZW
+GS1 GTIN prefix(es)
+
+—
+	UNDP country code
+
+ZIM
+	WMO country code(s)
+
+ZW
+	ITU callsign prefixes
+
+Z2A-Z2Z
