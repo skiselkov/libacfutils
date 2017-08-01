@@ -7,9 +7,9 @@
 -# if OP_GNUC_PREREQ(4,0)
 -#  pragma GCC visibility push(default)
 -# endif
-+//# if OP_GNUC_PREREQ(4,0)
-+//#  pragma GCC visibility push(default)
-+//# endif
++/*# if OP_GNUC_PREREQ(4,0)*/
++/*#  pragma GCC visibility push(default)*/
++/*# endif*/
  
  typedef struct OpusHead          OpusHead;
  typedef struct OpusTags          OpusTags;
@@ -20,9 +20,9 @@
 -# if OP_GNUC_PREREQ(4,0)
 -#  pragma GCC visibility pop
 -# endif
-+//# if OP_GNUC_PREREQ(4,0)
-+//#  pragma GCC visibility pop
-+//# endif
++/*# if OP_GNUC_PREREQ(4,0)*/
++/*#  pragma GCC visibility pop*/
++/*# endif*/
  
  # if defined(__cplusplus)
  }

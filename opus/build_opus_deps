@@ -33,6 +33,15 @@ fi
 
 OPUS_CFLAGS_COMMON="$CFLAGS_COMMON -DOPUS_EXPORT=''"
 
+if [[ "$1" = "-c" ]]; then
+	rm -fr "${OPUSFILE/%.tar.xz//}" "${OPUS/%.tar.xz//}" \
+	    "${LIBOGG/%.tar.xz//}" \
+	    opusfile-{linux,win,mac}-{32,64} \
+	    opus-{linux,win,mac}-{32,64} \
+	    libogg-{linux,win,mac}-{32,64}
+	exit
+fi
+
 case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
@@ -132,7 +141,6 @@ case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		build_opus "linux-64" 
 		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "linux-64" && \
 		CFLAGS="-m32" LDFLAGS="-m32" build_opusfile "linux-32" && \
 		build_opusfile "win-64" "--host=x86_64-w64-mingw32" && \
