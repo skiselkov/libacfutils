@@ -37,13 +37,22 @@ extern "C" {
 #endif
 
 typedef struct conf conf_t;
-conf_t *parse_conf(FILE *fp, int *errline);
-void free_conf(conf_t *conf);
+
+conf_t *conf_create_empty(void);
+void conf_free(conf_t *conf);
+
+conf_t *conf_read(FILE *fp, int *errline);
+bool_t conf_write(const conf_t *conf, FILE *fp);
 
 bool_t conf_get_str(const conf_t *conf, const char *key, const char **value);
 bool_t conf_get_i(const conf_t *conf, const char *key, int *value);
 bool_t conf_get_d(const conf_t *conf, const char *key, double *value);
 bool_t conf_get_b(const conf_t *conf, const char *key, bool_t *value);
+
+void conf_set_str(conf_t *conf, const char *key, const char *value);
+void conf_set_i(conf_t *conf, const char *key, int value);
+void conf_set_d(conf_t *conf, const char *key, double value);
+void conf_set_b(conf_t *conf, const char *key, bool_t value);
 
 #ifdef	__cplusplus
 }
