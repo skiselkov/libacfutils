@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 const char *icao2cc(const char *icao);
+const char *cc2lang(const char *cc);
 
 #ifdef	__cplusplus
 }
