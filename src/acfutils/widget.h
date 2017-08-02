@@ -23,42 +23,34 @@
  * Copyright 2017 Saso Kiselkov. All rights reserved.
  */
 
-#ifndef	_ACFUTILS_CONF_H_
-#define	_ACFUTILS_CONF_H_
+#ifndef	_ACFUTILS_WIDGET_H_
+#define	_ACFUTILS_WIDGET_H_
 
-#include <stdio.h>
-#include <stdint.h>
+#include <XPWidgets.h>
 
 #include <acfutils/types.h>
-#include <acfutils/avl.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-typedef struct conf conf_t;
+typedef struct tooltip_set tooltip_set_t;
 
-conf_t *conf_create_empty(void);
-void conf_free(conf_t *conf);
+XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
+    int width, int height, int visible, const char *descr, int root,
+    XPWidgetID container, XPWidgetClass cls);
 
-conf_t *conf_read(FILE *fp, int *errline);
-bool_t conf_write(const conf_t *conf, FILE *fp);
+void tooltip_init(void);
+void tooltip_fini(void);
 
-bool_t conf_get_str(const conf_t *conf, const char *key, const char **value);
-bool_t conf_get_i(const conf_t *conf, const char *key, int *value);
-bool_t conf_get_d(const conf_t *conf, const char *key, double *value);
-bool_t conf_get_b(const conf_t *conf, const char *key, bool_t *value);
+tooltip_set_t *tooltip_set_new(XPWidgetID window);
+void tooltip_set_destroy(tooltip_set_t *tts);
 
-void conf_set_str(conf_t *conf, const char *key, const char *value);
-void conf_set_i(conf_t *conf, const char *key, int value);
-void conf_set_d(conf_t *conf, const char *key, double value);
-void conf_set_b(conf_t *conf, const char *key, bool_t value);
-
-bool_t conf_walk(const conf_t *conf, const char **key, const char **value,
-    void **cookie);
+void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
+    const char **lines);
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* _ACFUTILS_CONF_H_ */
+#endif	/* _ACFUTILS_WIDGET_H_ */

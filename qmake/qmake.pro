@@ -24,6 +24,7 @@ CONFIG -= thread exceptions qt rtti debug
 VERSION = 1.0.0
 
 INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
+INCLUDEPATH += ../SDK/CHeaders/Widgets
 
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result

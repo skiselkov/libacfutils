@@ -306,7 +306,7 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 	n = vsnprintf(NULL, 0, fmt, ap1);
 	ASSERT3S(n, >, 0);
 	ck->value = malloc(n + 1);
-	(void) vsnprintf(ck->value, n, fmt, ap2);
+	(void) vsnprintf(ck->value, n + 1, fmt, ap2);
 	va_end(ap1);
 	va_end(ap2);
 }
@@ -339,4 +339,37 @@ void
 conf_set_b(conf_t *conf, const char *key, bool_t value)
 {
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
+}
+
+/*
+ * Walks all configuration key-value pairs. You must set *cookie to NULL
+ * on the first call. The function uses it to know how far it has progressed
+ * in the walk. Once the walk is done, the function returns B_FALSE. Otherwise
+ * it returns B_TRUE and the next config key & value in the respective args.
+ * Proper usage of this function:
+ *
+ *	void *cookie = NULL;
+ *	const char *key, *value;
+ *	while (conf_walk(conf, &key, &value, &cookie)) {
+ *		... do something with key & value ...
+ *	}
+ */
+bool_t
+conf_walk(const conf_t *conf, const char **key, const char **value,
+    void **cookie)
+{
+	conf_key_t *ck = *cookie;
+
+	if (ck == NULL)
+		ck = avl_first(&conf->tree);
+	else
+		ck = AVL_NEXT(&conf->tree, ck);
+	*cookie = ck;
+	if (ck != NULL) {
+		*key = ck->key;
+		*value = ck->value;
+		return (B_TRUE);
+	} else {
+		return (B_FALSE);
+	}
 }
