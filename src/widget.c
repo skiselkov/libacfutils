@@ -42,7 +42,7 @@ enum {
 
 typedef struct {
 	int		x, y, w, h;
-	const char	**lines;
+	const char	*text;
 	list_node_t	node;
 } tooltip_t;
 
@@ -124,16 +124,16 @@ tooltip_set_destroy(tooltip_set_t *tts)
 }
 
 void
-tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h, const char **lines)
+tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h, const char *text)
 {
-	ASSERT(lines[0] != NULL);
+	ASSERT(text != NULL);
 
 	tooltip_t *tt = malloc(sizeof (*tt));
 	tt->x = x;
 	tt->y = y;
 	tt->w = w;
 	tt->h = h;
-	tt->lines = lines;
+	tt->text = text;
 	list_insert_tail(&tts->tooltips, tt);
 }
 
@@ -142,14 +142,15 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 {
 	int width = 2 * TOOLTIP_WINDOW_MARGIN;
 	int height = 2 * TOOLTIP_WINDOW_MARGIN;
+	size_t n_lines;
+	char **lines = strsplit(tt->text, "\n", B_FALSE, &n_lines);
 
 	ASSERT(cur_tt == NULL);
 	ASSERT(cur_tt_win == NULL);
 
-	for (int i = 0; tt->lines[i] != NULL; i++) {
-		const char *line = tt->lines[i];
-		width = MAX(XPLMMeasureString(xplmFont_Proportional, line,
-		    strlen(line)) + 2 * TOOLTIP_WINDOW_MARGIN, width);
+	for (size_t i = 0; i < n_lines; i++) {
+		width = MAX(XPLMMeasureString(xplmFont_Proportional, lines[i],
+		    strlen(lines[i])) + 2 * TOOLTIP_WINDOW_MARGIN, width);
 		height += TOOLTIP_LINE_HEIGHT;
 	}
 
@@ -160,18 +161,18 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	XPSetWidgetProperty(cur_tt_win, xpProperty_MainWindowType,
 	    xpMainWindowStyle_Translucent);
 
-	for (int i = 0, y = TOOLTIP_WINDOW_MARGIN; tt->lines[i] != NULL; i++,
+	for (size_t i = 0, y = TOOLTIP_WINDOW_MARGIN; i < n_lines; i++,
 	    y += TOOLTIP_LINE_HEIGHT) {
-		const char *line = tt->lines[i];
 		XPWidgetID line_caption;
 
 		line_caption = create_widget_rel(TOOLTIP_WINDOW_MARGIN, y,
 		    B_FALSE, width - 2 * TOOLTIP_WINDOW_MARGIN,
-		    TOOLTIP_LINE_HEIGHT, 1, line, 0, cur_tt_win,
+		    TOOLTIP_LINE_HEIGHT, 1, lines[i], 0, cur_tt_win,
 		    xpWidgetClass_Caption);
 		XPSetWidgetProperty(line_caption, xpProperty_CaptionLit, 1);
 	}
 
+	free_strlist(lines, n_lines);
 	XPShowWidget(cur_tt_win);
 }
 

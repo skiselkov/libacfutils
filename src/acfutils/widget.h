@@ -47,7 +47,7 @@ tooltip_set_t *tooltip_set_new(XPWidgetID window);
 void tooltip_set_destroy(tooltip_set_t *tts);
 
 void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
-    const char **lines);
+    const char *text);
 
 #ifdef	__cplusplus
 }
