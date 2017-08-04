@@ -1153,7 +1153,8 @@ out:
 }
 
 static void
-parse_airports_txt_R_line(airport_t *arpt, const char *line)
+parse_airports_txt_R_line(airport_t *arpt, const char *line,
+    const char *filename, int line_num)
 {
 	char **comps;
 	size_t ncomps;
@@ -1171,10 +1172,13 @@ parse_airports_txt_R_line(airport_t *arpt, const char *line)
 	gpa = atof(comps[11]);
 	tch = atof(comps[12]);
 
-	if (!is_valid_elev(telev) ||
+	if (!is_valid_rwy_ID(rwy_id) || !is_valid_elev(telev) ||
 	    isnan(gpa) || gpa < 0 || gpa >= RWY_GPA_LIMIT ||
-	    isnan(tch) || tch < 0 || tch >= RWY_TCH_LIMIT)
+	    isnan(tch) || tch < 0 || tch >= RWY_TCH_LIMIT) {
+		logMsg("%s:%d: WARNING malformed runway line: \"%s\"",
+		    filename, line_num, line);
 		goto out;
+	}
 
 	for (runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
 	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
@@ -1239,7 +1243,7 @@ load_airports_txt(airportdb_t *db)
 		if (strstr(line, "A,") == line) {
 			arpt = parse_airports_txt_A_line(db, line);
 		} else if (strstr(line, "R,") == line && arpt != NULL) {
-			parse_airports_txt_R_line(arpt, line);
+			parse_airports_txt_R_line(arpt, line, fname, line_num);
 		}
 	}
 

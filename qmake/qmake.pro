@@ -38,6 +38,8 @@ DEFINES += _GNU_SOURCE DEBUG _FILE_OFFSET_BITS=64 _USE_MATH_DEFINES
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210
 
+DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
+
 TARGET = acfutils
 
 win32 {
