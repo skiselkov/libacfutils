@@ -1898,6 +1898,14 @@ make_apch_prox_bbox(const runway_t *rwy, int end_i)
 			 */
 			othr_v = geo2fpp(GEO3_TO_GEO2(orwy_end->thr), fpp);
 			v = vect2_sub(othr_v, thr_v);
+			if (IS_ZERO_VECT2(v)) {
+				logMsg("CAUTION: your nav DB is looking very "
+				    "strange: runways %s and %s at %s are on "
+				    "top of each other (coords: %fx%f)",
+				    end->id, orwy_end->id, rwy->arpt->icao,
+				    orwy_end->thr.lat, orwy_end->thr.lon);
+				continue;
+			}
 			a = rel_hdg(dir2hdg(dir_v), dir2hdg(v));
 			dist = fabs(sin(DEG2RAD(a)) * vect2_abs(v));
 

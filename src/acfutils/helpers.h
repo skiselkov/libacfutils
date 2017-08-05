@@ -160,7 +160,8 @@ is_valid_hdg(double hdg)
 	return (hdg >= 0.0 && hdg <= 360.0);
 }
 
-double rel_hdg(double hdg1, double hdg2);
+#define	rel_hdg(h1, h2)	rel_hdg_impl(h1, h2, __FILE__, __LINE__)
+double rel_hdg_impl(double hdg1, double hdg2, const char *file, int line);
 
 static inline double
 normalize_hdg(double hdg)

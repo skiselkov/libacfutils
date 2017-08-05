@@ -97,9 +97,10 @@ static const char *const icao_country_codes[] = {
  * being left. Always turns the shortest way around (<= 180 degrees).
  */
 double
-rel_hdg(double hdg1, double hdg2)
+rel_hdg_impl(double hdg1, double hdg2, const char *file, int line)
 {
-	ASSERT(is_valid_hdg(hdg1) && is_valid_hdg(hdg2));
+	ASSERT_MSG(is_valid_hdg(hdg1) && is_valid_hdg(hdg2),
+	    "from: %s:%d %f -> %f", file, line, hdg1, hdg2);
 	if (hdg1 > hdg2) {
 		if (hdg1 > hdg2 + 180)
 			return (360 - hdg1 + hdg2);
