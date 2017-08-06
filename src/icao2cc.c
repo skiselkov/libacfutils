@@ -351,18 +351,18 @@ icao2cc(const char *icao)
 }
 
 /*
- * Grabs a two-letter country code and tries to map it to language code of
- * the principal language spoken in that country. This shouldn't be relied
- * upon to be very accurate, since in reality the country-to-language
+ * Grabs an ICAO airport code and tries to map it to language code of
+ * the principal language spoken at that airport. This shouldn't be relied
+ * upon to be very accurate, since in reality the airport-to-language
  * mapping is anything but clear cut.
  * Returns a two- or three-letter language code (if no two-letter one exists),
  * or "XX" if no suitable mapping was found.
  */
 const char *
-cc2lang(const char *cc)
+icao2lang(const char *icao)
 {
-	for (int i = 0; icao2cc_table[i].cc != NULL; i++) {
-		if (strcmp(cc, icao2cc_table[i].cc) == 0)
+	for (int i = 0; icao2cc_table[i].icao != NULL; i++) {
+		if (strcmp(icao, icao2cc_table[i].icao) == 0)
 			return (icao2cc_table[i].lang);
 	}
 	return ("XX");
