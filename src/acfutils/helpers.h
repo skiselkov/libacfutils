@@ -277,6 +277,14 @@ DIR *opendir(const char *path);
 struct dirent *readdir(DIR *dirp);
 void closedir(DIR *dirp);
 
+/* A minimally compatible POSIX-style file stat reading implementation */
+struct stat {
+	uint64_t	st_size;
+	uint64_t	st_atime;
+	uint64_t	st_mtime;
+};
+int stat(const char *pathname, struct stat *buf);
+
 #endif	/* IBM */
 
 #ifdef	__cplusplus

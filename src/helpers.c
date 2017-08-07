@@ -724,7 +724,11 @@ file_exists(const char *filename, bool_t *isdir)
 	attr = GetFileAttributes(filenameT);
 	if (isdir != NULL)
 		*isdir = !!(attr & FILE_ATTRIBUTE_DIRECTORY);
-	return (attr != INVALID_FILE_ATTRIBUTES);
+	if (attr == INVALID_FILE_ATTRIBUTES) {
+		errno = ENOENT;	/* fake an errno value */
+		return (B_FALSE);
+	}
+	return (B_TRUE);
 #else	/* !IBM */
 	struct stat st;
 
@@ -983,6 +987,46 @@ closedir(DIR *dirp)
 {
 	FindClose(dirp->handle);
 	free(dirp);
+}
+
+int
+stat(const char *pathname, struct stat *buf)
+{
+	FILETIME	wtime, atime;
+	HANDLE		fh;
+	TCHAR		pathnameT[strlen(pathname) + 1];
+	LARGE_INTEGER	sz;
+	bool_t		isdir;
+
+	if (!file_exists(pathname, &isdir)) {
+		logMsg("Cannot stat %s: no such file or directory", pathname);
+		errno = ENOENT;
+		return (-1);
+	}
+
+	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT,
+	    sizeof (pathnameT));
+	fh = CreateFile(pathnameT, (!isdir ? FILE_READ_ATTRIBUTES : 0) |
+	    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
+	    FILE_ATTRIBUTE_NORMAL, NULL);
+	if (fh == INVALID_HANDLE_VALUE ||
+	    !GetFileTime(fh, NULL, &atime, &wtime) ||
+	    (!isdir && !GetFileSizeEx(fh, &sz))) {
+		win_perror(GetLastError(), "Cannot stat %s", pathname);
+		errno = EACCES;
+		return (-1);
+	}
+	if (isdir)
+		buf->st_size = 0;
+	else
+		buf->st_size = sz.QuadPart;
+	buf->st_atime = ((uint64_t)atime.dwHighDateTime << 32) |
+	    atime.dwLowDateTime;
+	buf->st_mtime = ((uint64_t)wtime.dwHighDateTime << 32) |
+	    wtime.dwLowDateTime;
+	CloseHandle(fh);
+
+	return (0);
 }
 
 #endif	/* IBM */
