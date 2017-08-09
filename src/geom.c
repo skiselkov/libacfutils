@@ -742,6 +742,9 @@ vect2vect_isect(vect2_t a, vect2_t oa, vect2_t b, vect2_t ob, bool_t confined)
 	vect2_t p1, p2, p3, p4, r;
 	double ca, cb, det;
 
+	if (IS_ZERO_VECT2(a) || IS_ZERO_VECT2(b))
+		return (NULL_VECT2);
+
 	if (VECT2_PARALLEL(a, b))
 		return (NULL_VECT2);
 
