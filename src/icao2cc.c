@@ -38,6 +38,98 @@ typedef struct {
  * ones.
  */
 static icao2cc_t icao2cc_table[] = {
+    /*
+     * We place some individual airport entries at the start of the table
+     * to guarantee they get picked up by the scanner ahead of all the
+     * more generic ones.
+     */
+    { .icao = "CYAD", .cc = "CA", .lang = "fr" },
+    { .icao = "CYAH", .cc = "CA", .lang = "fr" },
+    { .icao = "CYAS", .cc = "CA", .lang = "fr" },
+    { .icao = "CYBC", .cc = "CA", .lang = "fr" },
+    { .icao = "CYBG", .cc = "CA", .lang = "fr" },
+    { .icao = "CYBX", .cc = "CA", .lang = "fr" },
+    { .icao = "CYDO", .cc = "CA", .lang = "fr" },
+    { .icao = "CYEY", .cc = "CA", .lang = "fr" },
+    { .icao = "CYFE", .cc = "CA", .lang = "fr" },
+    { .icao = "CYFJ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYFJ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYGL", .cc = "CA", .lang = "fr" },
+    { .icao = "CYGP", .cc = "CA", .lang = "fr" },
+    { .icao = "CYGR", .cc = "CA", .lang = "fr" },
+    { .icao = "CYGV", .cc = "CA", .lang = "fr" },
+    { .icao = "CYGW", .cc = "CA", .lang = "fr" },
+    { .icao = "CYHA", .cc = "CA", .lang = "fr" },
+    { .icao = "CYHH", .cc = "CA", .lang = "fr" },
+    { .icao = "CYHR", .cc = "CA", .lang = "fr" },
+    { .icao = "CYHU", .cc = "CA", .lang = "fr" },
+    { .icao = "CYIF", .cc = "CA", .lang = "fr" },
+    { .icao = "CYIK", .cc = "CA", .lang = "fr" },
+    { .icao = "CYJN", .cc = "CA", .lang = "fr" },
+    { .icao = "CYKG", .cc = "CA", .lang = "fr" },
+    { .icao = "CYKL", .cc = "CA", .lang = "fr" },
+    { .icao = "CYKO", .cc = "CA", .lang = "fr" },
+    { .icao = "CYKQ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYLA", .cc = "CA", .lang = "fr" },
+    { .icao = "CYLQ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYLU", .cc = "CA", .lang = "fr" },
+    { .icao = "CYME", .cc = "CA", .lang = "fr" },
+    { .icao = "CYML", .cc = "CA", .lang = "fr" },
+    { .icao = "CYMT", .cc = "CA", .lang = "fr" },
+    { .icao = "CYMU", .cc = "CA", .lang = "fr" },
+    { .icao = "CYMW", .cc = "CA", .lang = "fr" },
+    { .icao = "CYMX", .cc = "CA", .lang = "fr" },
+    { .icao = "CYNA", .cc = "CA", .lang = "fr" },
+    { .icao = "CYNC", .cc = "CA", .lang = "fr" },
+    { .icao = "CYND", .cc = "CA", .lang = "fr" },
+    { .icao = "CYNM", .cc = "CA", .lang = "fr" },
+    { .icao = "CYOY", .cc = "CA", .lang = "fr" },
+    { .icao = "CYPH", .cc = "CA", .lang = "fr" },
+    { .icao = "CYPN", .cc = "CA", .lang = "fr" },
+    { .icao = "CYPP", .cc = "CA", .lang = "fr" },
+    { .icao = "CYPX", .cc = "CA", .lang = "fr" },
+    { .icao = "CYQB", .cc = "CA", .lang = "fr" },
+    { .icao = "CYQB", .cc = "CA", .lang = "fr" },
+    { .icao = "CYRC", .cc = "CA", .lang = "fr" },
+    { .icao = "CYRI", .cc = "CA", .lang = "fr" },
+    { .icao = "CYRJ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYRQ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYSC", .cc = "CA", .lang = "fr" },
+    { .icao = "CYSG", .cc = "CA", .lang = "fr" },
+    { .icao = "CYSZ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYTF", .cc = "CA", .lang = "fr" },
+    { .icao = "CYTQ", .cc = "CA", .lang = "fr" },
+    { .icao = "CYUL", .cc = "CA", .lang = "fr" },
+    { .icao = "CYUY", .cc = "CA", .lang = "fr" },
+    { .icao = "CYVB", .cc = "CA", .lang = "fr" },
+    { .icao = "CYVO", .cc = "CA", .lang = "fr" },
+    { .icao = "CYVP", .cc = "CA", .lang = "fr" },
+    { .icao = "CYXK", .cc = "CA", .lang = "fr" },
+    { .icao = "CYYY", .cc = "CA", .lang = "fr" },
+    { .icao = "CYZG", .cc = "CA", .lang = "fr" },
+    { .icao = "CYZV", .cc = "CA", .lang = "fr" },
+    { .icao = "CZBM", .cc = "CA", .lang = "fr" },
+    { .icao = "CZEM", .cc = "CA", .lang = "fr" },
+    { .icao = "ETAD", .cc = "US", .lang = "en" },
+    { .icao = "ETAR", .cc = "US", .lang = "en" },
+    { .icao = "ETNG", .cc = "US", .lang = "en" },
+    { .icao = "ETOU", .cc = "US", .lang = "en" },
+    { .icao = "LIDT", .cc = "IT", .lang = "de" },
+    { .icao = "LIPB", .cc = "IT", .lang = "de" },
+    { .icao = "LIVD", .cc = "IT", .lang = "de" },
+    { .icao = "LSGC", .cc = "CH", .lang = "fr" },
+    { .icao = "LSGE", .cc = "CH", .lang = "fr" },
+    { .icao = "LSGG", .cc = "CH", .lang = "fr" },
+    { .icao = "LSGL", .cc = "CH", .lang = "fr" },
+    { .icao = "LSGS", .cc = "CH", .lang = "fr" },
+    { .icao = "LSMP", .cc = "CH", .lang = "fr" },
+    { .icao = "LSZA", .cc = "CH", .lang = "it" },
+    { .icao = "LSZL", .cc = "CH", .lang = "it" },
+    { .icao = "LSZQ", .cc = "CH", .lang = "fr" },
+
+    /*
+     * The more generic entries come after the airport-specific ones.
+     */
     { .icao = "AG", .cc = "SB", .lang = "XX" },	/* Solomon Islands */
     { .icao = "AN", .cc = "NR", .lang = "XX" },	/* Nauru */
     { .icao = "AY", .cc = "PG", .lang = "XX" },	/* Papua New Guinea */
@@ -343,7 +435,8 @@ icao2cc(const char *icao)
 	 * matter anyway.
 	 */
 	for (int i = 0; icao2cc_table[i].icao != NULL; i++) {
-		if (strstr(icao, icao2cc_table[i].icao) == icao)
+		if (memcmp(icao, icao2cc_table[i].icao,
+		    strlen(icao2cc_table[i].icao)) == 0)
 			return (icao2cc_table[i].cc);
 	}
 
@@ -362,7 +455,8 @@ const char *
 icao2lang(const char *icao)
 {
 	for (int i = 0; icao2cc_table[i].icao != NULL; i++) {
-		if (strcmp(icao, icao2cc_table[i].icao) == 0)
+		if (memcmp(icao, icao2cc_table[i].icao,
+		    strlen(icao2cc_table[i].icao)) == 0)
 			return (icao2cc_table[i].lang);
 	}
 	return ("XX");
