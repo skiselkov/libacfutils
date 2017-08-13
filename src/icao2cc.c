@@ -169,7 +169,7 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "FC", .cc = "CG", .lang = "fr" },	/* Republic of the Congo */
     { .icao = "FD", .cc = "SZ", .lang = "en" },	/* Swaziland */
     { .icao = "FE", .cc = "CF", .lang = "fr" },	/* Central African Republic */
-    { .icao = "FG", .cc = "GQ", .lang = "es" },	/* Equatorial Guinea */
+    { .icao = "FG", .cc = "GQ", .lang = "pt" },	/* Equatorial Guinea */
     { .icao = "FH", .cc = "SH", .lang = "en" },	/* Saint Helena Ascension */
 						/* and Tristan da Cunha */
     { .icao = "FI", .cc = "MU", .lang = "XX" },	/* Mauritius */
@@ -183,9 +183,9 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "FMN", .cc = "MG", .lang = "fr" },/* Madagascar */
     { .icao = "FMS", .cc = "MG", .lang = "fr" },/* Madagascar */
     { .icao = "FM", .cc = "YT", .lang = "XX" },	/* Mayotte */
-    { .icao = "FN", .cc = "AO", .lang = "XX" },	/* Angola */
+    { .icao = "FN", .cc = "AO", .lang = "pt" },	/* Angola */
     { .icao = "FO", .cc = "GA", .lang = "XX" },	/* Gabon */
-    { .icao = "FP", .cc = "ST", .lang = "XX" },	/* São Tomé and Príncipe */
+    { .icao = "FP", .cc = "ST", .lang = "pt" },	/* São Tomé and Príncipe */
     { .icao = "FQ", .cc = "MZ", .lang = "pt" },	/* Mozambique */
     { .icao = "FS", .cc = "SC", .lang = "XX" },	/* Seychelles */
     { .icao = "FT", .cc = "TD", .lang = "XX" },	/* Chad */
@@ -200,14 +200,14 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "GC", .cc = "ES", .lang = "es" },	/* Spain */
     { .icao = "GE", .cc = "ES", .lang = "es" },	/* Spain */
     { .icao = "GF", .cc = "SL", .lang = "XX" },	/* Sierra Leone */
-    { .icao = "GG", .cc = "GW", .lang = "XX" },	/* Guinea-Bissau */
+    { .icao = "GG", .cc = "GW", .lang = "pt" },	/* Guinea-Bissau */
     { .icao = "GL", .cc = "LR", .lang = "XX" },	/* Liberia */
     { .icao = "GM", .cc = "MA", .lang = "ar" },	/* Morocco */
     { .icao = "GO", .cc = "SN", .lang = "fr" },	/* Senegal */
     { .icao = "GQ", .cc = "MR", .lang = "XX" },	/* Mauritania */
     { .icao = "GS", .cc = "EH", .lang = "XX" },	/* Western Sahara */
     { .icao = "GU", .cc = "GN", .lang = "XX" },	/* Guinea */
-    { .icao = "GV", .cc = "CV", .lang = "XX" },	/* Cape Verde */
+    { .icao = "GV", .cc = "CV", .lang = "pt" },	/* Cape Verde */
     { .icao = "HA", .cc = "ET", .lang = "XX" },	/* Ethiopia */
     { .icao = "HB", .cc = "BI", .lang = "XX" },	/* Burundi */
     { .icao = "HC", .cc = "SO", .lang = "XX" },	/* Somalia */
@@ -402,7 +402,7 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "WB", .cc = "MY", .lang = "ms" },	/* Malaysia */
     { .icao = "WI", .cc = "ID", .lang = "id" },	/* Indonesia */
     { .icao = "WM", .cc = "MY", .lang = "ms" },	/* Malaysia */
-    { .icao = "WP", .cc = "TL", .lang = "XX" },	/* Timor-Leste */
+    { .icao = "WP", .cc = "TL", .lang = "pt" },	/* Timor-Leste */
     { .icao = "WS", .cc = "SG", .lang = "zh" },	/* Singapore */
     { .icao = "YP", .cc = "CX", .lang = "XX" },	/* Christmas Island */
     { .icao = "Y", .cc = "AU", .lang = "en" },	/* Australia */
