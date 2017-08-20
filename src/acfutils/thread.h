@@ -24,6 +24,7 @@
 #if APL || LIN
 #include <pthread.h>
 #include <stdint.h>
+#include <time.h>
 #else	/* !APL && !LIN */
 #include <windows.h>
 #endif	/* !APL && !LIN */
