@@ -36,6 +36,8 @@
 extern "C" {
 #endif
 
+typedef struct alc alc_t;
+
 typedef struct wav_fmt_hdr {
 	uint16_t	datafmt;	/* PCM = 1 */
 	uint16_t	n_channels;
@@ -49,15 +51,16 @@ typedef struct wav_s {
 	char		*name;
 	wav_fmt_hdr_t	fmt;
 	double		duration;	/* in seconds */
+	alc_t		*alc;
 	ALuint		albuf;
 	ALuint		alsrc;
 } wav_t;
 
-void openal_set_shared_ctx(bool_t flag);
-bool_t openal_init();
-void openal_fini();
+char **openal_list_output_devs(size_t *num_p);
+alc_t *openal_init(const char *devname, bool_t shared);
+void openal_fini(alc_t *alc);
 
-wav_t *wav_load(const char *filename, const char *descr_name);
+wav_t *wav_load(const char *filename, const char *descr_name, alc_t *alc);
 void wav_free(wav_t *wav);
 
 void wav_set_gain(wav_t *wav, float gain);

@@ -45,11 +45,10 @@
 
 #define	READ_BUFSZ	((1024 * 1024) / sizeof (opus_int16))	/* bytes */
 
-static ALCdevice *old_dev = NULL, *my_dev = NULL;
-static ALCcontext *old_ctx = NULL, *my_ctx = NULL;
-static bool_t use_shared = B_FALSE;
-static bool_t ctx_saved = B_FALSE;
-static bool_t openal_inited = B_FALSE;
+struct alc {
+	ALCdevice	*dev;
+	ALCcontext	*ctx;
+};
 
 /*
  * ctx_save/ctx_restore must be used to bracket all OpenAL calls. This makes
@@ -57,50 +56,46 @@ static bool_t openal_inited = B_FALSE;
  * contexts are used, these functions are no-ops.
  */
 static bool_t
-ctx_save(void)
+ctx_save(alc_t *alc, alc_t *sav)
 {
 	ALuint err;
 
-	if (use_shared)
+	if (alc != NULL && alc->ctx == NULL)
 		return (B_TRUE);
 
-	ASSERT(!ctx_saved);
-
-	old_ctx = alcGetCurrentContext();
-	if (old_ctx != NULL) {
-		old_dev = alcGetContextsDevice(old_ctx);
-		VERIFY(old_dev != NULL);
+	sav->ctx = alcGetCurrentContext();
+	if (sav->ctx != NULL) {
+		sav->dev = alcGetContextsDevice(sav->ctx);
+		VERIFY(sav->dev != NULL);
 	} else {
-		old_dev = NULL;
+		sav->dev = NULL;
 	}
 
-	alcMakeContextCurrent(my_ctx);
-	if ((err = alcGetError(my_dev)) != ALC_NO_ERROR) {
-		logMsg("Error switching to my audio context (0x%x)", err);
-		return (B_FALSE);
+	if (alc != NULL) {
+		ASSERT(alc->ctx != NULL);
+		alcMakeContextCurrent(alc->ctx);
+		if ((err = alcGetError(alc->dev)) != ALC_NO_ERROR) {
+			logMsg("Error switching to my audio context (0x%x)",
+			    err);
+			return (B_FALSE);
+		}
 	}
-
-	ctx_saved = B_TRUE;
 
 	return (B_TRUE);
 }
 
 static bool_t
-ctx_restore(void)
+ctx_restore(alc_t *alc, alc_t *sav)
 {
 	ALuint err;
 
-	if (use_shared)
+	if (alc != NULL && alc->ctx == NULL)
 		return (B_TRUE);
 
-	ASSERT(ctx_saved);
-	/* To prevent tripping ASSERT in ctx_save if ctx_restore fails */
-	ctx_saved = B_FALSE;
-
-	if (old_ctx != NULL) {
-		alcMakeContextCurrent(old_ctx);
-		VERIFY(old_dev != NULL);
-		if ((err = alcGetError(old_dev)) != ALC_NO_ERROR) {
+	if (sav->ctx != NULL) {
+		alcMakeContextCurrent(sav->ctx);
+		VERIFY(sav->dev != NULL);
+		if ((err = alcGetError(sav->dev)) != ALC_NO_ERROR) {
 			logMsg("Error restoring shared audio context (0x%x)",
 			    err);
 			return (B_FALSE);
@@ -110,73 +105,95 @@ ctx_restore(void)
 	return (B_TRUE);
 }
 
-void
-openal_set_shared_ctx(bool_t flag)
+char **
+openal_list_output_devs(size_t *num_p)
 {
-	ASSERT(!openal_inited);
-	use_shared = flag;
+	char **devs = NULL;
+	size_t num = 0;
+
+	for (const char *device = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+	    device != NULL && *device != 0; device += strlen(device) + 1) {
+		devs = realloc(devs, (num + 1) * sizeof (*devs));
+		devs[num] = strdup(device);
+		num++;
+	}
+
+	*num_p = num;
+	return (devs);
 }
 
-bool_t
-openal_init(void)
+alc_t *
+openal_init(const char *devname, bool_t shared)
 {
-	ASSERT(!openal_inited);
+	alc_t	*alc;
+	alc_t	sav;
 
-	if (!ctx_save())
-		return (B_FALSE);
+	if (!ctx_save(NULL, &sav))
+		return (NULL);
 
-	if (!use_shared || alcGetCurrentContext() == NULL) {
+	alc = calloc(1, sizeof (*alc));
+	if (!shared || sav.ctx == NULL) {
+		ALCdevice *dev = NULL;
+		ALCcontext *ctx = NULL;
 		ALuint err;
 
-		my_dev = alcOpenDevice(NULL);
-		if (my_dev == NULL) {
+		dev = alcOpenDevice(devname);
+		if (dev == NULL) {
 			logMsg("Cannot init audio system: device open failed.");
-			(void) ctx_restore();
+			free(alc);
+			(void) ctx_restore(NULL, &sav);
 			return (B_FALSE);
 		}
-		my_ctx = alcCreateContext(my_dev, NULL);
-		if ((err = alcGetError(my_dev)) != ALC_NO_ERROR) {
+		ctx = alcCreateContext(dev, NULL);
+		if ((err = alcGetError(dev)) != ALC_NO_ERROR) {
 			logMsg("Cannot init audio system: create context "
 			    "failed (0x%x)", err);
-			alcCloseDevice(my_dev);
-			(void) ctx_restore();
+			alcCloseDevice(dev);
+			free(alc);
+			(void) ctx_restore(NULL, &sav);
 			return (B_FALSE);
 		}
-		VERIFY(my_ctx != NULL);
+		VERIFY(ctx != NULL);
 		/* No current context, install our own */
-		if (use_shared && alcGetCurrentContext() == NULL) {
-			alcMakeContextCurrent(my_ctx);
-			if ((err = alcGetError(my_dev)) != ALC_NO_ERROR) {
-				logMsg("Error installing my audio context "
+		if (shared && sav.ctx == NULL) {
+			sav.ctx = ctx;
+			sav.dev = dev;
+			alcMakeContextCurrent(sav.ctx);
+			VERIFY(sav.dev != NULL);
+			if ((err = alcGetError(sav.dev)) != ALC_NO_ERROR) {
+				logMsg("Error installing shared audio context "
 				    "(0x%x)", err);
-				alcDestroyContext(my_ctx);
-				alcCloseDevice(my_dev);
 				return (B_FALSE);
 			}
 		}
+		if (!shared) {
+			alc->dev = dev;
+			alc->ctx = ctx;
+		}
 	}
 
-	if (!ctx_restore())
-		return (B_FALSE);
+	if (!ctx_restore(alc, &sav)) {
+		if (!shared) {
+			alcDestroyContext(alc->ctx);
+			alcCloseDevice(alc->dev);
+		}
+		free(alc);
+		return (NULL);
+	}
 
-	openal_inited = B_TRUE;
-
-	return (B_TRUE);
+	return (alc);
 }
 
 void
-openal_fini()
+openal_fini(alc_t *alc)
 {
-	if (!openal_inited)
-		return;
+	ASSERT(alc != NULL);
 
-	if (!use_shared) {
-		alcDestroyContext(my_ctx);
-		alcCloseDevice(my_dev);
-		my_ctx = NULL;
-		my_dev = NULL;
+	if (alc->dev != NULL) {
+		alcDestroyContext(alc->ctx);
+		alcCloseDevice(alc->dev);
 	}
-	openal_inited = B_FALSE;
+	free(alc);
 }
 
 static bool_t
@@ -198,15 +215,16 @@ wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
 {
 	ALuint err;
 	ALfloat zeroes[3] = { 0.0, 0.0, 0.0 };
+	alc_t sav;
 
-	if (!ctx_save())
+	if (!ctx_save(wav->alc, &sav))
 		return (B_FALSE);
 
 	alGenBuffers(1, &wav->albuf);
 	if ((err = alGetError()) != AL_NO_ERROR) {
 		logMsg("Error loading WAV file %s: alGenBuffers failed (0x%x).",
 		    filename, err);
-		(void) ctx_restore();
+		(void) ctx_restore(wav->alc, &sav);
 		return (B_FALSE);
 	}
 	if (wav->fmt.bps == 16) {
@@ -222,7 +240,7 @@ wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
 	if ((err = alGetError()) != AL_NO_ERROR) {
 		logMsg("Error loading WAV file %s: alBufferData failed (0x%x).",
 		    filename, err);
-		(void) ctx_restore();
+		(void) ctx_restore(wav->alc, &sav);
 		return (B_FALSE);
 	}
 
@@ -230,7 +248,7 @@ wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
 	if ((err = alGetError()) != AL_NO_ERROR) {
 		logMsg("Error loading WAV file %s: alGenSources failed (0x%x).",
 		    filename, err);
-		(void) ctx_restore();
+		(void) ctx_restore(wav->alc, &sav);
 		return (B_FALSE);
 	}
 #define	CHECK_ERROR(stmt) \
@@ -242,7 +260,7 @@ wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
 			alDeleteSources(1, &wav->alsrc); \
 			VERIFY3S(alGetError(), ==, AL_NO_ERROR); \
 			wav->alsrc = 0; \
-			(void) ctx_restore(); \
+			(void) ctx_restore(wav->alc, &sav); \
 			return (B_FALSE); \
 		} \
 	} while (0)
@@ -253,13 +271,13 @@ wav_gen_al_bufs(wav_t *wav, const void *buf, size_t bufsz, const char *filename)
 	CHECK_ERROR(alSourcefv(wav->alsrc, AL_POSITION, zeroes));
 	CHECK_ERROR(alSourcefv(wav->alsrc, AL_VELOCITY, zeroes));
 
-	(void) ctx_restore();
+	(void) ctx_restore(wav->alc, &sav);
 
 	return (B_TRUE);
 }
 
 static wav_t *
-wav_load_opus(const char *filename)
+wav_load_opus(const char *filename, alc_t *alc)
 {
 	wav_t *wav;
 	int error;
@@ -277,6 +295,7 @@ wav_load_opus(const char *filename)
 	VERIFY(head != NULL);
 
 	wav = calloc(1, sizeof (*wav));
+	wav->alc = alc;
 
 	/* fake a wav_fmt_hdr_t from the OpusHead object */
 	wav->fmt.datafmt = 1;
@@ -321,7 +340,7 @@ errout:
 }
 
 static wav_t *
-wav_load_wav(const char *filename)
+wav_load_wav(const char *filename, alc_t *alc)
 {
 	wav_t *wav = NULL;
 	FILE *fp;
@@ -343,6 +362,7 @@ wav_load_wav(const char *filename)
 
 	if ((wav = calloc(1, sizeof (*wav))) == NULL)
 		goto errout;
+	wav->alc = alc;
 	if ((filebuf = malloc(filesz)) == NULL)
 		goto errout;
 	if (fread(filebuf, 1, filesz, fp) != filesz)
@@ -417,18 +437,18 @@ errout:
  * stereo raw PCM (uncompressed) WAV files.
  */
 wav_t *
-wav_load(const char *filename, const char *descr_name)
+wav_load(const char *filename, const char *descr_name, alc_t *alc)
 {
 	const char *dot = strrchr(filename, '.');
 	wav_t *wav;
 
-	ASSERT(openal_inited);
+	ASSERT(alc != NULL);
 
 	if (dot != NULL && (strcmp(&dot[1], "opus") == 0 ||
 	    strcmp(&dot[1], "OPUS") == 0)) {
-		wav = wav_load_opus(filename);
+		wav = wav_load_opus(filename, alc);
 	} else {
-		wav = wav_load_wav(filename);
+		wav = wav_load_wav(filename, alc);
 	}
 	if (wav != NULL) {
 		wav->name = strdup(descr_name);
@@ -443,12 +463,12 @@ wav_load(const char *filename, const char *descr_name)
 void
 wav_free(wav_t *wav)
 {
+	alc_t sav;
+
 	if (wav == NULL)
 		return;
 
-	ASSERT(openal_inited);
-
-	VERIFY(ctx_save());
+	VERIFY(ctx_save(wav->alc, &sav));
 	free(wav->name);
 	if (wav->alsrc != 0) {
 		alSourceStop(wav->alsrc);
@@ -456,7 +476,7 @@ wav_free(wav_t *wav)
 	}
 	if (wav->albuf != 0)
 		alDeleteBuffers(1, &wav->albuf);
-	VERIFY(ctx_restore());
+	VERIFY(ctx_restore(wav->alc, &sav));
 
 	free(wav);
 }
@@ -464,16 +484,16 @@ wav_free(wav_t *wav)
 #define	WAV_SET_PARAM(al_op, al_param_name, ...) \
 	do { \
 		ALuint err; \
+		alc_t sav; \
 		if (wav == NULL || wav->alsrc == 0) \
 			return; \
-		ASSERT(openal_inited); \
-		VERIFY(ctx_save()); \
+		VERIFY(ctx_save(wav->alc, &sav)); \
 		al_op(wav->alsrc, al_param_name, __VA_ARGS__); \
 		if ((err = alGetError()) != AL_NO_ERROR) { \
 			logMsg("Error changing " #al_param_name " of WAV %s, " \
 			    "error 0x%x.", wav->name, err); \
 		} \
-		VERIFY(ctx_restore()); \
+		VERIFY(ctx_restore(wav->alc, &sav)); \
 	} while (0)
 
 /*
@@ -515,22 +535,21 @@ bool_t
 wav_play(wav_t *wav)
 {
 	ALuint err;
+	alc_t sav;
 
 	if (wav == NULL)
 		return (B_FALSE);
 
-	ASSERT(openal_inited);
-
-	VERIFY(ctx_save());
+	VERIFY(ctx_save(wav->alc, &sav));
 
 	alSourcePlay(wav->alsrc);
 	if ((err = alGetError()) != AL_NO_ERROR) {
 		logMsg("Can't play sound: alSourcePlay failed (0x%x).", err);
-		VERIFY(ctx_restore());
+		VERIFY(ctx_restore(wav->alc, &sav));
 		return (B_FALSE);
 	}
 
-	VERIFY(ctx_restore());
+	VERIFY(ctx_restore(wav->alc, &sav));
 
 	return (B_TRUE);
 }
@@ -543,6 +562,7 @@ void
 wav_stop(wav_t *wav)
 {
 	ALuint err;
+	alc_t sav;
 
 	if (wav == NULL)
 		return;
@@ -550,10 +570,9 @@ wav_stop(wav_t *wav)
 	if (wav->alsrc == 0)
 		return;
 
-	ASSERT(openal_inited);
-	VERIFY(ctx_save());
+	VERIFY(ctx_save(wav->alc, &sav));
 	alSourceStop(wav->alsrc);
 	if ((err = alGetError()) != AL_NO_ERROR)
 		logMsg("Can't stop sound, alSourceStop failed (0x%x).", err);
-	VERIFY(ctx_restore());
+	VERIFY(ctx_restore(wav->alc, &sav));
 }

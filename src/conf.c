@@ -135,9 +135,6 @@ conf_read(FILE *fp, int *errline)
 				continue;
 		}
 
-		/* make the config file case-insensitive */
-		strtolower(line);
-
 		sep = strstr(line, "=");
 		if (sep == NULL) {
 			conf_free(conf);
@@ -152,6 +149,7 @@ conf_read(FILE *fp, int *errline)
 
 		srch.key = malloc(strlen(line) + 1);
 		strcpy(srch.key, line);
+		strtolower(srch.key);	/* keys are case-insensitive */
 		ck = avl_find(&conf->tree, &srch, &where);
 		if (ck == NULL) {
 			/* if the key didn't exist yet, create a new one */
