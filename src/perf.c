@@ -38,18 +38,6 @@
 
 #define	STEP_DEBUG
 
-/*
- * Physical constants.
- */
-#define	EARTH_GRAVITY	9.80665		/* Earth surface grav. acceleration */
-#define	DRY_AIR_MOL	0.0289644	/* Molar mass of dry air */
-#define	GAMMA		1.4		/* Specific heat ratio of dry air */
-#define	R_univ		8.31447		/* Universal gas constant */
-#define	R_spec		287.058		/* Specific gas constant of dry air */
-
-/* Calculates gravitational force for mass `m' in kg on Earth */
-#define	MASS2GFORCE(m)		((m) * EARTH_GRAVITY)
-
 #define	ACFT_PERF_MIN_VERSION	1
 #define	ACFT_PERF_MAX_VERSION	1
 #define	MAX_LINE_COMPS		2
