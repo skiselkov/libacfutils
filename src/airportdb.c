@@ -164,6 +164,7 @@
  */
 #define	ILS_GS_GND_OFFSET		5	/* meters */
 
+#define	MIN_RWY_LEN			10	/* meters */
 #define	RWY_GPA_LIMIT			10	/* degrees */
 #define	RWY_TCH_LIMIT			200	/* feet */
 #define	TCH_IS_VALID(tch)		(tch > 0 && tch < RWY_TCH_LIMIT)
@@ -891,13 +892,22 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line)
 		rwy->ends[1].thr.elev = atof(&comps[27][7]);
 	}
 
-	/* validate all parsed info */
+	/* Validate the runway ends individually. */
 	if (!validate_rwy_end(&rwy->ends[0], error_descr) ||
 	    !validate_rwy_end(&rwy->ends[1], error_descr)) {
 		free(rwy);
 		goto out;
 	}
-
+	/*
+	 * Are the runway ends sufficiently far apart? Protects against runways
+	 * with overlapping thresholds, which results in a NAN runway hdg.
+	 */
+	if (vect3_dist(sph2ecef(rwy->ends[0].thr),
+	    sph2ecef(rwy->ends[1].thr)) < MIN_RWY_LEN) {
+		free(rwy);
+		goto out;
+	}
+	/* Duplicate runway present? */
 	if (avl_find(&arpt->rwys, rwy, &where) != NULL) {
 		free(rwy);
 		goto out;
