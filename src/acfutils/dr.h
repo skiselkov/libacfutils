@@ -19,6 +19,8 @@
 #ifndef	_DR_H_
 #define	_DR_H_
 
+#include <stdlib.h>
+
 #include <XPLMDataAccess.h>
 
 #include <acfutils/types.h>
