@@ -734,7 +734,7 @@ file_exists(const char *filename, bool_t *isdir)
 
 	if (isdir != NULL)
 		*isdir = B_FALSE;
-	if (lstat(filename, &st) < 0) {
+	if (stat(filename, &st) < 0) {
 		if (errno != ENOENT)
 			logMsg("Error checking if file %s exists: %s",
 			    filename, strerror(errno));
