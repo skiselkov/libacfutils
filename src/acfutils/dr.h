@@ -23,6 +23,7 @@
 
 #include <XPLMDataAccess.h>
 
+#include <acfutils/helpers.h>
 #include <acfutils/types.h>
 
 #ifdef	__cplusplus
