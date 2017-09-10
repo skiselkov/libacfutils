@@ -85,7 +85,8 @@ extern "C" {
 #define	thread_create(thrp, proc, arg) \
 	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
 	    0, NULL)) != NULL)
-#define	thread_join(thrp)	VERIFY(WaitForSingleObject(*(thrp), INFINITE))
+#define	thread_join(thrp) \
+	VERIFY3S(WaitForSingleObject(*(thrp), INFINITE), ==, WAIT_OBJECT_0)
 
 #define	cv_wait(cv, mtx) \
 	VERIFY(SleepConditionVariableCS((cv), (mtx), INFINITE))
