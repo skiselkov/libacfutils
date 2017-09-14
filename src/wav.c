@@ -283,7 +283,7 @@ wav_load_opus(const char *filename, alc_t *alc)
 	int error;
 	OggOpusFile *file = op_open_file(filename, &error);
 	const OpusHead *head;
-	int sz = 0, cap = 0;
+	unsigned sz = 0, cap = 0;
 	opus_int16 *pcm = NULL;
 
 	if (file == NULL) {
@@ -311,7 +311,11 @@ wav_load_opus(const char *filename, alc_t *alc)
 	for (;;) {
 		int op_read_sz;
 
-		if (sz == cap) {
+		/*
+		 * opusfile asks us to keep at least 120ms of buffer space
+		 * available, so /8 gives us 125ms
+		 */
+		if (sz + ((wav->fmt.srate * wav->fmt.n_channels) / 8) >= cap) {
 			cap += READ_BUFSZ;
 			pcm = realloc(pcm, cap * sizeof (*pcm));
 		}
@@ -321,7 +325,8 @@ wav_load_opus(const char *filename, alc_t *alc)
 		else
 			break;
 	}
-	wav->duration = ((double)(sz / wav->fmt.n_channels)) / wav->fmt.srate;
+	wav->duration = ((double)((sz - head->pre_skip) /
+	    wav->fmt.n_channels)) / wav->fmt.srate;
 
 	VERIFY3S(head->pre_skip, <, sz);
 	wav_gen_al_bufs(wav, &pcm[head->pre_skip],
