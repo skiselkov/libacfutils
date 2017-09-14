@@ -90,9 +90,14 @@ extern "C" {
 
 #define	cv_wait(cv, mtx) \
 	VERIFY(SleepConditionVariableCS((cv), (mtx), INFINITE))
-#define	cv_timedwait(cv, mtx, microtime) \
-	(void) SleepConditionVariableCS((cv), (mtx), \
-	((microtime) - microclock()) / 1000)
+#define	cv_timedwait(cv, mtx, limit) \
+	do { \
+		uint64_t now = microclock(); \
+		if (now < (limit)) { \
+			(void) SleepConditionVariableCS((cv), (mtx), \
+			    ((limit) - now) / 1000); \
+		} \
+	} while (0)
 #define	cv_init		InitializeConditionVariable
 #define	cv_destroy(cv)	/* no-op */
 #define	cv_broadcast	WakeAllConditionVariable
