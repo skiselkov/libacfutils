@@ -25,8 +25,8 @@
 extern "C" {
 #endif
 
-#define	USEC2SEC(usec)	(usec / 1000000.0)
-#define	SEC2USEC(sec)	(sec * 1000000ll)
+#define	USEC2SEC(usec)	((usec) / 1000000.0)
+#define	SEC2USEC(sec)	((sec) * 1000000ll)
 uint64_t microclock();
 
 #ifdef	__cplusplus

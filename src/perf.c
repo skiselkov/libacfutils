@@ -993,7 +993,7 @@ mach2ktas(double mach, double oat)
  * Converts true airspeed to calibrated airspeed.
  *
  * @param ktas True airspeed in knots.
- * @param pressure Static air pressure in hPa.
+ * @param pressure Static air pressure in Pa.
  * @param oat Static outside air temperature in degrees C.
  *
  * @return Calibrated airspeed in knots.
@@ -1001,9 +1001,22 @@ mach2ktas(double mach, double oat)
 double
 ktas2kcas(double ktas, double pressure, double oat)
 {
-	double qc = impact_press(ktas2mach(ktas, oat), pressure);
-	return (MPS2KT(ISA_SPEED_SOUND *
-	    sqrt(5 * (pow(qc / ISA_SL_PRESS + 1, 0.2857142857) - 1))));
+	return (impact_press2kcas(impact_press(ktas2mach(ktas, oat),
+	    pressure)));
+}
+
+/*
+ * Converts impact pressure to calibrated airspeed.
+ *
+ * @param impact_pressure Impact air pressure in Pa.
+ *
+ * @return Calibrated airspeed in knots.
+ */
+double
+impact_press2kcas(double impact_pressure)
+{
+	return (MPS2KT(ISA_SPEED_SOUND * sqrt(5 *
+	    (pow(impact_pressure / ISA_SL_PRESS + 1, 0.2857142857) - 1))));
 }
 
 /*

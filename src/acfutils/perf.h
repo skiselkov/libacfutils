@@ -54,11 +54,14 @@ extern "C" {
 #define	FPM2MPS(f)	FEET2MET((f) / 60.0)	/* ft.min^-1 to m.s^-1 */
 #define	MPS2FPM(m)	MET2FEET((m) * 60.0)	/* m.s^-1 to ft.min^-1 */
 
+#define	INHG2PA(p)	((p) * (101325 / 29.92))
+#define	PA2INHG(p)	((p) * (29.92 / 101325))
+
 /*
  * Other unit conversions
  */
-#define	HPA2PA(x)	((x) / 100)
-#define	PA2HPA(x)	((x) * 100)
+#define	HPA2PA(x)	((x) * 100)
+#define	PA2HPA(x)	((x) / 100)
 
 /*
  * ISA (International Standard Atmosphere) parameters.
@@ -205,6 +208,7 @@ double mach2ktas(double mach, double oat);
 
 double ktas2kcas(double ktas, double pressure, double oat);
 double kcas2ktas(double kcas, double pressure, double oat);
+double press2kcas(double impact_pressure);
 
 double mach2keas(double mach, double press);
 double keas2mach(double keas, double press);
