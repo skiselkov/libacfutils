@@ -36,5 +36,10 @@ cd "$(dirname "$0")"
 PKG_CONFIG_PATH="\
 $(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/opus-$ARCH/lib/pkgconfig:\
-$(pwd)/opus/libogg-$ARCH/install/lib/pkgconfig" \
-    pkg-config $@ opusfile opus ogg
+$(pwd)/opus/libogg-$ARCH/install/lib/pkgconfig:\
+$(pwd)/freetype/freetype-$ARCH/lib/pkgconfig:\
+$(pwd)/libpng/libpng-$ARCH/lib/pkgconfig:\
+$(pwd)/zlib/zlib-$ARCH/lib/pkgconfig:\
+$(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
+$(pwd)/cairo/pixman-$ARCH/lib/pkgconfig" \
+    pkg-config $@ opusfile opus ogg libpng16 zlib cairo freetype2

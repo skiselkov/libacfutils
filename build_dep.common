@@ -25,6 +25,25 @@ function build_dep() {
 
 	SRCDIR="${TARBALL/%.tar.*/}"
 
+	if [ -n "$do_clean" ]; then
+		echo rm -rf "$PRODNAME-$PLATFORM" "$SRCDIR"
+		rm -rf "$PRODNAME-$PLATFORM" "$SRCDIR"
+		return
+	fi
+
+	case $(uname) in
+	Linux)
+		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
+		    | wc -l) + 1 ))
+		;;
+	Darwin)
+		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
+		;;
+	esac
+
+	export PKG_CONFIG_PATH=$(echo "$PKG_CONFIG_PATH" | \
+	    sed "s/{PLATFORM}/$PLATFORM/g")
+
 	if ! [ -d "$SRCDIR" ]; then
 		case "${TARBALL##*.}" in
 		bz2)	tar -xjf "$TARBALL" || exit 1 ;;
@@ -55,8 +74,8 @@ function build_dep() {
 
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
-		CFLAGS="${CFLAGS} -fvisibility=hidden -O2" \
-		LDFLAGS="${LDFLAGS} -fvisibility=hidden" \
+		CFLAGS="-fvisibility=hidden -O2 -fPIC ${CFLAGS}" \
+		LDFLAGS="-fvisibility=hidden -fPIC ${LDFLAGS}" \
 		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 		    $CONFOPTS || exit 1
 		make -j $NCPUS || exit 1

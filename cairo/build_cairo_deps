@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+source ../build_dep.common
+
+CAIRO="cairo-1.14.10.tar.xz"
+PIXMAN="pixman-0.34.0.tar.xz"
+
+PIXMAN_PRODUCT="pixman/.libs/libpixman-1.a"
+PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
+    --disable-libpng"
+
+CAIRO_CFLAGS_COMMON="$CFLAGS -I$(pwd)/../pixman-0.34.0/pixman"
+CAIRO_PRODUCT="src/.libs/libcairo.a"
+CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=yes --enable-ft=yes \
+    --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
+    --enable-xcb=no --enable-xlib-xcb=no --enable-xcb-shm=no \
+    --enable-qt=no --enable-quartz=no --enable-quartz-font=no \
+    --enable-quartz-image=no --enable-win32=no \
+    --enable-win32-font=no --enable-skia=no --enable-os2=no \
+    --enable-beos=no --enable-drm=no --enable-gallium=no \
+    --enable-png=no --enable-glesv2=no --enable-cogl=no \
+    --enable-directfb=no --enable-vg=no --enable-egl=no \
+    --enable-glx=no --enable-wgl=no --enable-script=no \
+    --enable-fc=no --enable-ps=no --enable-pdf=no \
+    --enable-svg=no --enable-full-testing \
+    --enable-interpreter=no"
+
+export PKG_CONFIG_PATH="../../freetype/freetype-{PLATFORM}/lib/pkgconfig:\
+../../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
+../../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
+../pixman-{PLATFORM}/lib/pkgconfig"
+
+case `uname` in
+	Linux)
+		CFLAGS="-m64" LDFLAGS="-m64" \
+		    build_dep "linux-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
+		    "pixman" "$PIXMAN_PRODUCT" && \
+		CFLAGS="-m32" LDFLAGS="-m32" \
+		    build_dep "linux-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
+		    "pixman" "$PIXMAN_PRODUCT" && \
+		build_dep "win-64" "$PIXMAN_CONFOPTS_COMMON \
+		    --host=x86_64-w64-mingw32" \
+		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
+		build_dep "win-32" "$PIXMAN_CONFOPTS_COMMON \
+		    --host=i686-w64-mingw32" \
+		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
+
+		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
+		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT" && \
+		CFLAGS="$CAIRO_CFLAGS_COMMON -m32" LDFLAGS="-m32" \
+		    build_dep "linux-32" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT" && \
+		CFLAGS="$CAIRO_CFLAGS_COMMON" \
+		    build_dep "win-64" "$CAIRO_CONFOPTS_COMMON \
+		    --host=x86_64-w64-mingw32" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT" && \
+		CFLAGS="$CAIRO_CFLAGS_COMMON" \
+		    build_dep "win-32" "$CAIRO_CONFOPTS_COMMON \
+		    --host=i686-w64-mingw32" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT"
+		;;
+	Darwin)
+		CFLAGS="-m64" LDFLAGS="-m64" \
+		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN"
+		    "pixman" "$PIXMAN_PRODUCT" && \
+		CFLAGS="-m32" LDFLAGS="-m32" \
+		    build_dep "mac-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN"
+		    "pixman" "$PIXMAN_PRODUCT"
+		;;
+	*)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+esac
