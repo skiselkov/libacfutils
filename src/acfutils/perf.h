@@ -208,7 +208,7 @@ double mach2ktas(double mach, double oat);
 
 double ktas2kcas(double ktas, double pressure, double oat);
 double kcas2ktas(double kcas, double pressure, double oat);
-double press2kcas(double impact_pressure);
+double impact_press2kcas(double impact_pressure);
 
 double mach2keas(double mach, double press);
 double keas2mach(double keas, double press);
