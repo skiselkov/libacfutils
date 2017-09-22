@@ -60,10 +60,12 @@ extern "C" {
 #define	PA2INHG(p)	((p) * (29.92 / 101325))
 
 /*
- * Other unit conversions
+ * Pressure unit conversions
  */
 #define	HPA2PA(x)	((x) * 100)
 #define	PA2HPA(x)	((x) / 100)
+#define	PSI2PA(x)	((x) * 6894.73326075122482308111)
+#define	PA2PSI(x)	((x) / 6894.73326075122482308111)
 
 /*
  * ISA (International Standard Atmosphere) parameters.
