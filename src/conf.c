@@ -227,6 +227,20 @@ conf_get_i(const conf_t *conf, const char *key, int *value)
 }
 
 /*
+ * Retrieves the 64-bit int value of a configuration key. If found, the value
+ * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ */
+bool_t
+conf_get_lli(const conf_t *conf, const char *key, long long *value)
+{
+	const conf_key_t *ck = conf_find(conf, key);
+	if (ck == NULL)
+		return (B_FALSE);
+	*value = atoll(ck->value);
+	return (B_TRUE);
+}
+
+/*
  * Retrieves the 64-bit float value of a configuration key. If found, the value
  * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
  */
@@ -352,6 +366,24 @@ void
 conf_set_i(conf_t *conf, const char *key, int value)
 {
 	conf_set_common(conf, key, "%i", value);
+}
+
+/*
+ * Same as conf_set_str but with a long long value. Obviously this
+ * cannot remove a key, use conf_set_str(conf, key, NULL) for that.
+ */
+void
+conf_set_lli(conf_t *conf, const char *key, long long value)
+{
+#if	IBM
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"	/* Workaround for MinGW crap */
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif	/* IBM */
+	conf_set_common(conf, key, "%lld", value);
+#if	IBM
+#pragma GCC diagnostic pop
+#endif
 }
 
 /*
