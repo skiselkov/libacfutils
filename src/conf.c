@@ -29,6 +29,9 @@
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
 
+/* For conf_get_da and conf_set_da. */
+CTASSERT(sizeof (double) == sizeof (unsigned long long));
+
 /*
  * This is a general-purpose configuration store. It's really just a
  * key-value pair dictionary that can be read from and written to a
@@ -233,7 +236,39 @@ conf_get_d(const conf_t *conf, const char *key, double *value)
 	const conf_key_t *ck = conf_find(conf, key);
 	if (ck == NULL)
 		return (B_FALSE);
-	*value = atof(ck->value);
+	return (sscanf(ck->value, "%lf", value) == 1);
+}
+
+/*
+ * Retrieves the 64-bit float value previously stored using conf_set_da. If
+ * found, the value is placed in *value. Returns B_TRUE if the key was found,
+ * else B_FALSE.
+ * Due to a limitation in MinGW, we can't use '%a' here. Instead, we directly
+ * write the binary representation of the double value. Since IEEE754 is used
+ * on all our supported platforms, that makes it portable. As future-proofing
+ * for big endian platforms, we always enforce storing the value in LE.
+ */
+bool_t
+conf_get_da(const conf_t *conf, const char *key, double *value)
+{
+	const conf_key_t *ck = conf_find(conf, key);
+	unsigned long long x;
+	if (ck == NULL)
+		return (B_FALSE);
+#if	IBM
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"	/* Workaround for MinGW crap */
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif	/* IBM */
+	if (sscanf(ck->value, "%llx", &x) != 1)
+		return (B_FALSE);
+#if	IBM
+#pragma GCC diagnostic pop
+#endif
+#if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	x = BSWAP64(x);
+#endif
+	memcpy(value, &x, sizeof (double));
 	return (B_TRUE);
 }
 
@@ -327,6 +362,31 @@ void
 conf_set_d(conf_t *conf, const char *key, double value)
 {
 	conf_set_common(conf, key, "%f", value);
+}
+
+/*
+ * Same as conf_set_d, but able to accurately represent the exact value of
+ * a double argument. Obviously this cannot remove a key, use
+ * conf_set_str(conf, key, NULL) for that.
+ */
+void
+conf_set_da(conf_t *conf, const char *key, double value)
+{
+	unsigned long long x;
+
+	memcpy(&x, &value, sizeof (value));
+#if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	x = BSWAP64(x);
+#endif
+#if	IBM
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"	/* Workaround for MinGW crap */
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
+#endif	/* IBM */
+	conf_set_common(conf, key, "%llx", x);
+#if	IBM
+#pragma GCC diagnostic pop
+#endif
 }
 
 /*
