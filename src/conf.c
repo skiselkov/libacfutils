@@ -253,6 +253,16 @@ conf_get_d(const conf_t *conf, const char *key, double *value)
 	return (sscanf(ck->value, "%lf", value) == 1);
 }
 
+/* Same as conf_get_d, but for float values */
+bool_t
+conf_get_f(const conf_t *conf, const char *key, float *value)
+{
+	const conf_key_t *ck = conf_find(conf, key);
+	if (ck == NULL)
+		return (B_FALSE);
+	return (sscanf(ck->value, "%f", value) == 1);
+}
+
 /*
  * Retrieves the 64-bit float value previously stored using conf_set_da. If
  * found, the value is placed in *value. Returns B_TRUE if the key was found,
@@ -392,6 +402,12 @@ conf_set_lli(conf_t *conf, const char *key, long long value)
  */
 void
 conf_set_d(conf_t *conf, const char *key, double value)
+{
+	conf_set_common(conf, key, "%f", value);
+}
+
+void
+conf_set_f(conf_t *conf, const char *key, float value)
 {
 	conf_set_common(conf, key, "%f", value);
 }
