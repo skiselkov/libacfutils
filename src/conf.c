@@ -403,13 +403,13 @@ conf_set_lli(conf_t *conf, const char *key, long long value)
 void
 conf_set_d(conf_t *conf, const char *key, double value)
 {
-	conf_set_common(conf, key, "%f", value);
+	conf_set_common(conf, key, "%.15f", value);
 }
 
 void
 conf_set_f(conf_t *conf, const char *key, float value)
 {
-	conf_set_common(conf, key, "%f", value);
+	conf_set_common(conf, key, "%.12f", value);
 }
 
 /*
