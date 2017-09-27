@@ -78,8 +78,8 @@ create_widget_rel(int x, int y, bool_t y_from_bottom, int width, int height,
 		y = wtop - y;
 		bottom = y - height;
 	} else {
-		bottom = y;
-		y = y + height;
+		y = wbottom + y;
+		bottom = y - height;
 	}
 	right = x + width;
 
