@@ -40,6 +40,10 @@ XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
     XPWidgetID container, XPWidgetClass cls);
 
+XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
+    int width, int height, int visible, const char *descr, int root,
+    XPWidgetID container, XPWidgetID coord_ref, XPWidgetClass cls);
+
 void tooltip_init(void);
 void tooltip_fini(void);
 

@@ -63,11 +63,20 @@ create_widget_rel(int x, int y, bool_t y_from_bottom, int width, int height,
     int visible, const char *descr, int root, XPWidgetID container,
     XPWidgetClass cls)
 {
+	return (create_widget_rel2(x, y, y_from_bottom, width, height, visible,
+	    descr, root, container, container, cls));
+}
+
+XPWidgetID
+create_widget_rel2(int x, int y, bool_t y_from_bottom, int width, int height,
+    int visible, const char *descr, int root, XPWidgetID container,
+    XPWidgetID coord_ref, XPWidgetClass cls)
+{
 	int wleft = 0, wtop = 0, wright = 0, wbottom = 0;
 	int bottom, right;
 
 	if (container != NULL) {
-		XPGetWidgetGeometry(container, &wleft, &wtop, &wright,
+		XPGetWidgetGeometry(coord_ref, &wleft, &wtop, &wright,
 		    &wbottom);
 	} else {
 		XPLMGetScreenSize(&wright, &wtop);
