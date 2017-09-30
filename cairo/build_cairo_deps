@@ -28,17 +28,14 @@ CAIRO_CFLAGS_COMMON="$CFLAGS -I$(pwd)/../pixman-0.34.0/pixman"
 CAIRO_PRODUCT="src/.libs/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=yes --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
-    --enable-xcb=no --enable-xlib-xcb=no --enable-xcb-shm=no \
-    --enable-qt=no --enable-quartz=no --enable-quartz-font=no \
-    --enable-quartz-image=no --enable-win32=no \
-    --enable-win32-font=no --enable-skia=no --enable-os2=no \
-    --enable-beos=no --enable-drm=no --enable-gallium=no \
-    --enable-png=no --enable-glesv2=no --enable-cogl=no \
-    --enable-directfb=no --enable-vg=no --enable-egl=no \
-    --enable-glx=no --enable-wgl=no --enable-script=no \
-    --enable-fc=no --enable-ps=no --enable-pdf=no \
-    --enable-svg=no --enable-full-testing \
-    --enable-interpreter=no"
+    --enable-xcb=no --enable-xlib-xcb=no --enable-xcb-shm=no --enable-qt=no \
+    --enable-quartz=no --enable-quartz-font=no --enable-quartz-image=no \
+    --enable-win32=no --enable-win32-font=no --enable-skia=no --enable-os2=no \
+    --enable-beos=no --enable-drm=no --enable-gallium=no --enable-png=no \
+    --enable-glesv2=no --enable-cogl=no --enable-directfb=no --enable-vg=no \
+    --enable-egl=no --enable-glx=no --enable-wgl=no --enable-script=no \
+    --enable-fc=no --enable-ps=no --enable-pdf=no --enable-svg=no \
+    --enable-full-testing --enable-interpreter=no --enable-static-testprogs=yes"
 
 export PKG_CONFIG_PATH="../../freetype/freetype-{PLATFORM}/lib/pkgconfig:\
 ../../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
@@ -77,11 +74,18 @@ case `uname` in
 		;;
 	Darwin)
 		CFLAGS="-m64" LDFLAGS="-m64" \
-		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN"
-		    "pixman" "$PIXMAN_PRODUCT" && \
+		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
+		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
 		CFLAGS="-m32" LDFLAGS="-m32" \
-		    build_dep "mac-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN"
-		    "pixman" "$PIXMAN_PRODUCT"
+		    build_dep "mac-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
+		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
+
+		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
+		    build_dep "mac-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT" && \
+		CFLAGS="$CAIRO_CFLAGS_COMMON -m32" LDFLAGS="-m32" \
+		    build_dep "mac-32" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
+		    "cairo" "$CAIRO_PRODUCT"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

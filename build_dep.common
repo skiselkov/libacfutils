@@ -78,6 +78,11 @@ function build_dep() {
 		LDFLAGS="-fvisibility=hidden -fPIC ${LDFLAGS}" \
 		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 		    $CONFOPTS || exit 1
+
+		if [ -n "$CUSTPREMAKECMD" ]; then
+			eval "$CUSTPREMAKECMD" || exit 1
+		fi
+
 		make -j $NCPUS || exit 1
 		if [ -z "$NOINSTALL" ]; then
 			make install || exit 1

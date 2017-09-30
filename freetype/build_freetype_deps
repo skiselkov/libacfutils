@@ -50,7 +50,7 @@ case `uname` in
 		    -m32" \
 		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON \
 		    -mmacosx-version-min=10.6 -m32" \
-		    build_dep "mac-64" "$FREETYPE_CONFOPTS_COMMON" \
+		    build_dep "mac-32" "$FREETYPE_CONFOPTS_COMMON" \
 		    "$FREETYPE" "freetype" "lib/libfreetype.a"
 		;;
 	*)
