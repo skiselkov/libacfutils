@@ -38,12 +38,51 @@
 #include <acfutils/riff.h>
 #include <acfutils/types.h>
 #include <acfutils/wav.h>
+#include <acfutils/time.h>
 
 #define	WAVE_ID	FOURCC("WAVE")
 #define	FMT_ID	FOURCC("fmt ")
 #define	DATA_ID	FOURCC("data")
 
 #define	READ_BUFSZ	((1024 * 1024) / sizeof (opus_int16))	/* bytes */
+
+#define	WAV_OP_PARAM(al_op, al_param_name, err_ret, ...) \
+	do { \
+		ALuint err; \
+		alc_t sav; \
+		if (wav == NULL || wav->alsrc == 0) \
+			return err_ret; \
+		VERIFY(ctx_save(wav->alc, &sav)); \
+		al_op(wav->alsrc, al_param_name, __VA_ARGS__); \
+		if ((err = alGetError()) != AL_NO_ERROR) { \
+			logMsg("Error performing " #al_op "(" #al_param_name \
+			    ") on WAV %s, error 0x%x.", wav->name, err); \
+			VERIFY(ctx_restore(wav->alc, &sav)); \
+			return err_ret; \
+		} \
+		VERIFY(ctx_restore(wav->alc, &sav)); \
+	} while (0)
+
+#define	WAV_SET_PARAM(al_op, al_param_name, ...) \
+	WAV_OP_PARAM(al_op, al_param_name, , __VA_ARGS__)
+
+#define	LISTENER_OP_PARAM(al_op, al_param_name, err_ret, ...) \
+	do { \
+		ALuint err; \
+		alc_t sav; \
+		VERIFY(ctx_save(alc, &sav)); \
+		al_op(al_param_name, __VA_ARGS__); \
+		if ((err = alGetError()) != AL_NO_ERROR) { \
+			logMsg("Error changing listener param " \
+			    #al_param_name ", error 0x%x.", err); \
+			VERIFY(ctx_restore(alc, &sav)); \
+			return err_ret; \
+		} \
+		VERIFY(ctx_restore(alc, &sav)); \
+	} while (0)
+
+#define	LISTENER_SET_PARAM(al_op, al_param_name, ...) \
+	LISTENER_OP_PARAM(al_op, al_param_name, , __VA_ARGS__)
 
 struct alc {
 	ALCdevice	*dev;
@@ -455,9 +494,8 @@ wav_load(const char *filename, const char *descr_name, alc_t *alc)
 	} else {
 		wav = wav_load_wav(filename, alc);
 	}
-	if (wav != NULL) {
+	if (wav != NULL)
 		wav->name = strdup(descr_name);
-	}
 
 	return (wav);
 }
@@ -486,21 +524,6 @@ wav_free(wav_t *wav)
 	free(wav);
 }
 
-#define	WAV_SET_PARAM(al_op, al_param_name, ...) \
-	do { \
-		ALuint err; \
-		alc_t sav; \
-		if (wav == NULL || wav->alsrc == 0) \
-			return; \
-		VERIFY(ctx_save(wav->alc, &sav)); \
-		al_op(wav->alsrc, al_param_name, __VA_ARGS__); \
-		if ((err = alGetError()) != AL_NO_ERROR) { \
-			logMsg("Error changing " #al_param_name " of WAV %s, " \
-			    "error 0x%x.", wav->name, err); \
-		} \
-		VERIFY(ctx_restore(wav->alc, &sav)); \
-	} while (0)
-
 /*
  * Sets the audio gain (volume) of a WAV file from 0.0 (silent) to 1.0
  * (full volume).
@@ -509,6 +532,14 @@ void
 wav_set_gain(wav_t *wav, float gain)
 {
 	WAV_SET_PARAM(alSourcef, AL_GAIN, gain);
+}
+
+float
+wav_get_gain(wav_t *wav)
+{
+	ALfloat gain;
+	WAV_OP_PARAM(alGetSourcef, AL_GAIN, NAN, &gain);
+	return (gain);
 }
 
 /*
@@ -520,16 +551,96 @@ wav_set_loop(wav_t *wav, bool_t loop)
 	WAV_SET_PARAM(alSourcei, AL_LOOPING, loop);
 }
 
+bool_t
+wav_get_loop(wav_t *wav)
+{
+	ALint looping;
+	WAV_OP_PARAM(alGetSourcei, AL_LOOPING, B_FALSE, &looping);
+	return (looping);
+}
+
 void
 wav_set_pitch(wav_t *wav, float pitch)
 {
 	WAV_SET_PARAM(alSourcef, AL_PITCH, pitch);
 }
 
+float
+wav_get_pitch(wav_t *wav)
+{
+	ALfloat pitch;
+	WAV_OP_PARAM(alGetSourcef, AL_PITCH, NAN, &pitch);
+	return (pitch);
+}
+
 void
 wav_set_position(wav_t *wav, vect3_t pos)
 {
 	WAV_SET_PARAM(alSource3f, AL_POSITION, pos.x, pos.y, pos.z);
+}
+
+vect3_t
+wav_get_position(wav_t *wav)
+{
+	ALfloat x, y, z;
+	WAV_OP_PARAM(alGetSource3f, AL_POSITION, NULL_VECT3, &x, &y, &z);
+	return (VECT3(x, y, z));
+}
+
+void
+wav_set_velocity(wav_t *wav, vect3_t vel)
+{
+	WAV_SET_PARAM(alSource3f, AL_VELOCITY, vel.x, vel.y, vel.z);
+}
+
+vect3_t
+wav_get_velocity(wav_t *wav)
+{
+	ALfloat x, y, z;
+	WAV_OP_PARAM(alGetSource3f, AL_VELOCITY, NULL_VECT3, &x, &y, &z);
+	return (VECT3(x, y, z));
+}
+
+void
+wav_set_ref_dist(wav_t *wav, double d)
+{
+	WAV_SET_PARAM(alSourcef, AL_REFERENCE_DISTANCE, d);
+}
+
+double
+wav_get_ref_dist(wav_t *wav)
+{
+	ALfloat d;
+	WAV_OP_PARAM(alGetSourcef, AL_REFERENCE_DISTANCE, NAN, &d);
+	return (d);
+}
+
+void
+wav_set_max_dist(wav_t *wav, double d)
+{
+	WAV_SET_PARAM(alSourcef, AL_MAX_DISTANCE, d);
+}
+
+double
+wav_get_max_dist(wav_t *wav)
+{
+	ALfloat d;
+	WAV_OP_PARAM(alGetSourcef, AL_MAX_DISTANCE, NAN, &d);
+	return (d);
+}
+
+void
+wav_set_rolloff_fact(wav_t *wav, double r)
+{
+	WAV_SET_PARAM(alSourcef, AL_ROLLOFF_FACTOR, r);
+}
+
+double
+wav_get_rolloff_fact(wav_t *wav)
+{
+	ALfloat r;
+	WAV_OP_PARAM(alGetSourcef, AL_ROLLOFF_FACTOR, NAN, &r);
+	return (r);
 }
 
 /*
@@ -553,10 +664,18 @@ wav_play(wav_t *wav)
 		VERIFY(ctx_restore(wav->alc, &sav));
 		return (B_FALSE);
 	}
+	wav->play_start = microclock();
 
 	VERIFY(ctx_restore(wav->alc, &sav));
 
 	return (B_TRUE);
+}
+
+bool_t
+wav_is_playing(wav_t *wav)
+{
+	return (wav->play_start != 0 && (wav_get_loop(wav) ||
+	    USEC2SEC(microclock() - wav->play_start) < wav->duration));
 }
 
 /*
@@ -580,4 +699,46 @@ wav_stop(wav_t *wav)
 	if ((err = alGetError()) != AL_NO_ERROR)
 		logMsg("Can't stop sound, alSourceStop failed (0x%x).", err);
 	VERIFY(ctx_restore(wav->alc, &sav));
+	wav->play_start = 0;
+}
+
+void
+alc_set_dist_model(alc_t *alc, ALenum model)
+{
+	alc_t sav;
+	VERIFY(ctx_save(alc, &sav));
+	alDistanceModel(model);
+	VERIFY(ctx_restore(alc, &sav));
+}
+
+void
+alc_listener_set_pos(alc_t *alc, vect3_t pos)
+{
+	LISTENER_SET_PARAM(alListener3f, AL_POSITION, pos.x, pos.y, pos.z);
+}
+
+vect3_t
+alc_listener_get_pos(alc_t *alc)
+{
+	ALfloat x, y, z;
+	LISTENER_OP_PARAM(alGetListener3f, AL_POSITION, NULL_VECT3, &x, &y, &z);
+	return (VECT3(x, y, z));
+}
+
+void
+alc_listener_set_orient(alc_t *alc, vect3_t orient)
+{
+	ALfloat v[6] = {
+		sin(DEG2RAD(orient.z)),
+		sin(DEG2RAD(orient.x)),
+		-cos(DEG2RAD(orient.z)),
+		0, 1, 0		/* Assume viewer is always upright */
+	};
+	LISTENER_SET_PARAM(alListenerfv, AL_ORIENTATION, v);
+}
+
+void
+alc_listener_set_velocity(alc_t *alc, vect3_t vel)
+{
+	LISTENER_SET_PARAM(alListener3f, AL_VELOCITY, vel.x, vel.y, vel.z);
 }

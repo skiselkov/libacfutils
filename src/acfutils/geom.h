@@ -115,6 +115,8 @@ typedef struct {
 #define	VECT2(x, y)			((vect2_t){(x), (y)})
 #define	VECT3(x, y, z)			((vect3_t){(x), (y), (z)})
 #define	VECT2_EQ(a, b)			((a).x == (b).x && (a).y == (b).y)
+#define	VECT3_EQ(a, b)	\
+	((a).x == (b).x && (a).y == (b).y && (a).z == (b).z)
 #define	VECT2_PARALLEL(a, b)	\
 	(((a).y == 0 && (b).y == 0) || (((a).x / (a).y) == ((b).x / (b).y)))
 
