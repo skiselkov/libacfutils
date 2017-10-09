@@ -33,6 +33,9 @@ ARCH="$1"
 shift
 
 cd "$(dirname "$0")"
+
+# The order of arguments we pass to pkg-config is important. We must list
+# dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
 PKG_CONFIG_PATH="\
 $(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/opus-$ARCH/lib/pkgconfig:\
@@ -42,4 +45,4 @@ $(pwd)/libpng/libpng-$ARCH/lib/pkgconfig:\
 $(pwd)/zlib/zlib-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig" \
-    pkg-config $@ opusfile opus ogg libpng16 zlib cairo freetype2
+    pkg-config $@ cairo freetype2 libpng16 opusfile opus ogg zlib
