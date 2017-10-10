@@ -45,6 +45,7 @@ TARGET = acfutils
 win32 {
 	DEFINES += APL=0 IBM=1 LIN=0
 	QMAKE_DEL_FILE = rm -f
+	INCLUDEPATH += /usr/include/GL
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
