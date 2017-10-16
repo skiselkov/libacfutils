@@ -191,6 +191,30 @@ dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
 	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
 }
 
+int
+dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
+{
+	if (dr->type & xplmType_IntArray) {
+		int i[num];
+		int n = XPLMGetDatavi(dr->dr, i, off, num);
+		for (int x = 0; x < n; x++)
+			ff[x] = i[x];
+		return (n);
+	}
+	if (dr->type & xplmType_FloatArray) {
+		int n = XPLMGetDatavf(dr->dr, ff, off, num);
+		return (n);
+	}
+	if (dr->type & xplmType_Data) {
+		uint8_t u[num];
+		int n = XPLMGetDatab(dr->dr, u, off, num);
+		for (int x = 0; x < n; x++)
+			ff[x] = u[x];
+		return (n);
+	}
+	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+}
+
 void
 dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
 {
@@ -209,6 +233,28 @@ dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
 		uint8_t u[num];
 		for (unsigned x = 0; x < num; x++)
 			u[x] = df[x];
+		XPLMSetDatab(dr->dr, u, off, num);
+	} else {
+		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
+		    dr->name, dr->type);
+	}
+}
+
+void
+dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
+{
+	ASSERT_MSG(dr->writable, "%s", dr->name);
+	if (dr->type & xplmType_IntArray) {
+		int i[num];
+		for (unsigned x = 0; x < num; x++)
+			i[x] = ff[x];
+		XPLMSetDatavi(dr->dr, i, off, num);
+	} else if (dr->type & xplmType_FloatArray) {
+		XPLMSetDatavf(dr->dr, ff, off, num);
+	} else if (dr->type & xplmType_Data) {
+		uint8_t u[num];
+		for (unsigned x = 0; x < num; x++)
+			u[x] = ff[x];
 		XPLMSetDatab(dr->dr, u, off, num);
 	} else {
 		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
@@ -297,8 +343,8 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
  \
-	if (dr->read_cb != NULL) \
-		dr->read_cb(dr); \
+	if (dr->read_array_cb != NULL) \
+		dr->read_array_cb(dr, out_values, off, count); \
 	if (out_values == NULL) \
 		return (dr->count); \
 	if (off < dr->count) { \
@@ -322,13 +368,13 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
 	ASSERT_MSG(dr->writable, "%s", dr->name); \
  \
+	if (dr->write_array_cb != NULL) \
+		dr->write_array_cb(dr, in_values, off, count); \
 	if (off < dr->count) { \
 		count = MIN(count, dr->count - off); \
 		memcpy(dr->value + (off * type_sz), in_values, \
 		    type_sz * count); \
 	} \
-	if (dr->write_cb != NULL) \
-		dr->write_cb(dr); \
 }
 
 DEF_READ_ARRAY_CB(int, IntArray, sizeof (int))

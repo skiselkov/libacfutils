@@ -43,6 +43,8 @@ struct dr {
 	ssize_t		count;
 	void		(*read_cb)(dr_t *);
 	void		(*write_cb)(dr_t *);
+	void		(*read_array_cb)(dr_t *, void *, int, int);
+	void		(*write_array_cb)(dr_t *, void *, int, int);
 };
 
 bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
@@ -66,6 +68,9 @@ void dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num);
 
 int dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num);
 void dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num);
+
+int dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
+void dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
 
 int dr_gets(dr_t *dr, char *str, size_t cap);
 void dr_sets(dr_t *dr, char *str);
