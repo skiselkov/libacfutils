@@ -119,6 +119,7 @@ shader_prog_from_file(const char *progname, const char *vtx_file,
 
 		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
 		buf = calloc(len + 1, sizeof (*buf));
+		glGetProgramInfoLog(prog, len, NULL, buf);
 		logMsg("Failed to link GLSL program %s: %s", progname, buf);
 		free(buf);
 
