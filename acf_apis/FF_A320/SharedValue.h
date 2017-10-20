@@ -75,7 +75,7 @@ typedef void (__stdcall *SharedValueGetProc)(int id, void *dst);
 typedef unsigned int (__stdcall *SharedValueGetSizeProc)(int id);
 typedef void (__stdcall *SharedValueReaderProc)(void *dst, unsigned int size, void *tag);
 typedef void (__stdcall *SharedValueWriterProc)(const void *src, unsigned int size, void *tag);
-typedef bool (__stdcall *SharedValueObjectLoadStateProc)(int id, SharedValueReaderProc src, void *tag);
+typedef int (__stdcall *SharedValueObjectLoadStateProc)(int id, SharedValueReaderProc src, void *tag);
 typedef void (__stdcall *SharedValueObjectSaveStateProc)(int id, SharedValueWriterProc dst, void *tag);
 typedef int (__stdcall *SharedValueObjectNewValueProc)(int id, const char *name, const char *desc, void *ptr, unsigned int type, unsigned int flags, unsigned int units);
 //--------------------------------------------------------------------------
