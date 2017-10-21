@@ -623,24 +623,45 @@ fix_pathsep(char *str)
 char *
 file2str(const char *comp, ...)
 {
-#define	MAX_FILESIZE	1024 * 1024
 	va_list ap;
-	char *filename;
-	char *contents;
-	FILE *fp;
+	char *filename, *str;
 	long len;
 
 	va_start(ap, comp);
 	filename = mkpathname_v(comp, ap);
 	va_end(ap);
+	str = file2str_name(&len, filename);
+	free(filename);
+
+	return (str);
+}
+
+char *
+file2str_ext(long *len_p, const char *comp, ...)
+{
+	va_list ap;
+	char *filename, *str;
+
+	va_start(ap, comp);
+	filename = mkpathname_v(comp, ap);
+	va_end(ap);
+	str = file2str_name(len_p, filename);
+	free(filename);
+
+	return (str);
+}
+
+char *
+file2str_name(long *len_p, const char *filename)
+{
+#define	MAX_FILESIZE	(256 << 20)	/* 256MB */
+	char *contents;
+	FILE *fp;
+	long len;
 
 	fp = fopen(filename, "rb");
-	if (fp == NULL) {
-		free(filename);
+	if (fp == NULL)
 		return (NULL);
-	}
-	free(filename);
-	filename = NULL;
 
 	fseek(fp, 0, SEEK_END);
 	len = ftell(fp);
@@ -657,6 +678,7 @@ file2str(const char *comp, ...)
 		return (NULL);
 	}
 	fclose(fp);
+	*len_p = len;
 
 	return (contents);
 }

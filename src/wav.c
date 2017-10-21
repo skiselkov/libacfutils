@@ -33,12 +33,15 @@
 #include <opusfile.h>
 
 #include <acfutils/assert.h>
+#include <acfutils/helpers.h>
 #include <acfutils/list.h>
 #include <acfutils/log.h>
 #include <acfutils/riff.h>
 #include <acfutils/types.h>
 #include <acfutils/wav.h>
 #include <acfutils/time.h>
+
+#include "minimp3.h"
 
 #define	WAVE_ID	FOURCC("WAVE")
 #define	FMT_ID	FOURCC("fmt ")
@@ -384,6 +387,75 @@ errout:
 }
 
 static wav_t *
+wav_load_mp3(const char *filename, alc_t *alc)
+{
+	wav_t *wav;
+	mp3_decoder_t mp3;
+	mp3_info_t info;
+	long len;
+	char *contents = file2str_name(&len, filename);
+	int16_t *pcm = NULL;
+	int bytes, n_bytes, audio_bytes;
+
+	if (contents == NULL) {
+		logMsg("Error reading MP3 file \"%s\": %s", filename,
+		    strerror(errno));
+		return (NULL);
+	}
+
+	wav = calloc(1, sizeof (*wav));
+	wav->alc = alc;
+
+	mp3 = mp3_create();
+	pcm = malloc(1024 * 1024);
+
+	bytes = mp3_decode(mp3, contents, len, pcm, &info);
+	if (bytes == 0) {
+		logMsg("Error decoding MP3 file %s", filename);
+		mp3_done(&mp3);
+		goto errout;
+	}
+
+	/* fake a wav_fmt_hdr_t from the OpusHead object */
+	wav->fmt.datafmt = 1;
+	wav->fmt.n_channels = info.channels;
+	wav->fmt.srate = info.sample_rate;
+	wav->fmt.bps = 16;
+	wav->fmt.byte_rate = (wav->fmt.srate * wav->fmt.bps *
+	    wav->fmt.n_channels) / 8;
+
+	audio_bytes = 0;
+	while ((n_bytes = mp3_decode(mp3, &contents[bytes], len - bytes,
+	    &pcm[audio_bytes / sizeof (*pcm)], &info)) > 0) {
+		bytes += n_bytes;
+		audio_bytes += info.audio_bytes;
+	}
+
+	if (!check_audio_fmt(&wav->fmt, filename)) {
+		mp3_done(&mp3);
+		goto errout;
+	}
+
+	wav->duration = ((double)((bytes / sizeof (*pcm)) /
+	    wav->fmt.n_channels)) / wav->fmt.srate;
+
+	wav_gen_al_bufs(wav, pcm, bytes, filename);
+
+	mp3_done(&mp3);
+	free(contents);
+	free(pcm);
+
+	return (wav);
+errout:
+	if (wav != NULL)
+		wav_free(wav);
+	free(contents);
+	free(pcm);
+
+	return (NULL);
+}
+
+static wav_t *
 wav_load_wav(const char *filename, alc_t *alc)
 {
 	wav_t *wav = NULL;
@@ -491,6 +563,9 @@ wav_load(const char *filename, const char *descr_name, alc_t *alc)
 	if (dot != NULL && (strcmp(&dot[1], "opus") == 0 ||
 	    strcmp(&dot[1], "OPUS") == 0)) {
 		wav = wav_load_opus(filename, alc);
+	} else if (dot != NULL && (strcmp(&dot[1], "mp3") == 0 ||
+	    strcmp(&dot[1], "MP3") == 0)) {
+		wav = wav_load_mp3(filename, alc);
 	} else {
 		wav = wav_load_wav(filename, alc);
 	}

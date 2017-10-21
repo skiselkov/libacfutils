@@ -214,6 +214,8 @@ char *mkpathname_v(const char *comp, va_list ap);
 void fix_pathsep(char *str);
 
 char *file2str(const char *comp, ...);
+char *file2str_ext(long *len_p, const char *comp, ...);
+char *file2str_name(long *len_p, const char *filename);
 ssize_t filesz(const char *filename);
 
 #if	IBM || LIN
