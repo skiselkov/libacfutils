@@ -59,6 +59,9 @@ extern "C" {
 #define	INHG2PA(p)	((p) * (101325 / 29.92))
 #define	PA2INHG(p)	((p) * (29.92 / 101325))
 
+#define	RADSEC2RPM(r)	(((r) / (2 * M_PI)) * 60)
+#define	RPM2RADSEC(r)	(((r) / 60) * (2 * M_PI))
+
 /*
  * Pressure unit conversions
  */
