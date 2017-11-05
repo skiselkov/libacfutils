@@ -16,12 +16,16 @@
  * Copyright 2017 Saso Kiselkov. All rights reserved.
  */
 
+#include <XPLMPlugin.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
+
+#define	DRE_MSG_ADD_DATAREF	0x01000000
 
 bool_t
 dr_find(dr_t *dr, const char *fmt, ...)
@@ -391,6 +395,8 @@ static void
 dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
     bool_t writable, const char *fmt, va_list ap)
 {
+	XPLMPluginID dre_plug;
+
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 
 	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
@@ -406,6 +412,17 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->count = count;
 	dr->read_cb = NULL;
 	dr->write_cb = NULL;
+
+	dre_plug = XPLMFindPluginBySignature(
+	    "xplanesdk.examples.DataRefEditor");
+	if (dre_plug != XPLM_NO_PLUGIN_ID) {
+		printf("registering dataref %s with DRE\n", dr->name);
+		XPLMSendMessageToPlugin(dre_plug, DRE_MSG_ADD_DATAREF,
+		    (void*)dr->name);
+	} else {
+		printf("can't register dataref %s with DRE: not found\n",
+		    dr->name);
+	}
 }
 
 /*
