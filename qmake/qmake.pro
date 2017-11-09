@@ -43,7 +43,8 @@ DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 TARGET = acfutils
 
 win32 {
-	DEFINES += APL=0 IBM=1 LIN=0
+	# Minimum Windows version is Windows Vista (0x0600)
+	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
 	QMAKE_DEL_FILE = rm -f
 	INCLUDEPATH += /usr/include/GL
 }
