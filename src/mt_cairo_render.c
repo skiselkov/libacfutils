@@ -155,6 +155,7 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 	mtcr->render_cb = render_cb;
 	mtcr->fini_cb = fini_cb;
 	mtcr->userinfo = userinfo;
+	mtcr->fps = fps;
 
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
@@ -267,4 +268,23 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	glTexCoord2f(1, 1);
 	glVertex2f(pos.x + size.x, pos.y);
 	glEnd();
+}
+
+bool_t
+try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
+    FT_Face *font, cairo_font_face_t **cr_font)
+{
+	char *fontpath = mkpathname(fontdir, fontfile, NULL);
+	FT_Error err;
+
+	if ((err = FT_New_Face(ft, fontpath, 0, font)) != 0) {
+		logMsg("Error loading font file %s: %s", fontpath,
+		    ft_err2str(err));
+		free(fontpath);
+		return (B_FALSE);
+	}
+	*cr_font = cairo_ft_font_face_create_for_ft_face(*font, 0);
+	free(fontpath);
+
+	return (B_TRUE);
 }

@@ -48,9 +48,11 @@ mt_cairo_render_t *mt_cairo_render_init(unsigned w, unsigned h, double fps,
     mt_cairo_fini_cb_t fini_cb, void *userinfo);
 void mt_cairo_render_fini(mt_cairo_render_t *mtcr);
 void mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps);
-void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos);
+void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size);
 
 const char *ft_err2str(FT_Error err);
+bool_t try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
+    FT_Face *font, cairo_font_face_t **cr_font);
 
 #ifdef	__cplusplus
 }
