@@ -254,6 +254,42 @@ floormul(double x, double y)
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))
 #define	AVG(x, y)	(((x) + (y)) / 2)
 #endif	/* MIN or MAX */
+/*
+ * Provides a gradual method of integrating an old value until it approaches
+ * a new target value. This is used in iterative processes by calling the
+ * FILTER_IN macro repeatedly a certain time intervals (d_t = delta-time).
+ * As time progresses, old_val will gradually be made to approach new_val.
+ * The lag serves to make the approach slower or faster (e.g. a value of
+ * '2' and d_t in seconds makes old_val approach new_val with a ramp that
+ * is approximately 2 seconds long).
+ */
+#define	FILTER_IN(old_val, new_val, d_t, lag) \
+	do { \
+		__typeof__(old_val) o = (old_val); \
+		__typeof__(new_val) n = (new_val); \
+		(old_val) += (n - o) * ((d_t) / (lag)); \
+		/* Prevent an overshoot */ \
+		if ((o < n && (old_val) > n) || \
+		    (o > n && (old_val) < n)) \
+			(old_val) = n; \
+	} while (0)
+/*
+ * Same as FILTER_IN, but handles NAN values for old_val and new_val properly.
+ * If new_val is NAN, old_val is set to NAN. Otherwise if old_val is NAN,
+ * it is set to new_val directly (without gradual filtering). Otherwise this
+ * simply calls the FILTER_IN macro as normal.
+ */
+#define	FILTER_IN_NAN(old_val, new_val, d_t, lag) \
+	do { \
+		__typeof__(old_val) o = (old_val); \
+		__typeof__(new_val) n = (new_val); \
+		if (isnan(n)) \
+			(old_val) = NAN; \
+		else if (isnan(o)) \
+			(old_val) = (new_val); \
+		else \
+			FILTER_IN(old_val, new_val, d_t, lag); \
+	} while (0)
 
 /* file/directory manipulation */
 bool_t file_exists(const char *path, bool_t *isdir);
