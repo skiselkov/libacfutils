@@ -416,12 +416,8 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dre_plug = XPLMFindPluginBySignature(
 	    "xplanesdk.examples.DataRefEditor");
 	if (dre_plug != XPLM_NO_PLUGIN_ID) {
-		printf("registering dataref %s with DRE\n", dr->name);
 		XPLMSendMessageToPlugin(dre_plug, DRE_MSG_ADD_DATAREF,
 		    (void*)dr->name);
-	} else {
-		printf("can't register dataref %s with DRE: not found\n",
-		    dr->name);
 	}
 }
 
