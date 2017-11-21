@@ -62,10 +62,10 @@ extern "C" {
 #define	RADSEC2RPM(r)	(((r) / (2 * M_PI)) * 60)
 #define	RPM2RADSEC(r)	(((r) / 60) * (2 * M_PI))
 
-#define	USG2LIT(usg)	((usg) / 3.785411784)
-#define	LIT2USG(lit)	((lit) * 3.785411784)
-#define	KG2LBS(kg)	((kg) * 0.45359237)
-#define	LBS2KG2(lbs)	((lbs) / 0.45359237)
+#define	USG2LIT(usg)	((usg) * 3.785411784)
+#define	LIT2USG(lit)	((lit) / 3.785411784)
+#define	LBS2KG(lbs)	((lbs) * 0.45359237)
+#define	KG2LBS(kg)	((kg) / 0.45359237)
 
 /*
  * Pressure unit conversions
