@@ -64,6 +64,8 @@ extern "C" {
 
 #define	USG2LIT(usg)	((usg) / 3.785411784)
 #define	LIT2USG(lit)	((lit) * 3.785411784)
+#define	KG2LBS(kg)	((kg) * 0.45359237)
+#define	LBS2KG2(lbs)	((lbs) / 0.45359237)
 
 /*
  * Pressure unit conversions
