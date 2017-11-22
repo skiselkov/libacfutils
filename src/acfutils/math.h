@@ -38,15 +38,38 @@ double fx_lin(double x, double x1, double y1, double x2, double y2);
 static inline double
 wavg(double x, double y, double w)
 {
-	ASSERT(w >= 0.0 && w <= 1.0);
+	ASSERT3F(w, >=, 0.0);
+	ASSERT3F(w, <=, 1.0);
 	return (x + (y - x) * w);
+}
+
+static inline double
+clamp(double x, double min_val, double max_val)
+{
+	ASSERT3F(min_val, <=, max_val);
+	if (x < min_val)
+		return (min_val);
+	if (x > max_val)
+		return (max_val);
+	return (x);
+}
+
+static inline long
+clampl(long x, long min_val, long max_val)
+{
+	ASSERT3S(min_val, <=, max_val);
+	if (x < min_val)
+		return (min_val);
+	if (x > max_val)
+		return (max_val);
+	return (x);
 }
 
 /*
  * Given two values min_val and max_val (such that min_val < max_val),
  * returns how far between min_val and max_val a third value 'x' lies.
- * If `clamp' is true, 'x' is clamped such that it always lies between
- * min_val and max_val. In essence, this function computes:
+ * If `clamp_output' is true, 'x' is clamped such that it always lies
+ * between min_val and max_val. In essence, this function computes:
  *
  *      ^
  *      |
@@ -62,14 +85,12 @@ wavg(double x, double y, double w)
  *         min_val  x   max_val
  */
 static inline double
-iter_fract(double x, double min_val, double max_val, bool_t clamp)
+iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
 {
 	ASSERT3F(max_val, >, min_val);
 	x = (x - min_val) / (max_val - min_val);
-	if (clamp) {
-		x = MAX(x, 0);
-		x = MIN(x, 1);
-	}
+	if (clamp_output)
+		x = clamp(x, 0, 1);
 	return (x);
 }
 
