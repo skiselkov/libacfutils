@@ -60,6 +60,36 @@ void conf_set_d(conf_t *conf, const char *key, double value);
 void conf_set_da(conf_t *conf, const char *key, double value);
 void conf_set_b(conf_t *conf, const char *key, bool_t value);
 
+bool_t conf_get_str_v(const conf_t *conf,const char *fmt, const char **value,
+    ...) PRINTF_ATTR2(2, 4);
+bool_t conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
+    PRINTF_ATTR2(2, 4);
+bool_t conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value,
+    ...) PRINTF_ATTR2(2, 4);
+bool_t conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
+    PRINTF_ATTR2(2, 4);
+bool_t conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
+    PRINTF_ATTR2(2, 4);
+bool_t conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
+    PRINTF_ATTR2(2, 4);
+bool_t conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
+    PRINTF_ATTR2(2, 4);
+
+void conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_f_v(conf_t *conf, const char *fmt, float value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
+    PRINTF_ATTR2(2, 4);
+void conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
+    PRINTF_ATTR2(2, 4);
+
 bool_t conf_walk(const conf_t *conf, const char **key, const char **value,
     void **cookie);
 

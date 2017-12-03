@@ -25,7 +25,7 @@ VERSION = 1.0.0
 
 INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
-
+INCLUDEPATH += $$[LIBGLEW]/include
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
 
@@ -34,6 +34,7 @@ QMAKE_CFLAGS += -Wunused-result
 # _FILE_OFFSET_BITS=64 to get 64-bit ftell and fseek on 32-bit platforms.
 # _USE_MATH_DEFINES - sometimes helps getting M_PI defined from system headers
 DEFINES += _GNU_SOURCE DEBUG _FILE_OFFSET_BITS=64 _USE_MATH_DEFINES
+DEFINES += GL_GLEXT_PROTOTYPES
 
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210
@@ -46,7 +47,6 @@ win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
 	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
 	QMAKE_DEL_FILE = rm -f
-	INCLUDEPATH += /usr/include/GL
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {

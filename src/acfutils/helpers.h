@@ -58,7 +58,8 @@ extern "C" {
 #endif	/* !IBM */
 
 #if	defined(__GNUC__) || defined(__clang__)
-#define	PRINTF_ATTR(x)	__attribute__((format(printf, x, x + 1)))
+#define	PRINTF_ATTR(x)		__attribute__((format(printf, x, x + 1)))
+#define	PRINTF_ATTR2(x,y)	__attribute__((format(printf, x, y)))
 #ifndef	BSWAP32
 #define	BSWAP16(x)	__builtin_bswap16((x))
 #define	BSWAP32(x)	__builtin_bswap32((x))

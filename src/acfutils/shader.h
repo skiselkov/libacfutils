@@ -26,10 +26,8 @@
 #ifndef	_ACF_UTILS_SHADER_H_
 #define	_ACF_UTILS_SHADER_H_
 
-#define	GL_GLEXT_PROTOTYPES
-
 #if	IBM
-#include <gl.h>
+#include <GL/glew.h>
 #elif	APL
 #include <OpenGL/gl.h>
 #else	/* LIN */

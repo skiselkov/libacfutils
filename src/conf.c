@@ -447,6 +447,124 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
 }
 
+#define	VARIABLE_GET(getfunc) \
+	do { \
+		va_list ap, ap2; \
+		int l; \
+		char *key; \
+		bool_t res; \
+		va_start(ap, value); \
+		va_copy(ap2, ap); \
+		l = vsnprintf(NULL, 0, fmt, ap); \
+		key = malloc(l + 1); \
+		vsnprintf(key, l + 1, fmt, ap2); \
+		res = getfunc(conf, key, value); \
+		free(key); \
+		va_end(ap); \
+		va_end(ap2); \
+		return (res); \
+	} while (0)
+
+#define	VARIABLE_SET(setfunc) \
+	do { \
+		va_list ap, ap2; \
+		int l; \
+		char *key; \
+		va_start(ap, value); \
+		va_copy(ap2, ap); \
+		l = vsnprintf(NULL, 0, fmt, ap); \
+		key = malloc(l + 1); \
+		vsnprintf(key, l + 1, fmt, ap2); \
+		setfunc(conf, key, value); \
+		free(key); \
+		va_end(ap); \
+		va_end(ap2); \
+	} while (0)
+
+bool_t
+conf_get_str_v(const conf_t *conf, const char *fmt, const char **value, ...)
+{
+	VARIABLE_GET(conf_get_str);
+}
+
+bool_t
+conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
+{
+	VARIABLE_GET(conf_get_i);
+}
+
+bool_t
+conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
+{
+	VARIABLE_GET(conf_get_lli);
+}
+
+bool_t
+conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
+{
+	VARIABLE_GET(conf_get_f);
+}
+
+bool_t
+conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
+{
+	VARIABLE_GET(conf_get_d);
+}
+
+bool_t
+conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
+{
+	VARIABLE_GET(conf_get_da);
+}
+
+bool_t
+conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
+{
+	VARIABLE_GET(conf_get_b);
+}
+
+void
+conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
+{
+	VARIABLE_SET(conf_set_str);
+}
+
+void
+conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
+{
+	VARIABLE_SET(conf_set_i);
+}
+
+void
+conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
+{
+	VARIABLE_SET(conf_set_lli);
+}
+
+void
+conf_set_f_v(conf_t *conf, const char *fmt, float value, ...)
+{
+	VARIABLE_SET(conf_set_f);
+}
+
+void
+conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
+{
+	VARIABLE_SET(conf_set_d);
+}
+
+void
+conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
+{
+	VARIABLE_SET(conf_set_da);
+}
+
+void
+conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
+{
+	VARIABLE_SET(conf_set_b);
+}
+
 /*
  * Walks all configuration key-value pairs. You must set *cookie to NULL
  * on the first call. The function uses it to know how far it has progressed

@@ -30,6 +30,8 @@
  * display the rendered result.
  */
 
+#include <GL/glew.h>
+
 #include <acfutils/assert.h>
 #include <acfutils/geom.h>
 #include <acfutils/mt_cairo_render.h>
@@ -37,14 +39,6 @@
 #include <acfutils/time.h>
 
 #include <XPLMGraphics.h>
-
-#if	IBM
-#include <gl.h>
-#elif	APL
-#include <OpenGL/gl.h>
-#else	/* LIN */
-#include <GL/gl.h>
-#endif	/* LIN */
 
 typedef	struct {
 	bool_t		chg;
