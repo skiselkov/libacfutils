@@ -127,20 +127,26 @@ dr_setf(dr_t *dr, double f)
 int
 dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num)
 {
+	ASSERT(i != NULL || num == 0);
+
 	if (dr->type & xplmType_IntArray)
 		return (XPLMGetDatavi(dr->dr, i, off, num));
 	if (dr->type & xplmType_FloatArray) {
 		float f[num];
-		int n = XPLMGetDatavf(dr->dr, f, off, num);
-		for (int x = 0; x < n; x++)
-			i[x] = f[x];
+		int n = XPLMGetDatavf(dr->dr, num > 0 ? f : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				i[x] = f[x];
+		}
 		return (n);
 	}
 	if (dr->type & xplmType_Data) {
 		uint8_t u[num];
-		int n = XPLMGetDatab(dr->dr, u, off, num);
-		for (int x = 0; x < n; x++)
-			i[x] = u[x];
+		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				i[x] = u[x];
+		}
 		return (n);
 	}
 	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
@@ -171,25 +177,33 @@ dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num)
 int
 dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
 {
+	ASSERT(df != NULL || num == 0);
+
 	if (dr->type & xplmType_IntArray) {
 		int i[num];
-		int n = XPLMGetDatavi(dr->dr, i, off, num);
-		for (int x = 0; x < n; x++)
-			df[x] = i[x];
+		int n = XPLMGetDatavi(dr->dr, num > 0 ? i : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				df[x] = i[x];
+		}
 		return (n);
 	}
 	if (dr->type & xplmType_FloatArray) {
 		float f[num];
-		int n = XPLMGetDatavf(dr->dr, f, off, num);
-		for (int x = 0; x < n; x++)
-			df[x] = f[x];
+		int n = XPLMGetDatavf(dr->dr, num > 0 ? f : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				df[x] = f[x];
+		}
 		return (n);
 	}
 	if (dr->type & xplmType_Data) {
 		uint8_t u[num];
-		int n = XPLMGetDatab(dr->dr, u, off, num);
-		for (int x = 0; x < n; x++)
-			df[x] = u[x];
+		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				df[x] = u[x];
+		}
 		return (n);
 	}
 	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
@@ -198,11 +212,15 @@ dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
 int
 dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 {
+	ASSERT(ff != NULL || num == 0);
+
 	if (dr->type & xplmType_IntArray) {
 		int i[num];
-		int n = XPLMGetDatavi(dr->dr, i, off, num);
-		for (int x = 0; x < n; x++)
-			ff[x] = i[x];
+		int n = XPLMGetDatavi(dr->dr, num > 0 ? i : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				ff[x] = i[x];
+		}
 		return (n);
 	}
 	if (dr->type & xplmType_FloatArray) {
@@ -211,9 +229,11 @@ dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 	}
 	if (dr->type & xplmType_Data) {
 		uint8_t u[num];
-		int n = XPLMGetDatab(dr->dr, u, off, num);
-		for (int x = 0; x < n; x++)
-			ff[x] = u[x];
+		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
+		if (num != 0) {
+			for (int x = 0; x < n; x++)
+				ff[x] = u[x];
+		}
 		return (n);
 	}
 	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
@@ -272,8 +292,9 @@ dr_gets(dr_t *dr, char *str, size_t cap)
 	int n;
 
 	ASSERT_MSG(dr->type & xplmType_Data, "%s", dr->name);
-	n = XPLMGetDatab(dr->dr, str, 0, cap - 1);
-	str[cap - 1] = 0;	/* ensure the string is properly terminated */
+	n = XPLMGetDatab(dr->dr, str, 0, cap > 0 ? cap - 1 : 0);
+	if (cap != 0)
+		str[cap - 1] = 0;	/* make sure it's properly terminated */
 
 	return (n);
 }
