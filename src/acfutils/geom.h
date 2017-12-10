@@ -80,7 +80,7 @@ typedef struct {
  *	 -------->
  *		 X (incr right)
  */
-typedef struct {
+typedef struct vect2_s {
 	double	x;
 	double	y;
 } vect2_t;

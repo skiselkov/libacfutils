@@ -18,6 +18,7 @@
 
 #include <math.h>
 
+#include <acfutils/geom.h>
 #include <acfutils/helpers.h>
 #include <acfutils/math.h>
 
@@ -65,4 +66,45 @@ double
 fx_lin(double x, double x1, double y1, double x2, double y2)
 {
 	return (((x - x1) / (x2 - x1)) * (y2 - y1) + y1);
+}
+
+/*
+ * Multi-segment version of fx_lin. The segments are defined as a series of
+ * x-y coordinate points (list terminated with a NULL_VECT2). The list must
+ * contain AT LEAST 2 points. The value of 'x' is then computed using the
+ * fx_lin function from the appropriate segment. If 'x' falls outside of the
+ * curve range, the `extrapolate' argument controls behavior. If extrapolate
+ * is B_TRUE, the nearest segment is extrapolated to the value of 'x'.
+ * Otherwise the function returns NAN.
+ */
+double
+fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
+{
+	ASSERT(!IS_NULL_VECT(points[0]));
+	ASSERT(!IS_NULL_VECT(points[1]));
+
+	for (;;) {
+		vect2_t p1 = points[0], p2 = points[1];
+
+		ASSERT3F(p1.x, <, p2.x);
+		points++;
+
+		if (x < p1.x) {
+			/* X outside of range to the left */
+			if (extrapolate)
+				return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
+			break;
+		}
+		/* X in range of current segment */
+		if (x <= p2.x)
+			return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
+		/* X outside of range to the right */
+		if (IS_NULL_VECT(points[2])) {
+			if (extrapolate)
+				return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
+			break;
+		}
+	}
+
+	return (NAN);
 }

@@ -29,8 +29,11 @@ extern "C" {
 #define	POW2(x)	((x) * (x))
 #define	ROUND_ERROR	1e-10
 
+struct vect2_s;
+
 unsigned quadratic_solve(double a, double b, double c, double x[2]);
 double fx_lin(double x, double x1, double y1, double x2, double y2);
+double fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate);
 
 /*
  * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.
