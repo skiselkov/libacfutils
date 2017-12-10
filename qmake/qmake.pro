@@ -25,7 +25,7 @@ VERSION = 1.0.0
 
 INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
-INCLUDEPATH += $$[LIBGLEW]/include
+INCLUDEPATH += ../glew
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
 
@@ -38,6 +38,8 @@ DEFINES += GL_GLEXT_PROTOTYPES
 
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210
+
+DEFINES += GLEW_BUILD=GLEW_STATIC
 
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 
