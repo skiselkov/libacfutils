@@ -42,7 +42,7 @@ struct dr {
 	void		*value;
 	ssize_t		count;
 	void		(*read_cb)(dr_t *);
-	void		(*write_cb)(dr_t *);
+	void		(*write_cb)(dr_t *, void *);
 	void		(*read_array_cb)(dr_t *, void *, int, int);
 	void		(*write_array_cb)(dr_t *, void *, int, int);
 	void		*cb_userinfo;

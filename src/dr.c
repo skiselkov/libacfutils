@@ -328,9 +328,9 @@ write_int_cb(void *refcon, int value)
 	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
-	*(int *)dr->value = value;
 	if (dr->write_cb != NULL)
-		dr->write_cb(dr);
+		dr->write_cb(dr, &value);
+	*(int *)dr->value = value;
 }
 
 static float
@@ -353,9 +353,9 @@ write_float_cb(void *refcon, float value)
 	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
-	*(float *)dr->value = value;
 	if (dr->write_cb != NULL)
-		dr->write_cb(dr);
+		dr->write_cb(dr, &value);
+	*(float *)dr->value = value;
 }
 
 #define	DEF_READ_ARRAY_CB(typename, xp_typename, type_sz) \
