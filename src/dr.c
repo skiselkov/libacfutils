@@ -48,6 +48,7 @@ dr_find(dr_t *dr, const char *fmt, ...)
 	dr->writable = XPLMCanWriteDataRef(dr->dr);
 	dr->read_cb = NULL;
 	dr->write_cb = NULL;
+	dr->cb_userinfo = NULL;
 	return (B_TRUE);
 }
 

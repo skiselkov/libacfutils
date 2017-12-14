@@ -45,6 +45,7 @@ struct dr {
 	void		(*write_cb)(dr_t *);
 	void		(*read_array_cb)(dr_t *, void *, int, int);
 	void		(*write_array_cb)(dr_t *, void *, int, int);
+	void		*cb_userinfo;
 };
 
 bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
