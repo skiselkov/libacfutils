@@ -81,7 +81,7 @@ void conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
     PRINTF_ATTR2(2, 4);
 void conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
     PRINTF_ATTR2(2, 4);
-void conf_set_f_v(conf_t *conf, const char *fmt, float value, ...)
+void conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
     PRINTF_ATTR2(2, 4);
 void conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
     PRINTF_ATTR2(2, 4);

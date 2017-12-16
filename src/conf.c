@@ -542,7 +542,7 @@ conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
 }
 
 void
-conf_set_f_v(conf_t *conf, const char *fmt, float value, ...)
+conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
 {
 	VARIABLE_SET(conf_set_f);
 }
