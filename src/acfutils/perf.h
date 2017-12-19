@@ -235,6 +235,7 @@ double speed_sound(double oat);
 double air_density(double pressure, double oat);
 double impact_press(double mach, double pressure);
 double dyn_press(double ktas, double press, double oat);
+double adiabatic_heating(double press_ratio, double start_temp);
 
 #ifdef	__cplusplus
 }

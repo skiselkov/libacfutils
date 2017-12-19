@@ -44,5 +44,7 @@ $(pwd)/freetype/freetype-$ARCH/lib/pkgconfig:\
 $(pwd)/libpng/libpng-$ARCH/lib/pkgconfig:\
 $(pwd)/zlib/zlib-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
-$(pwd)/cairo/pixman-$ARCH/lib/pkgconfig" \
-    pkg-config $@ cairo pixman-1 freetype2 libpng16 opusfile opus ogg zlib
+$(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
+$(pwd)/curl/libcurl-$ARCH/lib/pkgconfig" \
+    pkg-config $@ cairo pixman-1 freetype2 libpng16 opusfile opus ogg zlib \
+    libcurl

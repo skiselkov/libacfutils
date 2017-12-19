@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+source ../build_dep.common
+
+CURL="curl-7.57.0.tar.xz"
+CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
+    --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
+    --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
+    --disable-imap --disable-smb --disable-smtp --disable-gopher \
+    --disable-manual"
+
+case `uname` in
+	Linux)
+		build_dep "linux-64" "$CONFOPTS_COMMON" \
+		    "$CURL" "libcurl" "lib/libcurl.a" && \
+		build_dep "win-64" \
+		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32" \
+		    "$CURL" "libcurl" "lib/libcurl.a"
+		;;
+	Darwin)
+		build_dep "mac-64" "$CONFOPTS_COMMON" \
+		    "$CURL" "libcurl" "lib/libcurl.a"
+		;;
+	*)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+esac

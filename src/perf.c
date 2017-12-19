@@ -1116,8 +1116,8 @@ alt2press(double alt, double qnh)
 /*
  * Calculates pressure altitude from static air pressure.
  *
- * @param alt Static air pressure in hPa.
- * @param qnh Local QNH in hPa.
+ * @param alt Static air pressure in Pa.
+ * @param qnh Local QNH in Pa.
  *
  * @return Pressure altitude in feet.
  */
@@ -1283,4 +1283,31 @@ double
 dyn_press(double ktas, double press, double oat)
 {
 	return (0.5 * air_density(press, oat) * POW2(KT2MPS(ktas)));
+}
+
+/*
+ * Computes the adiabatic heating experienced by air when compressed in a
+ * turbine engine's compressor. The P-T relation for adiabatic heating is:
+ *
+ *	P1^(1 - gamma) T1^(gamma) = P2^(1 - gamma) T2^(gamma)
+ *
+ * Solving for T2:
+ *
+ *	T2 = ((P1^(1 - Gamma) T1^(Gamma)) / P2^(1 - Gamma))^(1 / Gamma)
+ *
+ * Since P2 / P1 is the compressor pressure ratio, we can cancel out P1
+ * to '1' and simply replace P2 by the pressure ratio P_r:
+ *
+ *	T2 = (T1^(Gamma) / P_r^(1 - Gamma))^(1 / Gamma)
+ *
+ * @param press_ratio Pressure ratio of the compressor (dimensionless).
+ * @param start_temp Starting gas temperature (in degrees Celsius).
+ *
+ * @return Compressed gas temperature (in degrees Celsius).
+ */
+double
+adiabatic_heating(double press_ratio, double start_temp)
+{
+	return (KELVIN2C(pow(pow(C2KELVIN(start_temp), GAMMA) /
+	    pow(press_ratio, 1 - GAMMA), 1 / GAMMA)));
 }
