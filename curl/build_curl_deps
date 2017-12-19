@@ -22,7 +22,11 @@ CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
     --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
     --disable-imap --disable-smb --disable-smtp --disable-gopher \
-    --disable-manual"
+    --disable-manual --disable-pthreads --disable-unix-sockets \
+    --disable-ipv6 --disable-threaded-resolver --disable-cookies \
+    --disable-tls-srp --disable-ntlm-wb --disable-crypto-auth \
+    --disable-sspi \
+    --with-pic --without-ssl"
 
 case `uname` in
 	Linux)
