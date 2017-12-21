@@ -109,8 +109,12 @@ worker(mt_cairo_render_t *mtcr)
 		mutex_enter(&mtcr->lock);
 		mtcr->cur_rs = !mtcr->cur_rs;
 
-		cv_timedwait(&mtcr->cv, &mtcr->lock, microclock() +
-		    SEC2USEC(1.0 / mtcr->fps));
+		if (mtcr->fps > 0) {
+			cv_timedwait(&mtcr->cv, &mtcr->lock, microclock() +
+			    SEC2USEC(1.0 / mtcr->fps));
+		} else {
+			cv_wait(&mtcr->cv, &mtcr->lock);
+		}
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -140,7 +144,6 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 
 	ASSERT(w != 0);
 	ASSERT(h != 0);
-	ASSERT3F(fps, >, 0);
 	ASSERT(render_cb != NULL);
 
 	mtcr->w = w;
@@ -212,8 +215,22 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 void
 mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps)
 {
-	ASSERT3F(fps, >, 0);
+	mutex_enter(&mtcr->lock);
 	mtcr->fps = fps;
+	cv_broadcast(&mtcr->cv);
+	mutex_exit(&mtcr->lock);
+}
+
+/*
+ * Fires the renderer off once to produce a new frame. This can be especially
+ * useful for renderers with fps = 0, which are only invoked on request.
+ */
+void
+mt_cairo_render_once(mt_cairo_render_t *mtcr)
+{
+	mutex_enter(&mtcr->lock);
+	cv_broadcast(&mtcr->cv);
+	mutex_exit(&mtcr->lock);
 }
 
 /*
