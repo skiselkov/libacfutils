@@ -26,6 +26,8 @@
 #ifndef	_ACF_UTILS_MT_CAIRO_RENDER_H_
 #define	_ACF_UTILS_MT_CAIRO_RENDER_H_
 
+#include <GL/glew.h>
+
 #include <cairo.h>
 #include <cairo-ft.h>
 #include <ft2build.h>
@@ -50,6 +52,7 @@ void mt_cairo_render_fini(mt_cairo_render_t *mtcr);
 void mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps);
 void mt_cairo_render_once(mt_cairo_render_t *mtcr);
 void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size);
+GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 
 const char *ft_err2str(FT_Error err);
 bool_t try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,

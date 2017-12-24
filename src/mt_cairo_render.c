@@ -281,6 +281,35 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	glEnd();
 }
 
+GLuint
+mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
+{
+	GLuint tex;
+
+	mutex_enter(&mtcr->lock);
+
+	if (mtcr->cur_rs != -1) {
+		render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
+		/* Upload the texture if it has changed */
+		if (rs->chg) {
+			glBindTexture(GL_TEXTURE_2D, rs->tex);
+			cairo_surface_flush(rs->surf);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w,
+			    mtcr->h, 0, GL_BGRA, GL_UNSIGNED_BYTE,
+			    cairo_image_surface_get_data(rs->surf));
+			rs->chg = B_FALSE;
+		}
+		tex = rs->tex;
+	} else {
+		/* No texture ready yet */
+		tex = 0;
+	}
+
+	mutex_exit(&mtcr->lock);
+
+	return (tex);
+}
+
 bool_t
 try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
     FT_Face *font, cairo_font_face_t **cr_font)

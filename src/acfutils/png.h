@@ -33,6 +33,8 @@ extern "C" {
 #endif
 
 uint8_t *png_load_from_file_rgba(const char *filename, int *width, int *height);
+bool_t png_write_to_file_rgba(const char *filename, int width, int height,
+    const uint8_t *data);
 
 #ifdef	__cplusplus
 }

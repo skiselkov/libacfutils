@@ -124,3 +124,62 @@ out:
 
 	return (pixels);
 }
+
+bool_t
+png_write_to_file_rgba(const char *filename, int width, int height,
+    const uint8_t *data)
+{
+	volatile bool_t result = B_FALSE;
+	png_structp png_ptr = NULL;
+	png_infop info_ptr = NULL;
+	FILE *fp = fopen(filename, "wb");
+
+	if (fp == NULL) {
+		logMsg("Error writing PNG file %s: %s", filename,
+		    strerror(errno));
+		goto out;
+		return (B_FALSE);
+	}
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL,
+	    NULL);
+	if (png_ptr == NULL) {
+		logMsg("Error writing PNG file %s: couldn't allocate "
+		    "write struct", filename);
+		goto out;
+	}
+	info_ptr = png_create_info_struct(png_ptr);
+	if (info_ptr == NULL) {
+		logMsg("Error writing PNG file %s: couldn't allocate "
+		    "info struct", filename);
+		goto out;
+	}
+
+	if (setjmp(png_jmpbuf(png_ptr))) {
+		logMsg("Error writing PNG file %s: error during png creation",
+		    filename);
+		goto out;
+	}
+
+	png_init_io(png_ptr, fp);
+
+	/* Write header (8 bit colour depth) */
+	png_set_IHDR(png_ptr, info_ptr, width, height,
+	    8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+	    PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+
+	png_write_info(png_ptr, info_ptr);
+	for (int i = 0; i < height; i++)
+		png_write_row(png_ptr, &data[i * width * 4]);
+	png_write_end(png_ptr, NULL);
+
+	result = B_TRUE;
+out:
+	if (info_ptr != NULL)
+		png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+	if (png_ptr != NULL)
+		png_destroy_write_struct(&png_ptr, (png_infopp)NULL);
+	if (fp != NULL)
+		fclose(fp);
+
+	return (result);
+}
