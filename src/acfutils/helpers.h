@@ -32,6 +32,7 @@
 #include <math.h>
 #if	APL || LIN
 #include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
+#include <unistd.h>
 #endif
 
 #if	IBM
@@ -323,6 +324,8 @@ struct stat {
 	uint64_t	st_mtime;
 };
 int stat(const char *pathname, struct stat *buf);
+
+#define	sleep(x)	SleepEx((x) * 1000, FALSE)
 
 #endif	/* IBM */
 
