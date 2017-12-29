@@ -194,10 +194,10 @@ vect3_t vect3_xprod(vect3_t a, vect3_t b);
 vect3_t vect3_mean(vect3_t a, vect3_t b);
 vect2_t vect2_mean(vect2_t a, vect2_t b);
 
-vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
-
 vect2_t vect2_norm(vect2_t v, bool_t right);
+vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
 vect2_t vect2_rot(vect2_t v, double angle);
+vect3_t vect3_neg(vect3_t v);
 vect2_t vect2_neg(vect2_t v);
 
 /*

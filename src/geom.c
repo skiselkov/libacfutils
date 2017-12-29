@@ -372,6 +372,15 @@ vect2_rot(vect2_t v, double a)
 /*
  * Negates vector `v' to point in the opposite direction.
  */
+vect3_t
+vect3_neg(vect3_t v)
+{
+	return (VECT3(-v.x, -v.y, -v.z));
+}
+
+/*
+ * Same as vect3_neg but for 2-space vectors.
+ */
 vect2_t
 vect2_neg(vect2_t v)
 {
