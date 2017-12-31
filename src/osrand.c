@@ -33,7 +33,7 @@
  * B_TRUE iff `buf' has been successfully populated with `len' bytes.
  */
 bool_t
-osrand(uint8_t *buf, size_t len)
+osrand(void *buf, size_t len)
 {
 #if	IBM
 	HCRYPTPROV prov;

@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-bool_t osrand(uint8_t *buf, size_t len);
+bool_t osrand(void *buf, size_t len);
 
 #ifdef	__cplusplus
 }
