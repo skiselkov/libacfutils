@@ -570,6 +570,7 @@ conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
  * on the first call. The function uses it to know how far it has progressed
  * in the walk. Once the walk is done, the function returns B_FALSE. Otherwise
  * it returns B_TRUE and the next config key & value in the respective args.
+ * You may add or remove key-value pairs to the configuration during the walk.
  * Proper usage of this function:
  *
  *	void *cookie = NULL;
@@ -582,18 +583,29 @@ bool_t
 conf_walk(const conf_t *conf, const char **key, const char **value,
     void **cookie)
 {
+	static conf_key_t eol;
 	conf_key_t *ck = *cookie;
 
-	if (ck == NULL)
-		ck = avl_first(&conf->tree);
-	else
-		ck = AVL_NEXT(&conf->tree, ck);
-	*cookie = ck;
-	if (ck != NULL) {
-		*key = ck->key;
-		*value = ck->value;
-		return (B_TRUE);
-	} else {
+	if (ck == &eol) {
+		/* end of tree */
 		return (B_FALSE);
 	}
+	if (ck == NULL) {
+		/* first call */
+		ck = avl_first(&conf->tree);
+		if (ck == NULL) {
+			/* tree is empty */
+			*cookie = &eol;
+			return (B_FALSE);
+		}
+	}
+	*key = ck->key;
+	*value = ck->value;
+	*cookie = AVL_NEXT(&conf->tree, ck);
+	if (*cookie == NULL) {
+		/* end of tree */
+		*cookie = &eol;
+	}
+
+	return (B_TRUE);
 }
