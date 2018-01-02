@@ -295,7 +295,7 @@ dr_gets(dr_t *dr, char *str, size_t cap)
 	ASSERT_MSG(dr->type & xplmType_Data, "%s", dr->name);
 	n = XPLMGetDatab(dr->dr, str, 0, cap > 0 ? cap - 1 : 0);
 	if (cap != 0)
-		str[cap - 1] = 0;	/* make sure it's properly terminated */
+		str[n] = '\0';	/* make sure it's properly terminated */
 
 	return (n);
 }
