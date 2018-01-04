@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # CDDL HEADER START
 #
@@ -47,5 +47,9 @@ $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig"
 
+if [[ "$ARCH" = "linux-64" ]] && [[ "$@" = "--libs" ]]; then
+	CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
+fi
+
 echo $(pkg-config $@ cairo pixman-1 freetype2 libpng16 opusfile opus ogg zlib ) \
-    $(pkg-config $@ --static libcurl)
+    $(pkg-config $@ --static libcurl) ${CLIPBOARD}

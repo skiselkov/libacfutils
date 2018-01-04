@@ -65,12 +65,14 @@ linux-g++-64 {
 	# but we'd prefer to be static.
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
+	INCLUDEPATH += $$[LIBCLIPBOARD]/include
 }
 
 linux-g++-32 {
 	DEFINES += APL=0 IBM=0 LIN=1
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-32 --cflags")
+	INCLUDEPATH += $$[LIBCLIPBOARD]/include
 }
 
 macx {
