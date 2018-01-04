@@ -179,6 +179,7 @@ conf_read(FILE *fp, int *errline)
  */
 bool_t conf_write(const conf_t *conf, FILE *fp)
 {
+	fprintf(fp, "# libacfutils configuration file - DO NOT EDIT!\n");
 	for (conf_key_t *ck = avl_first(&conf->tree); ck != NULL;
 	    ck = AVL_NEXT(&conf->tree, ck)) {
 		if (fprintf(fp, "%s = %s\n", ck->key, ck->value) <= 0)
