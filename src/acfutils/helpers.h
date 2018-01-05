@@ -325,6 +325,8 @@ struct stat {
 };
 int stat(const char *pathname, struct stat *buf);
 
+void win_perror(DWORD err, const char *fmt, ...) PRINTF_ATTR(2);
+
 #define	sleep(x)	SleepEx((x) * 1000, FALSE)
 
 #endif	/* IBM */

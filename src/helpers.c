@@ -700,9 +700,7 @@ filesz(const char *filename)
 
 #if	IBM
 
-static void win_perror(DWORD err, const char *fmt, ...) PRINTF_ATTR(2);
-
-static void
+void
 win_perror(DWORD err, const char *fmt, ...)
 {
 	va_list ap;

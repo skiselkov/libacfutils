@@ -68,10 +68,12 @@ paste_set_str(const char *str)
 	if (!OpenClipboard(NULL))
 		return (B_FALSE);
 	if (!EmptyClipboard()) {
+		win_perror(GetLastError(), "Error clearing clipboard contents");
 		CloseClipboard();
 		return (B_FALSE);
 	}
-	SetClipboardData(CF_TEXT, (HANDLE)str);
+	if (SetClipboardData(CF_TEXT, (HANDLE)str) == NULL)
+		win_perror(GetLastError(), "Error setting clipboard contents");
 	CloseClipboard();
 
 	return (B_TRUE);
