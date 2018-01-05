@@ -64,7 +64,15 @@ paste_get_str(char *str, size_t cap)
 bool_t
 paste_set_str(const char *str)
 {
+	HGLOBAL h_result;
+	char *glob_str;
+
 	ASSERT(str != NULL);
+	h_result = GlobalAlloc(GMEM_MOVEABLE, strlen(str) + 1);
+	glob_str = GlobalLock(h_result);
+	strlcpy(glob_str, str, strlen(str) + 1);
+	GlobalUnlock(h_result);
+
 	if (!OpenClipboard(NULL))
 		return (B_FALSE);
 	if (!EmptyClipboard()) {
@@ -72,8 +80,10 @@ paste_set_str(const char *str)
 		CloseClipboard();
 		return (B_FALSE);
 	}
-	if (SetClipboardData(CF_TEXT, (HANDLE)str) == NULL)
+	if (SetClipboardData(CF_TEXT, h_result) == NULL) {
 		win_perror(GetLastError(), "Error setting clipboard contents");
+		GlobalFree(h_result);
+	}
 	CloseClipboard();
 
 	return (B_TRUE);

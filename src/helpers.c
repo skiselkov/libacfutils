@@ -1016,6 +1016,7 @@ stat(const char *pathname, struct stat *buf)
 	HANDLE		fh;
 	TCHAR		pathnameT[strlen(pathname) + 1];
 	LARGE_INTEGER	sz;
+	ULARGE_INTEGER	ftime;
 	bool_t		isdir;
 
 	if (!file_exists(pathname, &isdir)) {
@@ -1040,10 +1041,15 @@ stat(const char *pathname, struct stat *buf)
 		buf->st_size = 0;
 	else
 		buf->st_size = sz.QuadPart;
-	buf->st_atime = ((uint64_t)atime.dwHighDateTime << 32) |
-	    atime.dwLowDateTime;
-	buf->st_mtime = ((uint64_t)wtime.dwHighDateTime << 32) |
-	    wtime.dwLowDateTime;
+
+	ftime.LowPart = atime.dwLowDateTime;
+	ftime.HighPart = atime.dwHighDateTime;
+	buf->st_atime = ftime.QuadPart / 10000000ull - 11644473600ull;
+
+	ftime.LowPart = wtime.dwLowDateTime;
+	ftime.HighPart = wtime.dwHighDateTime;
+	buf->st_mtime = ftime.QuadPart / 10000000ull - 11644473600ull;
+
 	CloseHandle(fh);
 
 	return (0);
