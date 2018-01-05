@@ -74,13 +74,33 @@ extern "C" {
 #else	/* !APL && !LIN */
 
 #define	thread_t	HANDLE
-#define	mutex_t		CRITICAL_SECTION
+typedef struct {
+	bool_t			inited;
+	CRITICAL_SECTION	cs;
+} mutex_t;
 #define	condvar_t	CONDITION_VARIABLE
 
-#define	mutex_init	InitializeCriticalSection
-#define	mutex_destroy	DeleteCriticalSection
-#define	mutex_enter	EnterCriticalSection
-#define	mutex_exit	LeaveCriticalSection
+#define	mutex_init(x) \
+	do { \
+		(x)->inited = B_TRUE; \
+		InitializeCriticalSection(&(x)->cs); \
+	} while (0)
+#define	mutex_destroy(x) \
+	do { \
+		ASSERT((x)->inited); \
+		DeleteCriticalSection(&(x)->cs); \
+		(x)->inited = B_FALSE; \
+	} while (0)
+#define	mutex_enter(x) \
+	do { \
+		ASSERT((x)->inited); \
+		EnterCriticalSection(&(x)->cs); \
+	} while (0)
+#define	mutex_exit(x) \
+	do { \
+		ASSERT((x)->inited); \
+		LeaveCriticalSection(&(x)->cs); \
+	} while (0)
 
 #define	thread_create(thrp, proc, arg) \
 	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
@@ -89,12 +109,12 @@ extern "C" {
 	VERIFY3S(WaitForSingleObject(*(thrp), INFINITE), ==, WAIT_OBJECT_0)
 
 #define	cv_wait(cv, mtx) \
-	VERIFY(SleepConditionVariableCS((cv), (mtx), INFINITE))
+	VERIFY(SleepConditionVariableCS((cv), &(mtx)->cs, INFINITE))
 #define	cv_timedwait(cv, mtx, limit) \
 	do { \
 		uint64_t now = microclock(); \
 		if (now < (limit)) { \
-			(void) SleepConditionVariableCS((cv), (mtx), \
+			(void) SleepConditionVariableCS((cv), &(mtx)->cs, \
 			    ((limit) - now) / 1000); \
 		} \
 	} while (0)
