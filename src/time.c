@@ -29,13 +29,13 @@ uint64_t
 microclock(void)
 {
 #if	IBM
-    LARGE_INTEGER val, freq;
-    QueryPerformanceFrequency(&freq);
-    QueryPerformanceCounter(&val);
-    return ((val.QuadPart * 1000000llu) / freq.QuadPart);
+	LARGE_INTEGER val, freq;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&val);
+	return (((double)val.QuadPart / (double)freq.QuadPart) * 1000000.0);
 #else	/* !IBM */
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return ((tv.tv_sec * 1000000llu) + tv.tv_usec);
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000000llu) + tv.tv_usec);
 #endif	/* !IBM */
 }
