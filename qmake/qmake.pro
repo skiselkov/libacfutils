@@ -18,8 +18,8 @@ TEMPLATE = lib
 QT -= gui core
 CONFIG += staticlib
 
-CONFIG += warn_on plugin release
-CONFIG -= thread exceptions qt rtti debug
+CONFIG += warn_on plugin debug
+CONFIG -= thread exceptions qt rtti release
 
 VERSION = 1.0.0
 
@@ -49,6 +49,7 @@ win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
 	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
 	QMAKE_DEL_FILE = rm -f
+	QMAKE_CFLAGS -= -Werror
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {

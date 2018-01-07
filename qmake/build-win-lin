@@ -23,20 +23,21 @@
 # We'll try to build on N+1 CPUs we have available. The extra +1 is to allow
 # for one make instance to be blocking on disk.
 NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo  | wc -l) + 1 ))
+RELEASE="debug"
 
 rm -rf win32 win64 lin32 lin64
 mkdir -p win32 win64 lin32 lin64
 
 make distclean > /dev/null
 qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv release/libacfutils.a win64
+    make -j $NCPUS && mv "$RELEASE/libacfutils.a" win64
 if [ $? != 0 ] ; then
   exit
 fi
 
 make distclean > /dev/null
 qmake -set CROSS_COMPILE i686-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv release/libacfutils.a win32
+    make -j $NCPUS && mv "$RELEASE/libacfutils.a" win32
 if [ $? != 0 ] ; then
   exit
 fi
