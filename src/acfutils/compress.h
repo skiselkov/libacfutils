@@ -29,6 +29,9 @@ bool_t zlib_test(const void *in_buf, size_t len);
 void *zlib_compress(void *in_buf, size_t len, size_t *out_len);
 void *zlib_decompress(void *in_buf, size_t len, size_t *out_len_p);
 
+bool_t test_7z(const void *in_buf, size_t len);
+void *decompress_7z(const char *filename, size_t *out_len);
+
 #ifdef	__cplusplus
 }
 #endif

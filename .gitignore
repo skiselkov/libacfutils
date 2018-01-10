@@ -42,3 +42,13 @@ curl-7.57.0
 libcurl-linux-64
 libcurl-win-64
 libcurl-mac-64
+
+lzma/qmake/object_script.liblzma.Debug
+lzma/qmake/object_script.liblzma.Release
+lzma/qmake/linux-32
+lzma/qmake/linux-64
+lzma/qmake/mac-32
+lzma/qmake/mac-64
+lzma/qmake/win-32
+lzma/qmake/win-64
+src/test/dsfdump
