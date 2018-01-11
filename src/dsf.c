@@ -231,19 +231,6 @@ errout:
 	return (NULL);
 }
 
-static int
-prop_compar(const void *a, const void *b)
-{
-	const dsf_prop_t *da = a, *db = b;
-	int res = strcmp(da->name, db->name);
-
-	if (res > 0)
-		return (1);
-	else if (res < 0)
-		return (-1);
-	return (0);
-}
-
 static bool_t
 parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 {
@@ -252,7 +239,7 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 
 	ASSERT3U(atom->id, ==, DSF_ATOM_PROP);
 
-	avl_create(&atom->prop_atom.props, prop_compar, sizeof (dsf_prop_t),
+	list_create(&atom->prop_atom.props, sizeof (dsf_prop_t),
 	    offsetof(dsf_prop_t, prop_node));
 	atom->subtype_inited = B_TRUE;
 
@@ -265,8 +252,6 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 		size_t name_len = strnlen(name, payload_end - name);
 		size_t value_len;
 		const char *value;
-		avl_index_t where;
-		dsf_prop_t srch;
 		dsf_prop_t *prop;
 
 		if (name_len == (size_t)(payload_end - name)) {
@@ -286,16 +271,10 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 			    "an unterminated value string");
 			goto errout;
 		}
-		srch.name = name;
-		if (avl_find(&atom->prop_atom.props, &srch, &where) != NULL) {
-			snprintf(reason, DSF_REASON_SZ, "PROP atom contains "
-			    "a duplicate name-value pair for \"%s\"", name);
-			goto errout;
-		}
 		prop = calloc(1, sizeof (*prop));
 		prop->name = name;
 		prop->value = value;
-		avl_insert(&atom->prop_atom.props, prop, where);
+		list_insert_tail(&atom->prop_atom.props, prop);
 
 		name = value + value_len + 1;
 	}
@@ -640,17 +619,14 @@ destroy_planar_numeric_atom(dsf_atom_t *atom)
 static void
 destroy_prop_atom(dsf_atom_t *atom)
 {
-	void *cookie;
 	dsf_prop_t *prop;
 
 	ASSERT3U(atom->id, ==, DSF_ATOM_PROP);
 	ASSERT(atom->subtype_inited);
 
-	cookie = NULL;
-	while ((prop = avl_destroy_nodes(&atom->prop_atom.props, &cookie)) !=
-	    NULL)
+	while ((prop = list_remove_head(&atom->prop_atom.props)) != NULL)
 		free(prop);
-	avl_destroy(&atom->prop_atom.props);
+	list_destroy(&atom->prop_atom.props);
 }
 
 static dsf_atom_t *
@@ -823,8 +799,8 @@ dump_prop_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 	memset(indent, ' ', depth * INDENT_DEPTH);
 	indent[depth * INDENT_DEPTH] = '\0';
 
-	for (dsf_prop_t *prop = avl_first(&atom->prop_atom.props); prop != NULL;
-	    prop = AVL_NEXT(&atom->prop_atom.props, prop)) {
+	for (dsf_prop_t *prop = list_head(&atom->prop_atom.props); prop != NULL;
+	    prop = list_next(&atom->prop_atom.props, prop)) {
 		append_format(str, len, "%s\"%s\" = \"%s\"\n",
 		    indent, prop->name, prop->value);
 	}

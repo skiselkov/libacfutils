@@ -1,7 +1,8 @@
 .DS_Store
 *.o
 *.d
-Makefile
+qmake/Makefile
+qmake/libacfutils.a
 mac32
 mac64
 win32

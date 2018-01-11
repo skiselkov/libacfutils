@@ -88,11 +88,11 @@ typedef enum {
 typedef struct {
 	const char		*name;
 	const char		*value;
-	avl_node_t		prop_node;
+	list_node_t		prop_node;
 } dsf_prop_t;
 
 typedef struct {
-	avl_tree_t		props;
+	list_t			props;
 } dsf_prop_atom_t;
 
 enum {
