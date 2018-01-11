@@ -178,19 +178,19 @@ dsf_init(const char *filename)
 	ssize_t readsz = 0;
 	FILE *fp = fopen(filename, "rb");
 	char reason[DSF_REASON_SZ];
-	uint8_t hdr[8];
 	static const uint8_t magic[8] = {
 	    'X', 'P', 'L', 'N', 'E', 'D', 'S', 'F'
 	};
 
-	if (bufsz <= 0 || fp == NULL)
+	if (bufsz < 12 + 16 || fp == NULL)
 		goto errout;
 	buf = malloc(bufsz);
 
-	if (fread(hdr, 1, sizeof (hdr), fp) != sizeof (hdr) || bufsz < 12 + 16)
+	if (fread(buf, 1, sizeof (magic), fp) != sizeof (magic))
 		goto errout;
+	readsz = sizeof (magic);
 
-	if (memcmp(hdr, magic, sizeof (hdr)) == 0) {
+	if (memcmp(buf, magic, sizeof (magic)) == 0) {
 		/* raw DSF, just read its contents */
 		while (readsz < bufsz) {
 			size_t n = fread(&buf[readsz], 1, bufsz - readsz, fp);
@@ -205,9 +205,10 @@ dsf_init(const char *filename)
 		}
 		fclose(fp);
 		fp = NULL;
-	} else if (test_7z(hdr, sizeof (hdr))) {
+	} else if (test_7z(buf, sizeof (magic))) {
 		fclose(fp);
 		fp = NULL;
+		free(buf);
 		buf = decompress_7z(filename, (size_t *)&bufsz);
 		if (buf == NULL)
 			goto errout;
@@ -594,6 +595,38 @@ errout:
 	return (B_FALSE);
 }
 
+static bool_t
+parse_demi_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
+{
+	const uint8_t *payload = atom->payload;
+
+	if (atom->payload_sz != 20) {
+		snprintf(reason, DSF_REASON_SZ, "Invalid payload size of "
+		    "DEMI atom (%x, wanted 20)", atom->payload_sz);
+		return (B_FALSE);
+	}
+	atom->demi_atom.version = *payload++;
+	if (atom->demi_atom.version != 1) {
+		snprintf(reason, DSF_REASON_SZ, "Unsupported DEMI atom "
+		    "version %d", atom->demi_atom.version);
+		return (B_FALSE);
+	}
+	atom->demi_atom.bpp = *payload++;
+	atom->demi_atom.flags = read_u16(payload);
+	payload += 2;
+	atom->demi_atom.width = read_u32(payload);
+	payload += 4;
+	atom->demi_atom.height = read_u32(payload);
+	payload += 4;
+	atom->demi_atom.scale = *(float *)payload;
+	payload += 4;
+	atom->demi_atom.offset = *(float *)payload;
+
+	atom->subtype_inited = B_TRUE;
+
+	return (B_TRUE);
+}
+
 static void
 destroy_planar_numeric_atom(dsf_atom_t *atom)
 {
@@ -661,6 +694,9 @@ parse_atom(const uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ],
 			goto errout;
 	} else if (atom->id == DSF_ATOM_PO32) {
 		if (!parse_planar_numeric_atom(atom, DSF_DATA_UINT32, reason))
+			goto errout;
+	} else if (atom->id == DSF_ATOM_DEMI) {
+		if (!parse_demi_atom(atom, reason))
 			goto errout;
 	}
 
@@ -753,6 +789,9 @@ free_atom(dsf_atom_t *atom)
 		case DSF_ATOM_PO32:
 			destroy_planar_numeric_atom(atom);
 			break;
+		case DSF_ATOM_DEMI:
+			/* no-op */
+			break;
 		default:
 			VERIFY(0);
 		}
@@ -808,6 +847,51 @@ dump_planar_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 }
 
 static void
+dump_demi_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
+{
+	char indent[(depth * INDENT_DEPTH) + 1];
+	const char *data_type;
+
+	memset(indent, ' ', depth * INDENT_DEPTH);
+	indent[depth * INDENT_DEPTH] = '\0';
+
+	switch (atom->demi_atom.flags & DEMI_DATA_MASK) {
+	case DEMI_DATA_FP32:
+		data_type = "float";
+		break;
+	case DEMI_DATA_SINT:
+		data_type = "sint";
+		break;
+	case DEMI_DATA_UINT:
+		data_type = "uint";
+		break;
+	default:
+		data_type = "<unknown>";
+		break;
+	}
+
+	append_format(str, len,
+	    "%sversion: %d\n"
+	    "%sbpp: %d\n"
+	    "%stype: %s\n"
+	    "%spostctr: %d\n"
+	    "%sflags: %x\n"
+	    "%swidth: %u\n"
+	    "%sheight: %u\n"
+	    "%sscale: %f\n"
+	    "%soffset: %f\n",
+	    indent, atom->demi_atom.version,
+	    indent, atom->demi_atom.bpp,
+	    indent, data_type,
+	    indent, (atom->demi_atom.flags >> 2) & 1,
+	    indent, atom->demi_atom.flags,
+	    indent, atom->demi_atom.width,
+	    indent, atom->demi_atom.height,
+	    indent, atom->demi_atom.scale,
+	    indent, atom->demi_atom.offset);
+}
+
+static void
 dump_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 {
 	char indent[(depth * INDENT_DEPTH) + 1];
@@ -830,6 +914,8 @@ dump_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 		dump_planar_atom(atom, str, len, depth + 1);
 	else if (atom->id == DSF_ATOM_PO32)
 		dump_planar_atom(atom, str, len, depth + 1);
+	else if (atom->id == DSF_ATOM_DEMI)
+		dump_demi_atom(atom, str, len, depth + 1);
 
 	for (dsf_atom_t *subatom = list_head(&atom->subatoms); subatom != NULL;
 	    subatom = list_next(&atom->subatoms, subatom))
@@ -1096,11 +1182,25 @@ parse_idx_rng_common(dsf_cmd_parser_t *parser, dsf_cmd_t cmd,
 	CHECK_LEN(4);
 	if (cb != NULL) {
 		dsf_idx_rng_arg_t arg = { read_u16(data), read_u16(data + 2) };
-		if (arg.first >= parser->pool->planar_atom.data_count ||
-		    arg.last_plus_one > parser->pool->planar_atom.data_count) {
+		if (arg.first >= parser->pool->planar_atom.data_count) {
 			snprintf(parser->reason, DSF_REASON_SZ,
-			    "index range parameters out of bounds for "
-			    "corresponding POOL atom");
+			    "range start index (%x) out of bounds for "
+			    "corresponding POOL atom (max: %x)", arg.first,
+			    parser->pool->planar_atom.data_count);
+			return (-1);
+		}
+		if (arg.last_plus_one > parser->pool->planar_atom.data_count) {
+			snprintf(parser->reason, DSF_REASON_SZ,
+			    "range end index (%x) out of bounds for "
+			    "corresponding POOL atom (max: %x)",
+			    arg.last_plus_one,
+			    parser->pool->planar_atom.data_count);
+			return (-1);
+		}
+		if (arg.first >= arg.last_plus_one) {
+			snprintf(parser->reason, DSF_REASON_SZ, "range start "
+			    "index (%x) not lower than end index (%x)",
+			    arg.first, arg.last_plus_one);
 			return (-1);
 		}
 		cb(cmd, &arg, parser);

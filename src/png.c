@@ -125,9 +125,9 @@ out:
 	return (pixels);
 }
 
-bool_t
-png_write_to_file_rgba(const char *filename, int width, int height,
-    const uint8_t *data)
+static bool_t
+png_write_to_file_common(const char *filename, int width, int height,
+    const uint8_t *data, int color_type, int bpp, int bit_depth)
 {
 	volatile bool_t result = B_FALSE;
 	png_structp png_ptr = NULL;
@@ -162,14 +162,15 @@ png_write_to_file_rgba(const char *filename, int width, int height,
 
 	png_init_io(png_ptr, fp);
 
-	/* Write header (8 bit colour depth) */
-	png_set_IHDR(png_ptr, info_ptr, width, height,
-	    8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
-	    PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+	/* Write header (8 bit color depth) */
+	png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, color_type,
+	    PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
+	    PNG_FILTER_TYPE_BASE);
 
 	png_write_info(png_ptr, info_ptr);
-	for (int i = 0; i < height; i++)
-		png_write_row(png_ptr, &data[i * width * 4]);
+	for (int i = 0; i < height; i++) {
+		png_write_row(png_ptr, &data[i * width * bpp]);
+	}
 	png_write_end(png_ptr, NULL);
 
 	result = B_TRUE;
@@ -182,4 +183,28 @@ out:
 		fclose(fp);
 
 	return (result);
+}
+
+bool_t
+png_write_to_file_grey8(const char *filename, int width, int height,
+    const void *data)
+{
+	return (png_write_to_file_common(filename, width, height, data,
+	    PNG_COLOR_TYPE_GRAY, 1, 8));
+}
+
+bool_t
+png_write_to_file_grey16(const char *filename, int width, int height,
+    const void *data)
+{
+	return (png_write_to_file_common(filename, width, height, data,
+	    PNG_COLOR_TYPE_GRAY, 2, 16));
+}
+
+bool_t
+png_write_to_file_rgba(const char *filename, int width, int height,
+    const void *data)
+{
+	return (png_write_to_file_common(filename, width, height, data,
+	    PNG_COLOR_TYPE_RGB_ALPHA, 4, 8));
 }

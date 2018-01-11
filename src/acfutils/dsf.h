@@ -95,6 +95,24 @@ typedef struct {
 	avl_tree_t		props;
 } dsf_prop_atom_t;
 
+enum {
+	DEMI_DATA_FP32 =	0,
+	DEMI_DATA_SINT =	1,
+	DEMI_DATA_UINT =	2,
+	DEMI_DATA_MASK =	3,
+	DEMI_POST_CTR =		1 << 2
+};
+
+typedef struct {
+	unsigned		version;
+	unsigned		bpp;
+	uint16_t		flags;
+	uint32_t		width;
+	uint32_t		height;
+	float			scale;
+	float			offset;
+} dsf_demi_atom_t;
+
 typedef struct {
 	dsf_data_type_t		data_type;
 	uint32_t		data_count;
@@ -123,6 +141,7 @@ typedef struct {
 	union {
 		dsf_prop_atom_t		prop_atom;
 		dsf_planar_atom_t	planar_atom;
+		dsf_demi_atom_t		demi_atom;
 	};
 
 	list_node_t		atom_list;
