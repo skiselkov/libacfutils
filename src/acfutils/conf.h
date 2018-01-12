@@ -41,7 +41,9 @@ typedef struct conf conf_t;
 conf_t *conf_create_empty(void);
 void conf_free(conf_t *conf);
 
+conf_t *conf_read_file(const char *filename, int *errline);
 conf_t *conf_read(FILE *fp, int *errline);
+bool_t conf_write_file(const conf_t *conf, const char *filename);
 bool_t conf_write(const conf_t *conf, FILE *fp);
 
 bool_t conf_get_str(const conf_t *conf, const char *key, const char **value);

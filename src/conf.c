@@ -100,6 +100,28 @@ conf_free(conf_t *conf)
 }
 
 /*
+ * Same as conf_read, but serves as a shorthand for reading directly from
+ * a file path on disk. If the file cannot be opened for reading and errline
+ * is not NULL, it will be set to -1.
+ */
+conf_t *
+conf_read_file(const char *filename, int *errline)
+{
+	FILE *fp = fopen(filename, "rb");
+	conf_t *conf;
+
+	if (fp == NULL) {
+		if (errline != NULL)
+			*errline = -1;
+		return (NULL);
+	}
+	conf = conf_read(fp, errline);
+	fclose(fp);
+
+	return (conf);
+}
+
+/*
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
  * comments.
@@ -171,6 +193,24 @@ conf_read(FILE *fp, int *errline)
 	free(line);
 
 	return (conf);
+}
+
+/*
+ * Same as conf_write, but serves as a shorthand for writing directly to
+ * a file path on disk.
+ */
+bool_t
+conf_write_file(const conf_t *conf, const char *filename)
+{
+	FILE *fp = fopen(filename, "wb");
+	bool_t res;
+
+	if (fp == NULL)
+		return (B_FALSE);
+	res = conf_write(conf, fp);
+	fclose (fp);
+
+	return (res);
 }
 
 /*
