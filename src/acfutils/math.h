@@ -46,27 +46,21 @@ wavg(double x, double y, double w)
 	return (x + (y - x) * w);
 }
 
-static inline double
-clamp(double x, double min_val, double max_val)
-{
-	ASSERT3F(min_val, <=, max_val);
-	if (x < min_val)
-		return (min_val);
-	if (x > max_val)
-		return (max_val);
-	return (x);
+#define	DEFN_CLAMP(name, type, assert_chk) \
+static inline type \
+name(type x, type min_val, type max_val) \
+{ \
+	assert_chk(min_val, <=, max_val); \
+	if (x < min_val) \
+		return (min_val); \
+	if (x > max_val) \
+		return (max_val); \
+	return (x); \
 }
 
-static inline long
-clampl(long x, long min_val, long max_val)
-{
-	ASSERT3S(min_val, <=, max_val);
-	if (x < min_val)
-		return (min_val);
-	if (x > max_val)
-		return (max_val);
-	return (x);
-}
+DEFN_CLAMP(clamp, double, ASSERT3F)
+DEFN_CLAMP(clampl, long, ASSERT3S)
+DEFN_CLAMP(clampi, int, ASSERT3S)
 
 /*
  * Given two values min_val and max_val (such that min_val < max_val),
