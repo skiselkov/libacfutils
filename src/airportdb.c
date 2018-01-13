@@ -377,6 +377,8 @@ apt_dat_lookup(airportdb_t *db, const char *icao)
 	strlcpy(search.icao, icao, sizeof (search.icao));
 	result = avl_find(&db->apt_dat, &search, NULL);
 	ASSERT(result == NULL || is_valid_icao_code(result->icao));
+	if (result != NULL)
+		load_airport(result);
 	return (result);
 }
 
@@ -902,8 +904,8 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line)
 	 * Are the runway ends sufficiently far apart? Protects against runways
 	 * with overlapping thresholds, which results in a NAN runway hdg.
 	 */
-	if (vect3_dist(sph2ecef(rwy->ends[0].thr),
-	    sph2ecef(rwy->ends[1].thr)) < MIN_RWY_LEN) {
+	if (vect3_dist(geo2ecef(rwy->ends[0].thr, &wgs84),
+	    geo2ecef(rwy->ends[1].thr, &wgs84)) < MIN_RWY_LEN) {
 		free(rwy);
 		goto out;
 	}
@@ -2064,7 +2066,7 @@ load_airport(airport_t *arpt)
 
 	arpt->fpp = ortho_fpp_init(GEO3_TO_GEO2(arpt->refpt), 0, &wgs84,
 	    B_FALSE);
-	arpt->ecef = sph2ecef(arpt->refpt);
+	arpt->ecef = geo2ecef(arpt->refpt, &wgs84);
 
 	for (runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
 	    rwy = AVL_NEXT(&arpt->rwys, rwy))
@@ -2114,7 +2116,7 @@ find_nearest_airports_tile(airportdb_t *db, vect3_t ecef,
 		return;
 	for (airport_t *arpt = avl_first(&tile->arpts); arpt != NULL;
 	    arpt = AVL_NEXT(&tile->arpts, arpt)) {
-		vect3_t arpt_ecef = sph2ecef(arpt->refpt);
+		vect3_t arpt_ecef = geo2ecef(arpt->refpt, &wgs84);
 		if (vect3_abs(vect3_sub(ecef, arpt_ecef)) < db->load_limit) {
 			list_insert_tail(l, arpt);
 			VERIFY(load_airport(arpt));
@@ -2130,7 +2132,7 @@ find_nearest_airports_tile(airportdb_t *db, vect3_t ecef,
 list_t *
 find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos)
 {
-	vect3_t ecef = sph2ecef(GEO_POS3(my_pos.lat, my_pos.lon, 0));
+	vect3_t ecef = geo2ecef(GEO_POS3(my_pos.lat, my_pos.lon, 0), &wgs84);
 	list_t *l;
 
 	l = malloc(sizeof (*l));
