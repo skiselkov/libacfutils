@@ -1517,8 +1517,8 @@ check_cache_version(const airportdb_t *db)
  * so we need to do some fulltext searching. Returns true if the determination
  * succeeded (`cycle' is filled with the cycle number), or false if it failed.
  */
-static bool_t
-get_xp11_airac_cycle(const char *xpdir, int *cycle)
+bool_t
+airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 {
 	char *line = NULL;
 	size_t linecap = 0;
@@ -1571,7 +1571,7 @@ check_airac_cycle(airportdb_t *db)
 		db_cycle = atoi(cycle_str);
 		free(cycle_str);
 	}
-	if (!get_xp11_airac_cycle(db->xpdir, &xp_cycle)) {
+	if (!airportdb_xp11_airac_cycle(db->xpdir, &xp_cycle)) {
 		if ((cycle_str = file2str(db->xpdir, "Custom Data", "GNS430",
 		    "navdata", "cycle_info.txt", NULL)) == NULL)
 			cycle_str = file2str(db->xpdir, "Resources", "GNS430",

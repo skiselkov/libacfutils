@@ -43,7 +43,7 @@ typedef struct runway_end runway_end_t;
 
 struct runway_end {
 	char		id[4];		/* runway ID, nul-terminated */
-	geo_pos3_t	thr;		/* threshold position */
+	geo_pos3_t	thr;		/* threshold position (elev in FEET!) */
 	double		displ;		/* threshold displacement in meters */
 	double		blast;		/* stopway/blastpad length in meters */
 	double		gpa;		/* glidepath angle in degrees */
@@ -77,6 +77,7 @@ struct runway {
 struct airport {
 	char		icao[5];	/* 4-letter ID, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
+					/* (^^^ elev in FEET!) */
 	bool_t		geo_linked;	/* airport is in geo_table */
 	double		TA;		/* transition altitude in feet */
 	double		TL;		/* transition level in feet */
@@ -107,6 +108,8 @@ void unload_distant_airport_tiles(airportdb_t *db, geo_pos2_t my_pos);
 airport_t *airport_lookup(airportdb_t *db, const char *icao, geo_pos2_t pos);
 airport_t *matching_airport_in_tile_with_TATL(airportdb_t *db, geo_pos2_t pos,
     const char *search_icao);
+
+bool_t airportdb_xp11_airac_cycle(const char *xpdir, int *cycle);
 
 #ifdef	__cplusplus
 }
