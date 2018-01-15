@@ -112,10 +112,10 @@ typedef struct {
 	VERIFY(SleepConditionVariableCS((cv), &(mtx)->cs, INFINITE))
 #define	cv_timedwait(cv, mtx, limit) \
 	do { \
-		uint64_t now = microclock(); \
-		if (now < (limit)) { \
+		uint64_t __now = microclock(); \
+		if (__now < (limit)) { \
 			(void) SleepConditionVariableCS((cv), &(mtx)->cs, \
-			    ((limit) - now) / 1000); \
+			    ((limit) - __now) / 1000); \
 		} \
 	} while (0)
 #define	cv_init		InitializeConditionVariable
