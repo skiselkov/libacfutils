@@ -87,7 +87,6 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 		vect2_t p1 = points[0], p2 = points[1];
 
 		ASSERT3F(p1.x, <, p2.x);
-		points++;
 
 		if (x < p1.x) {
 			/* X outside of range to the left */
@@ -104,6 +103,8 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 				return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
 			break;
 		}
+
+		points++;
 	}
 
 	return (NAN);
