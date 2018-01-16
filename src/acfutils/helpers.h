@@ -197,6 +197,10 @@ bool_t is_valid_tacan_freq(double freq_mhz);
 bool_t is_valid_rwy_ID(const char *rwy_ID);
 void copy_rwy_ID(const char *src, char dst[4]);
 
+/* AIRAC date functions */
+const char *airac_cycle2eff_date(int cycle);
+const char *airac_cycle2exp_date(int cycle);
+
 /* CSV file & string processing helpers */
 ssize_t parser_get_next_line(FILE *fp, char **linep, size_t *linecap,
     size_t *linenum);

@@ -92,6 +92,88 @@ static const char *const icao_country_codes[] = {
 	NULL
 };
 
+static struct {
+	int year;
+	const char *cycles[14];
+} airac_eff_dates[] = {
+    { 15,
+	{ "08-JAN", "05-FEB", "05-MAR", "02-APR", "30-APR", "28-MAY",
+	"25-JUN", "23-JUL", "20-AUG", "17-SEP", "15-OCT", "12-NOV",
+	"10-DEC", "10-DEC" }
+    },
+    { 16,
+	{ "07-JAN",  "04-FEB", "03-MAR", "31-MAR", "28-APR", "26-MAY",
+	"23-JUN", "21-JUL", "18-AUG", "15-SEP", "13-OCT", "10-NOV",
+	"08-DEC", "08-DEC" }
+    },
+    { 17,
+	{ "05-JAN", "02-FEB", "02-MAR", "30-MAR", "27-APR", "25-MAY",
+	"22-JUN", "20-JUL", "17-AUG", "14-SEP", "12-OCT", "09-NOV",
+	"07-DEC", "07-DEC" }
+    },
+    { 18,
+	{ "04-JAN", "01-FEB", "01-MAR", "29-MAR", "26-APR", "24-MAY",
+	"21-JUN", "19-JUL", "16-AUG", "13-SEP", "11-OCT", "08-NOV",
+	"06-DEC", "06-DEC" }
+    },
+    { 19,
+	{ "03-JAN", "31-JAN", "28-FEB", "28-MAR", "25-APR", "23-MAY",
+	"20-JUN", "18-JUL", "15-AUG", "12-SEP", "10-OCT", "07-NOV",
+	"05-DEC", "05-DEC" }
+    },
+    { 20,
+	{ "02-JAN", "30-JAN", "27-FEB", "26-MAR", "23-APR", "21-MAY",
+	"18-JUN", "16-JUL", "13-AUG", "10-SEP", "08-OCT", "05-NOV",
+	"03-DEC", "31-DEC" }
+    },
+    { 21,
+	{ "28-JAN", "25-FEB", "25-MAR", "22-APR", "20-MAY", "17-JUN",
+	"15-JUL", "12-AUG", "09-SEP", "07-OCT", "04-NOV", "02-DEC",
+	"30-DEC", NULL }
+    },
+    { 22,
+	{ "27-JAN", "24-FEB", "24-MAR", "21-APR", "19-MAY", "16-JUN",
+	"14-JUL", "11-AUG", "08-SEP", "06-OCT", "03-NOV", "01-DEC",
+	"29-DEC", NULL }
+    },
+    { 23,
+	{ "26-JAN", "23-FEB", "23-MAR", "20-APR", "18-MAY", "15-JUN",
+	"13-JUL", "10-AUG", "07-SEP", "05-OCT", "02-NOV", "30-NOV",
+	"28-DEC", NULL }
+    },
+    { 24,
+	{ "25-JAN", "22-FEB", "21-MAR", "18-APR", "16-MAY", "13-JUN",
+	"11-JUL", "08-AUG", "05-SEP", "03-OCT", "31-OCT", "28-NOV",
+	"26-DEC", NULL }
+    },
+    { 25,
+	{ "23-JAN", "20-FEB", "20-MAR", "17-APR", "15-MAY", "12-JUN",
+	"10-JUL", "07-AUG", "04-SEP", "02-OCT", "30-OCT", "27-NOV",
+	"25-DEC", NULL }
+    },
+    { 26,
+	{ "22-JAN", "19-FEB", "19-MAR", "16-APR", "14-MAY", "11-JUN",
+	"09-JUL", "06-AUG", "03-SEP", "01-OCT", "29-OCT", "26-NOV",
+	"24-DEC", NULL }
+    },
+    { 27,
+	{ "21-JAN", "18-FEB", "18-MAR", "15-APR", "13-MAY", "10-JUN",
+	"08-JUL", "05-AUG", "02-SEP", "30-SEP", "28-OCT", "25-NOV",
+	"23-DEC", NULL }
+    },
+    { 28,
+	{ "20-JAN", "17-FEB", "16-MAR", "13-APR", "11-MAY", "08-JUN",
+	"06-JUL", "03-AUG", "31-AUG", "28-SEP", "26-OCT", "23-NOV",
+	"21-DEC", NULL }
+    },
+    { 29,
+	{ "18-JAN", "15-FEB", "15-MAR", "12-APR", "10-MAY", "07-JUN",
+	"05-JUL", "02-AUG", "30-AUG", "27-SEP", "25-OCT", "22-NOV",
+	"20-DEC", NULL }
+    },
+    { -1, { NULL } }
+};
+
 /*
  * How to turn to get from hdg1 to hdg2 with positive being right and negative
  * being left. Always turns the shortest way around (<= 180 degrees).
@@ -219,6 +301,43 @@ copy_rwy_ID(const char *src, char dst[4])
 		memmove(dst + 1, dst, len + 1);
 		dst[0] = '0';
 	}
+}
+
+const char *
+airac_cycle2eff_date(int cycle)
+{
+	int year = cycle / 100;
+	int mo = cycle % 100;
+
+	VERIFY3S(mo, >=, 1);
+	VERIFY3S(mo, <=, 14);
+
+	for (int i = 0; airac_eff_dates[i].year != -1; i++) {
+		if (airac_eff_dates[i].year == year)
+			return (airac_eff_dates[i].cycles[mo]);
+	}
+
+	return (NULL);
+}
+
+const char *
+airac_cycle2exp_date(int cycle)
+{
+	int year = cycle / 100;
+	int mo = cycle % 100;
+
+	if (year <= 20) {
+		if (mo == 14)
+			cycle = (year + 1) * 100 + 1;
+		else
+			cycle = (year * 100) + (mo + 1);
+	} else {
+		if (mo == 13)
+			cycle = (year + 1) * 100 + 1;
+		else
+			cycle = (year * 100) + (mo + 1);
+	}
+	return (airac_cycle2eff_date(cycle));
 }
 
 /*
