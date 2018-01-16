@@ -1512,7 +1512,7 @@ comment_cb(dsf_cmd_parser_t *parser, dsf_cmd_t cmd,
     const uint8_t *data, size_t len, dsf_cmd_cb_t cb)
 {
 	dsf_comment_arg_t arg;
-	size_t hdrlen;
+	size_t hdrlen = 0;
 
 	if (cmd == DSF_COMMENT8) {
 		CHECK_LEN(1);
