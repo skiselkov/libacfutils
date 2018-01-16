@@ -27,7 +27,7 @@ INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../glew
 INCLUDEPATH += ../lzma/C
-QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
+QMAKE_CFLAGS += -std=c99 -O2 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
 
 # _GNU_SOURCE needed on Linux for getline()
