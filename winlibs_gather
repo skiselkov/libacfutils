@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+FILES=(
+	qmake/win64/libacfutils.a
+	lzma/qmake/win-64/liblzma.a
+	freetype/freetype-win-64/lib/libfreetype.a
+	curl/libcurl-win-64/lib/libcurl.a
+	libpng/libpng-win-64/lib/libpng16.a
+	opus/libogg-win-64/install/lib/libogg.a
+	opus/opusfile-win-64/lib/libopusfile.a
+	opus/opus-win-64/lib/libopus.a
+	cairo/cairo-win-64/lib/libcairo.a
+	cairo/pixman-win-64/lib/libpixman-1.a
+	zlib/zlib-win-64/lib/libz.a
+)
+
+HDR_DIRS=(
+	glew/GL
+	cairo/cairo-win-64/include/cairo
+	freetype/freetype-win-64/include/freetype2
+)
+
+OUTPUT=winlibs
+
+rm -rf "$OUTPUT"
+mkdir -p "$OUTPUT/lib" "$OUTPUT/include"
+
+cp -r ${FILES[@]} "$OUTPUT/lib"
+cp -r ${HDR_DIRS[@]} "$OUTPUT/include"
+cp -r src/acfutils "$OUTPUT/include"
