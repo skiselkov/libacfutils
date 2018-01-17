@@ -89,6 +89,16 @@ extern "C" {
 #endif	/* BSWAP32 */
 #endif	/* !__GNUC__ && !__clang__ */
 
+#if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define	BE64(x)	(x)
+#define	BE32(x)	(x)
+#define	BE16(x)	(x)
+#else	/* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
+#define	BE64(x)	BSWAP64(x)
+#define	BE32(x)	BSWAP32(x)
+#define	BE16(x)	BSWAP16(x)
+#endif	/* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
+
 #define	DESTROY(x)	do { free(x); (x) = NULL; } while (0)
 
 #ifdef	WINDOWS
