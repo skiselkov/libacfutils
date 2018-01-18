@@ -22,69 +22,51 @@ PIXMAN="pixman-0.34.0.tar.xz"
 
 PIXMAN_PRODUCT="pixman/.libs/libpixman-1.a"
 PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
-    --disable-libpng"
+    --disable-static-testprogs"
 
-CAIRO_CFLAGS_COMMON="$CFLAGS -I$(pwd)/../pixman-0.34.0/pixman"
+CAIRO_CFLAGS_COMMON="$CFLAGS -I$(pwd)/pixman-0.34.0/pixman"
 CAIRO_PRODUCT="src/.libs/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
     --enable-xcb=no --enable-xlib-xcb=no --enable-xcb-shm=no --enable-qt=no \
     --enable-quartz=no --enable-quartz-font=no --enable-quartz-image=no \
     --enable-win32=no --enable-win32-font=no --enable-skia=no --enable-os2=no \
-    --enable-beos=no --enable-drm=no --enable-gallium=no --enable-png=no \
+    --enable-beos=no --enable-drm=no --enable-gallium=no --enable-png=yes \
     --enable-glesv2=no --enable-cogl=no --enable-directfb=no --enable-vg=no \
     --enable-egl=no --enable-glx=no --enable-wgl=no --enable-script=no \
     --enable-fc=no --enable-ps=no --enable-pdf=no --enable-svg=no \
-    --enable-full-testing --enable-interpreter=no --enable-static-testprogs=yes"
+    --enable-full-testing=no --enable-interpreter=no \
+    --enable-static-testprogs=yes"
 
-export PKG_CONFIG_PATH="../../freetype/freetype-{PLATFORM}/lib/pkgconfig:\
-../../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
-../../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
-../pixman-{PLATFORM}/lib/pkgconfig"
+export PKG_CONFIG_PATH_IN="$(pwd)/../freetype/freetype-{PLATFORM}/lib/pkgconfig:\
+$(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
+$(pwd)/../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
+$(pwd)/pixman-{PLATFORM}/lib/pkgconfig" \
 
 case `uname` in
 	Linux)
-		CFLAGS="-m64" LDFLAGS="-m64" \
+		CFLAGS="-m64" LDFLAGS="-m64 -L$(pwd)/../freetype/freetype-linux-64/lib" \
 		    build_dep "linux-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" && \
-		CFLAGS="-m32" LDFLAGS="-m32" \
-		    build_dep "linux-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
-		    "pixman" "$PIXMAN_PRODUCT" && \
-		build_dep "win-64" "$PIXMAN_CONFOPTS_COMMON \
+		    build_dep "win-64" "$PIXMAN_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
 		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
-		build_dep "win-32" "$PIXMAN_CONFOPTS_COMMON \
-		    --host=i686-w64-mingw32" \
-		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
-
 		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON -m32" LDFLAGS="-m32" \
-		    build_dep "linux-32" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch" && \
+		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch \
+		    cairo-win-ulongf.patch" && \
 		CFLAGS="$CAIRO_CFLAGS_COMMON" \
 		    build_dep "win-64" "$CAIRO_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON" \
-		    build_dep "win-32" "$CAIRO_CONFOPTS_COMMON \
-		    --host=i686-w64-mingw32" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch"
+		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch \
+		    cairo-win-ulongf.patch"
 		;;
 	Darwin)
 		CFLAGS="-m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
-		CFLAGS="-m32" LDFLAGS="-m32" \
-		    build_dep "mac-32" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
-		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
-
 		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON -m32" LDFLAGS="-m32" \
-		    build_dep "mac-32" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT"
 		;;
 	*)

@@ -21,47 +21,27 @@ LIBPNG="libpng-1.6.30.tar.xz"
 
 case `uname` in
 	Linux)
-		CFLAGS="$CFLAGS_COMMON -I../../zlib/zlib-linux-64/include \
-		    -m64" \
+		CFLAGS="$CFLAGS_COMMON \
+		    -I$(pwd)/../zlib/zlib-linux-64/include -m64" \
 		    LDFLAGS="$LDFLAGS_COMMON -m64 \
-		    -L../../zlib/zlib-linux-64/lib" \
+		    -L$(pwd)/../zlib/zlib-linux-64/lib" \
 		    CUSTPREPCMD="ln -s \
-		    ../../zlib/zlib-linux-64/include/zconf.h && \
-		    ln -s ../../zlib/zlib-linux-64/include/zlib.h" \
+		    $(pwd)/../zlib/zlib-linux-64/include/zconf.h && \
+		    ln -s $(pwd)/../zlib/zlib-linux-64/include/zlib.h" \
 		    build_dep "linux-64" "--enable-static --disable-shared" \
 		    "$LIBPNG" "libpng" "lib/libpng16.a" && \
-		CFLAGS="$CFLAGS_COMMON -I../../zlib/zlib-linux-32/include \
-		    -m32 -fno-stack-protector" \
-		    LDFLAGS="$LDFLAGS_COMMON -m32 -fno-stack-protector \
-		    -L../../zlib/zlib-linux-32/lib" \
-		    CUSTPREPCMD="ln -s \
-		    ../../zlib/zlib-linux-32/include/zconf.h && \
-		    ln -s ../../zlib/zlib-linux-32/include/zlib.h" \
-		    build_dep "linux-32" "--enable-static --disable-shared" \
-		    "$LIBPNG" "libpng" "lib/libpng16.a" && \
-		CFLAGS="$CFLAGS_COMMON -I../../zlib/zlib-win-64/include" \
-		    LDFLAGS="$LDFLAGS_COMMON -L../../zlib/zlib-win-64/lib" \
-		    CUSTPREPCMD="ln -s ../../zlib/zlib-win-64/include/zconf.h \
-		    && ln -s ../../zlib/zlib-win-64/include/zlib.h" \
+		CFLAGS="$CFLAGS_COMMON -I$(pwd)/../zlib/zlib-win-64/include" \
+		    LDFLAGS="$LDFLAGS_COMMON -L$(pwd)/../zlib/zlib-win-64/lib" \
+		    CUSTPREPCMD="ln -s $(pwd)/../zlib/zlib-win-64/include/zconf.h \
+		    && ln -s $(pwd)/../zlib/zlib-win-64/include/zlib.h" \
 		    build_dep "win-64" "--enable-static --disable-shared \
 		    --host=x86_64-w64-mingw32" \
-		    "$LIBPNG" "libpng" "lib/libpng16.a" && \
-		CFLAGS="$CFLAGS_COMMON -I../../zlib/zlib-win-32/include" \
-		    LDFLAGS="$LDFLAGS_COMMON -L../../zlib/zlib-win-32/lib" \
-		    CUSTPREPCMD="ln -s ../../zlib/zlib-win-32/include/zconf.h \
-		    && ln -s ../../zlib/zlib-win-32/include/zlib.h" \
-		    build_dep "win-32" "--enable-static --disable-shared \
-		    --host=i686-w64-mingw32" \
 		    "$LIBPNG" "libpng" "lib/libpng16.a"
 		;;
 	Darwin)
 		CFLAGS="$CFLAGS_COMMON -mmacosx-version-min=10.6" \
 		    LDFLAGS="$LDFLAGS_COMMON -mmacosx-version-min=10.6" \
 		    build_dep "mac-64" "--enable-static --disable-shared" \
-		    "$LIBPNG" "libpng" "lib/libpng16.a" && \
-		CFLAGS="$CFLAGS_COMMON -mmacosx-version-min=10.6 -m32" \
-		    LDFLAGS="$LDFLAGS_COMMON -mmacosx-version-min=10.6 -m32" \
-		    build_dep "mac-32" "--enable-static --disable-shared" \
 		    "$LIBPNG" "libpng" "lib/libpng16.a"
 		;;
 	*)

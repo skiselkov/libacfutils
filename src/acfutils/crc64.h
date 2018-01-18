@@ -20,6 +20,7 @@
 #define	_ACF_UTILS_CRC64_H_
 
 #include <stdint.h>
+#include <acfutils/core.h>
 
 #ifdef	__cplusplus
 extern "C" {

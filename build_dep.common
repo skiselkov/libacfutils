@@ -21,7 +21,7 @@ function build_dep() {
 	TARBALL="$3"
 	PRODNAME="$4"
 	PRODFILE="$5"
-	PATCHFILE="$6"
+	PATCHFILES="$6"
 
 	SRCDIR="${TARBALL/%.tar.*/}"
 
@@ -41,7 +41,7 @@ function build_dep() {
 		;;
 	esac
 
-	export PKG_CONFIG_PATH=$(echo "$PKG_CONFIG_PATH" | \
+	export PKG_CONFIG_PATH=$(echo "$PKG_CONFIG_PATH_IN" | \
 	    sed "s/{PLATFORM}/$PLATFORM/g")
 
 	if ! [ -d "$SRCDIR" ]; then
@@ -55,8 +55,10 @@ function build_dep() {
 			;;
 		esac
 
-		if [ -n "$PATCHFILE" ]; then
-			( cd "$SRCDIR" && patch -p1 < "../$PATCHFILE" )
+		if [ -n "$PATCHFILES" ]; then
+			for PATCHFILE in $PATCHFILES; do
+				( cd "$SRCDIR" && patch -p1 < "../$PATCHFILE" )
+			done
 		fi
 	fi
 	if [ -f "$PRODNAME-$PLATFORM/$PRODFILE" ] && \
@@ -71,11 +73,15 @@ function build_dep() {
 		if [ -n "$CUSTPREPCMD" ]; then
 			eval "$CUSTPREPCMD" || exit 1
 		fi
+		if [[ "$PLATFORM" = "linux-32" ]] || \
+		    [[ "$PLATFORM" = "linux-64" ]]; then
+			FPIC="-fPIC"
+		fi
 
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
-		CFLAGS="-fvisibility=hidden -O2 -fPIC ${CFLAGS}" \
-		LDFLAGS="-fvisibility=hidden -fPIC ${LDFLAGS}" \
+		CFLAGS="-fvisibility=hidden -O2 $FPIC ${CFLAGS}" \
+		LDFLAGS="-fvisibility=hidden $FPIC ${LDFLAGS}" \
 		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 		    $CONFOPTS || exit 1
 
