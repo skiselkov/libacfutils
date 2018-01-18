@@ -55,3 +55,7 @@ lzma/qmake/win-64
 src/test/dsfdump
 
 libacfutils-redist
+qmake/acfutils.def
+qmake/acfutils_resource.rc
+qmake/object_script.acfutils.Debug
+qmake/object_script.acfutils.Release
