@@ -17,6 +17,7 @@
  */
 
 #include <acfutils/assert.h>
+#include <acfutils/crc64.h>
 
 #define	CRC64_POLY	0xC96C5795D7870F42ULL	/* ECMA-182, reflected form */
 
