@@ -16,6 +16,7 @@
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 
+#include <string.h>
 #include <stdio.h>
 
 #include <acfutils/assert.h>

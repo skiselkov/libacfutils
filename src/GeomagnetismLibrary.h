@@ -22,7 +22,7 @@
 #define	GEOMAGHEADER_H
 
 #ifndef	_POSIX_C_SOURCE
-#define	_POSIX_C_SOURCE
+#define	_POSIX_C_SOURCE	200112L
 #endif
 
 #include <acfutils/geom.h>

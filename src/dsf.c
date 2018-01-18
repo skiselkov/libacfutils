@@ -139,16 +139,6 @@ data_type2str(dsf_data_type_t data_type)
 	}
 }
 
-static inline int16_t
-read_s16(const uint8_t *buf)
-{
-#if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-	return (BSWAP16(*(int16_t *)buf));
-#else
-	return (*(int16_t *)buf);
-#endif
-}
-
 static inline uint16_t
 read_u16(const uint8_t *buf)
 {
