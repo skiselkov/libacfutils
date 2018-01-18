@@ -164,87 +164,94 @@ typedef struct {
 /*
  * The standard WGS84 ellipsoid.
  */
-const ellip_t wgs84;
+#define	wgs84	ACFSYM(wgs84)
+API_EXPORT const ellip_t wgs84;
 
 /*
  * Small helpers.
  */
-bool_t is_on_arc(double angle_x, double angle1, double angle2, bool_t cw);
+#define	is_on_arc	ACFSYM(is_on_arc)
+API_EXPORT bool_t is_on_arc(double angle_x, double angle1, double angle2,
+    bool_t cw);
 
 /*
  * Vector math.
  */
-double vect3_abs(vect3_t a);
-double vect3_dist(vect3_t a, vect3_t b);
-double vect2_abs(vect2_t a);
-double vect2_dist(vect2_t a, vect2_t b);
-vect3_t vect3_set_abs(vect3_t a, double abs);
-vect2_t vect2_set_abs(vect2_t a, double abs);
-vect3_t vect3_unit(vect3_t a, double *l);
-vect2_t vect2_unit(vect2_t a, double *l);
+API_EXPORT double vect3_abs(vect3_t a);
+API_EXPORT double vect3_dist(vect3_t a, vect3_t b);
+API_EXPORT double vect2_abs(vect2_t a);
+API_EXPORT double vect2_dist(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_set_abs(vect3_t a, double abs);
+API_EXPORT vect2_t vect2_set_abs(vect2_t a, double abs);
+API_EXPORT vect3_t vect3_unit(vect3_t a, double *l);
+API_EXPORT vect2_t vect2_unit(vect2_t a, double *l);
 
-vect3_t vect3_add(vect3_t a, vect3_t b);
-vect2_t vect2_add(vect2_t a, vect2_t b);
-vect3_t vect3_sub(vect3_t a, vect3_t b);
-vect2_t vect2_sub(vect2_t a, vect2_t b);
-vect3_t vect3_scmul(vect3_t a, double b);
-vect2_t vect2_scmul(vect2_t a, double b);
-double vect3_dotprod(vect3_t a, vect3_t b);
-double vect2_dotprod(vect2_t a, vect2_t b);
-vect3_t vect3_xprod(vect3_t a, vect3_t b);
-vect3_t vect3_mean(vect3_t a, vect3_t b);
-vect2_t vect2_mean(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b);
+API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b);
+API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_scmul(vect3_t a, double b);
+API_EXPORT vect2_t vect2_scmul(vect2_t a, double b);
+API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b);
+API_EXPORT double vect2_dotprod(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_xprod(vect3_t a, vect3_t b);
+API_EXPORT vect3_t vect3_mean(vect3_t a, vect3_t b);
+API_EXPORT vect2_t vect2_mean(vect2_t a, vect2_t b);
 
-vect2_t vect2_norm(vect2_t v, bool_t right);
-vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
-vect2_t vect2_rot(vect2_t v, double angle);
-vect3_t vect3_neg(vect3_t v);
-vect2_t vect2_neg(vect2_t v);
+API_EXPORT vect2_t vect2_norm(vect2_t v, bool_t right);
+API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
+API_EXPORT vect2_t vect2_rot(vect2_t v, double angle);
+API_EXPORT vect3_t vect3_neg(vect3_t v);
+API_EXPORT vect2_t vect2_neg(vect2_t v);
 
 /*
  * Spherical, geodesic and ECEF coordinate conversion.
  */
-ellip_t ellip_init(double semi_major, double semi_minor, double flattening);
-geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip);
-vect3_t geo2ecef(geo_pos3_t pos, const ellip_t *ellip);
-geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
-geo_pos3_t ecef2sph(vect3_t v);
-vect3_t sph2ecef(geo_pos3_t pos);
+API_EXPORT ellip_t ellip_init(double semi_major, double semi_minor,
+    double flattening);
+API_EXPORT geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip);
+API_EXPORT vect3_t geo2ecef(geo_pos3_t pos, const ellip_t *ellip);
+API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
+API_EXPORT geo_pos3_t ecef2sph(vect3_t v);
+API_EXPORT vect3_t sph2ecef(geo_pos3_t pos);
 
 /*
  * Interesections.
  */
-unsigned vect2sph_isect(vect3_t v, vect3_t o, vect3_t c, double r,
+API_EXPORT unsigned vect2sph_isect(vect3_t v, vect3_t o, vect3_t c, double r,
     bool_t confined, vect3_t i[2]);
-unsigned vect2circ_isect(vect2_t v, vect2_t o, vect2_t c, double r,
+API_EXPORT unsigned vect2circ_isect(vect2_t v, vect2_t o, vect2_t c, double r,
     bool_t confined, vect2_t i[2]);
-vect2_t vect2vect_isect(vect2_t da, vect2_t oa, vect2_t db, vect2_t ob,
-    bool_t confined);
-unsigned circ2circ_isect(vect2_t ca, double ra, vect2_t cb, double rb,
-    vect2_t i[2]);
-unsigned vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly);
-bool_t point_in_poly(vect2_t pt, const vect2_t *poly);
+API_EXPORT vect2_t vect2vect_isect(vect2_t da, vect2_t oa, vect2_t db,
+    vect2_t ob, bool_t confined);
+API_EXPORT unsigned circ2circ_isect(vect2_t ca, double ra, vect2_t cb,
+    double rb, vect2_t i[2]);
+API_EXPORT unsigned vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly);
+API_EXPORT bool_t point_in_poly(vect2_t pt, const vect2_t *poly);
 
 /*
  * Converting between headings and direction vectors on a 2D plane.
  */
-vect2_t hdg2dir(double truehdg);
-double dir2hdg(vect2_t dir);
+#define	hdg2dir	ACFSYM(hdg2dir)
+API_EXPORT vect2_t hdg2dir(double truehdg);
+#define	dir2hdg	ACFSYM(dir2hdg)
+API_EXPORT double dir2hdg(vect2_t dir);
 
 /*
  * Calculating coordinate displacement & radial intersection.
  */
-geo_pos2_t geo_displace(const ellip_t *ellip, geo_pos2_t pos, double truehdg,
-    double dist);
-geo_pos2_t geo_displace_dir(const ellip_t *ellip, geo_pos2_t pos, vect2_t dir,
-    double dist);
+API_EXPORT geo_pos2_t geo_displace(const ellip_t *ellip, geo_pos2_t pos,
+    double truehdg, double dist);
+API_EXPORT geo_pos2_t geo_displace_dir(const ellip_t *ellip, geo_pos2_t pos,
+    vect2_t dir, double dist);
 
 /*
  * Geometry parser & validator helpers.
  */
-bool_t geo_pos2_from_str(const char *lat, const char *lon, geo_pos2_t *pos);
-bool_t geo_pos3_from_str(const char *lat, const char *lon, const char *elev,
-    geo_pos3_t *pos);
+API_EXPORT bool_t geo_pos2_from_str(const char *lat, const char *lon,
+    geo_pos2_t *pos);
+API_EXPORT bool_t geo_pos3_from_str(const char *lat, const char *lon,
+    const char *elev, geo_pos3_t *pos);
 
 /*
  * Spherical coordinate system translation.
@@ -255,16 +262,18 @@ typedef struct {
 	bool_t	inv;
 } sph_xlate_t;
 
-sph_xlate_t sph_xlate_init(geo_pos2_t displacement, double rotation,
-    bool_t inv);
-geo_pos2_t sph_xlate(geo_pos2_t pos, const sph_xlate_t *xlate);
-vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate);
+API_EXPORT sph_xlate_t sph_xlate_init(geo_pos2_t displacement,
+    double rotation, bool_t inv);
+API_EXPORT geo_pos2_t sph_xlate(geo_pos2_t pos, const sph_xlate_t *xlate);
+API_EXPORT vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate);
 
 /*
  * Great circle functions.
  */
-double gc_distance(geo_pos2_t start, geo_pos2_t end);
-double gc_point_hdg(geo_pos2_t start, geo_pos2_t end, double arg);
+#define	gc_distance	ACFSYM(gc_distance)
+API_EXPORT double gc_distance(geo_pos2_t start, geo_pos2_t end);
+#define	gc_point_hdg	ACFSYM(gc_point_hdg)
+API_EXPORT double gc_point_hdg(geo_pos2_t start, geo_pos2_t end, double arg);
 
 /*
  * Generic spherical - to - flat-plane projections.
@@ -277,16 +286,16 @@ typedef struct {
 	double		dist;
 } fpp_t;
 
-fpp_t fpp_init(geo_pos2_t center, double rot, double dist,
+API_EXPORT fpp_t fpp_init(geo_pos2_t center, double rot, double dist,
     const ellip_t *ellip, bool_t allow_inv);
-fpp_t ortho_fpp_init(geo_pos2_t center, double rot, const ellip_t *ellip,
-    bool_t allow_inv);
-fpp_t gnomo_fpp_init(geo_pos2_t center, double rot, const ellip_t *ellip,
-    bool_t allow_inv);
-fpp_t stereo_fpp_init(geo_pos2_t center, double rot, const ellip_t *ellip,
-    bool_t allow_inv);
-vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp);
-geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp);
+API_EXPORT fpp_t ortho_fpp_init(geo_pos2_t center, double rot,
+    const ellip_t *ellip, bool_t allow_inv);
+API_EXPORT fpp_t gnomo_fpp_init(geo_pos2_t center, double rot,
+    const ellip_t *ellip, bool_t allow_inv);
+API_EXPORT fpp_t stereo_fpp_init(geo_pos2_t center, double rot,
+    const ellip_t *ellip, bool_t allow_inv);
+API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp);
+API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp);
 
 /*
  * Lambert conformal conic projection
@@ -299,16 +308,18 @@ typedef struct {
 	double	rho0;
 } lcc_t;
 
-lcc_t lcc_init(double reflat, double reflon, double stdpar1, double stdpar2);
-vect2_t geo2lcc(geo_pos2_t pos, const lcc_t *lcc);
+API_EXPORT lcc_t lcc_init(double reflat, double reflon, double stdpar1,
+    double stdpar2);
+API_EXPORT vect2_t geo2lcc(geo_pos2_t pos, const lcc_t *lcc);
 
 /*
  *  Bezier curve functions.
  */
-bezier_t *bezier_alloc(size_t num_pts);
-void bezier_free(bezier_t *curve);
-double quad_bezier_func(double x, const bezier_t *func);
-double *quad_bezier_func_inv(double y, const bezier_t *func, size_t *n_xs);
+API_EXPORT bezier_t *bezier_alloc(size_t num_pts);
+API_EXPORT void bezier_free(bezier_t *curve);
+API_EXPORT double quad_bezier_func(double x, const bezier_t *func);
+API_EXPORT double *quad_bezier_func_inv(double y, const bezier_t *func,
+    size_t *n_xs);
 
 #ifdef	__cplusplus
 }

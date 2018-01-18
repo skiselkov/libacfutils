@@ -21,15 +21,23 @@
 
 #include <stdint.h>
 
+#include <acfutils/types.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 typedef struct acf_file acf_file_t;
 
-acf_file_t *acf_file_read(const char *filename);
-void acf_file_free(acf_file_t *acf);
-const char *acf_prop_find(const acf_file_t *acf, const char *prop_path);
+#define	acf_file_read	ACFSYM(acf_file_read)
+API_EXPORT acf_file_t *acf_file_read(const char *filename);
+
+#define	acf_file_free	ACFSYM(acf_file_free)
+API_EXPORT void acf_file_free(acf_file_t *acf);
+
+#define	acf_prop_find	ACFSYM(acf_prop_find)
+API_EXPORT const char *acf_prop_find(const acf_file_t *acf,
+    const char *prop_path);
 
 #ifdef	__cplusplus
 }

@@ -26,6 +26,8 @@
 #ifndef	_ACF_UTILS_LIST_H_
 #define	_ACF_UTILS_LIST_H_
 
+#include <acfutils/core.h>
+
 #include "list_impl.h"
 
 #ifdef	__cplusplus
@@ -35,29 +37,29 @@ extern "C" {
 typedef struct list_node list_node_t;
 typedef struct list list_t;
 
-void list_create(list_t *, size_t, size_t);
-void list_destroy(list_t *);
+API_EXPORT void list_create(list_t *, size_t, size_t);
+API_EXPORT void list_destroy(list_t *);
 
-void list_insert_after(list_t *, void *, void *);
-void list_insert_before(list_t *, void *, void *);
-void list_insert_head(list_t *, void *);
-void list_insert_tail(list_t *, void *);
-void list_remove(list_t *, void *);
-void *list_remove_head(list_t *);
-void *list_remove_tail(list_t *);
-void list_move_tail(list_t *, list_t *);
+API_EXPORT void list_insert_after(list_t *, void *, void *);
+API_EXPORT void list_insert_before(list_t *, void *, void *);
+API_EXPORT void list_insert_head(list_t *, void *);
+API_EXPORT void list_insert_tail(list_t *, void *);
+API_EXPORT void list_remove(list_t *, void *);
+API_EXPORT void *list_remove_head(list_t *);
+API_EXPORT void *list_remove_tail(list_t *);
+API_EXPORT void list_move_tail(list_t *, list_t *);
 
-void *list_head(const list_t *);
-void *list_tail(const list_t *);
-void *list_next(const list_t *, const void *);
-void *list_prev(const list_t *, const void *);
-int list_is_empty(const list_t *);
+API_EXPORT void *list_head(const list_t *);
+API_EXPORT void *list_tail(const list_t *);
+API_EXPORT void *list_next(const list_t *, const void *);
+API_EXPORT void *list_prev(const list_t *, const void *);
+API_EXPORT int list_is_empty(const list_t *);
 
-void list_link_init(list_node_t *);
-void list_link_replace(list_node_t *, list_node_t *);
+API_EXPORT void list_link_init(list_node_t *);
+API_EXPORT void list_link_replace(list_node_t *, list_node_t *);
 
-int list_link_active(const list_node_t *);
-size_t list_count(const list_t *);
+API_EXPORT int list_link_active(const list_node_t *);
+API_EXPORT size_t list_count(const list_t *);
 
 #ifdef	__cplusplus
 }

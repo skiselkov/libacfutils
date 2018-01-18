@@ -26,21 +26,26 @@ NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo  | wc -l) + 1 ))
 RELEASE="debug"
 
 rm -rf win32 win64 lin32 lin64
-mkdir -p win32 win64 lin32 lin64
+mkdir -p win64 lin64
 
 make distclean > /dev/null
 qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv "$RELEASE/libacfutils.a" win64
+    make -j $NCPUS && mv "$RELEASE/libacfutils1.a" "win64/libacfutils.a" && \
+    mv "$RELEASE/acfutils1.dll" "win64/acfutils.dll" && \
+    x86_64-w64-mingw32-dlltool -d acfutils.def --dllname acfutils.dll \
+    --output-lib win64/acfutils.lib "win64/acfutils.dll"
 if [ $? != 0 ] ; then
   exit
 fi
 
-make distclean > /dev/null
-qmake -set CROSS_COMPILE i686-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv "$RELEASE/libacfutils.a" win32
-if [ $? != 0 ] ; then
-  exit
-fi
+# Don't build 32-bit anymore
+# make distclean > /dev/null
+# qmake -set CROSS_COMPILE i686-w64-mingw32- && qmake -spec win32-g++ && \
+#     make -j $NCPUS && mv "$RELEASE/libacfutils1.a" "win32/libacfutils.a" &&
+#     mv "$RELEASE/acfutils1.dll" "win32/acfutils.dll"
+# if [ $? != 0 ] ; then
+#   exit
+# fi
 
 make distclean > /dev/null
 qmake -spec linux-g++-64 && make -j $NCPUS && mv libacfutils.a lin64
@@ -48,10 +53,11 @@ if [ $? != 0 ] ; then
   exit
 fi
 
-make distclean > /dev/null
-qmake -spec linux-g++-32 && make -j $NCPUS && mv libacfutils.a lin32
-if [ $? != 0 ] ; then
-  exit
-fi
+# Don't build 32-bit anymore
+# make distclean > /dev/null
+# qmake -spec linux-g++-32 && make -j $NCPUS && mv libacfutils.a lin32
+# if [ $? != 0 ] ; then
+#   exit
+# fi
 
 make distclean > /dev/null

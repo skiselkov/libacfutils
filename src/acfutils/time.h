@@ -20,6 +20,7 @@
 #define	_ACF_UTILS_TIME_H_
 
 #include <stdint.h>
+#include <acfutils/core.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -27,7 +28,8 @@ extern "C" {
 
 #define	USEC2SEC(usec)	((usec) / 1000000.0)
 #define	SEC2USEC(sec)	((sec) * 1000000ll)
-uint64_t microclock();
+#define	microclock	ACFSYM(microclock)
+API_EXPORT uint64_t microclock();
 
 #ifdef	__cplusplus
 }

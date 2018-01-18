@@ -1,0 +1,15 @@
+--- freetype-2.8.1/include/freetype/config/ftoption.h	2017-08-22 21:55:39.000000000 -0700
++++ freetype-2.8.1-new/include/freetype/config/ftoption.h	2018-01-18 05:46:44.181958888 -0800
+@@ -306,8 +306,10 @@
+   /*   Do not #undef these macros here since the build system might define */
+   /*   them for certain configurations only.                               */
+   /*                                                                       */
+-/* #define FT_EXPORT(x)      extern x */
+-/* #define FT_EXPORT_DEF(x)  x */
++#ifdef	_WIN32
++#define FT_EXPORT(x)      __declspec(dllexport) extern x
++#define FT_EXPORT_DEF(x)  __declspec(dllexport) x
++#endif	/* _WIN32 */
+ 
+ 
+   /*************************************************************************/

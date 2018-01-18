@@ -38,9 +38,11 @@
 extern "C" {
 #endif
 
-GLuint shader_from_file(GLenum shader_type, const char *filename);
-GLuint shader_prog_from_file(const char *progname, const char *vtx_file,
-    const char *frag_file);
+#define	shader_from_file	ACFSYM(shader_from_file)
+API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
+#define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
+API_EXPORT GLuint shader_prog_from_file(const char *progname,
+    const char *vtx_file, const char *frag_file);
 
 #ifdef	__cplusplus
 }

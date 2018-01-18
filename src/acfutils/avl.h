@@ -31,7 +31,7 @@ extern "C" {
 #endif
 
 #include <sys/types.h>
-#include "types.h"
+#include <acfutils/types.h>
 
 #define	_AVL_IMPL_INCLUDED_FROM_AVL_H
 #include "avl_impl.h"
@@ -147,7 +147,7 @@ typedef uintptr_t avl_index_t;
  * size   - the value of sizeof(struct my_type)
  * offset - the value of OFFSETOF(struct my_type, my_link)
  */
-extern void avl_create(avl_tree_t *tree,
+API_EXPORT extern void avl_create(avl_tree_t *tree,
 	int (*compar) (const void *, const void *), size_t size, size_t offset);
 
 
@@ -159,7 +159,7 @@ extern void avl_create(avl_tree_t *tree,
  * node   - node that has the value being looked for
  * where  - position for use with avl_nearest() or avl_insert(), may be NULL
  */
-extern void *avl_find(const avl_tree_t *tree, const void *node,
+API_EXPORT extern void *avl_find(const avl_tree_t *tree, const void *node,
     avl_index_t *where);
 
 /*
@@ -168,7 +168,8 @@ extern void *avl_find(const avl_tree_t *tree, const void *node,
  * node   - the node to insert
  * where  - position as returned from avl_find()
  */
-extern void avl_insert(avl_tree_t *tree, void *node, avl_index_t where);
+API_EXPORT extern void avl_insert(avl_tree_t *tree, void *node,
+    avl_index_t where);
 
 /*
  * Insert "new_data" in "tree" in the given "direction" either after
@@ -181,8 +182,8 @@ extern void avl_insert(avl_tree_t *tree, void *node, avl_index_t where);
  * here		- existing node in "tree"
  * direction	- either AVL_AFTER or AVL_BEFORE the data "here".
  */
-extern void avl_insert_here(avl_tree_t *tree, void *new_data, void *here,
-    int direction);
+API_EXPORT extern void avl_insert_here(avl_tree_t *tree, void *new_data,
+    void *here, int direction);
 
 
 /*
@@ -190,8 +191,8 @@ extern void avl_insert_here(avl_tree_t *tree, void *new_data, void *here,
  * if the tree is empty.
  *
  */
-extern void *avl_first(const avl_tree_t *tree);
-extern void *avl_last(const avl_tree_t *tree);
+API_EXPORT extern void *avl_first(const avl_tree_t *tree);
+API_EXPORT extern void *avl_last(const avl_tree_t *tree);
 
 
 /*
@@ -227,7 +228,8 @@ extern void *avl_last(const avl_tree_t *tree);
  *	else
  *		less = avl_nearest(tree, where, AVL_BEFORE);
  */
-extern void *avl_nearest(avl_tree_t *tree, avl_index_t where, int direction);
+API_EXPORT extern void *avl_nearest(avl_tree_t *tree, avl_index_t where,
+    int direction);
 
 
 /*
@@ -237,7 +239,7 @@ extern void *avl_nearest(avl_tree_t *tree, avl_index_t where, int direction);
  *
  * node   - the node to add
  */
-extern void avl_add(avl_tree_t *tree, void *node);
+API_EXPORT extern void avl_add(avl_tree_t *tree, void *node);
 
 
 /*
@@ -245,7 +247,7 @@ extern void avl_add(avl_tree_t *tree, void *node);
  *
  * node   - the node to remove
  */
-extern void avl_remove(avl_tree_t *tree, void *node);
+API_EXPORT extern void avl_remove(avl_tree_t *tree, void *node);
 
 /*
  * Reinsert a node only if its order has changed relative to its nearest
@@ -254,19 +256,19 @@ extern void avl_remove(avl_tree_t *tree, void *node);
  * avl_update_gt() only if you know the direction in which the order of the
  * node may change.
  */
-extern bool_t avl_update(avl_tree_t *, void *);
-extern bool_t avl_update_lt(avl_tree_t *, void *);
-extern bool_t avl_update_gt(avl_tree_t *, void *);
+API_EXPORT extern bool_t avl_update(avl_tree_t *, void *);
+API_EXPORT extern bool_t avl_update_lt(avl_tree_t *, void *);
+API_EXPORT extern bool_t avl_update_gt(avl_tree_t *, void *);
 
 /*
  * Return the number of nodes in the tree
  */
-extern unsigned long avl_numnodes(const avl_tree_t *tree);
+API_EXPORT extern unsigned long avl_numnodes(const avl_tree_t *tree);
 
 /*
  * Return B_TRUE if there are zero nodes in the tree, B_FALSE otherwise.
  */
-extern bool_t avl_is_empty(avl_tree_t *tree);
+API_EXPORT extern bool_t avl_is_empty(avl_tree_t *tree);
 
 /*
  * Used to destroy any remaining nodes in a tree. The cookie argument should
@@ -289,7 +291,7 @@ extern bool_t avl_is_empty(avl_tree_t *tree);
  *		free(node);
  *	avl_destroy(tree);
  */
-extern void *avl_destroy_nodes(avl_tree_t *tree, void **cookie);
+API_EXPORT extern void *avl_destroy_nodes(avl_tree_t *tree, void **cookie);
 
 
 /*
@@ -297,7 +299,7 @@ extern void *avl_destroy_nodes(avl_tree_t *tree, void **cookie);
  *
  * tree   - the empty tree to destroy
  */
-extern void avl_destroy(avl_tree_t *tree);
+API_EXPORT extern void avl_destroy(avl_tree_t *tree);
 
 
 

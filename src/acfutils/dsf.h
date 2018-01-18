@@ -256,20 +256,23 @@ typedef struct {
 typedef void (*dsf_cmd_cb_t)(dsf_cmd_t cmd, const void *cmd_args,
     const dsf_cmd_parser_t *parser);
 
-dsf_t *dsf_init(const char *filename);
-dsf_t *dsf_parse(uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ]);
-void dsf_fini(dsf_t *dsf);
-bool_t dsf_read_md5(const char *filename, uint8_t md5sum[16]);
-char *dsf_dump(const dsf_t *dsf);
+API_EXPORT dsf_t *dsf_init(const char *filename);
+API_EXPORT dsf_t *dsf_parse(uint8_t *buf, size_t bufsz,
+    char reason[DSF_REASON_SZ]);
+API_EXPORT void dsf_fini(dsf_t *dsf);
+API_EXPORT bool_t dsf_read_md5(const char *filename, uint8_t md5sum[16]);
+API_EXPORT char *dsf_dump(const dsf_t *dsf);
 
-const dsf_atom_t *dsf_lookup(const dsf_t *dsf, ...);
-const dsf_atom_t *dsf_lookup_v(const dsf_t *dsf, const dsf_lookup_t *lookup);
-const dsf_atom_t *dsf_iter(const dsf_atom_t *parent, uint32_t atom_id,
-    const dsf_atom_t *prev);
-bool_t dsf_parse_cmds(const dsf_t *dsf, dsf_cmd_cb_t user_cbs[NUM_DSF_CMDS],
+API_EXPORT const dsf_atom_t *dsf_lookup(const dsf_t *dsf, ...);
+API_EXPORT const dsf_atom_t *dsf_lookup_v(const dsf_t *dsf,
+    const dsf_lookup_t *lookup);
+API_EXPORT const dsf_atom_t *dsf_iter(const dsf_atom_t *parent,
+    uint32_t atom_id, const dsf_atom_t *prev);
+API_EXPORT bool_t dsf_parse_cmds(const dsf_t *dsf,
+    dsf_cmd_cb_t user_cbs[NUM_DSF_CMDS],
     void *userinfo, char reason[DSF_REASON_SZ]);
 
-const char *dsf_cmd2str(dsf_cmd_t cmd);
+API_EXPORT const char *dsf_cmd2str(dsf_cmd_t cmd);
 
 #ifdef	__cplusplus
 }

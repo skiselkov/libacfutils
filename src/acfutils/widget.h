@@ -36,21 +36,23 @@ extern "C" {
 
 typedef struct tooltip_set tooltip_set_t;
 
-XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
+#define	create_widget_rel	ACFSYM(create_widget_rel)
+API_EXPORT XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
     XPWidgetID container, XPWidgetClass cls);
 
-XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
+#define	create_widget_rel2	ACFSYM(create_widget_rel2)
+API_EXPORT XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
     XPWidgetID container, XPWidgetID coord_ref, XPWidgetClass cls);
 
-void tooltip_init(void);
-void tooltip_fini(void);
+API_EXPORT void tooltip_init(void);
+API_EXPORT void tooltip_fini(void);
 
-tooltip_set_t *tooltip_set_new(XPWidgetID window);
-void tooltip_set_destroy(tooltip_set_t *tts);
+API_EXPORT tooltip_set_t *tooltip_set_new(XPWidgetID window);
+API_EXPORT void tooltip_set_destroy(tooltip_set_t *tts);
 
-void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
+API_EXPORT void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
     const char *text);
 
 #ifdef	__cplusplus

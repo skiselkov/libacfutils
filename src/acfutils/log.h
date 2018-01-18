@@ -32,7 +32,7 @@ extern "C" {
  * initialize it and pass it a logging function!
  */
 typedef void (*logfunc_t)(const char *);
-void log_init(logfunc_t func, const char *prefix);
+API_EXPORT void log_init(logfunc_t func, const char *prefix);
 
 /*
  * This lets us chop out the basename (last path component) from __FILE__
@@ -40,18 +40,20 @@ void log_init(logfunc_t func, const char *prefix);
  * below just chops it out at compile time.
  */
 #if	defined(__GNUC__) || defined(__clang__)
-#define	log_basename(f) (__builtin_strrchr(f, BUILD_DIRSEP) ? \
+#define	log_basename(f)	(__builtin_strrchr(f, BUILD_DIRSEP) ? \
 	__builtin_strrchr(f, BUILD_DIRSEP) + 1 : f)
 #else	/* !__GNUC__ && !__clang__ */
-const char *log_basename(const char *filename);
+#define	log_basename(f)	(strrchr(f, BUILD_DIRSEP) ? \
+	strrchr(f, BUILD_DIRSEP) + 1 : f)
 #endif	/* !__GNUC__ && !__clang__ */
 
 #define	logMsg(...) \
 	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
-void log_impl(const char *filename, int line, const char *fmt, ...)
+API_EXPORT void log_impl(const char *filename, int line, const char *fmt, ...)
     PRINTF_ATTR(3);
-void log_impl_v(const char *filename, int line, const char *fmt, va_list ap);
-void log_backtrace(void);
+API_EXPORT void log_impl_v(const char *filename, int line, const char *fmt,
+    va_list ap);
+API_EXPORT void log_backtrace(void);
 
 #ifdef __cplusplus
 }

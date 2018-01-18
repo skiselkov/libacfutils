@@ -48,7 +48,7 @@ struct dr {
 	void		*cb_userinfo;
 };
 
-bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
+API_EXPORT bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
 #define	fdr_find(dr, ...) \
 	do { \
 		if (!dr_find(dr, __VA_ARGS__)) { \
@@ -58,35 +58,35 @@ bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
 		} \
 	} while (0)
 
-int dr_geti(dr_t *dr);
-void dr_seti(dr_t *dr, int i);
+API_EXPORT int dr_geti(dr_t *dr);
+API_EXPORT void dr_seti(dr_t *dr, int i);
 
-double dr_getf(dr_t *dr);
-void dr_setf(dr_t *dr, double f);
+API_EXPORT double dr_getf(dr_t *dr);
+API_EXPORT void dr_setf(dr_t *dr, double f);
 
-int dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num);
-void dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num);
+API_EXPORT int dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num);
+API_EXPORT void dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num);
 
-int dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num);
-void dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num);
+API_EXPORT int dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num);
+API_EXPORT void dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num);
 
-int dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
-void dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
+API_EXPORT int dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
+API_EXPORT void dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
 
-int dr_gets(dr_t *dr, char *str, size_t cap);
-void dr_sets(dr_t *dr, char *str);
+API_EXPORT int dr_gets(dr_t *dr, char *str, size_t cap);
+API_EXPORT void dr_sets(dr_t *dr, char *str);
 
-void dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
-    PRINTF_ATTR(4);
-void dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
-    PRINTF_ATTR(4);
-void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
+API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
+    const char *fmt, ...) PRINTF_ATTR(4);
+API_EXPORT void dr_create_f(dr_t *dr, float *value, bool_t writable,
+    const char *fmt, ...) PRINTF_ATTR(4);
+API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(5);
-void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
+API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(5);
-void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
+API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(5);
-void dr_delete(dr_t *dr);
+API_EXPORT void dr_delete(dr_t *dr);
 
 #ifdef	__cplusplus
 }

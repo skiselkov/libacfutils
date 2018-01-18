@@ -25,7 +25,8 @@
 extern "C" {
 #endif
 
-bool_t osrand(void *buf, size_t len);
+#define	osrand	ACFSYM(osrand)
+API_EXPORT bool_t osrand(void *buf, size_t len);
 
 #ifdef	__cplusplus
 }

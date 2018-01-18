@@ -32,6 +32,19 @@ extern "C" {
 
 extern const char *libacfutils_version;
 
+#define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
+
+#if	IBM || defined(_MSC_VER)
+#define	API_EXPORT	__declspec(dllexport)
+#define	API_EXPORT_DATA	__declspec(dllexport)
+#else	/* !IBM && !defined(_MSC_VER) */
+#define	API_EXPORT
+#define	API_EXPORT_DATA
+#endif	/* !IBM && !defined(_MSC_VER) */
+
+#define	lacf_free	ACFSYM(lacf_free)
+API_EXPORT void lacf_free(void *buf);
+
 #ifdef	__cplusplus
 }
 #endif

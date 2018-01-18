@@ -45,18 +45,21 @@ typedef void (*mt_cairo_render_cb_t)(cairo_t *cr, unsigned w, unsigned h,
     void *userinfo);
 typedef struct mt_cairo_render_s mt_cairo_render_t;
 
-mt_cairo_render_t *mt_cairo_render_init(unsigned w, unsigned h, double fps,
-    mt_cairo_init_cb_t init_cb, mt_cairo_render_cb_t render_cb,
+API_EXPORT mt_cairo_render_t *mt_cairo_render_init(unsigned w, unsigned h,
+    double fps, mt_cairo_init_cb_t init_cb, mt_cairo_render_cb_t render_cb,
     mt_cairo_fini_cb_t fini_cb, void *userinfo);
-void mt_cairo_render_fini(mt_cairo_render_t *mtcr);
-void mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps);
-void mt_cairo_render_once(mt_cairo_render_t *mtcr);
-void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size);
-GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
+API_EXPORT void mt_cairo_render_fini(mt_cairo_render_t *mtcr);
+API_EXPORT void mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps);
+API_EXPORT void mt_cairo_render_once(mt_cairo_render_t *mtcr);
+API_EXPORT void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos,
+    vect2_t size);
+API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 
-const char *ft_err2str(FT_Error err);
-bool_t try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
-    FT_Face *font, cairo_font_face_t **cr_font);
+#define	ft_err2str	ACFSYM(ft_err2str)
+API_EXPORT const char *ft_err2str(FT_Error err);
+#define	try_load_font	ACFSYM(try_load_font)
+API_EXPORT bool_t try_load_font(const char *fontdir, const char *fontfile,
+    FT_Library ft, FT_Face *font, cairo_font_face_t **cr_font);
 
 #ifdef	__cplusplus
 }

@@ -31,9 +31,13 @@ extern "C" {
 
 struct vect2_s;
 
-unsigned quadratic_solve(double a, double b, double c, double x[2]);
-double fx_lin(double x, double x1, double y1, double x2, double y2);
-double fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate);
+#define	quadratic_solve	ACFSYM(quadratic_solve)
+API_EXPORT unsigned quadratic_solve(double a, double b, double c, double x[2]);
+#define	fx_lin		ACFSYM(fx_lin)
+API_EXPORT double fx_lin(double x, double x1, double y1, double x2, double y2);
+#define	fx_lin_multi	ACFSYM(fx_lin_multi)
+API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
+    bool_t extrapolate);
 
 /*
  * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.

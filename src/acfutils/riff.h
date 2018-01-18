@@ -66,10 +66,11 @@ typedef struct riff_chunk {
 	list_node_t	node;
 } riff_chunk_t;
 
-void riff_free_chunk(riff_chunk_t *c);
-riff_chunk_t *riff_parse(uint32_t filetype, uint8_t *buf, size_t bufsz);
-riff_chunk_t *riff_find_chunk(riff_chunk_t *topchunk, ...);
-char *riff_dump(const riff_chunk_t *topchunk);
+API_EXPORT void riff_free_chunk(riff_chunk_t *c);
+API_EXPORT riff_chunk_t *riff_parse(uint32_t filetype, uint8_t *buf,
+    size_t bufsz);
+API_EXPORT riff_chunk_t *riff_find_chunk(riff_chunk_t *topchunk, ...);
+API_EXPORT char *riff_dump(const riff_chunk_t *topchunk);
 
 #ifdef	__cplusplus
 }

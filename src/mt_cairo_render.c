@@ -60,6 +60,7 @@ struct mt_cairo_render_s {
 
 	thread_t		thr;
 	condvar_t		cv;
+	condvar_t		render_done_cv;
 	mutex_t			lock;
 	bool_t			started;
 	bool_t			shutdown;
@@ -89,6 +90,12 @@ ft_err2str(FT_Error err)
 	return (NULL);
 }
 
+/*
+ * Main mt_cairo_render_t worker thread. Simply waits around for the
+ * required interval and fires off the rendering callback. This performs
+ * no canvas clearing between calls, so the callback is responsible for
+ * making sure its output canvas looks right.
+ */
 static void
 worker(mt_cairo_render_t *mtcr)
 {
@@ -96,6 +103,15 @@ worker(mt_cairo_render_t *mtcr)
 
 	while (!mtcr->shutdown) {
 		render_surf_t *rs;
+
+		if (mtcr->fps > 0) {
+			cv_timedwait(&mtcr->cv, &mtcr->lock, microclock() +
+			    SEC2USEC(1.0 / mtcr->fps));
+		} else {
+			cv_wait(&mtcr->cv, &mtcr->lock);
+		}
+		if (mtcr->shutdown)
+			break;
 
 		mutex_exit(&mtcr->lock);
 
@@ -108,13 +124,7 @@ worker(mt_cairo_render_t *mtcr)
 
 		mutex_enter(&mtcr->lock);
 		mtcr->cur_rs = !mtcr->cur_rs;
-
-		if (mtcr->fps > 0) {
-			cv_timedwait(&mtcr->cv, &mtcr->lock, microclock() +
-			    SEC2USEC(1.0 / mtcr->fps));
-		} else {
-			cv_wait(&mtcr->cv, &mtcr->lock);
-		}
+		cv_broadcast(&mtcr->render_done_cv);
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -124,7 +134,8 @@ worker(mt_cairo_render_t *mtcr)
  * @param w Width of the rendered surface (in pixels).
  * @param h Height of the rendered surface (in pixels).
  * @param fps Framerate at which the surface should be rendered.
- *	This can be changed at any time later.
+ *	This can be changed at any time later. Pass a zero fps value
+ *	to make the renderer only run on-request (see mt_cairo_render_once).
  * @param init_cb An optional initialization callback that can be
  *	used to initialize private resources needed during rendering.
  *	Called once for every cairo_t instance (two instances for
@@ -156,6 +167,7 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
+	cv_init(&mtcr->render_done_cv);
 
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
@@ -208,6 +220,7 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
+	cv_destroy(&mtcr->render_done_cv);
 
 	free(mtcr);
 }
@@ -230,6 +243,19 @@ mt_cairo_render_once(mt_cairo_render_t *mtcr)
 {
 	mutex_enter(&mtcr->lock);
 	cv_broadcast(&mtcr->cv);
+	mutex_exit(&mtcr->lock);
+}
+
+/*
+ * Same as mt_cairo_render_once, but waits for the new frame to finish
+ * rendering.
+ */
+void
+mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
+{
+	mutex_enter(&mtcr->lock);
+	cv_broadcast(&mtcr->cv);
+	cv_wait(&mtcr->render_done_cv, &mtcr->lock);
 	mutex_exit(&mtcr->lock);
 }
 
@@ -281,6 +307,10 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	glEnd();
 }
 
+/*
+ * Retrieves the OpenGL texture object of the surface that has currently
+ * completed rendering. If no surface is ready yet, returns 0 instead.
+ */
 GLuint
 mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 {
@@ -310,6 +340,23 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	return (tex);
 }
 
+/*
+ * Simple font loading front-end.
+ *
+ * @param fontdir A path to the directory from which to load the font.
+ * @param fontfile A font file name. This is concatenated onto the fontdir
+ *	with a path separator. If you only want to provide one string with
+ *	a full path to the font file, pass that in fontdir and set
+ *	fontfile = NULL.
+ * @param ft FreeType library handle.
+ * @param font Return FreeType font face object pointer. Release this after
+ *	the cairo font face object using FT_DoneFace.
+ * @param cr_font Return cairo font face object pointer. Release this before
+ *	the freetype font face using cairo_font_face_destroy.
+ *
+ * Return B_TRUE if loading the font was successfull, B_FALSE otherwise. In
+ *	case of error, the reason is logged using logMsg.
+ */
 bool_t
 try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
     FT_Face *font, cairo_font_face_t **cr_font)
@@ -323,7 +370,9 @@ try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
 		free(fontpath);
 		return (B_FALSE);
 	}
+
 	*cr_font = cairo_ft_font_face_create_for_ft_face(*font, 0);
+
 	free(fontpath);
 
 	return (B_TRUE);

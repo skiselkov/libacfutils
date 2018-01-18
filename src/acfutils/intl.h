@@ -36,11 +36,11 @@ extern "C" {
 
 #define	_(str)	acfutils_xlate(str)
 
-bool_t acfutils_xlate_init(const char *po_file);
-void acfutils_xlate_fini(void);
-const char *acfutils_xlate(const char *msgid);
+API_EXPORT bool_t acfutils_xlate_init(const char *po_file);
+API_EXPORT void acfutils_xlate_fini(void);
+API_EXPORT const char *acfutils_xlate(const char *msgid);
 
-const char *acfutils_xplang2code(int lang);
+API_EXPORT const char *acfutils_xplang2code(int lang);
 
 #ifdef	__cplusplus
 }

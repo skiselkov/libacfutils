@@ -18,11 +18,12 @@
 source ../build_dep.common
 
 FREETYPE="freetype-2.8.1.tar.xz"
-FREETYPE_CONFOPTS_COMMON="--disable-shared --enable-static \
+FREETYPE_CONFOPTS_COMMON="--enable-shared --enable-static \
     --with-zlib=yes --with-bzip2=no --with-png=no \
     --with-harfbuzz=no --with-old-mac-fonts=no --with-fsspec=no \
     --with-fsref=no --with-quickdraw-toolbox=no \
     --with-quickdraw-carbon=no --with-ats=no"
+FREETYPE_PATCH="freetype-win-dllexport.patch"
 
 export PKG_CONFIG_PATH="../../zlib/zlib-{PLATFORM}/lib/pkgconfig"
 
@@ -30,28 +31,34 @@ case `uname` in
 	Linux)
 		CFLAGS="-m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$FREETYPE_CONFOPTS_COMMON" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" && \
-		CFLAGS="-m32" LDFLAGS="-m32" \
-		    build_dep "linux-32" "$FREETYPE_CONFOPTS_COMMON" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" && \
+		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
+		    "$FREETYPE_PATCH" && \
 		build_dep "win-64" "$FREETYPE_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" && \
-		build_dep "win-32" "$FREETYPE_CONFOPTS_COMMON \
-		    --host=i686-w64-mingw32" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a"
+		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
+		    "$FREETYPE_PATCH"
+
+#		CFLAGS="-m32" LDFLAGS="-m32" \
+#		    build_dep "linux-32" "$FREETYPE_CONFOPTS_COMMON" \
+#		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
+#		    "$FREETYPE_PATCH" && \
+#		build_dep "win-32" "$FREETYPE_CONFOPTS_COMMON \
+#		    --host=i686-w64-mingw32" \
+#		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
+#		    "$FREETYPE_PATCH"
 		;;
 	Darwin)
 		CFLAGS="$FREETYPE_CFLAGS_COMMON" \
 		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON" \
 		    build_dep "mac-64" "$FREETYPE_CONFOPTS_COMMON" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" && \
-		CFLAGS="$FREETYPE_CFLAGS_COMMON -mmacosx-version-min=10.6 \
-		    -m32" \
-		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON \
-		    -mmacosx-version-min=10.6 -m32" \
-		    build_dep "mac-32" "$FREETYPE_CONFOPTS_COMMON" \
 		    "$FREETYPE" "freetype" "lib/libfreetype.a"
+
+##		CFLAGS="$FREETYPE_CFLAGS_COMMON -mmacosx-version-min=10.6 \
+#		    -m32" \
+#		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON \
+#		    -mmacosx-version-min=10.6 -m32" \
+#		    build_dep "mac-32" "$FREETYPE_CONFOPTS_COMMON" \
+#		    "$FREETYPE" "freetype" "lib/libfreetype.a"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

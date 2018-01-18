@@ -18,4 +18,17 @@
 
 #include <acfutils/core.h>
 
+#include <stdlib.h>
+
 const char *libacfutils_version = LIBACFUTILS_VERSION;
+
+/*
+ * Whenever libacfutils returns an opaque allocated objects that you must
+ * free, use lacf_free to do so. Otherwise you risk running into troubles
+ * with different allocators being used between compilers (thanks Windows!).
+ */
+void
+lacf_free(void *buf)
+{
+	free(buf);
+}

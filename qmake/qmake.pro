@@ -51,14 +51,31 @@ win32 {
 	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
 	QMAKE_DEL_FILE = rm -f
 	QMAKE_CFLAGS -= -Werror
+
+	CONFIG += dll
+	LIBS += -static-libgcc -Wl,--output-def,acfutils.def
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
+
+	LIBS += $$system("../pkg-config-deps win-64 --libs")
+	LIBS += -L../SDK/Libraries/Win -lXPLM_64
+	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
+	LIBS += -L../OpenAL/libs/Win64 -lOpenAL32
+	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
+	LIBS += -ldbghelp
 }
 
 win32:contains(CROSS_COMPILE, i686-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-32 --cflags")
+
+	LIBS += $$system("../pkg-config-deps win-32 --libs")
+	LIBS += -L../SDK/Libraries/Win -lXPLM
+	LIBS += -L../SDK/Libraries/Win -lXPWidgets
+	LIBS += -L../OpenAL/libs/Win32 -lOpenAL32
+	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
+	LIBS += -ldbghelp
 }
 
 linux-g++-64 {

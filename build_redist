@@ -15,31 +15,19 @@
 
 # Copyright 2017 Saso Kiselkov. All rights reserved.
 
-FILES=(
-	qmake/win64/libacfutils.a
-	lzma/qmake/win-64/liblzma.a
-	freetype/freetype-win-64/lib/libfreetype.a
-	curl/libcurl-win-64/lib/libcurl.a
-	libpng/libpng-win-64/lib/libpng16.a
-	opus/libogg-win-64/install/lib/libogg.a
-	opus/opusfile-win-64/lib/libopusfile.a
-	opus/opus-win-64/lib/libopus.a
-	cairo/cairo-win-64/lib/libcairo.a
-	cairo/pixman-win-64/lib/libpixman-1.a
-	zlib/zlib-win-64/lib/libz.a
-)
+OUTPUT=libacfutils-redist
 
+LIBS=(
+	qmake/win64/acfutils.dll
+	qmake/win64/acfutils.lib
+)
 HDR_DIRS=(
 	glew/GL
 	cairo/cairo-win-64/include/cairo
 	freetype/freetype-win-64/include/freetype2
 )
 
-OUTPUT=winlibs
-
-rm -rf "$OUTPUT"
 mkdir -p "$OUTPUT/lib" "$OUTPUT/include"
-
-cp -r ${FILES[@]} "$OUTPUT/lib"
+cp -r ${LIBS[@]} "$OUTPUT/lib"
 cp -r ${HDR_DIRS[@]} "$OUTPUT/include"
 cp -r src/acfutils "$OUTPUT/include"

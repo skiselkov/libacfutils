@@ -25,10 +25,10 @@
 extern "C" {
 #endif
 
-bool_t paste_init(void);
-void paste_fini(void);
-bool_t paste_get_str(char *str, size_t cap);
-bool_t paste_set_str(const char *str);
+API_EXPORT bool_t paste_init(void);
+API_EXPORT void paste_fini(void);
+API_EXPORT bool_t paste_get_str(char *str, size_t cap);
+API_EXPORT bool_t paste_set_str(const char *str);
 
 #ifdef	__cplusplus
 }

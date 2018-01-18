@@ -36,11 +36,71 @@ extern "C" {
 #endif
 
 /*
- * Basic portable multi-threading API. We have 4 kinds of objects and
+ * Basic portable multi-threading API. We have 3 kinds of objects and
  * associated manipulation functions here:
  * 1) threat_t - A generic thread identification structure.
  * 2) mutex_t - A generic mutual exclusion lock.
  * 3) condvar_t - A generic condition variable.
+ *
+ * The actual implementation is all contained in this header and simply
+ * works as a set of macro expansions on top of the OS-specific threading
+ * API (pthreads on Unix/Linux, winthreads on Win32).
+ *
+ * Example of how to create a thread:
+ *	thread_t my_thread;
+ *	if (!thread_create(&my_thread, thread_main_func, thread_arg))
+ *		fprintf(stderr, "thread create failed!\n");
+ *
+ * Example of how to wait for a thread to exit:
+ *	thread_t my_thread;
+ *	thread_join(my_thread);
+ *	... thread disposed of, no need for further cleanup ...
+ *
+ * Example of how to use a mutex_t:
+ *	mutex_t my_lock;		-- the lock object itself
+ *	mutex_init(&my_lock);		-- create a lock
+ *	mutex_enter(&my_lock);		-- grab a lock
+ *	... do some critical, exclusiony-type stuff ...
+ *	mutex_exit(&my_lock);		-- release a lock
+ *	mutex_destroy(&my_lock);	-- free a lock
+ *
+ * Example of how to use a condvar_t:
+ *	mutex_t my_lock;
+ *	condvar_t my_cv;
+ *
+ *	mutex_init(&my_lock);		-- create a lock to control the CV
+ *	cv_init(&my_cv);		-- create the condition variable
+ *
+ *	-- thread that's going to signal the condition:
+ *		mutex_enter(&my_lock);	-- grab the lock
+ *		... set up some resource that others might be waiting on ...
+ *		cv_broadcast(&my_lock);	-- wake up all waiters
+ *		mutex_exit(&my_lock);	-- release the lock
+ *
+ *	-- thread that's going to wait on the condition:
+ *		mutex_enter(&my_lock);			-- grab the lock
+ *		while (!condition_met())
+ *			cv_wait(&my_cv, &my_lock);	-- wait for the CV
+ *							-- to be signalled
+ *		... condition fulfilled, use the resource ...
+ *		mutex_exit(&my_lock);			-- release the lock
+ *
+ * You can also performed a "timed" wait on a CV using cv_timedwait. The
+ * function will exit when either the condition has been signalled, or the
+ * timer has expired. You have to check yourself which of these occurred:
+ *
+ *		mutex_enter(&my_lock);			-- grab the lock
+ *		-- Wait for the CV to be signalled. Time argument is an
+ *		-- absolute time as returned by the 'microclock' function +
+ *		-- whatever extra time delay you want to apply.
+ *		uint64_t deadline = microclock() + timeout_usecs;
+ *		while (!condition_met()) {
+ *			cv_timedwait(&my_cv, &my_lock, deadline);
+ *			if (microclock() > deadline)
+ *				-- timed out waiting for CV to signal
+ *				goto bail_out;
+ *		}
+ *		mutex_exit(&my_lock);			-- release the lock
  */
 
 #if	APL || LIN

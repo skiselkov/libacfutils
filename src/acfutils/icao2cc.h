@@ -19,12 +19,16 @@
 #ifndef	_ICAO2CC_H_
 #define	_ICAO2CC_H_
 
+#include <acfutils/core.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-const char *icao2cc(const char *icao);
-const char *icao2lang(const char *icao);
+#define	icao2cc		ACFSYM(icao2cc)
+API_EXPORT const char *icao2cc(const char *icao);
+#define	icao2lang	ACFSYM(icao2lang)
+API_EXPORT const char *icao2lang(const char *icao);
 
 #ifdef	__cplusplus
 }

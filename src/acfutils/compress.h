@@ -25,12 +25,17 @@
 extern "C" {
 #endif
 
-bool_t zlib_test(const void *in_buf, size_t len);
-void *zlib_compress(void *in_buf, size_t len, size_t *out_len);
-void *zlib_decompress(void *in_buf, size_t len, size_t *out_len_p);
+#define	zlib_test	ACFSYM(zlib_test)
+API_EXPORT bool_t zlib_test(const void *in_buf, size_t len);
+#define	zlib_compress	ACFSYM(zlib_compress)
+API_EXPORT void *zlib_compress(void *in_buf, size_t len, size_t *out_len);
+#define	zlib_decompress	ACFSYM(zlib_decompress)
+API_EXPORT void *zlib_decompress(void *in_buf, size_t len, size_t *out_len_p);
 
-bool_t test_7z(const void *in_buf, size_t len);
-void *decompress_7z(const char *filename, size_t *out_len);
+#define	test_7z		ACFSYM(test_7z)
+API_EXPORT bool_t test_7z(const void *in_buf, size_t len);
+#define	decompress_7z	ACFSYM(decompress_7z)
+API_EXPORT void *decompress_7z(const char *filename, size_t *out_len);
 
 #ifdef	__cplusplus
 }

@@ -208,45 +208,4 @@ out:
 	File_Close(&archiveStream.file);
 
 	return (out_buf);
-
-/*
-	enum { REALLOC_THRESH = 1024 * 1024 };
-	size_t out_len = len * 4;
-	void *out_buf = malloc(out_len);
-	size_t consumed = 0;
-	size_t out_fill = 0;
-	const void *lzma_props = in_buf;
-	const void *in = in_buf + LZMA_PROPS_SIZE;
-	size_t in_len = len - LZMA_PROPS_SIZE;
-
-	for (;;) {
-		size_t in_cap = len - consumed;
-		size_t out_cap = out_len - out_fill;
-		int res = LzmaUncompress(out_buf + out_fill, &out_cap,
-		    in_buf + consumed, &in_cap, NULL, 0);
-
-		switch (res) {
-		case SZ_OK:
-			goto out;
-		case SZ_ERROR_DATA:
-		case SZ_ERROR_MEM:
-		case SZ_ERROR_UNSUPPORTED:
-		case SZ_ERROR_INPUT_EOF:
-			free(out_buf);
-			*out_len_p = 0;
-			return (NULL);
-		}
-
-		consumed += in_cap;
-		out_fill += out_cap;
-
-		if (out_fill + REALLOC_THRESH > out_cap) {
-			out_cap += MAX(len / 3, REALLOC_THRESH);
-			out_buf = realloc(out_buf, out_cap);
-		}
-	}
-out:
-	*out_len_p = out_fill;
-
-	return (out_buf);*/
 }

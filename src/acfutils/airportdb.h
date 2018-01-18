@@ -93,23 +93,42 @@ struct airport {
 	avl_node_t	tile_node;	/* tiles in the airport_geo_tree */
 };
 
-void airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir);
-void airportdb_destroy(airportdb_t *db);
+#define	airportdb_create		ACFSYM(airportdb_create)
+API_EXPORT void airportdb_create(airportdb_t *db, const char *xpdir,
+    const char *cachedir);
+#define	airportdb_destroy		ACFSYM(airportdb_destroy)
+API_EXPORT void airportdb_destroy(airportdb_t *db);
 
-bool_t recreate_cache(airportdb_t *db);
+#define	recreate_cache			ACFSYM(recreate_cache)
+API_EXPORT bool_t recreate_cache(airportdb_t *db);
 
-list_t *find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos);
-void free_nearest_airport_list(list_t *l);
+#define	find_nearest_airports		ACFSYM(find_nearest_airports)
+API_EXPORT list_t *find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos);
 
-void set_airport_load_limit(airportdb_t *db, double limit);
-void load_nearest_airport_tiles(airportdb_t *db, geo_pos2_t my_pos);
-void unload_distant_airport_tiles(airportdb_t *db, geo_pos2_t my_pos);
+#define	free_nearest_airport_list	ACFSYM(free_nearest_airport_list)
+API_EXPORT void free_nearest_airport_list(list_t *l);
 
-airport_t *airport_lookup(airportdb_t *db, const char *icao, geo_pos2_t pos);
-airport_t *matching_airport_in_tile_with_TATL(airportdb_t *db, geo_pos2_t pos,
-    const char *search_icao);
+#define	set_airport_load_limit		ACFSYM(set_airport_load_limit)
+API_EXPORT void set_airport_load_limit(airportdb_t *db, double limit);
 
-bool_t airportdb_xp11_airac_cycle(const char *xpdir, int *cycle);
+#define	load_nearest_airport_tiles	ACFSYM(load_nearest_airport_tiles)
+API_EXPORT void load_nearest_airport_tiles(airportdb_t *db, geo_pos2_t my_pos);
+
+#define	unload_distant_airport_tiles	ACFSYM(unload_distant_airport_tiles)
+API_EXPORT void unload_distant_airport_tiles(airportdb_t *db,
+    geo_pos2_t my_pos);
+
+#define	airport_lookup	ACFSYM(airport_lookup)
+API_EXPORT airport_t *airport_lookup(airportdb_t *db, const char *icao,
+    geo_pos2_t pos);
+
+#define	matching_airport_in_tile_with_TATL \
+    ACFSYM(matching_airport_in_tile_with_TATL)
+API_EXPORT airport_t *matching_airport_in_tile_with_TATL(airportdb_t *db,
+    geo_pos2_t pos, const char *search_icao);
+
+#define	airportdb_xp11_airac_cycle	ACFSYM(airportdb_xp11_airac_cycle)
+API_EXPORT bool_t airportdb_xp11_airac_cycle(const char *xpdir, int *cycle);
 
 #ifdef	__cplusplus
 }

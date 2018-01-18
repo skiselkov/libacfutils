@@ -38,62 +38,69 @@ extern "C" {
 
 typedef struct conf conf_t;
 
-conf_t *conf_create_empty(void);
-void conf_free(conf_t *conf);
+API_EXPORT conf_t *conf_create_empty(void);
+API_EXPORT void conf_free(conf_t *conf);
 
-conf_t *conf_read_file(const char *filename, int *errline);
-conf_t *conf_read(FILE *fp, int *errline);
-bool_t conf_write_file(const conf_t *conf, const char *filename);
-bool_t conf_write(const conf_t *conf, FILE *fp);
+API_EXPORT conf_t *conf_read_file(const char *filename, int *errline);
+API_EXPORT conf_t *conf_read(FILE *fp, int *errline);
+API_EXPORT bool_t conf_write_file(const conf_t *conf, const char *filename);
+API_EXPORT bool_t conf_write(const conf_t *conf, FILE *fp);
 
-bool_t conf_get_str(const conf_t *conf, const char *key, const char **value);
-bool_t conf_get_i(const conf_t *conf, const char *key, int *value);
-bool_t conf_get_lli(const conf_t *conf, const char *key, long long *value);
-bool_t conf_get_f(const conf_t *conf, const char *key, float *value);
-bool_t conf_get_d(const conf_t *conf, const char *key, double *value);
-bool_t conf_get_da(const conf_t *conf, const char *key, double *value);
-bool_t conf_get_b(const conf_t *conf, const char *key, bool_t *value);
+API_EXPORT bool_t conf_get_str(const conf_t *conf, const char *key,
+    const char **value);
+API_EXPORT bool_t conf_get_i(const conf_t *conf, const char *key,
+    int *value);
+API_EXPORT bool_t conf_get_lli(const conf_t *conf, const char *key,
+    long long *value);
+API_EXPORT bool_t conf_get_f(const conf_t *conf, const char *key,
+    float *value);
+API_EXPORT bool_t conf_get_d(const conf_t *conf, const char *key,
+    double *value);
+API_EXPORT bool_t conf_get_da(const conf_t *conf, const char *key,
+    double *value);
+API_EXPORT bool_t conf_get_b(const conf_t *conf, const char *key,
+    bool_t *value);
 
-void conf_set_str(conf_t *conf, const char *key, const char *value);
-void conf_set_i(conf_t *conf, const char *key, int value);
-void conf_set_lli(conf_t *conf, const char *key, long long value);
-void conf_set_f(conf_t *conf, const char *key, float value);
-void conf_set_d(conf_t *conf, const char *key, double value);
-void conf_set_da(conf_t *conf, const char *key, double value);
-void conf_set_b(conf_t *conf, const char *key, bool_t value);
+API_EXPORT void conf_set_str(conf_t *conf, const char *key, const char *value);
+API_EXPORT void conf_set_i(conf_t *conf, const char *key, int value);
+API_EXPORT void conf_set_lli(conf_t *conf, const char *key, long long value);
+API_EXPORT void conf_set_f(conf_t *conf, const char *key, float value);
+API_EXPORT void conf_set_d(conf_t *conf, const char *key, double value);
+API_EXPORT void conf_set_da(conf_t *conf, const char *key, double value);
+API_EXPORT void conf_set_b(conf_t *conf, const char *key, bool_t value);
 
-bool_t conf_get_str_v(const conf_t *conf,const char *fmt, const char **value,
+API_EXPORT bool_t conf_get_str_v(const conf_t *conf,const char *fmt,
+    const char **value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_i_v(const conf_t *conf, const char *fmt,
+    int *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_lli_v(const conf_t *conf, const char *fmt,
+    long long *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_f_v(const conf_t *conf, const char *fmt,
+    float *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_d_v(const conf_t *conf, const char *fmt,
+    double *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_da_v(const conf_t *conf, const char *fmt,
+    double *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT bool_t conf_get_b_v(const conf_t *conf, const char *fmt,
+    bool_t *value, ...) PRINTF_ATTR2(2, 4);
+
+API_EXPORT void conf_set_str_v(conf_t *conf, const char *fmt,
+    const char *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT void conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
+    PRINTF_ATTR2(2, 4);
+API_EXPORT void conf_set_lli_v(conf_t *conf, const char *fmt, long long value,
     ...) PRINTF_ATTR2(2, 4);
-bool_t conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
+API_EXPORT void conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
     PRINTF_ATTR2(2, 4);
-bool_t conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value,
-    ...) PRINTF_ATTR2(2, 4);
-bool_t conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
+API_EXPORT void conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
     PRINTF_ATTR2(2, 4);
-bool_t conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
+API_EXPORT void conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
     PRINTF_ATTR2(2, 4);
-bool_t conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
-    PRINTF_ATTR2(2, 4);
-bool_t conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
+API_EXPORT void conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
     PRINTF_ATTR2(2, 4);
 
-void conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
-    PRINTF_ATTR2(2, 4);
-void conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
-    PRINTF_ATTR2(2, 4);
-
-bool_t conf_walk(const conf_t *conf, const char **key, const char **value,
-    void **cookie);
+API_EXPORT bool_t conf_walk(const conf_t *conf, const char **key,
+    const char **value, void **cookie);
 
 #ifdef	__cplusplus
 }

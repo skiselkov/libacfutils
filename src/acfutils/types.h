@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <limits.h>
 
+#include <acfutils/core.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -32,6 +34,14 @@ typedef unsigned int bool_t;
 #define	B_TRUE	1
 #define	B_FALSE	0
 #endif
+
+#ifdef	_MSC_VER
+
+#include <basetsd.h>
+#define	ssize_t	SSIZE_T
+#define	restrict
+
+#endif	/* _MSC_VER */
 
 #ifdef	__cplusplus
 }

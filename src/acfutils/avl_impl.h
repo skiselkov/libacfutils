@@ -158,7 +158,7 @@ struct avl_tree {
 /*
  * This will only by used via AVL_NEXT() or AVL_PREV()
  */
-extern void *avl_walk(const struct avl_tree *, const void *, int);
+API_EXPORT extern void *avl_walk(const struct avl_tree *, const void *, int);
 
 #ifdef	__cplusplus
 }

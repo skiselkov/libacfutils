@@ -58,39 +58,40 @@ typedef struct wav_s {
 	uint64_t	play_start;
 } wav_t;
 
-char **openal_list_output_devs(size_t *num_p);
-alc_t *openal_init(const char *devname, bool_t shared);
-void openal_fini(alc_t *alc);
+API_EXPORT char **openal_list_output_devs(size_t *num_p);
+API_EXPORT alc_t *openal_init(const char *devname, bool_t shared);
+API_EXPORT void openal_fini(alc_t *alc);
 
-wav_t *wav_load(const char *filename, const char *descr_name, alc_t *alc);
-void wav_free(wav_t *wav);
+API_EXPORT wav_t *wav_load(const char *filename, const char *descr_name,
+    alc_t *alc);
+API_EXPORT void wav_free(wav_t *wav);
 
-void wav_set_gain(wav_t *wav, float gain);
-float wav_get_gain(wav_t *wav);
-void wav_set_loop(wav_t *wav, bool_t loop);
-bool_t wav_get_loop(wav_t *wav);
-void wav_set_pitch(wav_t *wav, float pitch);
-float wav_get_pitch(wav_t *wav);
-void wav_set_position(wav_t *wav, vect3_t pos);
-vect3_t wav_get_position(wav_t *wav);
-void wav_set_velocity(wav_t *wav, vect3_t pos);
-vect3_t wav_get_velocity(wav_t *wav);
-void wav_set_ref_dist(wav_t *wav, double d);
-double wav_get_ref_dist(wav_t *wav);
-void wav_set_max_dist(wav_t *wav, double d);
-double wav_get_max_dist(wav_t *wav);
-void wav_set_rolloff_fact(wav_t *wav, double r);
-double wav_get_rolloff_fact(wav_t *wav);
+API_EXPORT void wav_set_gain(wav_t *wav, float gain);
+API_EXPORT float wav_get_gain(wav_t *wav);
+API_EXPORT void wav_set_loop(wav_t *wav, bool_t loop);
+API_EXPORT bool_t wav_get_loop(wav_t *wav);
+API_EXPORT void wav_set_pitch(wav_t *wav, float pitch);
+API_EXPORT float wav_get_pitch(wav_t *wav);
+API_EXPORT void wav_set_position(wav_t *wav, vect3_t pos);
+API_EXPORT vect3_t wav_get_position(wav_t *wav);
+API_EXPORT API_EXPORT void wav_set_velocity(wav_t *wav, vect3_t pos);
+API_EXPORT vect3_t wav_get_velocity(wav_t *wav);
+API_EXPORT void wav_set_ref_dist(wav_t *wav, double d);
+API_EXPORT double wav_get_ref_dist(wav_t *wav);
+API_EXPORT void wav_set_max_dist(wav_t *wav, double d);
+API_EXPORT double wav_get_max_dist(wav_t *wav);
+API_EXPORT void wav_set_rolloff_fact(wav_t *wav, double r);
+API_EXPORT double wav_get_rolloff_fact(wav_t *wav);
 
-bool_t wav_play(wav_t *wav);
-bool_t wav_is_playing(wav_t *wav);
-void wav_stop(wav_t *wav);
+API_EXPORT bool_t wav_play(wav_t *wav);
+API_EXPORT bool_t wav_is_playing(wav_t *wav);
+API_EXPORT void wav_stop(wav_t *wav);
 
-void alc_set_dist_model(alc_t *alc, ALenum model);
-void alc_listener_set_pos(alc_t *alc, vect3_t pos);
-vect3_t alc_listener_get_pos(alc_t *alc);
-void alc_listener_set_orient(alc_t *alc, vect3_t orient);
-void alc_listener_set_velocity(alc_t *alc, vect3_t vel);
+API_EXPORT void alc_set_dist_model(alc_t *alc, ALenum model);
+API_EXPORT void alc_listener_set_pos(alc_t *alc, vect3_t pos);
+API_EXPORT vect3_t alc_listener_get_pos(alc_t *alc);
+API_EXPORT void alc_listener_set_orient(alc_t *alc, vect3_t orient);
+API_EXPORT void alc_listener_set_velocity(alc_t *alc, vect3_t vel);
 
 #ifdef	__cplusplus
 }

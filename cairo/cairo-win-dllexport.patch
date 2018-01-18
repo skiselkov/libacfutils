@@ -1,0 +1,20 @@
+--- cairo-1.14.10/src/cairoint.h	2017-06-15 15:13:55.000000000 -0700
++++ cairo-1.14.10-new/src/cairoint.h	2018-01-18 05:33:11.913550098 -0800
+@@ -50,7 +50,7 @@
+ #include "config.h"
+ #endif
+ 
+-#ifdef _MSC_VER
++#if	defined(_MSC_VER) || defined(_WIN32)
+ #define cairo_public __declspec(dllexport)
+ #endif
+ 
+@@ -60,7 +60,7 @@
+ #include <stdarg.h>
+ #include <stddef.h>
+ 
+-#ifdef _MSC_VER
++#if	defined(_MSC_VER) || defined(_WIN32)
+ #define _USE_MATH_DEFINES
+ #endif
+ #include <math.h>
