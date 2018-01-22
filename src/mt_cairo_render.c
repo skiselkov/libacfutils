@@ -42,6 +42,7 @@
 
 typedef	struct {
 	bool_t		chg;
+	bool_t		rdy;
 
 	GLuint		tex;
 	cairo_surface_t	*surf;
@@ -57,6 +58,8 @@ struct mt_cairo_render_s {
 
 	int			cur_rs;
 	render_surf_t		rs[2];
+	GLuint			pbo;
+	GLsync			in_flight;
 
 	thread_t		thr;
 	condvar_t		cv;
@@ -187,6 +190,7 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 			return (NULL);
 		}
 	}
+	glGenBuffers(1, &mtcr->pbo);
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -217,6 +221,8 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		if (rs->tex != 0)
 			glDeleteTextures(1, &rs->tex);
 	}
+	if (mtcr->pbo != 0)
+		glDeleteBuffers(1, &mtcr->pbo);
 
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
@@ -261,6 +267,80 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 	mutex_exit(&mtcr->lock);
 }
 
+static void
+bind_tex_sync(mt_cairo_render_t *mtcr, render_surf_t *rs)
+{
+	glBindTexture(GL_TEXTURE_2D, rs->tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0, GL_BGRA,
+	    GL_UNSIGNED_BYTE, cairo_image_surface_get_data(rs->surf));
+	rs->rdy = B_TRUE;
+	rs->chg = B_FALSE;
+}
+
+static bool_t
+bind_cur_tex(mt_cairo_render_t *mtcr)
+{
+	render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
+
+	ASSERT(rs->tex != 0);
+	if (rs->chg) {
+		cairo_surface_flush(rs->surf);
+		if (!rs->rdy && mtcr->in_flight == 0) {
+			size_t sz = mtcr->w * mtcr->h * 4;
+			void *ptr;
+
+			/* the back-buffer is ready, set up an async xfer */
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, 0,
+			    GL_STREAM_DRAW);
+			ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER,
+			    GL_WRITE_ONLY);
+			if (ptr != NULL) {
+				memcpy(ptr,
+				    cairo_image_surface_get_data(rs->surf), sz);
+				glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+				mtcr->in_flight = glFenceSync(
+				    GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				rs->chg = B_FALSE;
+				rs->rdy = B_FALSE;
+			} else {
+				logMsg("Error updating mt_cairo_render surface "
+				    "%p: glMapBuffer returned NULL", mtcr);
+				bind_tex_sync(mtcr, rs);
+			}
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		} else {
+			/* No back-buffer to show, transfer synchronously */
+			bind_tex_sync(mtcr, rs);
+		}
+	}
+	/*
+	 * If the current surface is in flight, check if it has completed
+	 * transfer and mark it as ready for display.
+	 */
+	ASSERT(rs->rdy || mtcr->in_flight != 0);
+	if (!rs->rdy) {
+		if (glClientWaitSync(mtcr->in_flight, 0, 0) ==
+		    GL_TIMEOUT_EXPIRED) {
+			rs->rdy = B_TRUE;
+			mtcr->in_flight = 0;
+			glBindTexture(GL_TEXTURE_2D, rs->tex);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w,
+			    mtcr->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		} else {
+			rs = &mtcr->rs[!mtcr->cur_rs];
+			if (!rs->rdy)
+				return (B_FALSE);
+		}
+	}
+
+	glBindTexture(GL_TEXTURE_2D, rs->tex);
+
+	return (B_TRUE);
+}
+
 /*
  * Draws the rendered surface at offset pos.xy, at a size of size.xy.
  * This should be called at regular intervals to draw the results of
@@ -271,8 +351,6 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 void
 mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 {
-	render_surf_t *rs;
-
 	mutex_enter(&mtcr->lock);
 
 	if (mtcr->cur_rs == -1) {
@@ -284,15 +362,9 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 
 	XPLMSetGraphicsState(0, 1, 0, 0, 1, 0, 0);
 
-	rs = &mtcr->rs[mtcr->cur_rs];
-	ASSERT(rs->tex != 0);
-	glBindTexture(GL_TEXTURE_2D, rs->tex);
-	if (rs->chg) {
-		cairo_surface_flush(rs->surf);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
-		    GL_BGRA, GL_UNSIGNED_BYTE,
-		    cairo_image_surface_get_data(rs->surf));
-		rs->chg = B_FALSE;
+	if (!bind_cur_tex(mtcr)) {
+		mutex_exit(&mtcr->lock);
+		return;
 	}
 
 	mutex_exit(&mtcr->lock);
