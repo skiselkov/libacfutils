@@ -64,6 +64,7 @@ struct mt_cairo_render_s {
 	thread_t		thr;
 	condvar_t		cv;
 	condvar_t		render_done_cv;
+	bool_t			one_shot_block;
 	mutex_t			lock;
 	bool_t			started;
 	bool_t			shutdown;
@@ -107,11 +108,13 @@ worker(mt_cairo_render_t *mtcr)
 	while (!mtcr->shutdown) {
 		render_surf_t *rs;
 
-		if (mtcr->fps > 0) {
-			cv_timedwait(&mtcr->cv, &mtcr->lock, microclock() +
-			    SEC2USEC(1.0 / mtcr->fps));
-		} else {
-			cv_wait(&mtcr->cv, &mtcr->lock);
+		if (!mtcr->one_shot_block) {
+			if (mtcr->fps > 0) {
+				cv_timedwait(&mtcr->cv, &mtcr->lock,
+				    microclock() + SEC2USEC(1.0 / mtcr->fps));
+			} else {
+				cv_wait(&mtcr->cv, &mtcr->lock);
+			}
 		}
 		if (mtcr->shutdown)
 			break;
@@ -242,6 +245,12 @@ mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps)
 	mutex_exit(&mtcr->lock);
 }
 
+double
+mt_cairo_render_get_fps(mt_cairo_render_t *mtcr)
+{
+	return (mtcr->fps);
+}
+
 /*
  * Fires the renderer off once to produce a new frame. This can be especially
  * useful for renderers with fps = 0, which are only invoked on request.
@@ -262,8 +271,10 @@ void
 mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 {
 	mutex_enter(&mtcr->lock);
+	mtcr->one_shot_block = B_TRUE;
 	cv_broadcast(&mtcr->cv);
 	cv_wait(&mtcr->render_done_cv, &mtcr->lock);
+	mtcr->one_shot_block = B_FALSE;
 	mutex_exit(&mtcr->lock);
 }
 
