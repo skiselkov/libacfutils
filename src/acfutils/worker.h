@@ -35,11 +35,11 @@ typedef struct {
 	void		*userinfo;
 } worker_t;
 
-void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
+API_EXPORT void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
     uint64_t intval_us, void *userinfo);
-void worker_fini(worker_t *wk);
+API_EXPORT void worker_fini(worker_t *wk);
 
-void worker_wake_up(worker_t *wk);
+API_EXPORT void worker_wake_up(worker_t *wk);
 
 
 #ifdef	__cplusplus
