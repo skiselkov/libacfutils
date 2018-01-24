@@ -59,7 +59,7 @@ win32 {
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
 
-	LIBS += $$system("../pkg-config-deps win-64 --libs")
+	LIBS += $$system("../pkg-config-deps win-64 --libacfutils --libs")
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
 	LIBS += -L../OpenAL/libs/Win64 -lOpenAL32
@@ -70,7 +70,7 @@ win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 win32:contains(CROSS_COMPILE, i686-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-32 --cflags")
 
-	LIBS += $$system("../pkg-config-deps win-32 --libs")
+	LIBS += $$system("../pkg-config-deps win-32 --libacfutils --libs")
 	LIBS += -L../SDK/Libraries/Win -lXPLM
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets
 	LIBS += -L../OpenAL/libs/Win32 -lOpenAL32
@@ -100,11 +100,13 @@ macx {
 }
 
 macx-clang {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
+	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --libacfutils \
+	    --cflags")
 }
 
 macx-clang-32 {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-32 --cflags")
+	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-32 --libacfutils \
+	    --cflags")
 }
 
 HEADERS += ../src/*.h ../src/acfutils/*.h

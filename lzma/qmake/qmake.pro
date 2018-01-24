@@ -42,13 +42,11 @@ SOURCES += $$files(../C/*.c)
 HEADERS -= \
     ../C/DllSecur.h \
     ../C/LzFindMt.h \
-    ../C/Lzma2Enc.h \
     ../C/MtCoder.h \
     ../C/Threads.h
 
 SOURCES -= \
     ../C/DllSecur.c \
     ../C/LzFindMt.c \
-    ../C/Lzma2Enc.c \
     ../C/MtCoder.c \
-    ../C/Threads.c
+    ../C/Threads.c \

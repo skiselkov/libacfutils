@@ -47,19 +47,25 @@ $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig"
 
-if [[ "$@" = "--libs" ]]; then
+PACKAGES="pixman-1 libpng16 opusfile opus ogg zlib"
+
+if [[ "$1" = "--libacfutils" ]] || [[ "$1" = "--cflags" ]]; then
+	PACKAGES="cairo freetype2 $PACKAGES"
+	if [[ "$1" = "--libacfutils" ]]; then
+		shift
+	fi
+fi
+
+if [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "linux-64" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
 
-	if [[ "$ARCH" = "win-64" ]]; then
-		WHOLE_ARCH_ON="-Wl,--whole-archive"
-		WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
-	fi
+	WHOLE_ARCH_ON="-Wl,--whole-archive"
+	WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
 fi
 
-echo $WHOLE_ARCH_ON $(pkg-config $@ cairo) $WHOLE_ARCH_OFF \
-    $WHOLE_ARCH_ON $(pkg-config $@ freetype2) $WHOLE_ARCH_OFF \
-    $(pkg-config $@ pixman-1 libpng16 opusfile opus ogg zlib) \
-    $(pkg-config $@ --static libcurl) ${CLIPBOARD} ${LZMA}
+echo $WHOLE_ARCH_ON \
+    $(pkg-config $@ $PACKAGES) \
+    $(pkg-config $@ --static libcurl) ${CLIPBOARD} ${LZMA} $WHOLE_ARCH_OFF

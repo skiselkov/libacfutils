@@ -15,6 +15,10 @@
 #define MTCODER__THREADS_MAX 1
 #endif
 
+#ifndef _WIN32
+#define E_INVALIDARG (0x80070057L)
+#endif
+
 #define LZMA2_CONTROL_LZMA (1 << 7)
 #define LZMA2_CONTROL_COPY_NO_RESET 2
 #define LZMA2_CONTROL_COPY_RESET_DIC 1
