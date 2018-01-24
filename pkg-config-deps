@@ -47,14 +47,7 @@ $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig"
 
-PACKAGES="pixman-1 libpng16 opusfile opus ogg zlib"
-
-if [[ "$1" = "--libacfutils" ]] || [[ "$1" = "--cflags" ]]; then
-	PACKAGES="cairo freetype2 $PACKAGES"
-	if [[ "$1" = "--libacfutils" ]]; then
-		shift
-	fi
-fi
+PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib"
 
 if [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "linux-64" ]]; then
