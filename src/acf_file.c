@@ -26,6 +26,10 @@
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
 
+/*
+ * This code provides functionality to read the .acf file of X-Plane.
+ */
+
 typedef struct {
 	char		*name;
 	char		*value;
@@ -48,6 +52,15 @@ acf_prop_compar(const void *a, const void *b)
 	return (1);
 }
 
+/*
+ * Reads an X-Plane .acf file and returns a structure which can be used
+ * to access its properties.
+ *
+ * @param filename A full path to the .acf file to read.
+ *
+ * @return A constructed .acf file in an accessible structure, or NULL
+ *	on error. The exact error is emitted via logMsg.
+ */
 acf_file_t *
 acf_file_read(const char *filename)
 {
@@ -121,6 +134,9 @@ errout:
 	return (NULL);
 }
 
+/*
+ * Frees the structured returned by acf_file_read.
+ */
 void
 acf_file_free(acf_file_t *acf)
 {
@@ -136,6 +152,17 @@ acf_file_free(acf_file_t *acf)
 	free(acf);
 }
 
+/*
+ * Locates a property in a parsed .acf file and returns its contents.
+ *
+ * @param acf The parsed acf file structure.
+ * @param prop_path A nul-terminated string containing the full path
+ *	of the property in the acf file.
+ *
+ * @return A pointer to a nul-terminated string containing the value
+ *	of the property if found, or NULL if the property doesn't
+ *	exist in the acf file.
+ */
 const char *
 acf_prop_find(const acf_file_t *acf, const char *prop_path)
 {

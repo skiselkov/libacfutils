@@ -34,8 +34,18 @@ CTASSERT(sizeof (double) == sizeof (unsigned long long));
 
 /*
  * This is a general-purpose configuration store. It's really just a
- * key-value pair dictionary that can be read from and written to a
- * file.
+ * key-value pair dictionary that can be read from and written to a file.
+ *
+ * The file format is very simple, consisting of a simple sequence of
+ * lines like the following:
+ *
+ * key = value
+ *
+ * In addition to being able to return the full-text values of keys, this
+ * set functions also allows you to easily parse the data in a variety of
+ * formats (integers, floats, booleans, etc.). The file format also allows
+ * for comments, so it is usable as a user-written configuration parser.
+ * Lines beginning with "#" or "--" are automatically skipped.
  */
 
 struct conf {
@@ -47,6 +57,9 @@ typedef struct {
 	char		*value;
 	avl_node_t	node;
 } conf_key_t;
+
+static void conf_set_common(conf_t *conf, const char *key,
+    const char *fmt, ...) PRINTF_ATTR(3);
 
 static void
 strtolower(char *str)
@@ -125,9 +138,12 @@ conf_read_file(const char *filename, int *errline)
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
  * comments.
+ *
  * Returns the parsed conf_t object, or NULL in case an error was found.
  * If errline is not NULL, it is set to the line number where the error
  * was encountered.
+ *
+ * Use conf_free to free the returned structure.
  */
 conf_t *
 conf_read(FILE *fp, int *errline)
@@ -379,9 +395,6 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 	ck->value = strdup(value);
 }
 
-static void conf_set_common(conf_t *conf, const char *key,
-    const char *fmt, ...) PRINTF_ATTR(3);
-
 /*
  * Common setter back-end for conf_set_{i,d,b}.
  */
@@ -522,84 +535,128 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 		va_end(ap2); \
 	} while (0)
 
+/*
+ * Same as conf_get_str, but allows passing in a printf-formatted argument
+ * string in `fmt' and a variable number of arguments following `value'
+ * to construct the configuration key name dynamically.
+ */
 bool_t
 conf_get_str_v(const conf_t *conf, const char *fmt, const char **value, ...)
 {
 	VARIABLE_GET(conf_get_str);
 }
 
+/*
+ * Same as conf_get_i, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
 {
 	VARIABLE_GET(conf_get_i);
 }
 
+/*
+ * Same as conf_get_lli, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
 {
 	VARIABLE_GET(conf_get_lli);
 }
 
+/*
+ * Same as conf_get_f, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
 {
 	VARIABLE_GET(conf_get_f);
 }
 
+/*
+ * Same as conf_get_d, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
 {
 	VARIABLE_GET(conf_get_d);
 }
 
+/*
+ * Same as conf_get_da, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
 {
 	VARIABLE_GET(conf_get_da);
 }
 
+/*
+ * Same as conf_get_b, but with dynamic name-construction as conf_get_str_v.
+ */
 bool_t
 conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
 {
 	VARIABLE_GET(conf_get_b);
 }
 
+/*
+ * Same as conf_set_str, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
 {
 	VARIABLE_SET(conf_set_str);
 }
 
+/*
+ * Same as conf_set_i, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
 {
 	VARIABLE_SET(conf_set_i);
 }
 
+/*
+ * Same as conf_set_lli, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
 {
 	VARIABLE_SET(conf_set_lli);
 }
 
+/*
+ * Same as conf_set_f, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
 {
 	VARIABLE_SET(conf_set_f);
 }
 
+/*
+ * Same as conf_set_d, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
 {
 	VARIABLE_SET(conf_set_d);
 }
 
+/*
+ * Same as conf_set_da, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
 {
 	VARIABLE_SET(conf_set_da);
 }
 
+/*
+ * Same as conf_set_b, but with dynamic name-construction as conf_get_str_v.
+ */
 void
 conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
 {

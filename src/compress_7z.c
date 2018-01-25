@@ -29,6 +29,11 @@
 #include <acfutils/assert.h>
 #include <acfutils/compress.h>
 
+/*
+ * Performs a light-weight & quick test to see if some data might constitute
+ * a 7-zip archive. Returns B_TRUE if the data MAY be a 7-zip archive,
+ * B_FALSE if definitely not.
+ */
 bool_t
 test_7z(const void *in_buf, size_t len)
 {
@@ -37,6 +42,17 @@ test_7z(const void *in_buf, size_t len)
 	    memcmp(in_buf, magic, sizeof (magic)) == 0);
 }
 
+/*
+ * Decompresses the first file contained in a 7-zip archive and returns its
+ * contents.
+ *
+ * @param filename The full path to the file holding the 7-zip archive.
+ * @param out_len Return argument, which will be filled with the amount of
+ *	bytes contained in the returned decompressed buffer.
+ *
+ * @return A buffer containing the decompressed file data, or NULL if
+ *	decompression failed. Free the returned data using lacf_free().
+ */
 void *
 decompress_7z(const char *filename, size_t *out_len)
 {

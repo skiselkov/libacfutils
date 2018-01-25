@@ -29,8 +29,13 @@
 #include <acfutils/osrand.h>
 
 /*
- * Generates high-quality random numbers using the OS'es own RNG. Returns
+ * Generates high-quality random numbers using the OS'es own PRNG. Returns
  * B_TRUE iff `buf' has been successfully populated with `len' bytes.
+ * Use this to generate high-quality encryption key material.
+ *
+ * Be sparing with this function. High-quality random numbers are expensive
+ * and/or slow to generate in large quantities. For a low-quality but cheap
+ * PRNG, see crc64.c.
  */
 bool_t
 osrand(void *buf, size_t len)

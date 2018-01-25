@@ -19,6 +19,13 @@
 #include <acfutils/assert.h>
 #include <acfutils/crc64.h>
 
+/*
+ * A generic CRC64 implementation from OpenSolaris. Be sure to call
+ * crc64_init before using it. Then just call crc64() and pass it the
+ * data you want checksummed. Also includes a fast & light-weight
+ * portable pseudo random number generator.
+ */
+
 #define	CRC64_POLY	0xC96C5795D7870F42ULL	/* ECMA-182, reflected form */
 
 static uint64_t crc64_table[256];
@@ -35,6 +42,9 @@ crc64_init(void)
 	}
 }
 
+/*
+ * Computes the CRC64 checksum of a block of input data.
+ */
 uint64_t
 crc64(const void *input, size_t sz)
 {
@@ -48,12 +58,28 @@ crc64(const void *input, size_t sz)
 	return (crc);
 }
 
+/*
+ * Initializes the CRC64-based pseudo random number generator. Pass in some
+ * random seed (e.g. current microclock() usually does nicely). Obviously
+ * you only want to call this once in your app.
+ */
 void
 crc64_srand(uint64_t seed)
 {
 	rand_seed = seed;
 }
 
+/*
+ * Grabs a random 64-bit number from the PRNG. This function isn't
+ * thread-safe, so take care not to rely on its output being super-duper
+ * unpredictable in multi-threade apps. You shouldn't be relying on it
+ * for anything more than lightweight randomness duties which need to be
+ * fast above everything else.
+ *
+ * DO NOT use this for cryptographically secure randomness operations
+ * (e.g. generating encryption key material). See osrand.c for a
+ * high-quality PRNG.
+ */
 uint64_t
 crc64_rand(void)
 {

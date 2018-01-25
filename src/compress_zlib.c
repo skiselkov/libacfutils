@@ -24,6 +24,14 @@
 #include <acfutils/assert.h>
 #include <acfutils/compress.h>
 
+/*
+ * Performs a light-weight & quick test to see if some data might constitute
+ * zlib-compressed data. Returns B_TRUE if the data MAY contain zlib data,
+ * B_FALSE if definitely not.
+ *
+ * Please note that zlib data is NOT the same as a Gzip (.gz) file. A .gz
+ * file contains additional metadata that these functions do not understand.
+ */
 bool_t
 zlib_test(const void *in_buf, size_t len)
 {
@@ -34,6 +42,20 @@ zlib_test(const void *in_buf, size_t len)
 	    (buf8[1] == 0x01 || buf8[1] == 0x9c || buf8[1] == 0xda));
 }
 
+/*
+ * Compresses a chunk of data using the zlib algorithm and returns it.
+ * The compression ratio applied is the default zlib value (equivalent
+ * to "gzip -6").
+ *
+ * @param in_buf Input data buffer to be compressed.
+ * @param len Number of bytes in `in_buf'.
+ * @param out_len Output variable which will be filled the number of
+ *	bytes contained in the compressed output.
+ *
+ * @return Returns a pointer to the output buffer containing the
+ *	zlib-compressed data. Returns NULL on an internal compressor
+ *	error. Use lacf_free to free the returned buffer.
+ */
 void *
 zlib_compress(void *in_buf, size_t len, size_t *out_len)
 {
@@ -90,6 +112,14 @@ out:
 	return (out_buf);
 }
 
+/*
+ * Decompresses a chunk of data previously compressed using the zlib
+ * algorithm. Same argument logic as `zlib_compress', but the returned
+ * buffer contains the decompressed data. Returns NULL on error, or if
+ * the input data doesn't look like valid zlib compressed data.
+ *
+ * Use lacf_free to free the returned buffer.
+ */
 void *
 zlib_decompress(void *in_buf, size_t len, size_t *out_len_p)
 {

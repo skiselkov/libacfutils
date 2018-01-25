@@ -20,12 +20,16 @@
 
 #include <stdlib.h>
 
+/*
+ * A string holding the current build version of libacfutils.
+ * It's just a 7-character git revision number.
+ */
 const char *libacfutils_version = LIBACFUTILS_VERSION;
 
 /*
- * Whenever libacfutils returns an opaque allocated objects that you must
- * free, use lacf_free to do so. Otherwise you risk running into troubles
- * with different allocators being used between compilers (thanks Windows!).
+ * Whenever libacfutils returns an allocated object that you must free,
+ * use lacf_free to do so. Otherwise you risk running into troubles with
+ * different allocators being used between compilers (thanks Windows!).
  */
 void
 lacf_free(void *buf)
