@@ -24,4 +24,6 @@ fi
     ( cd freetype && ./build_freetype_deps ) && \
     ( cd cairo && ./build_cairo_deps ) && \
     ( cd opus && ./build_opus_deps ) && \
-    ( cd curl && ./build_curl_deps )
+    ( cd curl && ./build_curl_deps ) && \
+    ( cd lzma/qmake && if [ $(uname) = Darwin ]; then \
+    ./build-mac else ./build-win-lin ; fi )
