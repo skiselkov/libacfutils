@@ -52,6 +52,7 @@ lzma/qmake/mac-32
 lzma/qmake/mac-64
 lzma/qmake/win-32
 lzma/qmake/win-64
+lzma/qmake/Makefile
 src/test/dsfdump
 
 libacfutils-redist
