@@ -13,7 +13,7 @@
 
 # Copyright 2017 Saso Kiselkov. All rights reserved.
 
-dsfdump : dsfdump.c ../../qmake/libacfutils.a
-	$(CC) -W -Wall -Werror -o dsfdump dsfdump.c \
-	    -I.. -L../../qmake -lacfutils \
-	    $(shell ../../pkg-config-deps linux-64 --libs) -lm
+dsfdump : dsfdump.c ../../qmake/lin64/libacfutils.a
+	$(CC) -g -W -Wall -Werror -o dsfdump dsfdump.c \
+	    -I.. -L../../qmake/lin64 -lacfutils \
+	    $(shell ../../pkg-config-deps linux-64 --libs) -lm -lpthread -lxcb

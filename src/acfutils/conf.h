@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <acfutils/helpers.h>
 #include <acfutils/types.h>
 #include <acfutils/avl.h>
 

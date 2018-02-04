@@ -60,3 +60,12 @@ qmake/acfutils.def
 qmake/acfutils_resource.rc
 qmake/object_script.acfutils.Debug
 qmake/object_script.acfutils.Release
+
+shapelib/libproj-linux-64
+shapelib/libproj-mac-64
+shapelib/libproj-win-64
+shapelib/libshape-linux-64
+shapelib/libshape-mac-64
+shapelib/libshape-win-64
+shapelib/proj-4.9.3
+shapelib/shapelib-1.4.1

@@ -45,13 +45,13 @@ $(pwd)/pixman-{PLATFORM}/lib/pkgconfig" \
 
 case `uname` in
 	Linux)
-		CFLAGS="-m64" LDFLAGS="-m64 -L$(pwd)/../freetype/freetype-linux-64/lib" \
+		CFLAGS="-m64" LDFLAGS="-m64\\ -L$(pwd)/../freetype/freetype-linux-64/lib" \
 		    build_dep "linux-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" && \
 		    build_dep "win-64" "$PIXMAN_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
 		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
+		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch \
 		    cairo-win-ulongf.patch" && \

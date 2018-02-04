@@ -25,5 +25,6 @@ fi
     ( cd cairo && ./build_cairo_deps ) && \
     ( cd opus && ./build_opus_deps ) && \
     ( cd curl && ./build_curl_deps ) && \
+    ( cd shapelib && ./build_shapelib_deps ) && \
     ( cd lzma/qmake && if [ $(uname) = Darwin ]; then \
     ./build-mac else ./build-win-lin ; fi )

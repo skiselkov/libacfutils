@@ -23,7 +23,7 @@ case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		CFLAGS="-fPIC -m64" LDLFAGS="-fPIC -m64" \
+		CFLAGS="-fPIC\\ -m64" LDLFAGS="-fPIC\\ -m64" \
 		    build_dep "linux-64" "--static --64" "$ZLIB" "zlib" \
 		    "libz.a" && \
 		CFLAGS="-m64" LDFLAGS="-m64" CC="x86_64-w64-mingw32-gcc" \
