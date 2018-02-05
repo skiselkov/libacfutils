@@ -13,7 +13,18 @@
 
 # Copyright 2017 Saso Kiselkov. All rights reserved.
 
+all : dsfdump shpdump
+
+clean :
+	rm -f dsfdump shpdump
+
 dsfdump : dsfdump.c ../../qmake/lin64/libacfutils.a
 	$(CC) -g -W -Wall -Werror -o dsfdump dsfdump.c \
 	    -I.. -L../../qmake/lin64 -lacfutils \
 	    $(shell ../../pkg-config-deps linux-64 --libs) -lm -lpthread -lxcb
+
+shpdump : shpdump.c ../../qmake/lin64/libacfutils.a
+	$(CC) -g -W -Wall -Werror -o shpdump shpdump.c \
+	    -I.. -L../../qmake/lin64 -lacfutils \
+	    $(shell ../../pkg-config-deps linux-64 --cflags --libs) \
+	    -lm -lpthread -lxcb

@@ -53,7 +53,9 @@ lzma/qmake/mac-64
 lzma/qmake/win-32
 lzma/qmake/win-64
 lzma/qmake/Makefile
+
 src/test/dsfdump
+src/test/shpdump
 
 libacfutils-redist
 qmake/acfutils.def
