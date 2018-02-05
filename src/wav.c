@@ -102,6 +102,8 @@ ctx_save(alc_t *alc, alc_t *sav)
 {
 	ALuint err;
 
+	(void) alGetError(); // cleanup after other OpenAL users
+
 	if (alc != NULL && alc->ctx == NULL)
 		return (B_TRUE);
 
