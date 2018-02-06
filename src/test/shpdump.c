@@ -35,8 +35,8 @@
 #include <acfutils/log.h>
 #include <acfutils/png.h>
 
-#define	WIDTH	1024
-#define	HEIGHT	1024
+#define	WIDTH	981
+#define	HEIGHT	1111
 
 static void
 logfunc(const char *str)
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 
 	surf = cairo_image_surface_create(CAIRO_FORMAT_A8, WIDTH, HEIGHT);
 	cr = cairo_create(surf);
+	cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
 
 	cairo_scale(cr, WIDTH, HEIGHT);
 
@@ -147,9 +148,18 @@ main(int argc, char *argv[])
 			}
 
 			cairo_new_sub_path(cr);
-			cairo_move_to(cr, obj->padfX[0],
-			    obj->padfY[0]);
-			for (int k = start_k; k < end_k; k++) {
+			/*
+			 * Note that since `lat' is always the floor of the
+			 * latitude, but cairo & PNG address the image from
+			 * the top left, to get the PNG to look right, we
+			 * need to flip the Y coordinates to make the image
+			 * look right when drawn. This is not done in OpenGWPS,
+			 * since it instead wants to address the image from the
+			 * bottom left corner.
+			 */
+			cairo_move_to(cr, obj->padfX[start_k] - lon,
+			    (lat + 1) - obj->padfY[start_k]);
+			for (int k = start_k + 1; k < end_k; k++) {
 				if (verbose) {
 					printf("      %d: %f x %f\n", k,
 					    obj->padfX[k], obj->padfY[k]);
