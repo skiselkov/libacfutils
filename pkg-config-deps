@@ -67,8 +67,11 @@ if [[ "$1" = "--libs" ]]; then
 		WHOLE_ARCH_ON=""
 		WHOLE_ARCH_OFF=""
 	fi
+
+	EXTRA="-static-libstdc++"
 fi
 
 echo $WHOLE_ARCH_ON \
     $(pkg-config $@ $PACKAGES) \
-    $(pkg-config $@ --static libcurl) ${CLIPBOARD} ${LZMA} $WHOLE_ARCH_OFF
+    $(pkg-config $@ --static libcurl) ${CLIPBOARD} ${LZMA} \
+    $EXTRA $WHOLE_ARCH_OFF
