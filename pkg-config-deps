@@ -47,10 +47,12 @@ $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libproj-$ARCH/lib/pkgconfig:\
-$(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig"
+$(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
+$(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
+$(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig"
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj"
+    shapelib proj tesseract lept"
 
 if [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "linux-64" ]]; then

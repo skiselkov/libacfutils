@@ -20,25 +20,20 @@ source ../build_dep.common
 LEPTONICA="leptonica-1.75.1.tar.xz"
 TESSERACT="tesseract-3.05.00.tar.xz"
 
-#CONFOPTS_LEPTONICA="--enable-static --disable-shared \
-#    --without-zlib --without-libpng --without-jpeg \
-#    --without-giflib --without-libtiff --without-libwebp \
-#    --without-libopenjpeg"
-
 CONFOPTS_LEPTONICA="--enable-static --disable-shared \
-    --without-zlib --without-jpeg \
-    --without-giflib --without-libtiff --without-libwebp \
-    --without-libopenjpeg"
-CONFOPTS_TESSERACT="--enable-static --disable-shared \
-    --disable-graphics --disable-cube"
+    --without-zlib --without-jpeg --without-giflib \
+    --without-libtiff --without-libwebp --without-libopenjpeg \
+    --disable-programs"
+CONFOPTS_TESSERACT="--enable-static --disable-shared --disable-cube"
 
 case `uname` in
 	Linux)
 		build_dep "linux-64" "$CONFOPTS_LEPTONICA" \
-		    "$LEPTONICA" "liblept" "lib/liblept.a" && \
+		    "$LEPTONICA" "liblept" "lib/liblept.a" \
+		    "leptonica.patch" && \
 		build_dep "win-64" "$CONFOPTS_LEPTONICA \
 		    --host=x86_64-w64-mingw32" "$LEPTONICA" "liblept" \
-		    "lib/liblept.a" && \
+		    "lib/liblept.a" "leptonica.patch" && \
 		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
 		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-linux-64/include/leptonica" \
 		    build_dep "linux-64" "$CONFOPTS_TESSERACT \
