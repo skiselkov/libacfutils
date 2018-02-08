@@ -55,7 +55,9 @@ extern "C" {
 #else	/* !IBM */
 #define	DIRSEP		'/'
 #define	DIRSEP_S	"/"	/* DIRSEP as a string */
+#ifndef	MAX_PATH
 #define	MAX_PATH	512
+#endif
 #endif	/* !IBM */
 
 #if	defined(__GNUC__) || defined(__clang__)

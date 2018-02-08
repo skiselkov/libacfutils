@@ -81,6 +81,7 @@ function build_dep() {
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
 		eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CFLAGS}" \
+		CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CXXFLAGS}" \
 		LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}" \
 		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 		    ${CONFOPTS} || exit 1

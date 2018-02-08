@@ -36,7 +36,7 @@ typedef struct {
 } worker_t;
 
 API_EXPORT void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
-    uint64_t intval_us, void *userinfo);
+    uint64_t intval_us, void *userinfo, const char *thread_name);
 API_EXPORT void worker_fini(worker_t *wk);
 
 API_EXPORT void worker_wake_up(worker_t *wk);

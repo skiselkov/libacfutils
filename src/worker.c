@@ -46,7 +46,7 @@ worker(void *ui)
 
 void
 worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
-    uint64_t intval_us, void *userinfo)
+    uint64_t intval_us, void *userinfo, const char *thread_name)
 {
 	ASSERT(worker_func != NULL);
 	ASSERT(!wk->run);
@@ -58,6 +58,8 @@ worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
 	wk->intval_us = intval_us;
 	wk->userinfo = userinfo;
 	VERIFY(thread_create(&wk->thread, worker, wk));
+	if (thread_name != NULL)
+		thread_set_name(&wk->thread, thread_name);
 }
 
 void

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+OUTFILE="$(echo "$1" | cut -d : -f 2-)"
+shift
+ar rcs "$OUTFILE" $@

@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+source ../build_dep.common
+
+LEPTONICA="leptonica-1.75.1.tar.xz"
+TESSERACT="tesseract-3.05.00.tar.xz"
+
+#CONFOPTS_LEPTONICA="--enable-static --disable-shared \
+#    --without-zlib --without-libpng --without-jpeg \
+#    --without-giflib --without-libtiff --without-libwebp \
+#    --without-libopenjpeg"
+
+CONFOPTS_LEPTONICA="--enable-static --disable-shared \
+    --without-zlib --without-jpeg \
+    --without-giflib --without-libtiff --without-libwebp \
+    --without-libopenjpeg"
+CONFOPTS_TESSERACT="--enable-static --disable-shared \
+    --disable-graphics --disable-cube"
+
+case `uname` in
+	Linux)
+		build_dep "linux-64" "$CONFOPTS_LEPTONICA" \
+		    "$LEPTONICA" "liblept" "lib/liblept.a" && \
+		build_dep "win-64" "$CONFOPTS_LEPTONICA \
+		    --host=x86_64-w64-mingw32" "$LEPTONICA" "liblept" \
+		    "lib/liblept.a" && \
+		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
+		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-linux-64/include/leptonica" \
+		    build_dep "linux-64" "$CONFOPTS_TESSERACT \
+		    --with-extra-libraries=$(pwd)/liblept-linux-64/lib" \
+		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
+		    "tesseract-thread.patch" && \
+		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
+		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-win-64/include/leptonica" \
+		    PATH="$(pwd)/tub-of-fuck:$PATH" \
+		    build_dep "win-64" "$CONFOPTS_TESSERACT --with-gnu-ld \
+		    --with-extra-libraries=$(pwd)/liblept-win-64/lib \
+		    --host=x86_64-w64-mingw32" \
+		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
+		    "tesseract-thread.patch" && \
+		    ( ! [ -f tesseract-win-64/lib/libtesseract.lib ] || \
+		    mv tesseract-win-64/lib/libtesseract.lib \
+		    tesseract-win-64/lib/libtesseract.a )
+		;;
+	Darwin)
+		build_dep "mac-64" "--enable-static --disable-shared" \
+		    "$SHAPELIB" "libshape" "lib/libshape.a"
+		;;
+	*)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+esac

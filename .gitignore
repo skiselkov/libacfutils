@@ -71,3 +71,12 @@ shapelib/libshape-mac-64
 shapelib/libshape-win-64
 shapelib/proj-4.9.3
 shapelib/shapelib-1.4.1
+
+ocr/leptonica-1.75.1
+ocr/liblept-linux-64
+ocr/liblept-mac-64
+ocr/liblept-win-64
+ocr/tesseract-3.05.00
+ocr/tesseract-linux-64
+ocr/tesseract-mac-64
+ocr/tesseract-win-64
