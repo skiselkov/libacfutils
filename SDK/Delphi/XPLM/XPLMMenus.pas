@@ -9,17 +9,33 @@
 UNIT XPLMMenus;
 INTERFACE
 {
-   XPLMMenus - Theory of Operation 
+   Theory of Operation 
    
-   Plug-ins can create menus in the menu bar of X-Plane.  This is done  by 
+   Plug-ins can create menus in the menu bar of X-Plane.  This is done by 
    creating a menu and then creating items.  Menus are referred to by an 
-   opaque ID.  Items are referred to by index number.  For each menu and item 
-   you specify a void *.  Per menu you specify a handler function that is 
-   called with each void * when the menu item is picked.  Menu item indices 
-   are zero based.                                                             
+   opaque ID.  Items are referred to by (zero-based) index number. 
+   
+   Menus are "sandboxed" between plugins---no plugin can access the menus of 
+   any other plugin. Furthermore, all menu indices are relative to your 
+   plugin's menus only; if your plugin creates two sub-menus in the Plugins 
+   menu at different times, it doesn't matter how many other plugins also 
+   create sub-menus of Plugins in the intervening time: your sub-menus will be 
+   given menu indices 0 and 1. (The SDK does some work in the back-end to 
+   filter out menus that are irrelevant to your plugin in order to deliver 
+   this consistency for each plugin.) 
+   
+   When you create a menu item, you specify how we should handle clicks on 
+   that menu item. You can either have the XPLM trigger a callback (the 
+   XPLMMenuHandler_f associated with the menu that contains the item), or you 
+   can simply have a command be triggered (with no associated call to your 
+   menu handler). The advantage of the latter method is that X-Plane will 
+   display any keyboard shortcuts associated with the command. (In contrast, 
+   there are no keyboard shortcuts associated with menu handler callbacks with 
+   specific parameters.)                                                       
 }
 
 USES   XPLMDefs;
+USES   XPLMUtilities;
    {$A4}
 {$IFDEF MSWINDOWS}
    {$DEFINE DELPHI}
@@ -31,14 +47,12 @@ USES   XPLMDefs;
                                                                                
 }
 
-
-
    {
     XPLMMenuCheck
     
     These enumerations define the various 'check' states for an X-Plane menu.  
-    'checking' in x-plane actually appears as a light which may or may not be 
-    lit.  So there are  three possible states.                                  
+    'checking' in X-Plane actually appears as a light which may or may not be 
+    lit.  So there are three possible states.                                   
    }
 TYPE
    XPLMMenuCheck = (
@@ -84,6 +98,29 @@ TYPE
                                        cdecl; external 'XPLM.DLL';
 {$ELSE}
                                        cdecl; external '';
+{$ENDIF}
+
+{$IFDEF XPLM300}
+   {
+    XPLMFindAircraftMenu
+    
+    This function returns the ID of the menu for the currently-loaded aircraft, 
+    used for showing aircraft-specific commands. 
+    
+    The aircraft menu is created by X-Plane at startup, but it remains hidden 
+    until it is populated via XPLMAppendMenuItem() or 
+    XPLMAppendMenuItemWithCommand(). 
+    
+    Only plugins loaded with the user's current aircraft are allowed to access 
+    the aircraft menu. For all other plugins, this will return NULL, and any 
+    attempts to add menu items to it will fail.                                 
+   }
+   FUNCTION XPLMFindAircraftMenu: XPLMMenuID;
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
 {$ENDIF}
 
    {
@@ -145,27 +182,64 @@ TYPE
     
     This routine appends a new menu item to the bottom of a menu and returns 
     its index. Pass in the menu to add the item to, the items name, and a void 
-    * ref for this item. If you pass in inForceEnglish, this menu item will be 
-    drawn using the english character set no matter what language x-plane is 
-    running in.  Otherwise the menu item will be drawn localized.  (An example 
-    of why you'd want to do this is for a proper name.)  See XPLMUtilities for 
-    determining the current langauge.                                           
+    * ref for this item. 
+    
+    Returns a negative index if the append failed (due to an invalid parent 
+    menu argument). 
+    
+    Note that all menu indices returned are relative to your plugin's menus 
+    only; if your plugin creates two sub-menus in the Plugins menu at different 
+    times, it doesn't matter how many other plugins also create sub-menus of 
+    Plugins in the intervening time: your sub-menus will be given menu indices 
+    0 and 1. (The SDK does some work in the back-end to filter out menus that 
+    are irrelevant to your plugin in order to deliver this consistency for each 
+    plugin.)                                                                    
    }
    FUNCTION XPLMAppendMenuItem(
                                         inMenu              : XPLMMenuID;    
                                         inItemName          : Pchar;    
                                         inItemRef           : pointer;    
-                                        inForceEnglish      : integer) : integer;    
+                                        inDeprecatedAndIgnored: integer) : integer;    
 {$IFDEF DELPHI}
                                        cdecl; external 'XPLM.DLL';
 {$ELSE}
                                        cdecl; external '';
 {$ENDIF}
 
+{$IFDEF XPLM300}
+   {
+    XPLMAppendMenuItemWithCommand
+    
+    Like XPLMAppendMenuItem(), but instead of the new menu item triggering the 
+    XPLMMenuHandler_f of the containiner menu, it will simply execute the 
+    command you pass in. Using a command for your menu item allows the user to 
+    bind a keyboard shortcut to the command and see that shortcut represented 
+    in the menu. 
+    
+    Returns a negative index if the append failed (due to an invalid parent 
+    menu argument). 
+    
+    Like XPLMAppendMenuItem(), all menu indices are relative to your plugin's 
+    menus only.                                                                 
+   }
+   FUNCTION XPLMAppendMenuItemWithCommand(
+                                        inMenu              : XPLMMenuID;    
+                                        inItemName          : Pchar;    
+                                        inCommandToExecute  : XPLMCommandRef) : integer;    
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+{$ENDIF}
+
    {
     XPLMAppendMenuSeparator
     
-    This routine adds a seperator to the end of a menu.                         
+    This routine adds a separator to the end of a menu. 
+    
+    Returns a negative index if the append failed (due to an invalid parent 
+    menu argument).                                                             
    }
    PROCEDURE XPLMAppendMenuSeparator(
                                         inMenu              : XPLMMenuID);    

@@ -53,7 +53,6 @@ USES   XPLMDefs;
 }
 
 
-
    {
     XPLMTextureID
     
@@ -144,7 +143,7 @@ TYPE
     
     inTextureID is the ID of the texture object to bind; inTextureUnit is a 
     zero-based  texture unit (e.g. 0 for the first one), up to a maximum of 4 
-    units.  (This number may increase in future versions of x-plane.) 
+    units.  (This number may increase in future versions of X-Plane.) 
     
     Use this routine instead of glBindTexture(GL_TEXTURE_2D, ....);             
    }
@@ -184,8 +183,8 @@ TYPE
     XPLMGetTexture returns the OpenGL texture enumeration of an X-Plane texture 
     based on a  generic identifying code.  For example, you can get the texture 
     for X-Plane's UI bitmaps.  This allows you to build new gauges that take 
-    advantage of x-plane's textures, for smooth artwork integration and also 
-    saving texture  memory.  Note that the texture might not be loaded yet, 
+    advantage of X-Plane's textures, for smooth artwork integration and also 
+    saving texture memory.  Note that the texture might not be loaded yet, 
     depending on what the  plane's panel contains. 
     
     OPEN ISSUE: We really need a way to make sure X-Plane loads this texture if 
@@ -268,8 +267,6 @@ TYPE
 {
                                                                                
 }
-
-
 
    {
     XPLMFontID
