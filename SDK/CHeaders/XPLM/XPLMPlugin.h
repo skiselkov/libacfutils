@@ -34,6 +34,7 @@ extern "C" {
  */
 
 
+
 /*
  * XPLMGetMyID
  * 
@@ -118,6 +119,7 @@ XPLM_API void                 XPLMGetPluginInfo(
  */
 
 
+
 /*
  * XPLMIsPluginEnabled
  * 
@@ -178,9 +180,10 @@ XPLM_API void                 XPLMReloadPlugins(void);
  * (e.g. be greater or equal to unsigned 0x8000000) while commands should have 
  * this bit be cleared. 
  * 
- * The following messages are sent to your plugin by X-Plane.                  
+ * The following messages are sent to your plugin by x-plane.                  
  *
  */
+
 
 
 /* This message is sent to your plugin whenever the user's plane crashes.      */
@@ -259,6 +262,8 @@ XPLM_API void                 XPLMSendMessageToPlugin(
  * should not expect a feature to be guaranteed present.                       
  *
  */
+
+
 
 
 /*

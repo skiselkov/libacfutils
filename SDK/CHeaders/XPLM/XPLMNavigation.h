@@ -20,7 +20,7 @@
  * 
  * You can also use this API to program the FMS.  You must use the navigation 
  * APIs to find the nav-aids you want to program into the FMS, since the FMS 
- * is powered internally by X-Plane's navigation database.                     
+ * is powered internally by x-plane's navigation database.                     
  *
  */
 
@@ -37,6 +37,8 @@ extern "C" {
  *                                                                             
  *
  */
+
+
 
 /*
  * XPLMNavType
@@ -120,7 +122,7 @@ XPLM_API XPLMNavRef           XPLMGetFirstNavAid(void);
  * 
  * WARNING: due to a bug in the SDK, when fix loading is disabled in the 
  * rendering settings screen, calling this routine with the last airport 
- * returns a bogus nav aid.  Using this nav aid can crash X-Plane.             
+ * returns a bogus nav aid.  Using this nav aid can crash x-plane.             
  *
  */
 XPLM_API XPLMNavRef           XPLMGetNextNavAid(
@@ -135,7 +137,7 @@ XPLM_API XPLMNavRef           XPLMGetNextNavAid(
  * 
  * WARNING: due to a bug in the SDK, when fix loading is disabled in the 
  * rendering settings screen, calling this routine with fixes returns a bogus 
- * nav aid.  Using this nav aid can crash X-Plane.                             
+ * nav aid.  Using this nav aid can crash x-plane.				                         
  *
  */
 XPLM_API XPLMNavRef           XPLMFindFirstNavAidOfType(
@@ -150,7 +152,7 @@ XPLM_API XPLMNavRef           XPLMFindFirstNavAidOfType(
  * 
  * WARNING: due to a bug in the SDK, when fix loading is disabled in the 
  * rendering settings screen, calling this routine with fixes returns a bogus 
- * nav aid.  Using this nav aid can crash X-Plane.                             
+ * nav aid.  Using this nav aid can crash x-plane.								                     
  *
  */
 XPLM_API XPLMNavRef           XPLMFindLastNavAidOfType(
@@ -237,6 +239,7 @@ XPLM_API void                 XPLMGetNavAidInfo(
  * waypoints in the flight plan.                                               
  *
  */
+
 
 
 /*
@@ -346,6 +349,8 @@ XPLM_API void                 XPLMClearFMSEntry(
  * These APIs let you read data from the GPS unit.                             
  *
  */
+
+
 
 /*
  * XPLMGetGPSDestinationType

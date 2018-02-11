@@ -47,6 +47,7 @@ extern "C" {
  */
 
 
+
 #ifdef __cplusplus
 	#if APL
         #if __GNUC__ >= 4
@@ -130,6 +131,7 @@ extern "C" {
  */
 
 
+
 /*
  * XPLMPluginID
  * 
@@ -210,6 +212,7 @@ typedef int XPLMKeyFlags;
  */
 
 
+
 #define XPLM_KEY_RETURN      13
 
 #define XPLM_KEY_ESCAPE      27
@@ -271,7 +274,7 @@ typedef int XPLMKeyFlags;
  * 1. Modifier keys are not available as virtual key codes.  You cannot get 
  * distinct modifier press and release messages.  Please do not try to use 
  * modifier keys as regular keys; doing so will almost certainly interfere 
- * with users' abilities to use the native X-Plane key bindings. 
+ * with users' abilities to use the native x-plane key bindings. 
  * 
  * 2. Some keys that do not exist on both Mac and PC keyboards are removed. 
  * 
@@ -279,6 +282,7 @@ typedef int XPLMKeyFlags;
  * with MS v-keys.                                                             
  *
  */
+
 
 
 #define XPLM_VK_BACK         0x08

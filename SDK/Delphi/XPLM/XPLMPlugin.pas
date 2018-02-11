@@ -29,6 +29,7 @@ USES   XPLMDefs;
 }
 
 
+
    {
     XPLMGetMyID
     
@@ -136,6 +137,7 @@ USES   XPLMDefs;
 }
 
 
+
    {
     XPLMIsPluginEnabled
     
@@ -212,8 +214,9 @@ USES   XPLMDefs;
    (e.g. be greater or equal to unsigned 0x8000000) while commands should have 
    this bit be cleared. 
    
-   The following messages are sent to your plugin by X-Plane.                  
+   The following messages are sent to your plugin by x-plane.                  
 }
+
 
 
 CONST
@@ -296,6 +299,8 @@ CONST
    names will vary with the particular  installation of X-Plane, so plugins 
    should not expect a feature to be guaranteed present.                       
 }
+
+
 
 
    {
