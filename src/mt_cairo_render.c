@@ -178,13 +178,6 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
 
-		glGenTextures(1, &rs->tex);
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-		    GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		    GL_LINEAR);
-
 		rs->surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 		    mtcr->w, mtcr->h);
 		rs->cr = cairo_create(rs->surf);
@@ -281,6 +274,7 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 static void
 bind_tex_sync(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
+	ASSERT(rs->tex != 0);
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0, GL_BGRA,
 	    GL_UNSIGNED_BYTE, cairo_image_surface_get_data(rs->surf));
@@ -288,13 +282,26 @@ bind_tex_sync(mt_cairo_render_t *mtcr, render_surf_t *rs)
 	rs->chg = B_FALSE;
 }
 
+static void
+rs_tex_alloc(render_surf_t *rs)
+{
+	if (rs->tex == 0) {
+		glGenTextures(1, &rs->tex);
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+		    GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+		    GL_LINEAR);
+	}
+}
+
 static bool_t
 bind_cur_tex(mt_cairo_render_t *mtcr)
 {
 	render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 
-	ASSERT(rs->tex != 0);
-	if (rs->chg) {
+	rs_tex_alloc(rs);
+	if (rs->chg || !rs->rdy) {
 		cairo_surface_flush(rs->surf);
 		if (!rs->rdy && mtcr->in_flight == 0) {
 			size_t sz = mtcr->w * mtcr->h * 4;
@@ -406,6 +413,8 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	if (mtcr->cur_rs != -1) {
 		render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 		/* Upload the texture if it has changed */
+
+		rs_tex_alloc(rs);
 		if (rs->chg) {
 			glBindTexture(GL_TEXTURE_2D, rs->tex);
 			cairo_surface_flush(rs->surf);
