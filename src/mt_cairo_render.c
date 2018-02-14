@@ -360,15 +360,34 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 }
 
 /*
- * Draws the rendered surface at offset pos.xy, at a size of size.xy.
- * This should be called at regular intervals to draw the results of
- * the cairo render (though not necessarily in lockstep with it). If
- * a new frame hasn't been rendered yet, this function simply renders
- * the old buffer again.
+ * Same as mt_cairo_render_draw_subrect, but renders the entire surface
+ * to the passed coordinates.
  */
 void
 mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 {
+	mt_cairo_render_draw_subrect(mtcr, ZERO_VECT2, VECT2(1, 1), pos, size);
+}
+
+/*
+ * Draws the rendered surface at offset pos.xy, at a size of size.xy.
+ * src_pos and src_sz allow you to specify only a sub-rectangle of the
+ * surface to be rendered.
+ *
+ * This should be called at regular intervals to draw the results of
+ * the cairo render (though not necessarily in lockstep with it). If
+ * a new frame hasn't been rendered yet, this function simply renders
+ * the old buffer again (or nothing at all if no surface has completed
+ * internal Cairo rendering). You can guarantee that a surface is ready
+ * by first calling mt_cairo_render_once_wait.
+ */
+void
+mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
+    vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
+{
+	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
+	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
+
 	mutex_enter(&mtcr->lock);
 
 	if (mtcr->cur_rs == -1) {
@@ -388,13 +407,13 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	mutex_exit(&mtcr->lock);
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0, 1);
+	glTexCoord2f(x1, y2);
 	glVertex2f(pos.x, pos.y);
-	glTexCoord2f(0, 0);
+	glTexCoord2f(x1, y1);
 	glVertex2f(pos.x, pos.y + size.y);
-	glTexCoord2f(1, 0);
+	glTexCoord2f(x2, y1);
 	glVertex2f(pos.x + size.x, pos.y + size.y);
-	glTexCoord2f(1, 1);
+	glTexCoord2f(x2, y2);
 	glVertex2f(pos.x + size.x, pos.y);
 	glEnd();
 }
