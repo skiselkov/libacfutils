@@ -173,7 +173,7 @@ typedef struct {
 	    0, NULL)) != NULL)
 #define	thread_join(thrp) \
 	VERIFY3S(WaitForSingleObject(*(thrp), INFINITE), ==, WAIT_OBJECT_0)
-#define	thread_set_name(thrp, name)	UNUSED(name)
+#define	thread_set_name(name)		UNUSED(name)
 
 #define	cv_wait(cv, mtx) \
 	VERIFY(SleepConditionVariableCS((cv), &(mtx)->cs, INFINITE))
