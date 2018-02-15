@@ -117,8 +117,13 @@ extern "C" {
 #define	thread_create(thrp, proc, arg) \
 	(pthread_create(thrp, NULL, (void *(*)(void *))proc, \
 	    arg) == 0)
-#define	thread_join(thrp)		pthread_join(*(thrp), NULL)
-#define	thread_set_name(thrp, name)	pthread_setname_np(*(thrp), name)
+#define	thread_join(thrp)	pthread_join(*(thrp), NULL)
+
+#if	LIN
+#define	thread_set_name(name)	pthread_setname_np(pthread_self(), (name))
+#else	/* APL */
+#define	thread_set_name(name)	pthread_setname_np((name))
+#endif	/* APL */
 
 #define	cv_wait(cv, mtx)	pthread_cond_wait((cv), (mtx))
 #define	cv_timedwait(cond, mtx, microtime) \

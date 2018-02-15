@@ -43,7 +43,13 @@ case `uname` in
 		;;
 	Darwin)
 		build_dep "mac-64" "--enable-static --disable-shared" \
-		    "$SHAPELIB" "libshape" "lib/libshape.a"
+		    "$PROJ4" "libproj" "lib/libproj.a"  &&
+		build_dep "mac-64" "--enable-static --disable-shared \
+		    --with-proj-cflags='$(PKG_CONFIG_PATH=libproj-mac-64/lib/pkgconfig \
+		    pkg-config --cflags proj)' \
+		    --with-proj-libs='$(PKG_CONFIG_PATH=libproj-mac-64/lib/pkgconfig \
+		    pkg-config --libs proj)'" \
+		    "$SHAPELIB" "libshape" "lib/libshp.a"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

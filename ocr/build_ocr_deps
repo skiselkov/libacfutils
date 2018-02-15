@@ -53,8 +53,15 @@ case `uname` in
 		    tesseract-win-64/lib/libtesseract.a )
 		;;
 	Darwin)
-		build_dep "mac-64" "--enable-static --disable-shared" \
-		    "$SHAPELIB" "libshape" "lib/libshape.a"
+		build_dep "mac-64" "$CONFOPTS_LEPTONICA" \
+		    "$LEPTONICA" "liblept" "lib/liblept.a" \
+		    "leptonica.patch" && \
+		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
+		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-mac-64/include/leptonica" \
+		    build_dep "mac-64" "$CONFOPTS_TESSERACT \
+		    --with-extra-libraries=$(pwd)/liblept-mac-64/lib" \
+		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
+		    "tesseract-thread.patch"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

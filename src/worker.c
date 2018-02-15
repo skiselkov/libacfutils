@@ -16,7 +16,10 @@
  * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
+#include <string.h>
+
 #include <acfutils/assert.h>
+#include <acfutils/helpers.h>
 #include <acfutils/worker.h>
 #include <acfutils/time.h>
 
@@ -24,6 +27,8 @@ static void
 worker(void *ui)
 {
 	worker_t *wk = ui;
+
+	thread_set_name(wk->name);
 
 	mutex_enter(&wk->lock);
 	while (wk->run) {
@@ -57,9 +62,11 @@ worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
 	wk->worker_func = worker_func;
 	wk->intval_us = intval_us;
 	wk->userinfo = userinfo;
-	VERIFY(thread_create(&wk->thread, worker, wk));
 	if (thread_name != NULL)
-		thread_set_name(&wk->thread, thread_name);
+		strlcpy(wk->name, thread_name, sizeof (wk->name));
+	else
+		memset(wk->name, 0, sizeof (wk->name));
+	VERIFY(thread_create(&wk->thread, worker, wk));
 }
 
 void

@@ -33,6 +33,7 @@ typedef struct {
 	thread_t	thread;
 	bool_t		(*worker_func)(void *userinfo);
 	void		*userinfo;
+	char		name[32];
 } worker_t;
 
 API_EXPORT void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
