@@ -309,12 +309,12 @@ airac_cycle2eff_date(int cycle)
 	int year = cycle / 100;
 	int mo = cycle % 100;
 
-	VERIFY3S(mo, >=, 1);
-	VERIFY3S(mo, <=, 14);
+	if (mo < 1 || mo > 14)
+		return (NULL);
 
 	for (int i = 0; airac_eff_dates[i].year != -1; i++) {
 		if (airac_eff_dates[i].year == year)
-			return (airac_eff_dates[i].cycles[mo]);
+			return (airac_eff_dates[i].cycles[mo - 1]);
 	}
 
 	return (NULL);
