@@ -23,13 +23,12 @@ function build_ssl() {
 
 	OUTDIR="$(pwd)/openssl-$PLATFORM"
 
-	[ -d openssl-1.0.2n ] || tar xzf openssl-1.0.2n.tar.gz
-
 	(
-		cd openssl-1.0.2n
 		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
-			rm -rf "$OUTDIR"
+			rm -rf "$OUTDIR" openssl-1.0.2n
+			tar xzf openssl-1.0.2n.tar.gz
 			mkdir -p "$OUTDIR"
+			cd openssl-1.0.2n
 			./Configure no-shared no-dso --prefix="$OUTDIR" \
 			    $CONFOPTS && make clean && make -j 8 && make install
 		fi
@@ -38,7 +37,7 @@ function build_ssl() {
 
 case `uname` in
 	Linux)
-		build_ssl linux-64 "linux-x86_64" && \
+		build_ssl linux-64 "-fPIC linux-x86_64" && \
 		build_ssl win-64 \
 		    "--cross-compile-prefix=x86_64-w64-mingw32- mingw64"
 		;;

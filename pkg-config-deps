@@ -51,7 +51,7 @@ $(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
 $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig"
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj openssl"
+    shapelib proj libcurl openssl"
 
 if [[ $(uname) != "Darwin" ]]; then
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
@@ -62,6 +62,9 @@ $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig"
 fi
 
 if [[ "$1" = "--libs" ]]; then
+	if [[ "$ARCH" = "win-64" ]]; then
+		OPENSSL_EXTRA="-lcrypt32 -lws2_32 -lgdi32"
+	fi
 	if [[ "$ARCH" = "linux-64" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
 	fi
@@ -79,6 +82,5 @@ if [[ "$1" = "--libs" ]]; then
 fi
 
 echo $WHOLE_ARCH_ON \
-    $(pkg-config $@ $PACKAGES) \
-    $(pkg-config $@ --static libcurl) ${CLIPBOARD} ${LZMA} \
-    $EXTRA $WHOLE_ARCH_OFF
+    $(pkg-config $@ $PACKAGES) $OPENSSL_EXTRA \
+    ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF
