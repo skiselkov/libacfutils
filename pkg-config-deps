@@ -47,10 +47,11 @@ $(pwd)/cairo/cairo-$ARCH/lib/pkgconfig:\
 $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libproj-$ARCH/lib/pkgconfig:\
-$(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig"
+$(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
+$(pwd)/ssl/openssl-$ARCH/lib/pkgconfig"
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj"
+    shapelib proj openssl"
 
 if [[ $(uname) != "Darwin" ]]; then
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
