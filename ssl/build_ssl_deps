@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2017 Saso Kiselkov. All rights reserved.
+
+# OpenSSL uses a fairly custom build infrastructure, so we can't
+# use build_dep
+function build_ssl() {
+	PLATFORM="$1"
+	CONFOPTS="$2"
+
+	OUTDIR="$(pwd)/openssl-$PLATFORM"
+
+	[ -d openssl-1.0.2n ] || tar xzf openssl-1.0.2n.tar.gz
+
+	(
+		cd openssl-1.0.2n
+		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
+			rm -rf "$OUTDIR"
+			mkdir -p "$OUTDIR"
+			./Configure no-shared no-dso --prefix="$OUTDIR" \
+			    $CONFOPTS && make clean && make -j 8 && make install
+		fi
+	)
+}
+
+case `uname` in
+	Linux)
+		build_ssl linux-64 "linux-x86_64" && \
+		build_ssl win-64 \
+		    "--cross-compile-prefix=x86_64-w64-mingw32- mingw64"
+		;;
+	Darwin)
+		build_ssl mac-64 "BSD-generic64"
+		;;
+	*)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+esac

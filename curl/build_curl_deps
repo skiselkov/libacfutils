@@ -24,20 +24,22 @@ CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-imap --disable-smb --disable-smtp --disable-gopher \
     --disable-manual --disable-pthreads --disable-unix-sockets \
     --disable-ipv6 --disable-threaded-resolver --disable-cookies \
-    --disable-tls-srp --disable-ntlm-wb --disable-crypto-auth \
-    --disable-sspi \
-    --with-pic --without-ssl"
+    --disable-ntlm-wb --disable-crypto-auth --disable-sspi \
+    --with-pic"
 
 case `uname` in
 	Linux)
-		build_dep "linux-64" "$CONFOPTS_COMMON" \
+		build_dep "linux-64" "$CONFOPTS_COMMON \
+		    --with-ssl=$(pwd)/../ssl/openssl-linux-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
 		build_dep "win-64" \
-		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32" \
+		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32 \
+		    --with-ssl=$(pwd)/../ssl/openssl-win-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
-		build_dep "mac-64" "$CONFOPTS_COMMON" \
+		build_dep "mac-64" "$CONFOPTS_COMMON \
+		    --with-ssl=$(pwd)/../ssl/openssl-mac-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	*)
