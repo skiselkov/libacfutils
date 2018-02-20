@@ -63,6 +63,8 @@ fi
 
 if [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
+		# This must be appended AFTER --whole-archive, otherwise
+		# it produces linkage errors on Windows.
 		OPENSSL_EXTRA="-lcrypt32 -lws2_32 -lgdi32"
 	fi
 	if [[ "$ARCH" = "linux-64" ]]; then
@@ -82,5 +84,6 @@ if [[ "$1" = "--libs" ]]; then
 fi
 
 echo $WHOLE_ARCH_ON \
-    $(pkg-config $@ $PACKAGES) $OPENSSL_EXTRA \
-    ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF
+    $(pkg-config $@ $PACKAGES) \
+    ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF \
+    $OPENSSL_EXTRA
