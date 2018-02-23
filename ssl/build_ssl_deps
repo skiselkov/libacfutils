@@ -24,6 +24,10 @@ function build_ssl() {
 	OUTDIR="$(pwd)/openssl-$PLATFORM"
 
 	(
+		if [[ "$do_clean" = 1 ]]; then
+			rm -rf "$OUTDIR" openssl-1.0.2n
+			return
+		fi
 		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
 			rm -rf "$OUTDIR" openssl-1.0.2n
 			tar xzf openssl-1.0.2n.tar.gz

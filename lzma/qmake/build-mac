@@ -23,7 +23,12 @@ LIB="liblzma.a"
 rm -rf mac-32 mac-64
 mkdir -p mac-32 mac-64
 
-make distclean > /dev/null
+make distclean &> /dev/null
+
+if [[ "$do_clean" = 1 ]]; then
+	exit
+fi
+
 qmake -spec macx-clang && make -j $NCPUS && mv "$LIB" mac-64
 if [ $? != 0 ] ; then
   exit
