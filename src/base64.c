@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #include "acfutils/base64.h"
 
