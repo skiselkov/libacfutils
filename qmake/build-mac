@@ -23,11 +23,8 @@ rm -rf mac32 mac64
 mkdir -p mac32 mac64
 
 make distclean > /dev/null
+qmake -set DLL 0
 qmake -spec macx-clang && make -j $NCPUS && mv libacfutils.a mac64
 if [ $? != 0 ] ; then
   exit
 fi
-
-# Don't bother with 32-bit builds.
-#make distclean > /dev/null
-#qmake -spec macx-clang-32 && make -j $NCPUS && mv libacfutils.a mac32

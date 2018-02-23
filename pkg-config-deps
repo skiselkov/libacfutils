@@ -31,6 +31,16 @@
 
 ARCH="$1"
 shift
+if [[ "$1" = "--whole-archive" ]]; then
+	if [[ "$(uname)" != Darwin ]]; then
+		WHOLE_ARCH_ON="-Wl,--whole-archive"
+		WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
+	fi
+	shift
+else
+	WHOLE_ARCH_ON=""
+	WHOLE_ARCH_OFF=""
+fi
 
 cd "$(dirname "$0")"
 
@@ -71,14 +81,6 @@ if [[ "$1" = "--libs" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
-
-	if [[ "$(uname)" != Darwin ]]; then
-		WHOLE_ARCH_ON="-Wl,--whole-archive"
-		WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
-	else
-		WHOLE_ARCH_ON=""
-		WHOLE_ARCH_OFF=""
-	fi
 
 	EXTRA="-static-libstdc++"
 fi

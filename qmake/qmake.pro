@@ -45,6 +45,7 @@ DEFINES += GLEW_BUILD=GLEW_STATIC
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 
 TARGET = acfutils
+dll = $$[DLL]
 
 win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
@@ -52,8 +53,6 @@ win32 {
 	QMAKE_DEL_FILE = rm -f
 	QMAKE_CFLAGS -= -Werror
 	LIBS += -static-libgcc
-
-	dll = $$[DLL]
 	contains(dll, 1) {
 		CONFIG += dll
 		LIBS += -Wl,--output-def,acfutils.def
@@ -63,21 +62,16 @@ win32 {
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
 
-	LIBS += $$system("../pkg-config-deps win-64 --libs")
+	contains(dll, 1) {
+		LIBS += $$system("../pkg-config-deps win-64 --whole-archive \
+		    --libs")
+	}
+	contains(dll, 0) {
+		LIBS += $$system("../pkg-config-deps win-64 --libs")
+	}
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
 	LIBS += -L../OpenAL/libs/Win64 -lOpenAL32
-	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
-	LIBS += -ldbghelp
-}
-
-win32:contains(CROSS_COMPILE, i686-w64-mingw32-) {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps win-32 --cflags")
-
-	LIBS += $$system("../pkg-config-deps win-32 --libs")
-	LIBS += -L../SDK/Libraries/Win -lXPLM
-	LIBS += -L../SDK/Libraries/Win -lXPWidgets
-	LIBS += -L../OpenAL/libs/Win32 -lOpenAL32
 	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
 	LIBS += -ldbghelp
 }
@@ -91,13 +85,6 @@ linux-g++-64 {
 	INCLUDEPATH += $$[LIBCLIPBOARD]/include
 }
 
-linux-g++-32 {
-	DEFINES += APL=0 IBM=0 LIN=1
-	QMAKE_CFLAGS += -fno-stack-protector
-	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-32 --cflags")
-	INCLUDEPATH += $$[LIBCLIPBOARD]/include
-}
-
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
 	QMAKE_CFLAGS += -mmacosx-version-min=10.7
@@ -105,10 +92,6 @@ macx {
 
 macx-clang {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
-}
-
-macx-clang-32 {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-32 --cflags")
 }
 
 HEADERS += ../src/*.h ../src/acfutils/*.h
