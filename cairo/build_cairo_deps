@@ -24,7 +24,7 @@ PIXMAN_PRODUCT="pixman/.libs/libpixman-1.a"
 PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
     --disable-static-testprogs"
 
-CAIRO_CFLAGS_COMMON="$CFLAGS -I$(pwd)/pixman-0.34.0/pixman"
+CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.34.0/pixman"
 CAIRO_PRODUCT="src/.libs/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
@@ -65,7 +65,7 @@ case `uname` in
 		CFLAGS="-m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON -m64" LDFLAGS="-m64" \
+		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT"
 		;;
