@@ -31,7 +31,7 @@ if [[ "$(uname)" = "Darwin" ]]; then
 	LDFLAGS_COMMON="-mmacosx-version-min=10.6"
 fi
 
-OPUS_CFLAGS_COMMON="$CFLAGS_COMMON -DOPUS_EXPORT=''"
+OPUS_CFLAGS_COMMON="$CFLAGS_COMMON\\ -DOPUS_EXPORT=''"
 
 if [[ "$1" = "-c" ]]; then
 	rm -fr "${OPUSFILE/%.tar.xz//}" "${OPUS/%.tar.xz//}" \
@@ -50,26 +50,15 @@ case `uname` in
 		    LDFLAGS="$LDFLAGS_COMMON -m64" \
 		    build_dep "linux-64" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$OPUS_CFLAGS_COMMON -m32" \
-		    LDFLAGS="$LDFLAGS_COMMON -m32" \
-		    build_dep "linux-32" "$OPUS_CONFOPTS_COMMON" \
-		    "$OPUS" "opus" ".libs/libopus.a" && \
 		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "win-64" "$OPUS_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
-		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
-		    build_dep "win-32" "$OPUS_CONFOPTS_COMMON \
-		    --host=i686-w64-mingw32" \
 		    "$OPUS" "opus" ".libs/libopus.a"
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    build_dep "mac-64" "$OPUS_CONFOPTS_COMMON" \
-		    "$OPUS" "opus" ".libs/libopus.a" && \
-		CFLAGS="$OPUS_CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON" \
-		    build_dep "mac-32" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a"
 		;;
 	*)
@@ -86,19 +75,10 @@ case `uname` in
 		    INSTALL_DIR="install" \
 		    build_dep "linux-64" "$LIBOGG_CONFOPTS_COMMON" \
 		    "$LIBOGG" "libogg" "src/.libs/libogg.a" && \
-		CFLAGS="$CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON -m32" \
-		    INSTALL_DIR="install" \
-		    build_dep "linux-32" "$LIBOGG_CONFOPTS_COMMON" \
-		    "$LIBOGG" "libogg" "src/.libs/libogg.a" && \
 		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    INSTALL_DIR="install" \
 		    build_dep "win-64" "$LIBOGG_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
-		    "$LIBOGG" "libogg" "src/.libs/libogg.a" && \
-		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
-		    INSTALL_DIR="install" \
-		    build_dep "win-32" "$LIBOGG_CONFOPTS_COMMON \
-		    --host=i686-w64-mingw32" \
 		    "$LIBOGG" "libogg" "src/.libs/libogg.a"
 		;;
 	Darwin)
@@ -106,10 +86,6 @@ case `uname` in
 		CFLAGS="$CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
 		    INSTALL_DIR="install" \
 		    build_dep "mac-64" "$LIBOGG_CONFOPTS_COMMON" \
-		    "$LIBOGG" "libogg" "src/.libs/libogg.a" && \
-		CFLAGS="$CFLAGS_COMMON -m32" LDFLAGS="$LDFLAGS_COMMON -m32" \
-		    INSTALL_DIR="install" \
-		    build_dep "mac-32" "$LIBOGG_CONFOPTS_COMMON" \
 		    "$LIBOGG" "libogg" "src/.libs/libogg.a"
 		;;
 	*)
@@ -142,14 +118,11 @@ case `uname` in
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
 		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "linux-64" && \
-		CFLAGS="-m32" LDFLAGS="-m32" build_opusfile "linux-32" && \
-		build_opusfile "win-64" "--host=x86_64-w64-mingw32" && \
-		build_opusfile "win-32" "--host=i686-w64-mingw32"
+		build_opusfile "win-64" "--host=x86_64-w64-mingw32"
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
-		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "mac-64" && \
-		CFLAGS="-m32" LDFLAGS="-m32" build_opusfile "mac-32"
+		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "mac-64"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
