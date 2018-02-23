@@ -37,28 +37,12 @@ case `uname` in
 		    --enable-shared --host=x86_64-w64-mingw32" \
 		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
 		    "$FREETYPE_PATCH"
-
-#		CFLAGS="-m32" LDFLAGS="-m32" \
-#		    build_dep "linux-32" "$FREETYPE_CONFOPTS_COMMON" \
-#		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
-#		    "$FREETYPE_PATCH" && \
-#		build_dep "win-32" "$FREETYPE_CONFOPTS_COMMON \
-#		    --host=i686-w64-mingw32" \
-#		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
-#		    "$FREETYPE_PATCH"
 		;;
 	Darwin)
 		CFLAGS="$FREETYPE_CFLAGS_COMMON" \
 		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON" \
 		    build_dep "mac-64" "$FREETYPE_CONFOPTS_COMMON" \
 		    "$FREETYPE" "freetype" "lib/libfreetype.a"
-
-##		CFLAGS="$FREETYPE_CFLAGS_COMMON -mmacosx-version-min=10.6 \
-#		    -m32" \
-#		    LDFLAGS="$FREETYPE_LDFLAGS_COMMON \
-#		    -mmacosx-version-min=10.6 -m32" \
-#		    build_dep "mac-32" "$FREETYPE_CONFOPTS_COMMON" \
-#		    "$FREETYPE" "freetype" "lib/libfreetype.a"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

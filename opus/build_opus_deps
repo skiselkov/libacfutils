@@ -33,7 +33,7 @@ fi
 
 OPUS_CFLAGS_COMMON="$CFLAGS_COMMON\\ -DOPUS_EXPORT=''"
 
-if [[ "$1" = "-c" ]]; then
+if [[ "$do_clean" = "1" ]]; then
 	rm -fr "${OPUSFILE/%.tar.xz//}" "${OPUS/%.tar.xz//}" \
 	    "${LIBOGG/%.tar.xz//}" \
 	    opusfile-{linux,win,mac}-{32,64} \
@@ -46,8 +46,8 @@ case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		CFLAGS="$OPUS_CFLAGS_COMMON -m64" \
-		    LDFLAGS="$LDFLAGS_COMMON -m64" \
+		CFLAGS="$OPUS_CFLAGS_COMMON\\ -m64" \
+		    LDFLAGS="$LDFLAGS_COMMON\\ -m64" \
 		    build_dep "linux-64" "$OPUS_CONFOPTS_COMMON" \
 		    "$OPUS" "opus" ".libs/libopus.a" && \
 		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
@@ -71,7 +71,8 @@ case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		CFLAGS="$CFLAGS_COMMON -m64" LDFLAGS="$LDFLAGS_COMMON -m64" \
+		CFLAGS="$CFLAGS_COMMON\\ -m64" \
+		    LDFLAGS="$LDFLAGS_COMMON\\ -m64" \
 		    INSTALL_DIR="install" \
 		    build_dep "linux-64" "$LIBOGG_CONFOPTS_COMMON" \
 		    "$LIBOGG" "libogg" "src/.libs/libogg.a" && \

@@ -29,7 +29,7 @@ fi
 case `uname` in
 	Linux)
 		build_dep "linux-64" "--enable-static --disable-shared" \
-		    "$PROJ4" "libproj" "lib/libproj.a"  &&
+		    "$PROJ4" "libproj" "lib/libproj.a" && \
 		build_dep "win-64" "--enable-static --disable-shared \
 		    --host=x86_64-w64-mingw32" "$PROJ4" "libproj" \
 		    "lib/libproj.a" && \
