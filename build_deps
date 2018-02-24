@@ -15,9 +15,12 @@
 
 # Copyright 2017 Saso Kiselkov. All rights reserved.
 
-if [[ "$1" = "-c" ]]; then
-	export do_clean=1
-fi
+while getopts "cd" opt; do
+	case $opt in
+	c) export do_clean=1 ;;
+	d) export do_dll=1 ;;
+	esac
+done
 
 ( cd zlib && ./build_zlib_deps ) && \
     ( cd libpng && ./build_libpng_deps ) && \

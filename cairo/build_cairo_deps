@@ -43,6 +43,11 @@ $(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/pixman-{PLATFORM}/lib/pkgconfig" \
 
+CAIRO_PATCHES="cairo-win-ulongf.patch"
+if [[ "$do_dll" = 1 ]]; then
+	CAIRO_PATCHES="$CAIRO_PATCHES cairo-win-dllexport.patch"
+fi
+
 case `uname` in
 	Linux)
 		CFLAGS="-m64" LDFLAGS="-m64\\ -L$(pwd)/../freetype/freetype-linux-64/lib" \
@@ -53,13 +58,11 @@ case `uname` in
 		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" && \
 		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch \
-		    cairo-win-ulongf.patch" && \
+		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES" && \
 		CFLAGS="$CAIRO_CFLAGS_COMMON" \
 		    build_dep "win-64" "$CAIRO_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT" "cairo-win-dllexport.patch \
-		    cairo-win-ulongf.patch"
+		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES"
 		;;
 	Darwin)
 		CFLAGS="-m64" LDFLAGS="-m64" \

@@ -32,7 +32,7 @@ extern "C" {
 
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
 
-#if	IBM || defined(_MSC_VER)
+#if	(IBM || defined(_MSC_VER)) && ACFUTILS_DLL
 #define	API_EXPORT	__declspec(dllexport)
 #define	API_EXPORT_DATA	__declspec(dllexport)
 #else	/* !IBM && !defined(_MSC_VER) */

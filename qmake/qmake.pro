@@ -40,12 +40,19 @@ DEFINES += GL_GLEXT_PROTOTYPES
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210
 
-DEFINES += GLEW_BUILD=GLEW_STATIC
-
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 
 TARGET = acfutils
 dll = $$[DLL]
+
+contains(dll, 0) {
+	DEFINES += GLEW_STATIC
+	DEFINES += ACFUTILS_DLL=0
+}
+contains(dll, 1) {
+	DEFINES += GLEW_BUILD
+	DEFINES += ACFUTILS_DLL=1
+}
 
 win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
