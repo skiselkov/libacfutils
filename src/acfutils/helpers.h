@@ -48,7 +48,6 @@ extern "C" {
 #define	NO_ACF_TYPE		0
 #define	FF_A320_ACF_TYPE	1
 
-#define	BUILD_DIRSEP	'/'	/* we only build on Unix-like OSes */
 #if	IBM
 #define	DIRSEP		'\\'
 #define	DIRSEP_S	"\\"	/* DIRSEP as a string */

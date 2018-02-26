@@ -34,18 +34,20 @@ extern "C" {
 typedef void (*logfunc_t)(const char *);
 API_EXPORT void log_init(logfunc_t func, const char *prefix);
 
+#if	defined(__GNUC__) || defined(__clang__)
+#define	BUILTIN_STRRCHR	__builtin_strrchr
+#else	/* !defined(__GNUC__) && !defined(__clang__) */
+#define	BUILTIN_STRRCHR	strrchr
+#endif	/* !defined(__GNUC__) && !defined(__clang__) */
+
 /*
  * This lets us chop out the basename (last path component) from __FILE__
  * at compile time. This works on GCC and Clang. The fallback mechanism
  * below just chops it out at compile time.
  */
-#if	defined(__GNUC__) || defined(__clang__)
-#define	log_basename(f)	(__builtin_strrchr(f, BUILD_DIRSEP) ? \
-	__builtin_strrchr(f, BUILD_DIRSEP) + 1 : f)
-#else	/* !__GNUC__ && !__clang__ */
-#define	log_basename(f)	(strrchr(f, BUILD_DIRSEP) ? \
-	strrchr(f, BUILD_DIRSEP) + 1 : f)
-#endif	/* !__GNUC__ && !__clang__ */
+#define	log_basename(f)	\
+	(BUILTIN_STRRCHR(f, '/') ? BUILTIN_STRRCHR(f, '/') + 1 : \
+	    (BUILTIN_STRRCHR(f, '\\') ? BUILTIN_STRRCHR(f, '\\') + 1 : (f)))
 
 #define	logMsg(...) \
 	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
