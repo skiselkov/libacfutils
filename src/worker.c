@@ -40,6 +40,11 @@ worker(void *ui)
 
 		if (!wk->worker_func(wk->userinfo))
 			break;
+		/*
+		 * If another thread is waiting on us to finish executing,
+		 * signal it.
+		 */
+		cv_broadcast(&wk->cv);
 
 		if (wk->intval_us != 0) {
 			cv_timedwait(&wk->cv, &wk->lock,
@@ -54,7 +59,6 @@ worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
     uint64_t intval_us, void *userinfo, const char *thread_name)
 {
 	ASSERT(worker_func != NULL);
-	ASSERT(!wk->run);
 
 	wk->run = B_TRUE;
 	mutex_init(&wk->lock);
@@ -87,7 +91,6 @@ worker_fini(worker_t *wk)
 
 	thread_join(&wk->thread);
 
-	wk->run = B_FALSE;
 	mutex_destroy(&wk->lock);
 	cv_destroy(&wk->cv);
 }
@@ -97,5 +100,16 @@ worker_wake_up(worker_t *wk)
 {
 	mutex_enter(&wk->lock);
 	cv_broadcast(&wk->cv);
+	mutex_exit(&wk->lock);
+}
+
+void
+worker_wake_up_wait(worker_t *wk)
+{
+	mutex_enter(&wk->lock);
+	/* First wake up the thread */
+	cv_broadcast(&wk->cv);
+	/* And then wait for it to finish */
+	cv_wait(&wk->cv, &wk->lock);
 	mutex_exit(&wk->lock);
 }
