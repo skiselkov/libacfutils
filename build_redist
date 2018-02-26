@@ -17,18 +17,77 @@
 
 OUTPUT=libacfutils-redist
 
-LIBS=(
-	qmake/win64/acfutils.dll
-	qmake/win64/acfutils.lib
-)
-HDR_DIRS=(
-	glew/GL
-	cairo/cairo-win-64/include/cairo
-	freetype/freetype-win-64/include/freetype2
-)
+function install_platform() {
+	PLATFORM="$1"
+	HDRS="$2"
+	LIBS="$3"
 
-mkdir -p "$OUTPUT/lib" "$OUTPUT/include"
-cp -r ${LIBS[@]} "$OUTPUT/lib"
-cp -r ${HDR_DIRS[@]} "$OUTPUT/include"
-cp -r src/acfutils "$OUTPUT/include"
+	mkdir -p "$OUTPUT/$PLATFORM/include" "$OUTPUT/$PLATFORM/lib"
+
+	cp -r ${HDRS} "$OUTPUT/$PLATFORM"
+	cp -r ${LIBS} "$OUTPUT/$PLATFORM/lib"
+}
+
+rm -rf "$OUTPUT"
+
+mkdir -p "$OUTPUT/include"
+cp -r src/acfutils glew/GL "$OUTPUT/include"
 cp README-redist.md "$OUTPUT/README.md"
+
+case $(uname) in
+Linux)
+	HDRS_WIN64=(
+		cairo/cairo-win-64/include
+		freetype/freetype-win-64/include
+	)
+	LIBS_WIN64=(
+		qmake/win64/acfutils.dll
+		qmake/win64/acfutils.lib
+	)
+	HDRS_LIN64=(
+		cairo/cairo-linux-64/include
+		freetype/freetype-linux-64/include
+	)
+	LIBS_LIN64=(
+		qmake/lin64/libacfutils.a
+		cairo/cairo-linux-64/lib/libcairo.a
+		cairo/pixman-linux-64/lib/libpixman-1.a
+		freetype/freetype-linux-64/lib/libfreetype.a
+		libpng/libpng-linux-64/lib/libpng16.a
+		opus/opusfile-linux-64/lib/libopusfile.a
+		opus/opus-linux-64/lib/libopus.a
+		opus/opusfile-linux-64/lib/libopusurl.a
+		opus/libogg-linux-64/install/lib/libogg.a
+		zlib/zlib-linux-64/lib/libz.a
+	)
+
+	install_platform "win64" "${HDRS_WIN64[*]}" "${LIBS_WIN64[*]}"
+	install_platform "lin64" "${HDRS_LIN64[*]}" "${LIBS_LIN64[*]}"
+
+	;;
+Darwin)
+	HDRS_MAC64=(
+		cairo/cairo-mac-64/include
+		freetype/freetype-mac-64/include
+	)
+	LIBS_MAC64=(
+		qmake/mac64/libacfutils.a
+		cairo/cairo-mac-64/lib/libcairo.a
+		cairo/pixman-mac-64/lib/libpixman-1.a
+		freetype/freetype-mac-64/lib/libfreetype.a
+		libpng/libpng-mac-64/lib/libpng16.a
+		opus/opusfile-mac-64/lib/libopusfile.a
+		opus/opusfile-mac-64/lib/libopusurl.a
+		opus/opus-mac-64/lib/libopus.a
+		opus/libogg-mac-64/install/lib/libogg.a
+		zlib/zlib-mac-64/lib/libz.a
+	)
+
+	install_platform "mac64" "${HDRS_MAC64[@]}" "${LIBS_MAC64[@]}"
+
+	;;
+*)
+	echo "Unknown platform" >&2
+	exit 1
+	;;
+esac
