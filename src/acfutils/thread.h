@@ -29,7 +29,8 @@
 #include <windows.h>
 #endif	/* !APL && !LIN */
 
-#include "helpers.h"
+#include <acfutils/assert.h>
+#include <acfutils/helpers.h>
 
 #ifdef __cplusplus
 extern "C" {
