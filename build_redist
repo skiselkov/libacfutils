@@ -59,6 +59,7 @@ Linux)
 		opus/opusfile-linux-64/lib/libopusurl.a
 		opus/libogg-linux-64/install/lib/libogg.a
 		zlib/zlib-linux-64/lib/libz.a
+		lzma/qmake/linux-64/liblzma.a
 	)
 
 	install_platform "win64" "${HDRS_WIN64[*]}" "${LIBS_WIN64[*]}"
@@ -81,9 +82,10 @@ Darwin)
 		opus/opus-mac-64/lib/libopus.a
 		opus/libogg-mac-64/install/lib/libogg.a
 		zlib/zlib-mac-64/lib/libz.a
+		lzma/qmake/mac-64/liblzma.a
 	)
 
-	install_platform "mac64" "${HDRS_MAC64[@]}" "${LIBS_MAC64[@]}"
+	install_platform "mac64" "${HDRS_MAC64[*]}" "${LIBS_MAC64[*]}"
 
 	;;
 *)
