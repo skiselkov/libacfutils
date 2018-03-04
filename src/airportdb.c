@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #if	IBM
 #include <windows.h>
@@ -203,6 +204,13 @@ static void free_airport(airport_t *arpt);
 static bool_t load_airport(airport_t *arpt);
 static void load_rwy_info(runway_t *rwy);
 
+static inline void
+strtoupper(char *str)
+{
+	for (int i = 0, n = strlen(str); i < n; i++)
+		str[i] = toupper(str[i]);
+}
+
 /*
  * Given an arbitrary geographical position, returns the geo_table tile
  * coordinate which the input position corresponds to. If div_by_10 is
@@ -369,16 +377,21 @@ rwy_is_hard(int t)
 
 /*
  * Performs a lookup for an airport based on ICAO code in an airportdb_t.
+ * The lookup is case-insensitive, because some data providers sometimes
+ * provided ICAO identifiers in lowercase.
  */
 static airport_t *
 apt_dat_lookup(airportdb_t *db, const char *icao)
 {
 	airport_t search, *result;
+
 	strlcpy(search.icao, icao, sizeof (search.icao));
+	strtoupper(search.icao);
 	result = avl_find(&db->apt_dat, &search, NULL);
 	ASSERT(result == NULL || is_valid_icao_code(result->icao));
 	if (result != NULL)
 		load_airport(result);
+
 	return (result);
 }
 
@@ -606,6 +619,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line)
 	avl_create(&arpt->rwys, runway_compar, sizeof (runway_t),
 	    offsetof(runway_t, node));
 	strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
+	strtoupper(arpt->icao);
 	arpt->refpt = pos;
 	arpt->TL = TL;
 	arpt->TA = TA;
