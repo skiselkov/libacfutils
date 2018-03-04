@@ -43,12 +43,13 @@ API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
  * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.
  */
 static inline double
-wavg(double x, double y, double w)
+wavg_impl(double x, double y, double w, const char *file, int line)
 {
-	ASSERT3F(w, >=, 0.0);
-	ASSERT3F(w, <=, 1.0);
+	ASSERT_MSG(w >= 0.0, "%f < 0.0: called from: %s:%d", w, file, line);
+	ASSERT_MSG(w <= 1.0, "%f > 1.0: called from: %s:%d", w, file, line);
 	return (x + (y - x) * w);
 }
+#define wavg(x, y, w)	wavg_impl((x), (y), (w), __FILE__, __LINE__)
 
 #define	DEFN_CLAMP(name, type, assert_chk) \
 static inline type \
