@@ -58,18 +58,12 @@ $(pwd)/cairo/pixman-$ARCH/lib/pkgconfig:\
 $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libproj-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
-$(pwd)/ssl/openssl-$ARCH/lib/pkgconfig"
-
-PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj libcurl openssl"
-
-if [[ $(uname) != "Darwin" ]]; then
-	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
+$(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig"
-	export PKG_CONFIG_PATH
-	PACKAGES="$PACKAGES tesseract lept"
-fi
+
+PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
+    shapelib proj libcurl openssl tesseract lept"
 
 if [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
@@ -82,7 +76,9 @@ if [[ "$1" = "--libs" ]]; then
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
 
-	EXTRA="-static-libstdc++"
+	if [[ "$ARCH" != "mac-64" ]]; then
+		EXTRA="-static-libstdc++"
+	fi
 fi
 
 echo $WHOLE_ARCH_ON \

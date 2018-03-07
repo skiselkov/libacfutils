@@ -34,7 +34,10 @@ function build_ssl() {
 			mkdir -p "$OUTDIR"
 			cd openssl-1.0.2n
 			./Configure no-shared no-dso --prefix="$OUTDIR" \
-			    $CONFOPTS && make clean && make -j 8 && make install
+			    $CONFOPTS -mmacosx-version-min=10.9 && \
+			    make clean && \
+			    make -j 8 && \
+			    make install
 		fi
 	)
 }
