@@ -28,13 +28,16 @@ function build_ssl() {
 			rm -rf "$OUTDIR" openssl-1.0.2n
 			return
 		fi
+		if [[ $(uname) = "Darwin" ]]; then
+			CONFOPTS="$CONFOPTS -mmacosx-version-min=10.9"
+		fi
 		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
 			rm -rf "$OUTDIR" openssl-1.0.2n
 			tar xzf openssl-1.0.2n.tar.gz
 			mkdir -p "$OUTDIR"
 			cd openssl-1.0.2n
 			./Configure no-shared no-dso --prefix="$OUTDIR" \
-			    $CONFOPTS -mmacosx-version-min=10.9 && \
+			    $CONFOPTS && \
 			    make clean && \
 			    make -j 8 && \
 			    make install
