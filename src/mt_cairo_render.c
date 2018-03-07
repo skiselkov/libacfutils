@@ -85,6 +85,8 @@ static const struct {
 } ft_errors[] =
 #include FT_ERRORS_H
 
+static bool_t glob_inited = B_FALSE;
+
 const char *
 ft_err2str(FT_Error err)
 {
@@ -136,6 +138,22 @@ worker(mt_cairo_render_t *mtcr)
 }
 
 /*
+ * Initializes the mt_cairo_render state. You should call this before doing
+ * *ANY* Cairo or mt_cairo_render calls. Notably, the font machinery of
+ * Cairo isn't thread-safe before this call, so place a call to this function
+ * at the start of your bootstrap code.
+ */
+void
+mt_cairo_render_glob_init(void)
+{
+	if (glob_inited)
+		return;
+	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+	    1, 1));
+	glob_inited = B_TRUE;
+}
+
+/*
  * Creates a new mt_cairo_render_t surface.
  * @param w Width of the rendered surface (in pixels).
  * @param h Height of the rendered surface (in pixels).
@@ -158,6 +176,8 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
     mt_cairo_fini_cb_t fini_cb, void *userinfo)
 {
 	mt_cairo_render_t *mtcr = calloc(1, sizeof (*mtcr));
+
+	mt_cairo_render_glob_init();
 
 	ASSERT(w != 0);
 	ASSERT(h != 0);
@@ -476,6 +496,8 @@ try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
 {
 	char *fontpath = mkpathname(fontdir, fontfile, NULL);
 	FT_Error err;
+
+	mt_cairo_render_glob_init();
 
 	if ((err = FT_New_Face(ft, fontpath, 0, font)) != 0) {
 		logMsg("Error loading font file %s: %s", fontpath,

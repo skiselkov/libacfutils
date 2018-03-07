@@ -39,6 +39,8 @@
 extern "C" {
 #endif
 
+API_EXPORT void mt_cairo_render_glob_init(void);
+
 typedef bool_t (*mt_cairo_init_cb_t)(cairo_t *cr, void *userinfo);
 typedef void (*mt_cairo_fini_cb_t)(cairo_t *cr, void *userinfo);
 typedef void (*mt_cairo_render_cb_t)(cairo_t *cr, unsigned w, unsigned h,
