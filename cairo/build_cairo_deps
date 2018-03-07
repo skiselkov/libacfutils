@@ -65,6 +65,9 @@ case `uname` in
 		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES"
 		;;
 	Darwin)
+		# We must disable built-in support for thread-local-storage,
+		# because it messes with VMProtect packed files on OSX.
+		CUSTPREMAKECMD="gsed -i '/^#define TLS/d;' config.h" \
 		CFLAGS="-m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" "pixman-test-prng.patch" && \
