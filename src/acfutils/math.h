@@ -25,6 +25,7 @@
 extern "C" {
 #endif
 
+#define	POW4(x)	((x) * (x) * (x) * (x))
 #define	POW3(x)	((x) * (x) * (x))
 #define	POW2(x)	((x) * (x))
 #define	ROUND_ERROR	1e-10
