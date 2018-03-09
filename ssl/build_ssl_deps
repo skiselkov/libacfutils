@@ -45,14 +45,19 @@ function build_ssl() {
 	)
 }
 
+if [[ -z "$do_dll" ]]; then
+	VIS="-fvisibility=hidden"
+fi
+
 case `uname` in
 	Linux)
-		build_ssl linux-64 "-fPIC linux-x86_64" && \
+		build_ssl linux-64 "-fPIC -fvisibility=hidden linux-x86_64" || \
+		    exit 1
 		build_ssl win-64 \
-		    "--cross-compile-prefix=x86_64-w64-mingw32- mingw64"
+		    "--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
 		;;
 	Darwin)
-		build_ssl mac-64 "BSD-generic64"
+		build_ssl mac-64 "-fvisibility=hidden BSD-generic64"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
