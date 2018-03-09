@@ -20,6 +20,7 @@
 #define	_ACF_UTILS_TYPES_H_
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include <acfutils/core.h>
