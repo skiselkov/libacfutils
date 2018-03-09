@@ -40,6 +40,7 @@ function build_dep() {
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 		CFLAGS_ADDTL="-mmacosx-version-min=10.9"
 		CXXFLAGS_ADDTL="-mmacosx-version-min=10.9"
+		LDFLAGS_ADDTL="-mmacosx-version-min=10.9"
 		;;
 	esac
 
@@ -86,7 +87,8 @@ function build_dep() {
 $CFLAGS_ADDTL" \
 		CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CXXFLAGS}\\ \
 $CXXFLAGS_ADDTL" \
-		LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}" \
+		LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}\\ \
+$LDFLAGS_ADDTL" \
 		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 		    ${CONFOPTS} || exit 1
 
