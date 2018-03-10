@@ -33,14 +33,20 @@
 #include "acfutils/log.h"
 #include "acfutils/png.h"
 
+typedef struct {
+	const void	*bufp;
+	size_t		len;
+	size_t		cur;
+} bufread_t;
+
 /*
  * This is a simplified PNG file loading routine that avoids having to deal
  * with all that libpng nonsense.
  */
 uint8_t *
-png_load_from_file_rgba(const char *filename, int *width, int *height)
+png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height)
 {
-	FILE *fp;
+	FILE *volatile fp = NULL;
 	size_t rowbytes;
 	png_bytep *volatile rowp = NULL;
 	png_structp pngp = NULL;
@@ -48,16 +54,25 @@ png_load_from_file_rgba(const char *filename, int *width, int *height)
 	uint8_t header[8];
 	uint8_t *volatile pixels = NULL;
 	volatile int w, h;
+	const char *volatile filename;
 
-	fp = fopen(filename, "rb");
-	if (fp == NULL) {
-		logMsg("Cannot open file %s: %s", filename, strerror(errno));
-		goto out;
-	}
-	if (fread(header, 1, sizeof (header), fp) != 8 ||
-	    png_sig_cmp(header, 0, sizeof (header)) != 0) {
-		logMsg("Cannot open file %s: invalid PNG header", filename);
-		goto out;
+	if (readfunc == NULL) {
+		filename = arg;
+
+		fp = fopen(filename, "rb");
+		if (fp == NULL) {
+			logMsg("Cannot open file %s: %s", filename,
+			    strerror(errno));
+			goto out;
+		}
+		if (fread(header, 1, sizeof (header), fp) != 8 ||
+		    png_sig_cmp(header, 0, sizeof (header)) != 0) {
+			logMsg("Cannot open file %s: invalid PNG header",
+			    filename);
+			goto out;
+		}
+	} else {
+		filename = "<memstream>";
 	}
 	pngp = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	VERIFY(pngp != NULL);
@@ -68,8 +83,12 @@ png_load_from_file_rgba(const char *filename, int *width, int *height)
 		    filename);
 		goto out;
 	}
-	png_init_io(pngp, fp);
-	png_set_sig_bytes(pngp, 8);
+	if (readfunc == NULL) {
+		png_init_io(pngp, fp);
+		png_set_sig_bytes(pngp, 8);
+	} else {
+		png_set_read_fn(pngp, arg, readfunc);
+	}
 
 	if (setjmp(png_jmpbuf(pngp))) {
 		logMsg("Cannot open file %s: libpng read info failed",
@@ -123,6 +142,29 @@ out:
 	}
 
 	return (pixels);
+}
+
+uint8_t *
+png_load_from_file_rgba(const char *filename, int *width, int *height)
+{
+	return (png_load_impl(NULL, (void *)filename, width, height));
+}
+
+static void
+bufread(png_structp pngp, png_bytep out_buf, png_size_t len)
+{
+	bufread_t *br = png_get_io_ptr(pngp);
+	size_t to_read = MIN(br->len - br->cur, len);
+
+	memcpy(out_buf, br->bufp + br->cur, to_read);
+	br->cur += to_read;
+}
+
+uint8_t *
+png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
+{
+	bufread_t br = { .bufp = buf, .len = len, .cur = 0 };
+	return (png_load_impl(bufread, &br, width, height));
 }
 
 static bool_t
