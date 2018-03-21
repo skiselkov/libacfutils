@@ -24,6 +24,7 @@
 #if	IBM
 #include <windows.h>
 #include <dbghelp.h>
+#include <psapi.h>
 #else
 #include <execinfo.h>   /* used for stack tracing */
 #endif	/* !IBM */
@@ -91,6 +92,7 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
 }
 
 #define	MAX_STACK_FRAMES	128
+#define	MAX_MODULES		1024
 #define	BACKTRACE_STR		"Backtrace is:\n"
 #if	defined(__GNUC__) || defined(__clang__)
 #define	BACKTRACE_STRLEN	__builtin_strlen(BACKTRACE_STR)
@@ -105,26 +107,93 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
  * to call into the VM subsystem.
  */
 #define	MAX_SYM_NAME_LEN	1024
-static char backtrace_buf[4096] = { 0 };
+#define	MAX_BACKTRACE_LEN	(64 * 1024)
+static char backtrace_buf[MAX_BACKTRACE_LEN] = { 0 };
 static char symbol_buf[sizeof (SYMBOL_INFO) +
     MAX_SYM_NAME_LEN * sizeof (TCHAR)];
 static char line_buf[sizeof (IMAGEHLP_LINE64)];
 #endif	/* IBM */
 
+#if	IBM
+
+/*
+ * Given a module path in `filename' and a relative module address in `addr',
+ * attempts to resolve the symbol name and relative symbol address. This is
+ * done by looking for a syms.txt file in the same directory as the module's
+ * filename.
+ * If found, the symbol name + symbol relative address is placed into
+ * `symname' in the "symbol+offset" format.
+ */
+static void
+find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
+{
+	static char symstxtname[MAX_PATH];
+	static char prevsym[128];
+	const char *sep;
+	FILE *fp;
+	void *prevptr = NULL;
+	void *image_base = NULL;
+
+	*symname = 0;
+	*prevsym = 0;
+
+	sep = strrchr(filename, DIRSEP);
+	if (sep == NULL)
+		return;
+	strlcpy(symstxtname, filename, MIN((uintptr_t)(sep - filename) + 1,
+	    sizeof (symstxtname)));
+	strncat(symstxtname, DIRSEP_S "syms.txt", sizeof (symstxtname));
+	fp = fopen(symstxtname, "rb");
+	if (fp == NULL)
+		return;
+	while (!feof(fp)) {
+		char unused_c;
+		void *ptr;
+		static char sym[128];
+
+		if (fscanf(fp, "%p %c %127s", &ptr, &unused_c, sym) != 3)
+			break;
+		if (strcmp(sym, "__image_base__") == 0) {
+			image_base = ptr;
+			continue;
+		}
+		ptr = (void *)(ptr - image_base);
+		if (addr >= prevptr && addr < ptr) {
+			snprintf(symname, symname_cap, "%s+%x", prevsym,
+			    (unsigned)(addr - prevptr));
+			break;
+		}
+		prevptr = ptr;
+		strlcpy(prevsym, sym, sizeof (prevsym));
+	}
+	fclose(fp);
+}
+
 void
 log_backtrace(void)
 {
-#if	IBM
-
 	unsigned frames;
 	void *stack[MAX_STACK_FRAMES];
 	SYMBOL_INFO *symbol;
 	HANDLE process;
 	DWORD displacement;
 	IMAGEHLP_LINE64 *line;
+	static HMODULE modules[MAX_MODULES];
+	static MODULEINFO mi[MAX_MODULES];
+	DWORD num_modules;
+	static TCHAR filenameT[MAX_PATH];
+	static char filename[MAX_PATH];
 
 	process = GetCurrentProcess();
 	SymInitialize(process, NULL, TRUE);
+	EnumProcessModules(process, modules, sizeof (HMODULE) * MAX_MODULES,
+	    &num_modules);
+	num_modules = MIN(num_modules, MAX_MODULES);
+
+	for (DWORD i = 0; i < num_modules; i++) {
+		GetModuleInformation(process, modules[i], &mi[i],
+		    sizeof (*mi));
+	}
 
 	frames = CaptureStackBackTrace(0, MAX_STACK_FRAMES, stack, NULL);
 
@@ -158,8 +227,33 @@ log_backtrace(void)
 		 * Try to grab the symbol name from the stored %rip data.
 		 */
 		if (!SymFromAddr(process, address, 0, symbol)) {
-			snprintf(&backtrace_buf[fill], sizeof (backtrace_buf) -
-			    fill, "%u %p\n", i, stack[i]);
+			for (DWORD j = 0; j < num_modules; j++) {
+				LPVOID start = mi[j].lpBaseOfDll;
+				LPVOID end = start + mi[j].SizeOfImage;
+				if (start <= stack[i] && end > stack[i]) {
+					char symname[128];
+					GetModuleFileName(modules[j],
+					    filenameT, sizeof (filenameT) /
+					    sizeof (TCHAR));
+					WideCharToMultiByte(CP_UTF8, 0,
+					    filenameT, -1, filename,
+					    sizeof (filename), NULL, NULL);
+					find_symbol(filename,
+					    (void *)(stack[i] - start),
+					    symname, sizeof (symname));
+					fill += snprintf(&backtrace_buf[fill],
+					    sizeof (backtrace_buf) - fill,
+					    "%u %p %s+%x (%s)\n", i, stack[i],
+					    filename,
+					    (unsigned)(stack[i] - start),
+					    symname);
+					goto module_found;
+				}
+			}
+			fill += snprintf(&backtrace_buf[fill],
+			    sizeof (backtrace_buf) - fill,
+			    "%u %p <unknown module>\n", i, stack[i]);
+module_found:
 			continue;
 		}
 		/*
@@ -182,9 +276,14 @@ log_backtrace(void)
 		abort();
 	log_func(backtrace_buf);
 	fputs(backtrace_buf, stderr);
+	fflush(stderr);
+}
 
 #else	/* !IBM */
 
+void
+log_backtrace(void)
+{
 	char *msg;
 	size_t msg_len;
 	void *trace[MAX_STACK_FRAMES];
@@ -209,6 +308,6 @@ log_backtrace(void)
 
 	free(msg);
 	free(fnames);
+}
 
 #endif	/* !IBM */
-}

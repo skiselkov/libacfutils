@@ -70,6 +70,7 @@ if [[ "$1" = "--libs" ]]; then
 		# This must be appended AFTER --whole-archive, otherwise
 		# it produces linkage errors on Windows.
 		OPENSSL_EXTRA="-lcrypt32 -lws2_32 -lgdi32"
+		DBGEXTRA="-ldbghelp -lpsapi"
 	fi
 	if [[ "$ARCH" = "linux-64" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
@@ -84,4 +85,4 @@ fi
 echo $WHOLE_ARCH_ON \
     $(pkg-config $@ $PACKAGES) \
     ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF \
-    $OPENSSL_EXTRA
+    $OPENSSL_EXTRA $DBGEXTRA
