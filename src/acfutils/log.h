@@ -55,7 +55,7 @@ API_EXPORT void log_impl(const char *filename, int line, const char *fmt, ...)
     PRINTF_ATTR(3);
 API_EXPORT void log_impl_v(const char *filename, int line, const char *fmt,
     va_list ap);
-API_EXPORT void log_backtrace(void);
+API_EXPORT void log_backtrace(int skip_frames);
 
 #ifdef __cplusplus
 }

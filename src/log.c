@@ -170,7 +170,7 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 }
 
 void
-log_backtrace(void)
+log_backtrace(int skip_frames)
 {
 	unsigned frames;
 	void *stack[MAX_STACK_FRAMES];
@@ -210,7 +210,8 @@ log_backtrace(void)
 	backtrace_buf[0] = '\0';
 	strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
-	for (unsigned i = 0; i < frames; i++) {
+	for (unsigned i = 1 + skip_frames; i < frames; i++) {
+		int frame_nr = i - 1 - skip_frames;
 		/*
 		 * This is needed because some dunce at Microsoft thought
 		 * it'd be a swell idea to design the SymFromAddr function to
@@ -243,8 +244,8 @@ log_backtrace(void)
 					    symname, sizeof (symname));
 					fill += snprintf(&backtrace_buf[fill],
 					    sizeof (backtrace_buf) - fill,
-					    "%u %p %s+%x (%s)\n", i, stack[i],
-					    filename,
+					    "%d %p %s+%x (%s)\n", frame_nr,
+					    stack[i], filename,
 					    (unsigned)(stack[i] - start),
 					    symname);
 					goto module_found;
@@ -252,7 +253,7 @@ log_backtrace(void)
 			}
 			fill += snprintf(&backtrace_buf[fill],
 			    sizeof (backtrace_buf) - fill,
-			    "%u %p <unknown module>\n", i, stack[i]);
+			    "%d %p <unknown module>\n", frame_nr, stack[i]);
 module_found:
 			continue;
 		}
@@ -263,11 +264,12 @@ module_found:
 		if (SymGetLineFromAddr64(process, address, &displacement,
 		    line)) {
 			snprintf(&backtrace_buf[fill], sizeof (backtrace_buf) -
-			    fill, "%u: %s (0x%x) [%s:%d]\n", i, symbol->Name,
-			    symbol->Address, line->FileName, line->LineNumber);
+			    fill, "%d: %s (0x%x) [%s:%d]\n", frame_nr,
+			    symbol->Name, symbol->Address, line->FileName,
+			    line->LineNumber);
 		} else {
 			snprintf(&backtrace_buf[fill], sizeof (backtrace_buf) -
-			    fill, "%u: %s - 0x%x\n", i, symbol->Name,
+			    fill, "%d: %s - 0x%x\n", frame_nr, symbol->Name,
 			    symbol->Address);
 		}
 	}
@@ -282,7 +284,7 @@ module_found:
 #else	/* !IBM */
 
 void
-log_backtrace(void)
+log_backtrace(int skip_frames)
 {
 	char *msg;
 	size_t msg_len;
@@ -293,12 +295,12 @@ log_backtrace(void)
 	sz = backtrace(trace, MAX_STACK_FRAMES);
 	fnames = backtrace_symbols(trace, sz);
 
-	for (i = 1, msg_len = BACKTRACE_STRLEN; i < sz; i++)
+	for (i = 1 + skip_frames, msg_len = BACKTRACE_STRLEN; i < sz; i++)
 		msg_len += snprintf(NULL, 0, "%s\n", fnames[i]);
 
 	msg = (char *)malloc(msg_len + 1);
 	strcpy(msg, BACKTRACE_STR);
-	for (i = 1, j = BACKTRACE_STRLEN; i < sz; i++)
+	for (i = 1 + skip_frames, j = BACKTRACE_STRLEN; i < sz; i++)
 		j += sprintf(&msg[j], "%s\n", fnames[i]);
 
 	if (log_func == NULL)
