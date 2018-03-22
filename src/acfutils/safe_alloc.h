@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_SAFE_ALLOC_H_
