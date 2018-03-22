@@ -30,6 +30,7 @@
 
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
+#include <acfutils/safe_alloc.h>
 #include <acfutils/shader.h>
 
 /*
@@ -66,7 +67,7 @@ shader_from_file(GLenum shader_type, const char *filename)
 		GLchar *buf;
 
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-		buf = calloc(len + 1, sizeof (*buf));
+		buf = safe_calloc(len + 1, sizeof (*buf));
 		glGetShaderInfoLog(shader, len, NULL, buf);
 		logMsg("Cannot load shader %s: compile error: %s", filename,
 		    buf);
@@ -118,7 +119,7 @@ shader_prog_from_file(const char *progname, const char *vtx_file,
 		GLchar *buf;
 
 		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &len);
-		buf = calloc(len + 1, sizeof (*buf));
+		buf = safe_calloc(len + 1, sizeof (*buf));
 		glGetProgramInfoLog(prog, len, NULL, buf);
 		logMsg("Failed to link GLSL program %s: %s", progname, buf);
 		free(buf);

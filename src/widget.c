@@ -28,6 +28,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/list.h>
+#include <acfutils/safe_alloc.h>
 #include <acfutils/widget.h>
 #include <acfutils/time.h>
 
@@ -99,7 +100,7 @@ create_widget_rel2(int x, int y, bool_t y_from_bottom, int width, int height,
 tooltip_set_t *
 tooltip_set_new(XPWidgetID window)
 {
-	tooltip_set_t *tts = malloc(sizeof (*tts));
+	tooltip_set_t *tts = safe_malloc(sizeof (*tts));
 	tts->window = window;
 	list_create(&tts->tooltips, sizeof (tooltip_t),
 	    offsetof(tooltip_t, node));
@@ -137,7 +138,7 @@ tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h, const char *text)
 {
 	ASSERT(text != NULL);
 
-	tooltip_t *tt = malloc(sizeof (*tt));
+	tooltip_t *tt = safe_malloc(sizeof (*tt));
 	tt->x = x;
 	tt->y = y;
 	tt->w = w;

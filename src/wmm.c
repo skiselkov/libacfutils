@@ -30,6 +30,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/perf.h>
+#include <acfutils/safe_alloc.h>
 #include <acfutils/wmm.h>
 
 struct wmm_s {
@@ -67,7 +68,7 @@ wmm_open(const char *filename, double year)
 	n_max = MAX(fixed_model->nMax, 0);
 	n_terms = ((n_max + 1) * (n_max + 2) / 2);
 
-	wmm = calloc(sizeof (*wmm), 1);
+	wmm = safe_calloc(sizeof (*wmm), 1);
 	wmm->model = MAG_AllocateModelMemory(n_terms);
 	ASSERT(wmm->model != NULL);
 	MAG_TimelyModifyMagneticModel(date, fixed_model, wmm->model);

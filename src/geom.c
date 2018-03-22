@@ -25,6 +25,7 @@
 #include <acfutils/math.h>
 #include <acfutils/helpers.h>
 #include <acfutils/geom.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * The WGS84 ellipsoid parameters.
@@ -1431,10 +1432,10 @@ geo2lcc(geo_pos2_t pos, const lcc_t *lcc)
 bezier_t *
 bezier_alloc(size_t n_pts)
 {
-	bezier_t *curve = malloc(sizeof (*curve));
+	bezier_t *curve = safe_malloc(sizeof (*curve));
 
 	curve->n_pts = n_pts;
-	curve->pts = calloc(sizeof (vect2_t), n_pts);
+	curve->pts = safe_calloc(sizeof (vect2_t), n_pts);
 
 	return (curve);
 }

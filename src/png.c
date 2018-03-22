@@ -29,9 +29,10 @@
 
 #include <png.h>
 
-#include "acfutils/assert.h"
-#include "acfutils/log.h"
-#include "acfutils/png.h"
+#include <acfutils/assert.h>
+#include <acfutils/log.h>
+#include <acfutils/png.h>
+#include <acfutils/safe_alloc.h>
 
 typedef struct {
 	const void	*bufp;
@@ -109,10 +110,10 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height)
 	}
 	rowbytes = png_get_rowbytes(pngp, infop);
 
-	rowp = malloc(sizeof (*rowp) * h);
+	rowp = safe_malloc(sizeof (*rowp) * h);
 	VERIFY(rowp != NULL);
 	for (int i = 0; i < h; i++) {
-		rowp[i] = malloc(rowbytes);
+		rowp[i] = safe_malloc(rowbytes);
 		VERIFY(rowp[i] != NULL);
 	}
 
@@ -121,7 +122,7 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height)
 		goto out;
 	}
 	png_read_image(pngp, rowp);
-	pixels = malloc(h * rowbytes);
+	pixels = safe_malloc(h * rowbytes);
 	for (int i = 0; i < h; i++)
 		memcpy(&pixels[i * rowbytes], rowp[i], rowbytes);
 

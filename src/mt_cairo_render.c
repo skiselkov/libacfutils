@@ -35,6 +35,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/geom.h>
 #include <acfutils/mt_cairo_render.h>
+#include <acfutils/safe_alloc.h>
 #include <acfutils/thread.h>
 #include <acfutils/time.h>
 
@@ -175,7 +176,7 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
     mt_cairo_init_cb_t init_cb, mt_cairo_render_cb_t render_cb,
     mt_cairo_fini_cb_t fini_cb, void *userinfo)
 {
-	mt_cairo_render_t *mtcr = calloc(1, sizeof (*mtcr));
+	mt_cairo_render_t *mtcr = safe_calloc(1, sizeof (*mtcr));
 
 	mt_cairo_render_glob_init();
 

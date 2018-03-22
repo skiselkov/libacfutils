@@ -33,6 +33,7 @@
 #include <acfutils/log.h>
 #include <acfutils/helpers.h>
 #include <acfutils/perf.h>
+#include <acfutils/safe_alloc.h>
 
 #define	SECS_PER_HR	3600		/* Number of seconds in an hour */
 
@@ -138,7 +139,7 @@ errout:
 acft_perf_t *
 acft_perf_parse(const char *filename)
 {
-	acft_perf_t	*acft = calloc(sizeof (*acft), 1);
+	acft_perf_t	*acft = safe_calloc(sizeof (*acft), 1);
 	FILE		*fp = fopen(filename, "r");
 	char		*line = NULL;
 	size_t		line_cap = 0, line_num = 0;
@@ -313,7 +314,7 @@ acft_perf_destroy(acft_perf_t *acft)
 flt_perf_t *
 flt_perf_new(const acft_perf_t *acft)
 {
-	flt_perf_t *flt = calloc(sizeof (*flt), 1);
+	flt_perf_t *flt = safe_calloc(sizeof (*flt), 1);
 	memcpy(flt, &acft->ref, sizeof (*flt));
 	return (flt);
 }

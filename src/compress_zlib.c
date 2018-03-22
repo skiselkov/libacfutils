@@ -23,6 +23,7 @@
 
 #include <acfutils/assert.h>
 #include <acfutils/compress.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * Performs a light-weight & quick test to see if some data might constitute
@@ -61,7 +62,7 @@ zlib_compress(void *in_buf, size_t len, size_t *out_len)
 {
 	enum { CHUNK = 16384 };
 	z_stream strm;
-	void *out_buf = malloc(len);
+	void *out_buf = safe_malloc(len);
 	size_t consumed = 0;
 	size_t output = 0;
 

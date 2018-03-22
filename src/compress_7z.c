@@ -28,6 +28,7 @@
 
 #include <acfutils/assert.h>
 #include <acfutils/compress.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * Performs a light-weight & quick test to see if some data might constitute
@@ -94,7 +95,7 @@ decompress_7z(const char *filename, size_t *out_len)
 		goto out;
 
 	*out_len = outBufferSize;
-	out_buf = malloc(outBufferSize);
+	out_buf = safe_malloc(outBufferSize);
 	memcpy(out_buf, outBuffer, outBufferSize);
 
 out:

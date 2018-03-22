@@ -44,6 +44,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * The single-letter versions of the IDs need to go after the two-letter ones
@@ -375,7 +376,7 @@ char *
 parser_get_next_quoted_str(FILE *fp)
 {
 	char c;
-	char *str = calloc(1, 1);
+	char *str = safe_calloc(1, 1);
 	size_t len = 0, cap = 0;
 
 	for (;;) {
@@ -511,7 +512,7 @@ strip_space(char *line)
  * two occurences of the separator string are next to each other).
  * Returns an array of pointers to the component strings and the number
  * of components in the `num' return parameter. The array of pointers
- * as well as the strings themselves are malloc'd and should be freed
+ * as well as the strings themselves are safe_malloc'd and should be freed
  * by the caller. Use free_strlist for that.
  */
 char **
@@ -534,14 +535,14 @@ strsplit(const char *input, char *sep, bool_t skip_empty, size_t *num)
 		n++;
 	}
 
-	result = calloc(n, sizeof (char *));
+	result = safe_calloc(n, sizeof (char *));
 
 	for (const char *a = input, *b = strstr(a, sep);
 	    a != NULL; a = b + seplen, b = strstr(a, sep)) {
 		if (b == NULL) {
 			b = input + strlen(input);
 			if (a != b || !skip_empty) {
-				result[i] = calloc(b - a + 1, sizeof (char));
+				result[i] = safe_calloc(b - a + 1, sizeof (char));
 				memcpy(result[i], a, b - a);
 			}
 			break;
@@ -549,7 +550,7 @@ strsplit(const char *input, char *sep, bool_t skip_empty, size_t *num)
 		if (a == b && skip_empty)
 			continue;
 		ASSERT(i < n);
-		result[i] = calloc(b - a + 1, sizeof (char));
+		result[i] = safe_calloc(b - a + 1, sizeof (char));
 		memcpy(result[i], a, b - a);
 		i++;
 	}
@@ -703,7 +704,7 @@ mkpathname_v(const char *comp, va_list ap)
 	}
 	va_end(ap2);
 
-	str = malloc(len + 1);
+	str = safe_malloc(len + 1);
 	n += snprintf(str, len + 1, "%s", comp);
 	for (const char *c = va_arg(ap, const char *); c != NULL;
 	    c = va_arg(ap, const char *)) {
@@ -789,7 +790,7 @@ file2str_name(long *len_p, const char *filename)
 		return (NULL);
 	}
 	fseek(fp, 0, SEEK_SET);
-	contents = malloc(len + 1);
+	contents = safe_malloc(len + 1);
 	contents[len] = 0;
 	if (fread(contents, 1, len, fp) != (size_t)len) {
 		fclose(fp);
@@ -830,7 +831,7 @@ win_perror(DWORD err, const char *fmt, ...)
 	va_start(ap, fmt);
 	len = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
-	caller_msg = malloc(len + 1);
+	caller_msg = safe_malloc(len + 1);
 	va_start(ap, fmt);
 	vsnprintf(caller_msg, len + 1, fmt, ap);
 	va_end(ap);
@@ -920,7 +921,7 @@ create_directory(const char *dirname)
 bool_t
 create_directory_recursive(const char *dirname)
 {
-	char *partname = calloc(1, strlen(dirname) + 1);
+	char *partname = safe_calloc(1, strlen(dirname) + 1);
 
 	for (const char *start = dirname, *end = strchr(&dirname[1], DIRSEP);
 	    end != NULL; start = end, end = strchr(&start[1], DIRSEP)) {
@@ -1091,7 +1092,7 @@ remove_file(const char *filename, bool_t notfound_ok)
 DIR *
 opendir(const char *path)
 {
-	DIR	*dirp = calloc(1, sizeof (*dirp));
+	DIR	*dirp = safe_calloc(1, sizeof (*dirp));
 	TCHAR	pathT[strlen(path) + 3];	/* For '\*' at the end */
 
 	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, sizeof (pathT));

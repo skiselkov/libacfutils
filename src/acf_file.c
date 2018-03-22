@@ -25,6 +25,7 @@
 #include <acfutils/avl.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * This code provides functionality to read the .acf file of X-Plane.
@@ -75,7 +76,7 @@ acf_file_read(const char *filename)
 		    strerror(errno));
 		return (NULL);
 	}
-	acf = calloc(1, sizeof (*acf));
+	acf = safe_calloc(1, sizeof (*acf));
 	avl_create(&acf->props, acf_prop_compar, sizeof (acf_prop_t),
 	    offsetof(acf_prop_t, node));
 
@@ -109,9 +110,9 @@ acf_file_read(const char *filename)
 			    "line.", filename, line_num);
 			goto errout;
 		}
-		prop = calloc(1, sizeof (*prop));
-		prop->name = malloc(name_end - line - 1);
-		prop->value = malloc(strlen(&name_end[1]) + 1);
+		prop = safe_calloc(1, sizeof (*prop));
+		prop->name = safe_malloc(name_end - line - 1);
+		prop->value = safe_malloc(strlen(&name_end[1]) + 1);
 		strlcpy(prop->name, &line[2], name_end - line - 1);
 		strlcpy(prop->value, &name_end[1], strlen(&name_end[1]) + 1);
 		if (avl_find(&acf->props, prop, &where) != NULL) {

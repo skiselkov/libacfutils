@@ -37,9 +37,10 @@
 #include <acfutils/list.h>
 #include <acfutils/log.h>
 #include <acfutils/riff.h>
+#include <acfutils/safe_alloc.h>
+#include <acfutils/time.h>
 #include <acfutils/types.h>
 #include <acfutils/wav.h>
-#include <acfutils/time.h>
 
 #include "minimp3.h"
 
@@ -175,7 +176,7 @@ openal_init(const char *devname, bool_t shared)
 	if (!ctx_save(NULL, &sav))
 		return (NULL);
 
-	alc = calloc(1, sizeof (*alc));
+	alc = safe_calloc(1, sizeof (*alc));
 	if (!shared || sav.ctx == NULL) {
 		ALCdevice *dev = NULL;
 		ALCcontext *ctx = NULL;
@@ -338,7 +339,7 @@ wav_load_opus(const char *filename, alc_t *alc)
 	head = op_head(file, 0);
 	VERIFY(head != NULL);
 
-	wav = calloc(1, sizeof (*wav));
+	wav = safe_calloc(1, sizeof (*wav));
 	wav->alc = alc;
 
 	/* fake a wav_fmt_hdr_t from the OpusHead object */
@@ -405,11 +406,11 @@ wav_load_mp3(const char *filename, alc_t *alc)
 		return (NULL);
 	}
 
-	wav = calloc(1, sizeof (*wav));
+	wav = safe_calloc(1, sizeof (*wav));
 	wav->alc = alc;
 
 	mp3 = mp3_create();
-	pcm = malloc(1024 * 1024);
+	pcm = safe_malloc(1024 * 1024);
 
 	bytes = mp3_decode(mp3, contents, len, pcm, &info);
 	if (bytes == 0) {
@@ -478,10 +479,10 @@ wav_load_wav(const char *filename, alc_t *alc)
 	filesz = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	if ((wav = calloc(1, sizeof (*wav))) == NULL)
+	if ((wav = safe_calloc(1, sizeof (*wav))) == NULL)
 		goto errout;
 	wav->alc = alc;
-	if ((filebuf = malloc(filesz)) == NULL)
+	if ((filebuf = safe_malloc(filesz)) == NULL)
 		goto errout;
 	if (fread(filebuf, 1, filesz, fp) != filesz)
 		goto errout;

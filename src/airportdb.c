@@ -41,6 +41,7 @@
 #include <acfutils/list.h>
 #include <acfutils/math.h>
 #include <acfutils/perf.h>
+#include <acfutils/safe_alloc.h>
 #include <acfutils/types.h>
 
 /*
@@ -305,7 +306,7 @@ geo_table_get_tile(airportdb_t *db, geo_pos2_t pos, bool_t create,
 
 	tile = avl_find(&db->geo_table, &srch, &where);
 	if (tile == NULL && create) {
-		tile = malloc(sizeof (*tile));
+		tile = safe_malloc(sizeof (*tile));
 		tile->pos = pos;
 		avl_create(&tile->arpts, airport_compar, sizeof (airport_t),
 		    offsetof(airport_t, tile_node));
@@ -330,7 +331,7 @@ make_rwy_bbox(vect2_t thresh_v, vect2_t dir_v, double width, double len,
 	vect2_t *bbox;
 	vect2_t len_displ_v;
 
-	bbox = malloc(sizeof (*bbox) * 5);
+	bbox = safe_malloc(sizeof (*bbox) * 5);
 
 	/*
 	 * Displace the 'a' point from the runway threshold laterally
@@ -519,7 +520,7 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 			scn_name = &line[13];
 			strip_space(scn_name);
 			fix_pathsep(scn_name);
-			e = malloc(sizeof (*e));
+			e = safe_malloc(sizeof (*e));
 			e->fname = mkpathname(db->xpdir, scn_name,
 			    "Earth nav data", "apt.dat", NULL);
 			list_insert_tail(list, e);
@@ -529,7 +530,7 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 	}
 
 	/* append the default apt.dat */
-	e = malloc(sizeof (*e));
+	e = safe_malloc(sizeof (*e));
 	e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
 	    "default apt dat", "Earth nav data", "apt.dat", NULL);
 	list_insert_tail(list, e);
@@ -615,7 +616,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line)
 		ASSERT(is_valid_elev(TA) && is_valid_elev(TL) &&
 		    is_valid_lat(pos.lat) && is_valid_lon(pos.lon));
 	}
-	arpt = calloc(1, sizeof (*arpt));
+	arpt = safe_calloc(1, sizeof (*arpt));
 	avl_create(&arpt->rwys, runway_compar, sizeof (runway_t),
 	    offsetof(runway_t, node));
 	strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
@@ -858,7 +859,7 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line)
 	if (ncomps < 8 + 9 + 5 || !rwy_is_hard(atoi(comps[2])))
 		goto out;
 
-	rwy = calloc(1, sizeof (*rwy));
+	rwy = safe_calloc(1, sizeof (*rwy));
 
 	rwy->arpt = arpt;
 	rwy->width = atof(comps[1]);
@@ -1626,7 +1627,7 @@ read_apt_dats_list(const airportdb_t *db, list_t *list)
 		if (getline(&line, &cap, fp) <= 0)
 			continue;
 		strip_space(line);
-		entry = malloc(sizeof (*entry));
+		entry = safe_malloc(sizeof (*entry));
 		entry->fname = strdup(line);
 		list_insert_tail(list, entry);
 	}
@@ -1862,7 +1863,7 @@ make_apch_prox_bbox(const runway_t *rwy, int end_i)
 	const fpp_t *fpp = &rwy->arpt->fpp;
 	double limit_left = 1000000, limit_right = 1000000;
 	vect2_t x, a, b, b1, c, c1, d, thr_v, othr_v, dir_v;
-	vect2_t *bbox = calloc(7, sizeof (vect2_t));
+	vect2_t *bbox = safe_calloc(7, sizeof (vect2_t));
 	size_t n_pts = 0;
 
 	ASSERT(fpp != NULL);
@@ -2149,7 +2150,7 @@ find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos)
 	vect3_t ecef = geo2ecef(GEO_POS3(my_pos.lat, my_pos.lon, 0), &wgs84);
 	list_t *l;
 
-	l = malloc(sizeof (*l));
+	l = safe_malloc(sizeof (*l));
 	list_create(l, sizeof (airport_t), offsetof(airport_t, cur_arpts_node));
 	for (int i = -1; i <= 1; i++) {
 		for (int j = -1; j <= 1; j++)

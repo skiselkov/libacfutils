@@ -28,6 +28,7 @@
 #include <acfutils/conf.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
+#include <acfutils/safe_alloc.h>
 
 /* For conf_get_da and conf_set_da. */
 CTASSERT(sizeof (double) == sizeof (unsigned long long));
@@ -88,7 +89,7 @@ conf_key_compar(const void *a, const void *b)
 conf_t *
 conf_create_empty(void)
 {
-	conf_t *conf = calloc(1, sizeof (*conf));
+	conf_t *conf = safe_calloc(1, sizeof (*conf));
 	avl_create(&conf->tree, conf_key_compar, sizeof (conf_key_t),
 	    offsetof(conf_key_t, node));
 	return (conf);
@@ -188,13 +189,13 @@ conf_read(FILE *fp, int *errline)
 		strip_space(line);
 		strip_space(&sep[1]);
 
-		srch.key = malloc(strlen(line) + 1);
+		srch.key = safe_malloc(strlen(line) + 1);
 		strcpy(srch.key, line);
 		strtolower(srch.key);	/* keys are case-insensitive */
 		ck = avl_find(&conf->tree, &srch, &where);
 		if (ck == NULL) {
 			/* if the key didn't exist yet, create a new one */
-			ck = calloc(1, sizeof (*ck));
+			ck = safe_calloc(1, sizeof (*ck));
 			ck->key = srch.key;
 			avl_insert(&conf->tree, ck, where);
 		} else {
@@ -202,7 +203,7 @@ conf_read(FILE *fp, int *errline)
 			free(srch.key);
 		}
 		free(ck->value);
-		ck->value = malloc(strlen(&sep[1]) + 1);
+		ck->value = safe_malloc(strlen(&sep[1]) + 1);
 		strcpy(ck->value, &sep[1]);
 	}
 
@@ -381,7 +382,7 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 	if (ck == NULL) {
 		if (value == NULL)
 			return;
-		ck = calloc(1, sizeof (*ck));
+		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
 		avl_add(&conf->tree, ck);
 	}
@@ -409,14 +410,14 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 	va_copy(ap2, ap1);
 
 	if (ck == NULL) {
-		ck = calloc(1, sizeof (*ck));
+		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
 		avl_add(&conf->tree, ck);
 	}
 	free(ck->value);
 	n = vsnprintf(NULL, 0, fmt, ap1);
 	ASSERT3S(n, >, 0);
-	ck->value = malloc(n + 1);
+	ck->value = safe_malloc(n + 1);
 	(void) vsnprintf(ck->value, n + 1, fmt, ap2);
 	va_end(ap1);
 	va_end(ap2);
@@ -510,7 +511,7 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 		va_start(ap, value); \
 		va_copy(ap2, ap); \
 		l = vsnprintf(NULL, 0, fmt, ap); \
-		key = malloc(l + 1); \
+		key = safe_malloc(l + 1); \
 		vsnprintf(key, l + 1, fmt, ap2); \
 		res = getfunc(conf, key, value); \
 		free(key); \
@@ -527,7 +528,7 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 		va_start(ap, value); \
 		va_copy(ap2, ap); \
 		l = vsnprintf(NULL, 0, fmt, ap); \
-		key = malloc(l + 1); \
+		key = safe_malloc(l + 1); \
 		vsnprintf(key, l + 1, fmt, ap2); \
 		setfunc(conf, key, value); \
 		free(key); \

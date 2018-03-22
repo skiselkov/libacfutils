@@ -32,6 +32,7 @@
 #include <acfutils/compress.h>
 #include <acfutils/dsf.h>
 #include <acfutils/helpers.h>
+#include <acfutils/safe_alloc.h>
 
 #define	DSF_MAX_VERSION	1
 #define	INDENT_DEPTH	4
@@ -174,7 +175,7 @@ dsf_init(const char *filename)
 
 	if (bufsz < 12 + 16 || fp == NULL)
 		goto errout;
-	buf = malloc(bufsz);
+	buf = safe_malloc(bufsz);
 
 	if (fread(buf, 1, sizeof (magic), fp) != sizeof (magic))
 		goto errout;
@@ -261,7 +262,7 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 			    "an unterminated value string");
 			goto errout;
 		}
-		prop = calloc(1, sizeof (*prop));
+		prop = safe_calloc(1, sizeof (*prop));
 		prop->name = name;
 		prop->value = value;
 		list_insert_tail(&atom->prop_atom.props, prop);
@@ -370,7 +371,7 @@ diff_decode(dsf_atom_t *atom, unsigned plane, const uint8_t *start,
 
 	CHECK_LEN(num_values * datalen);
 
-	out = calloc(datalen, num_values);
+	out = safe_calloc(datalen, num_values);
 
 #if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error	"TODO: implement big-endian"
@@ -433,7 +434,7 @@ raw_decode(dsf_atom_t *atom, unsigned plane, const uint8_t *start,
 
 	CHECK_LEN(num_values * datalen);
 
-	out = calloc(datalen, num_values);
+	out = safe_calloc(datalen, num_values);
 #if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #error	"TODO: implement big-endian"
 #else	/* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
@@ -535,7 +536,7 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 	pa->data_type = data_type;
 	pa->data_count = read_u32(atom->payload);
 	pa->plane_count = atom->payload[4];
-	pa->data = calloc(pa->plane_count, sizeof (*pa->data));
+	pa->data = safe_calloc(pa->plane_count, sizeof (*pa->data));
 	atom->subtype_inited = B_TRUE;
 
 	for (unsigned i = 0; i < pa->plane_count; i++) {
@@ -623,7 +624,7 @@ static dsf_atom_t *
 parse_atom(const uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ],
     uint64_t abs_off)
 {
-	dsf_atom_t *atom = calloc(1, sizeof (*atom));
+	dsf_atom_t *atom = safe_calloc(1, sizeof (*atom));
 
 	ASSERT(reason != NULL);
 	list_create(&atom->subatoms, sizeof (dsf_atom_t),
@@ -695,7 +696,7 @@ parse_atom_list(const uint8_t *buf, uint64_t bufsz, list_t *atoms,
 dsf_t *
 dsf_parse(uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ])
 {
-	dsf_t *dsf = calloc(1, sizeof (*dsf));
+	dsf_t *dsf = safe_calloc(1, sizeof (*dsf));
 	static const uint8_t magic[8] = {
 	    'X', 'P', 'L', 'N', 'E', 'D', 'S', 'F'
 	};
@@ -932,7 +933,7 @@ dsf_lookup(const dsf_t *dsf, ...)
 	}
 	va_end(ap);
 
-	lookup = calloc(num_args + 1, sizeof (*lookup));
+	lookup = safe_calloc(num_args + 1, sizeof (*lookup));
 
 	va_start(ap, dsf);
 	for (unsigned i = 0; i < num_args; i++) {

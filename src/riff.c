@@ -32,6 +32,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/list.h>
 #include <acfutils/riff.h>
+#include <acfutils/safe_alloc.h>
 
 #define	RIFF_ID	FOURCC("RIFF")
 #define	LIST_ID	FOURCC("LIST")
@@ -62,7 +63,7 @@ riff_free_chunk(riff_chunk_t *c)
 static riff_chunk_t *
 riff_parse_chunk(uint8_t *buf, size_t bufsz, bool_t bswap)
 {
-	riff_chunk_t *c = calloc(1, sizeof (*c));
+	riff_chunk_t *c = safe_calloc(1, sizeof (*c));
 
 	memcpy(&c->fourcc, buf, sizeof (c->fourcc));
 	memcpy(&c->datasz, buf + 4, sizeof (c->datasz));
@@ -241,7 +242,7 @@ riff_dump_impl(const riff_chunk_t *chunk, int indent)
 	    IS_LIST(chunk) ? " " : "       ", IS_LIST(chunk) ? listcc : "", \
 	    IS_LIST(chunk) ? "  " : "", chunk->datasz
 	len = snprintf(NULL, 0, DUMP_FMT_ARGS);
-	buf = malloc(len + 1);
+	buf = safe_malloc(len + 1);
 	snprintf(buf, len + 1, DUMP_FMT_ARGS);
 #undef	DUMP_FMT_ARGS
 
