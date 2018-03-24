@@ -52,14 +52,12 @@ TYPE
 
 
 
-
 {___________________________________________________________________________
  * GLOBAL DEFINITIONS
  ___________________________________________________________________________}
 {
    These definitions are used in all parts of the SDK.                         
 }
-
 
 
 TYPE
@@ -87,8 +85,8 @@ CONST
     { X-Plane itself                                                              }
    XPLM_PLUGIN_XPLANE   = (0);
 
-    { The current XPLM revision is 2.10 (210).                                    }
-   kXPLM_Version        = (210);
+    { The current XPLM revision is 3.01 (301).                                    }
+   kXPLM_Version        = (301);
 
    {
     XPLMKeyFlags
@@ -140,7 +138,6 @@ TYPE
    NULL.  To detect control-key combinations, use virtual key codes, not ASCII 
    keys.                                                                       
 }
-
 
 
 CONST
@@ -205,14 +202,13 @@ CONST
    1. Modifier keys are not available as virtual key codes.  You cannot get 
    distinct modifier press and release messages.  Please do not try to use 
    modifier keys as regular keys; doing so will almost certainly interfere 
-   with users' abilities to use the native x-plane key bindings. 
+   with users' abilities to use the native X-Plane key bindings. 
    
    2. Some keys that do not exist on both Mac and PC keyboards are removed. 
    
    3. Do not assume that the values of these keystrokes are interchangeable 
    with MS v-keys.                                                             
 }
-
 
 
 CONST

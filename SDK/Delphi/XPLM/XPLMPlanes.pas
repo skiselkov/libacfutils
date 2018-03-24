@@ -9,7 +9,7 @@
 UNIT XPLMPlanes;
 INTERFACE
 {
-   The XPLMPlanes APIs allow you to control the various aircraft in x-plane, 
+   The XPLMPlanes APIs allow you to control the various aircraft in X-Plane, 
    both the user's and the sim's.                                              
 }
 
@@ -24,7 +24,6 @@ USES   XPLMDefs;
 {
                                                                                
 }
-
 
    {
     XPLMSetUsersAircraft
@@ -53,13 +52,36 @@ USES   XPLMDefs;
 {$ELSE}
                                        cdecl; external '';
 {$ENDIF}
+{$IFDEF XPLM300}
+   {
+    XPLMPlaceUserAtLocation
+    
+    Places the user at a specific location after performing any necessary 
+    scenery loads. 
+    
+    As with in-air starts initiated from the X-Plane user interface, the 
+    aircraft will always start with its engines running, regardless of the 
+    user's preferences (i.e., regardless of what the dataref 
+    sim/operation/prefs/startup_running says).                                  
+   }
+   PROCEDURE XPLMPlaceUserAtLocation(
+                                        latitudeDegrees     : real;    
+                                        longitudeDegrees    : real;    
+                                        elevationMetersMSL  : single;    
+                                        headingDegreesTrue  : single;    
+                                        speedMetersPerSecond: single);    
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+{$ENDIF}
 {___________________________________________________________________________
  * GLOBAL AIRCRAFT ACCESS
  ___________________________________________________________________________}
 {
                                                                                
 }
-
 
 CONST
     { The user's aircraft is always index 0.                                      }
@@ -148,7 +170,6 @@ TYPE
    The following routines require exclusive access to the airplane APIs. Only 
    one plugin may have this access at a time.                                  
 }
-
 
 
    {
@@ -274,8 +295,8 @@ TYPE
     
     This function recomputes the derived flight model data from the aircraft 
     structure in memory.  If you have used the data access layer to modify the 
-    aircraft structure, use this routine to resynchronize x-plane; since 
-    X-plane works at least partly from derived values, the sim will not behave 
+    aircraft structure, use this routine to resynchronize X-Plane; since 
+    X-Plane works at least partly from derived values, the sim will not behave 
     properly until this is called. 
     
     WARNING: this routine does not necessarily place the airplane at the 
