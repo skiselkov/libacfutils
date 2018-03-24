@@ -40,7 +40,7 @@ extern "C" {
 #define	API_EXPORT_DATA
 #endif	/* !IBM && !defined(_MSC_VER) */
 
-API_EXPORT const char *libacfutils_version;
+API_EXPORT extern const char *libacfutils_version;
 
 #define	lacf_free	ACFSYM(lacf_free)
 API_EXPORT void lacf_free(void *buf);
