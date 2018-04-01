@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 typedef struct airportdb {
+	bool_t		ifr_only;
 	char		*xpdir;
 	char		*cachedir;
 	int		xp_airac_cycle;

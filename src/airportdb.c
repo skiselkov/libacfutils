@@ -122,8 +122,8 @@
  * one place.
  *
  * So for X-Plane 11, we've implemented a new method of obtaining this
- * information. By default, if a runway has an instrument approach (and is
- * thus interesting to us), it will have an entry in CIFP. Runway entries in
+ * information. By default, if a runway has an instrument approach (unless
+ * ifr_only=B_FALSE), it will have an entry in CIFP. Runway entries in
  * APPCH-type procedures specify the TCH and GPA in columns 24 and 29 (ARINC
  * 424 fields 4.1.9.1.85-89 and 4.1.9.1.103-106). We only use the first
  * such occurence. If there are multiple approaches to the runway, they
@@ -1743,6 +1743,10 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 /*
  * Takes the current state of the apt_dat table and writes all the airports
  * in it to the db->cachedir so that a subsequent run can pick this info up.
+ * Be sure to configure the `ifr_only' flag in the airportdb_t structure
+ * before calling this function. That flag specifies whether the cache should
+ * only contain airports with published instrument approaches, or if VFR-only
+ * airports should also be allowed.
  */
 bool_t
 recreate_cache(airportdb_t *db)
@@ -1788,9 +1792,10 @@ recreate_cache(airportdb_t *db)
 		ASSERT(arpt->geo_linked);
 		/*
 		 * If the airport isn't in Airports.txt, we want to dump the
-		 * airport, because we don't have TA/TL info on them.
+		 * airport, because we don't have TA/TL info on them. But if
+		 * we are in ifr_only=B_FALSE mode, then accept it anyway.
 		 */
-		if (!arpt->in_navdb) {
+		if (!arpt->in_navdb && db->ifr_only) {
 			geo_unlink_airport(db, arpt);
 			avl_remove(&db->apt_dat, arpt);
 			free_airport(arpt);
@@ -2266,6 +2271,7 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	db->xpdir = strdup(xpdir);
 	db->cachedir = strdup(cachedir);
 	db->load_limit = ARPT_LOAD_LIMIT;
+	db->ifr_only = B_TRUE;
 
 	avl_create(&db->apt_dat, airport_compar, sizeof (airport_t),
 	    offsetof(airport_t, apt_dat_node));
