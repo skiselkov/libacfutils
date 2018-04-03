@@ -1615,3 +1615,22 @@ quad_bezier_func_inv(double y, const bezier_t *func, size_t *n_xs)
 	*n_xs = num_xs;
 	return (xs);
 }
+
+API_EXPORT void
+mat4_ident(mat4_t *mat)
+{
+	memset(mat, 0, sizeof (*mat));
+	MAT4(mat, 0, 0) = 1;
+	MAT4(mat, 1, 1) = 1;
+	MAT4(mat, 2, 2) = 1;
+	MAT4(mat, 3, 3) = 1;
+}
+
+API_EXPORT void
+mat3_ident(mat3_t *mat)
+{
+	memset(mat, 0, sizeof (*mat));
+	MAT3(mat, 0, 0) = 1;
+	MAT3(mat, 1, 1) = 1;
+	MAT3(mat, 2, 2) = 1;
+}

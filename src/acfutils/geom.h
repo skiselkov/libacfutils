@@ -321,6 +321,25 @@ API_EXPORT double quad_bezier_func(double x, const bezier_t *func);
 API_EXPORT double *quad_bezier_func_inv(double y, const bezier_t *func,
     size_t *n_xs);
 
+/*
+ * Matrix math.
+ */
+typedef struct {
+	double	_mat4_data[16];
+} mat4_t;
+
+typedef struct {
+	double	_mat3_data[9];
+} mat3_t;
+
+#define	MAT4(mat, col, row)	((mat)->_mat4_data[(col) * 4 + (row)])
+#define	MAT3(mat, col, row)	((mat)->_mat3_data[(col) * 3 + (row)])
+#define	MAT4_DATA(mat)		((mat)->_mat4_data)
+#define	MAT3_DATA(mat)		((mat)->_mat3_data)
+
+API_EXPORT void mat4_ident(mat4_t *mat);
+API_EXPORT void mat3_ident(mat3_t *mat);
+
 #ifdef	__cplusplus
 }
 #endif
