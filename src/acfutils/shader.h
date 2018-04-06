@@ -26,13 +26,7 @@
 #ifndef	_ACF_UTILS_SHADER_H_
 #define	_ACF_UTILS_SHADER_H_
 
-#if	IBM
 #include <GL/glew.h>
-#elif	APL
-#include <OpenGL/gl.h>
-#else	/* LIN */
-#include <GL/gl.h>
-#endif	/* LIN */
 
 #ifdef	__cplusplus
 extern "C" {

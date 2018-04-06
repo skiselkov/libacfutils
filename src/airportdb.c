@@ -2268,6 +2268,10 @@ unload_distant_airport_tiles(airportdb_t *db, geo_pos2_t my_pos)
 void
 airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 {
+	VERIFY(db != NULL);
+	VERIFY(xpdir != NULL);
+	VERIFY(cachedir != NULL);
+
 	db->xpdir = strdup(xpdir);
 	db->cachedir = strdup(cachedir);
 	db->load_limit = ARPT_LOAD_LIMIT;
