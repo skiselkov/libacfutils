@@ -40,6 +40,7 @@ API_EXPORT void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
     uint64_t intval_us, void *userinfo, const char *thread_name);
 API_EXPORT void worker_fini(worker_t *wk);
 
+API_EXPORT void worker_set_interval(worker_t *wk, uint64_t intval_us);
 API_EXPORT void worker_wake_up(worker_t *wk);
 API_EXPORT void worker_wake_up_wait(worker_t *wk);
 

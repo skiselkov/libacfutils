@@ -95,6 +95,17 @@ worker_fini(worker_t *wk)
 	cv_destroy(&wk->cv);
 }
 
+API_EXPORT void
+worker_set_interval(worker_t *wk, uint64_t intval_us)
+{
+	mutex_enter(&wk->lock);
+	if (wk->intval_us != intval_us) {
+		wk->intval_us = intval_us;
+		cv_broadcast(&wk->cv);
+	}
+	mutex_exit(&wk->lock);
+}
+
 void
 worker_wake_up(worker_t *wk)
 {
