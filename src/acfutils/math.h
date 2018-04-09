@@ -46,6 +46,8 @@ API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
 static inline double
 wavg_impl(double x, double y, double w, const char *file, int line)
 {
+	UNUSED(file);
+	UNUSED(line);
 	ASSERT_MSG(w >= 0.0, "%f < 0.0: called from: %s:%d", w, file, line);
 	ASSERT_MSG(w <= 1.0, "%f > 1.0: called from: %s:%d", w, file, line);
 	return (x + (y - x) * w);
