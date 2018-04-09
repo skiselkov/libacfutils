@@ -38,6 +38,8 @@ API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
 API_EXPORT GLuint shader_prog_from_file(const char *progname,
     const char *vtx_file, const char *frag_file);
 
+API_EXPORT void glutils_disable_all_client_state(void);
+
 #ifdef	__cplusplus
 }
 #endif
