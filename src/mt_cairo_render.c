@@ -36,10 +36,16 @@
 #include <acfutils/geom.h>
 #include <acfutils/mt_cairo_render.h>
 #include <acfutils/safe_alloc.h>
+#include <acfutils/shader.h>
 #include <acfutils/thread.h>
 #include <acfutils/time.h>
 
 #include <XPLMGraphics.h>
+
+typedef struct {
+	GLfloat		pos[3];
+	GLfloat		tex0[2];
+} vtx_t;
 
 typedef	struct {
 	bool_t		chg;
@@ -69,6 +75,19 @@ struct mt_cairo_render_s {
 	mutex_t			lock;
 	bool_t			started;
 	bool_t			shutdown;
+
+	/* Only accessed from OpenGL drawing thread, so no locking req'd */
+	struct {
+		double		x1, x2, y1, y2;
+		vect2_t		pos;
+		vect2_t		size;
+	} last_draw;
+	GLuint			vtx_buf;
+};
+
+enum {
+	VTX_ATTRIB_POS =	0,
+	VTX_ATTRIB_TEX0 =	8
 };
 
 /*
@@ -208,6 +227,9 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 		}
 	}
 	glGenBuffers(1, &mtcr->pbo);
+	glGenBuffers(1, &mtcr->vtx_buf);
+
+	mtcr->last_draw.pos = NULL_VECT2;
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -225,6 +247,9 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		mutex_exit(&mtcr->lock);
 		thread_join(&mtcr->thr);
 	}
+
+	if (mtcr->vtx_buf != 0)
+		glDeleteBuffers(1, &mtcr->vtx_buf);
 
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
@@ -390,6 +415,54 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	mt_cairo_render_draw_subrect(mtcr, ZERO_VECT2, VECT2(1, 1), pos, size);
 }
 
+static void
+prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
+    double x1, double x2, double y1, double y2)
+{
+	vtx_t buf[4];
+
+	if (VECT2_EQ(mtcr->last_draw.pos, pos) &&
+	    VECT2_EQ(mtcr->last_draw.size, size) &&
+	    mtcr->last_draw.x1 == x1 && mtcr->last_draw.x2 == x2 &&
+	    mtcr->last_draw.y1 == y1 && mtcr->last_draw.y2 == y2)
+		return;
+
+	buf[0].pos[0] = pos.x;
+	buf[0].pos[1] = pos.y;
+	buf[0].pos[2] = 0;
+	buf[0].tex0[0] = x1;
+	buf[0].tex0[1] = y2;
+
+	buf[1].pos[0] = pos.x;
+	buf[1].pos[1] = pos.y + size.y;
+	buf[1].pos[2] = 0;
+	buf[1].tex0[0] = x1;
+	buf[1].tex0[1] = y1;
+
+	buf[2].pos[0] = pos.x + size.x;
+	buf[2].pos[1] = pos.y + size.y;
+	buf[2].pos[2] = 0;
+	buf[2].tex0[0] = x2;
+	buf[2].tex0[1] = y1;
+
+	buf[3].pos[0] = pos.x + size.x;
+	buf[3].pos[1] = pos.y;
+	buf[3].pos[2] = 0;
+	buf[3].tex0[0] = x2;
+	buf[3].tex0[1] = y2;
+
+	ASSERT(mtcr->vtx_buf != 0);
+	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
+	glBufferData(GL_ARRAY_BUFFER, sizeof (buf), buf, GL_STATIC_DRAW);
+
+	mtcr->last_draw.pos = pos;
+	mtcr->last_draw.size = size;
+	mtcr->last_draw.x1 = x1;
+	mtcr->last_draw.x2 = x2;
+	mtcr->last_draw.y1 = y1;
+	mtcr->last_draw.y2 = y2;
+}
+
 /*
  * Draws the rendered surface at offset pos.xy, at a size of size.xy.
  * src_pos and src_sz allow you to specify only a sub-rectangle of the
@@ -427,16 +500,25 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 
 	mutex_exit(&mtcr->lock);
 
-	glBegin(GL_QUADS);
-	glTexCoord2f(x1, y2);
-	glVertex2f(pos.x, pos.y);
-	glTexCoord2f(x1, y1);
-	glVertex2f(pos.x, pos.y + size.y);
-	glTexCoord2f(x2, y1);
-	glVertex2f(pos.x + size.x, pos.y + size.y);
-	glTexCoord2f(x2, y2);
-	glVertex2f(pos.x + size.x, pos.y);
-	glEnd();
+	glutils_disable_all_client_state();
+	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
+
+	glEnableVertexAttribArray(VTX_ATTRIB_POS);
+	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
+
+	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
+	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
+	    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+
+	glDrawArrays(GL_QUADS, 0, 4);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glDisableVertexAttribArray(VTX_ATTRIB_POS);
+	glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
 }
 
 /*
