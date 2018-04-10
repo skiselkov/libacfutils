@@ -928,13 +928,22 @@ hdg2dir(double truehdg)
 double
 dir2hdg(vect2_t dir)
 {
+	double res;
+
 	if (dir.x >= 0 && dir.y >= 0)
-		return (RAD2DEG(asin(dir.x / vect2_abs(dir))));
-	if (dir.x < 0 && dir.y >= 0)
-		return (360 + RAD2DEG(asin(dir.x / vect2_abs(dir))));
-	if (dir.x >= 0 && dir.y < 0)
-		return (180 - RAD2DEG(asin(dir.x / vect2_abs(dir))));
-	return (180 - RAD2DEG(asin(dir.x / vect2_abs(dir))));
+		res = RAD2DEG(asin(dir.x / vect2_abs(dir)));
+	else if (dir.x < 0 && dir.y >= 0)
+		res = 360 + RAD2DEG(asin(dir.x / vect2_abs(dir)));
+	else if (dir.x >= 0 && dir.y < 0)
+		res = 180 - RAD2DEG(asin(dir.x / vect2_abs(dir)));
+	else
+		res = 180 - RAD2DEG(asin(dir.x / vect2_abs(dir)));
+
+	/*
+	 * The result might VERY subtly be off by just a fraction from a normal
+	 * heading, causing this to crash other assertion-checking functions.
+	 */
+	return (normalize_hdg(res));
 }
 
 geo_pos2_t
