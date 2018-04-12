@@ -44,8 +44,10 @@ API_EXPORT void glutils_disable_all_client_state(void);
 API_EXPORT GLuint glutils_make_quads_IBO(size_t num_vtx);
 API_EXPORT void glutils_init_2D_quads(glutils_quads_t *quads,
     vect2_t *p, vect2_t *t, size_t num_pts);
+API_EXPORT void glutils_init_3D_quads(glutils_quads_t *quads,
+    vect3_t *p, vect2_t *t, size_t num_pts);
 API_EXPORT void glutils_destroy_quads(glutils_quads_t *quads);
-API_EXPORT void glutils_draw_2D_quads(const glutils_quads_t *quads);
+API_EXPORT void glutils_draw_quads(const glutils_quads_t *quads);
 
 #ifdef	__cplusplus
 }

@@ -36,21 +36,24 @@ if [[ "$1" = "--dll" ]]; then
 	shift
 fi
 
-make distclean > /dev/null
-qmake -set DLL $DLL
-qmake -set WHOLE_ARCHIVE $WHOLE_ARCHIVE
-qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS
-if [ $? != 0 ] ; then
-  exit
-fi
-if [[ "$DLL" = 1 ]]; then
-	mv "$RELEASE/libacfutils1.a" "win64/libacfutils.a" || exit 1
-	mv "$RELEASE/acfutils1.dll" "win64/acfutils.dll" || exit 1
-	x86_64-w64-mingw32-dlltool -d acfutils.def --dllname acfutils.dll \
-	    --output-lib win64/acfutils.lib "win64/acfutils.dll" || exit 1
-else
-	mv "$RELEASE/libacfutils.a" "win64/libacfutils.a" || exit 1
+if [[ "$1" != "--linux-only" ]]; then
+	make distclean > /dev/null
+	qmake -set DLL $DLL
+	qmake -set WHOLE_ARCHIVE $WHOLE_ARCHIVE
+	qmake -set CROSS_COMPILE x86_64-w64-mingw32- && \
+	    qmake -spec win32-g++ && make -j $NCPUS
+	if [ $? != 0 ] ; then
+	  exit
+	fi
+	if [[ "$DLL" = 1 ]]; then
+		mv "$RELEASE/libacfutils1.a" "win64/libacfutils.a" || exit 1
+		mv "$RELEASE/acfutils1.dll" "win64/acfutils.dll" || exit 1
+		x86_64-w64-mingw32-dlltool -d acfutils.def \
+		    --dllname acfutils.dll --output-lib win64/acfutils.lib \
+		    "win64/acfutils.dll" || exit 1
+	else
+		mv "$RELEASE/libacfutils.a" "win64/libacfutils.a" || exit 1
+	fi
 fi
 
 make distclean > /dev/null

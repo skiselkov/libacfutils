@@ -40,6 +40,11 @@
 
 #define	FAA_DOF_URL	"http://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
 
+enum {
+	ODB_REGION_US,		/* USA */
+	NUM_ODB_REGIONS
+};
+
 typedef struct {
 	odb_t		*odb;
 	uint8_t		*buf;
@@ -74,6 +79,8 @@ struct odb_s {
 	mutex_t		refresh_lock;
 	thread_t	refresh_thr;
 	bool_t		refresh_run;
+
+	time_t		refresh_times[NUM_ODB_REGIONS];
 };
 
 static void add_obst_to_odb(obst_type_t type, geo_pos2_t pos, float agl,
@@ -102,8 +109,9 @@ tile_compar(const void *a, const void *b)
 static void
 latlon2path(int lat, int lon, char dname[32])
 {
-	snprintf(dname, 32, "%+03d+%04d%c%+03d%+04d",
-	    (int)floor(lat / 10.0), (int)floor(lon / 10.0), DIRSEP, lat, lon);
+	snprintf(dname, 32, "%+03d%+04d%c%+03d%+04d",
+	    (int)floor(lat / 10.0) * 10, (int)floor(lon / 10.0) * 10,
+	    DIRSEP, lat, lon);
 }
 
 static obst_type_t
@@ -204,7 +212,7 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
     void *userinfo)
 {
 	for (const char *line_start = buf, *line_end = buf;
-	    line_start < buf + len; line_start = line_end) {
+	    line_start < buf + len; line_start = line_end + 1) {
 		char **comps;
 		size_t n_comps;
 		obst_type_t type;
@@ -247,7 +255,7 @@ next:
 static bool_t
 odb_proc_us_dof(const char *path, add_obst_cb_t cb, void *userinfo)
 {
-	char *str = file2str(path);
+	char *str = file2str(path, NULL);
 	bool_t res;
 
 	if (str == NULL)
@@ -311,17 +319,15 @@ odb_set_unload_delay(odb_t *odb, unsigned seconds)
 }
 
 time_t
-odb_get_cc_refresh_date(const odb_t *odb, const char *cc)
+odb_get_cc_refresh_date_impl(odb_t* odb, const char *cc)
 {
-	char *path = mkpathname(odb->cache_dir, cc, "refresh.txt", NULL);
 	char *str;
 	time_t res = 0;
 
 	ASSERT_MSG(strlen(cc) == 2 && strchr(cc, DIRSEP) == NULL,
 	    "invalid country code \"%s\" passed", cc);
 
-	str = file2str(path);
-	lacf_free(path);
+	str = file2str(odb->cache_dir, cc, "refresh.txt", NULL);
 
 	if (str != NULL) {
 		res = atoll(str);
@@ -329,6 +335,20 @@ odb_get_cc_refresh_date(const odb_t *odb, const char *cc)
 	}
 
 	return (res);
+}
+
+time_t
+odb_get_cc_refresh_date(odb_t *odb, const char *cc)
+{
+	if (strcmp(cc, "US") == 0) {
+		if (odb->refresh_times[ODB_REGION_US] == 0) {
+			odb->refresh_times[ODB_REGION_US] =
+			    odb_get_cc_refresh_date_impl(odb, cc);
+		}
+		return odb->refresh_times[ODB_REGION_US];
+	} else {
+		return (0);
+	}
 }
 
 static size_t
@@ -446,6 +466,8 @@ odb_refresh_us(odb_t *odb)
 	curl = curl_easy_init();
 	VERIFY(curl != NULL);
 
+	logMsg("Downloading new obstacle data from \"%s\" for region \"US\"",
+	    FAA_DOF_URL);
 	curl_easy_setopt(curl, CURLOPT_URL, FAA_DOF_URL);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, UPDATE_TIMEOUT);
@@ -459,25 +481,32 @@ odb_refresh_us(odb_t *odb)
 		void *buf = decompress_zip(dl_info.buf, dl_info.bufsz, &len);
 
 		if (buf != NULL) {
+			char *subpath = mkpathname(odb->cache_dir, "US", NULL);
+
 			mutex_enter(&odb->tiles_lock);
 
 			odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
-			remove_directory(odb->cache_dir);
+			remove_directory(subpath);
 			create_directory_recursive(odb->cache_dir);
-			odb_write_tiles(odb, "us");
+			odb_write_tiles(odb, "US");
 			odb_flush_tiles(odb);
-			write_odb_refresh_date(odb, "us");
+			write_odb_refresh_date(odb, "US");
+
+			lacf_free(subpath);
+			odb->refresh_times[ODB_REGION_US] = time(NULL);
 
 			mutex_exit(&odb->tiles_lock);
 		} else {
 			logMsg("Error updating obstacle database from %s: "
 			    "failed to decompress downloaded ZIP file",
 			    FAA_DOF_URL);
+			odb->refresh_times[ODB_REGION_US] = -1u;
 		}
 		free(buf);
 	} else {
 		logMsg("Error updating obstacle database from %s: "
 		    "network error %d", FAA_DOF_URL, res);
+		odb->refresh_times[ODB_REGION_US] = -1u;
 	}
 
 	curl_easy_cleanup(curl);
@@ -495,7 +524,7 @@ odb_refresh_cc(odb_t *odb, const char *cc)
 
 	mutex_enter(&odb->refresh_lock);
 	if (!odb->refresh_run) {
-		if (strcmp(cc, "us"))
+		if (strcmp(cc, "US") == 0)
 			refresh_op = odb_refresh_us;
 		if (refresh_op != NULL) {
 			odb->refresh_run = B_TRUE;
@@ -541,7 +570,7 @@ odb_populate_tile_us(odb_t *odb, odb_tile_t *tile)
 	char *path;
 
 	latlon2path(tile->lat, tile->lon, tilepath);
-	path = mkpathname(odb->cache_dir, "us", tilepath, NULL);
+	path = mkpathname(odb->cache_dir, "US", tilepath, NULL);
 	odb_proc_us_dof(path, add_tile_obst, tile);
 	lacf_free(path);
 }

@@ -31,9 +31,9 @@
 #include <acfutils/shader.h>
 
 typedef struct {
-	GLfloat	pos[2];
+	GLfloat	pos[3];
 	GLfloat	tex0[2];
-} vtx_2d_t;
+} vtx_t;
 
 /*
  * Kills all OpenGL client state arrays. Call this before enabling the OpenGL
@@ -99,7 +99,19 @@ API_EXPORT void
 glutils_init_2D_quads(glutils_quads_t *quads, vect2_t *p, vect2_t *t,
     size_t num_pts)
 {
-	vtx_2d_t vtx_data[2 * num_pts];
+	vect3_t p_3d[num_pts];
+
+	for (size_t i = 0; i < num_pts; i++)
+		p_3d[i] = VECT3(p[i].x, p[i].y, 0);
+
+	glutils_init_3D_quads(quads, p_3d, t, num_pts);
+}
+
+API_EXPORT void
+glutils_init_3D_quads(glutils_quads_t *quads, vect3_t *p, vect2_t *t,
+    size_t num_pts)
+{
+	vtx_t vtx_data[2 * num_pts];
 	size_t i, n;
 
 	ASSERT0(num_pts & 3);
@@ -110,21 +122,27 @@ glutils_init_2D_quads(glutils_quads_t *quads, vect2_t *p, vect2_t *t,
 	for (i = 0, n = 0; i < num_pts; i += 4, n += 6) {
 		vtx_data[n + 0].pos[0] = p[i + 0].x;
 		vtx_data[n + 0].pos[1] = p[i + 0].y;
+		vtx_data[n + 0].pos[2] = p[i + 0].z;
 
 		vtx_data[n + 1].pos[0] = p[i + 1].x;
 		vtx_data[n + 1].pos[1] = p[i + 1].y;
+		vtx_data[n + 1].pos[2] = p[i + 1].z;
 
 		vtx_data[n + 2].pos[0] = p[i + 2].x;
 		vtx_data[n + 2].pos[1] = p[i + 2].y;
+		vtx_data[n + 2].pos[2] = p[i + 2].z;
 
 		vtx_data[n + 3].pos[0] = p[i + 0].x;
 		vtx_data[n + 3].pos[1] = p[i + 0].y;
+		vtx_data[n + 3].pos[2] = p[i + 0].z;
 
 		vtx_data[n + 4].pos[0] = p[i + 2].x;
 		vtx_data[n + 4].pos[1] = p[i + 2].y;
+		vtx_data[n + 4].pos[2] = p[i + 2].z;
 
 		vtx_data[n + 5].pos[0] = p[i + 3].x;
 		vtx_data[n + 5].pos[1] = p[i + 3].y;
+		vtx_data[n + 5].pos[2] = p[i + 3].z;
 
 		if (t != NULL) {
 			vtx_data[n + 0].tex0[0] = t[i + 0].x;
@@ -167,16 +185,16 @@ glutils_destroy_quads(glutils_quads_t *quads)
 }
 
 API_EXPORT void
-glutils_draw_2D_quads(const glutils_quads_t *quads)
+glutils_draw_quads(const glutils_quads_t *quads)
 {
 	glEnableVertexAttribArray(VTX_ATTRIB_POS);
 	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
-	glVertexAttribPointer(VTX_ATTRIB_POS, 2, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_2d_t), (void *)(offsetof(vtx_2d_t, pos)));
+	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
 	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_2d_t), (void *)(offsetof(vtx_2d_t, tex0)));
+	    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
 
 	glDrawArrays(GL_TRIANGLES, 0, quads->num_vtx);
 

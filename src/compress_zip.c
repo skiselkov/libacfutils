@@ -56,9 +56,11 @@ static size_t
 mem_read(JZFile *file, void *buf, size_t size)
 {
 	memfile_t *mf = (memfile_t *)file;
+
 	size = MIN(mf->cap - mf->off, size);
 	memcpy(buf, mf->buf + mf->off, size);
 	mf->off += size;
+
 	return (size);
 }
 
@@ -82,11 +84,11 @@ mem_seek(JZFile *file, size_t offset, int whence)
 		mf->off = MIN(mf->off + (int)offset, mf->cap);
 		break;
 	case SEEK_END:
-		mf->off = (offset <= mf->cap ? mf->off - offset : 0);
+		mf->off = (offset <= mf->cap ? mf->cap - offset : 0);
 		break;
 	}
 
-	return (mf->off);
+	return (0);
 }
 
 static int

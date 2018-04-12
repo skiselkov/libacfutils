@@ -58,7 +58,7 @@ odb_t *odb_init(const char *xpdir);
 void odb_fini(odb_t *odb);
 
 void odb_set_unload_delay(odb_t *odb, unsigned seconds);
-time_t odb_get_cc_refresh_date(const odb_t *odb, const char *cc);
+time_t odb_get_cc_refresh_date(odb_t *odb, const char *cc);
 bool_t odb_refresh_cc(odb_t *odb, const char *cc);
 bool_t odb_get_obstacles(odb_t *odb, int lat, int lon, add_obst_cb_t cb,
     void *userinfo);
