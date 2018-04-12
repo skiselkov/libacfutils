@@ -51,8 +51,8 @@ typedef enum {
 } obst_light_t;
 
 typedef struct odb_s odb_t;
-typedef void (*add_obst_cb_t)(obst_type_t type, geo_pos2_t pos,
-    float agl, float amsl, obst_light_t light, void *userinfo);
+typedef void (*add_obst_cb_t)(obst_type_t type, geo_pos3_t pos,
+    float agl, obst_light_t light, void *userinfo);
 
 odb_t *odb_init(const char *xpdir);
 void odb_fini(odb_t *odb);

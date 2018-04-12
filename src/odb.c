@@ -54,8 +54,7 @@ typedef struct {
 
 typedef struct {
 	obst_type_t	type;
-	geo_pos2_t	pos;
-	float		amsl;
+	geo_pos3_t	pos;
 	float		agl;
 	obst_light_t	light;
 
@@ -83,8 +82,8 @@ struct odb_s {
 	time_t		refresh_times[NUM_ODB_REGIONS];
 };
 
-static void add_obst_to_odb(obst_type_t type, geo_pos2_t pos, float agl,
-    float amsl, obst_light_t light, void *userinfo);
+static void add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
+    obst_light_t light, void *userinfo);
 static odb_tile_t * load_tile(odb_t *odb, int lat, int lon,
     bool_t load_from_db);
 static void odb_flush_tiles(odb_t *odb);
@@ -217,7 +216,7 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
 		size_t n_comps;
 		obst_type_t type;
 		obst_light_t light;
-		geo_pos2_t pos;
+		geo_pos3_t pos;
 		float agl, amsl;
 		char line[256];
 
@@ -233,18 +232,19 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
 		if (n_comps < 19 || strcmp(comps[0], "OAS") == 0)
 			goto next;
 
-		pos.lat = atof(comps[5]);
-		pos.lon = atof(comps[6]);
 		agl = FEET2MET(atof(comps[11]));
 		amsl = FEET2MET(atof(comps[12]));
 		type = dof2type(comps[9]);
 		light = dof2light(comps[13]);
+		pos.lat = atof(comps[5]);
+		pos.lon = atof(comps[6]);
+		pos.elev = amsl - agl;
 
 		if (!is_valid_lat(pos.lat) || !is_valid_lon(pos.lon) ||
 		    agl < 0 || !is_valid_alt(agl) || !is_valid_alt(amsl))
 			goto next;
 
-		cb(type, pos, agl, amsl, light, userinfo);
+		cb(type, pos, agl, light, userinfo);
 next:
 		free_strlist(comps, n_comps);
 	}
@@ -403,8 +403,8 @@ write_tile(odb_t *odb, odb_tile_t *tile, const char *cc)
 	    obst = list_next(&tile->obst, obst)) {
 		fprintf(fp, ",,US,,,%f,%f,,,%s,1,%.0f,%.0f,%c,1A,,,,\n",
 		    obst->pos.lat, obst->pos.lon, type2dof(obst->type),
-			MET2FEET(obst->agl), MET2FEET(obst->amsl),
-			light2dof(obst->light));
+			MET2FEET(obst->agl), MET2FEET(obst->pos.elev +
+			obst->agl), light2dof(obst->light));
 	}
 
 	res = B_TRUE;
@@ -538,7 +538,7 @@ odb_refresh_cc(odb_t *odb, const char *cc)
 }
 
 static void
-add_tile_obst(obst_type_t type, geo_pos2_t pos, float agl, float amsl,
+add_tile_obst(obst_type_t type, geo_pos3_t pos, float agl,
     obst_light_t light, void *userinfo)
 {
 	odb_tile_t *tile = userinfo;
@@ -546,7 +546,6 @@ add_tile_obst(obst_type_t type, geo_pos2_t pos, float agl, float amsl,
 
 	obst->type = type;
 	obst->pos = pos;
-	obst->amsl = amsl;
 	obst->agl = agl;
 	obst->light = light;
 
@@ -554,13 +553,13 @@ add_tile_obst(obst_type_t type, geo_pos2_t pos, float agl, float amsl,
 }
 
 static void
-add_obst_to_odb(obst_type_t type, geo_pos2_t pos, float agl, float amsl,
+add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
     obst_light_t light, void *userinfo)
 {
 	odb_t *odb = userinfo;
 	odb_tile_t *tile = load_tile(odb, floor(pos.lat), floor(pos.lon),
 	    B_FALSE);
-	add_tile_obst(type, pos, agl, amsl, light, tile);
+	add_tile_obst(type, pos, agl, light, tile);
 }
 
 static void
@@ -619,8 +618,7 @@ odb_get_obstacles(odb_t *odb, int lat, int lon, add_obst_cb_t cb,
 	tile = load_tile(odb, lat, lon, B_TRUE);
 	for (obst_t *obst = list_head(&tile->obst); obst != NULL;
 	    obst = list_next(&tile->obst, obst)) {
-		cb(obst->type, obst->pos, obst->agl, obst->amsl, obst->light,
-		    userinfo);
+		cb(obst->type, obst->pos, obst->agl, obst->light, userinfo);
 	}
 
 	mutex_exit(&odb->tiles_lock);
