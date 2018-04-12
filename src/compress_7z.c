@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
 #include <string.h>

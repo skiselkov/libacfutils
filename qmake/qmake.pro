@@ -27,6 +27,7 @@ INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../glew
 INCLUDEPATH += ../lzma/C
+INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c99 -O2 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
 
@@ -101,5 +102,5 @@ macx-clang {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
 }
 
-HEADERS += ../src/*.h ../src/acfutils/*.h
-SOURCES += ../src/*.c
+HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h
+SOURCES += ../src/*.c ../junzip/junzip.c

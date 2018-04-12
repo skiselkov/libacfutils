@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
 #include <acfutils/assert.h>

@@ -37,6 +37,9 @@ API_EXPORT bool_t test_7z(const void *in_buf, size_t len);
 #define	decompress_7z	ACFSYM(decompress_7z)
 API_EXPORT void *decompress_7z(const char *filename, size_t *out_len);
 
+#define	decompress_zip	ACFSYM(decompress_zip)
+API_EXPORT void *decompress_zip(void *in_buf, size_t len, size_t *out_len);
+
 #ifdef	__cplusplus
 }
 #endif
