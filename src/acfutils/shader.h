@@ -32,13 +32,34 @@
 extern "C" {
 #endif
 
+/*
+ * Apparently these are the standard vertex attribute indices:
+ * gl_Vertex            0
+ * gl_Normal            2
+ * gl_Color             3
+ * gl_SecondaryColor    4
+ * gl_FogCoord          5
+ * gl_MultiTexCoord0    8
+ * gl_MultiTexCoord1    9
+ * gl_MultiTexCoord2    10
+ * gl_MultiTexCoord3    11
+ * gl_MultiTexCoord4    12
+ * gl_MultiTexCoord5    13
+ * gl_MultiTexCoord6    14
+ * gl_MultiTexCoord7    15
+ */
+enum {
+	VTX_ATTRIB_POS =	0,
+	VTX_ATTRIB_NORM =	2,
+	VTX_ATTRIB_TEX0 =	8,
+	VTX_ATTRIB_TEX1 =	9
+};
+
 #define	shader_from_file	ACFSYM(shader_from_file)
 API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
 #define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
 API_EXPORT GLuint shader_prog_from_file(const char *progname,
     const char *vtx_file, const char *frag_file);
-
-API_EXPORT void glutils_disable_all_client_state(void);
 
 #ifdef	__cplusplus
 }

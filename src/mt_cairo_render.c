@@ -36,7 +36,7 @@
 #include <acfutils/geom.h>
 #include <acfutils/mt_cairo_render.h>
 #include <acfutils/safe_alloc.h>
-#include <acfutils/shader.h>
+#include <acfutils/glutils.h>
 #include <acfutils/thread.h>
 #include <acfutils/time.h>
 
@@ -83,6 +83,7 @@ struct mt_cairo_render_s {
 		vect2_t		size;
 	} last_draw;
 	GLuint			vtx_buf;
+	GLuint			idx_buf;
 };
 
 enum {
@@ -228,6 +229,7 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 	}
 	glGenBuffers(1, &mtcr->pbo);
 	glGenBuffers(1, &mtcr->vtx_buf);
+	mtcr->idx_buf = glutils_make_quads_IBO(4);
 
 	mtcr->last_draw.pos = NULL_VECT2;
 
@@ -250,6 +252,8 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 
 	if (mtcr->vtx_buf != 0)
 		glDeleteBuffers(1, &mtcr->vtx_buf);
+	if (mtcr->idx_buf != 0)
+		glDeleteBuffers(1, &mtcr->idx_buf);
 
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
@@ -513,9 +517,11 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
 	    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
 
-	glDrawArrays(GL_QUADS, 0, 4);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glDisableVertexAttribArray(VTX_ATTRIB_POS);
 	glDisableVertexAttribArray(VTX_ATTRIB_TEX0);

@@ -142,27 +142,3 @@ shader_prog_from_file(const char *progname, const char *vtx_file,
 
 	return (prog);
 }
-
-/*
- * Kills all OpenGL client state arrays. Call this before enabling the OpenGL
- * client arrays you will need to draw, as otherwise you don't know if some
- * other plugin left them in some misconfigured state.
- */
-API_EXPORT void
-glutils_disable_all_client_state(void)
-{
-	static const GLenum disable_caps[] = {
-	    GL_COLOR_ARRAY,
-	    GL_EDGE_FLAG_ARRAY,
-	    GL_FOG_COORD_ARRAY,
-	    GL_INDEX_ARRAY,
-	    GL_NORMAL_ARRAY,
-	    GL_SECONDARY_COLOR_ARRAY,
-	    GL_TEXTURE_COORD_ARRAY,
-	    GL_VERTEX_ARRAY,
-	    0
-	};
-
-	for (int i = 0; disable_caps[i] != 0; i++)
-		glDisableClientState(disable_caps[i]);
-}
