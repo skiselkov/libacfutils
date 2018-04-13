@@ -152,7 +152,7 @@ decompress_zip(void *in_buf, size_t len, size_t *out_len)
 	    .buf = in_buf,
 	    .cap = len
 	};
-	outbuf_t buf = { 0 };
+	outbuf_t buf = { .buf = NULL };
 	JZFile *zip = (JZFile *)&mf;
 	JZEndRecord endrec;
 
