@@ -38,7 +38,7 @@ typedef enum {
 
 typedef enum {
 	OBST_LIGHT_UNK,			/* lighting status unknown */
-	OBST_LIGHT_NONE,			/* not lighted */
+	OBST_LIGHT_NONE,		/* not lighted */
 	OBST_LIGHT_LIGHTED,		/* lighted by unknown type of light */
 	OBST_LIGHT_RED,			/* continuous red */
 	OBST_LIGHT_STROBE_WR_MED,	/* med intensity white & red strobe */
