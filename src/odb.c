@@ -164,7 +164,7 @@ type2dof(obst_type_t type)
 {
 	switch (type) {
 	case OBST_BLDG:
-		return "BLDG";
+		return ("BLDG");
 	case OBST_TOWER:
 		return ("TOWER");
 	case OBST_STACK:
