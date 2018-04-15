@@ -31,12 +31,19 @@ typedef struct {
 	uint64_t	intval_us;
 	bool_t		run;
 	thread_t	thread;
+	bool_t		(*init_func)(void *userinfo);
 	bool_t		(*worker_func)(void *userinfo);
+	void		(*fini_func)(void *userinfo);
 	void		*userinfo;
 	char		name[32];
 } worker_t;
 
 API_EXPORT void worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
+    uint64_t intval_us, void *userinfo, const char *thread_name);
+API_EXPORT void worker_init2(worker_t *wk,
+    bool_t (*init_func)(void *userinfo),
+    bool_t (*worker_func)(void *userinfo),
+    void (*fini_func)(void *userinfo),
     uint64_t intval_us, void *userinfo, const char *thread_name);
 API_EXPORT void worker_fini(worker_t *wk);
 

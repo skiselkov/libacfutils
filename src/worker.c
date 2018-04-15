@@ -31,6 +31,11 @@ worker(void *ui)
 	thread_set_name(wk->name);
 
 	mutex_enter(&wk->lock);
+
+	if (wk->init_func != NULL) {
+		if (!wk->init_func(wk->userinfo))
+			goto init_fail;
+	}
 	while (wk->run) {
 		if (wk->intval_us == 0) {
 			cv_wait(&wk->cv, &wk->lock);
@@ -51,6 +56,9 @@ worker(void *ui)
 			    microclock() + wk->intval_us);
 		}
 	}
+	if (wk->fini_func != NULL)
+		wk->fini_func(wk->userinfo);
+init_fail:
 	mutex_exit(&wk->lock);
 }
 
@@ -58,12 +66,25 @@ void
 worker_init(worker_t *wk, bool_t (*worker_func)(void *userinfo),
     uint64_t intval_us, void *userinfo, const char *thread_name)
 {
+	worker_init2(wk, NULL, worker_func, NULL, intval_us, userinfo,
+	    thread_name);
+}
+
+API_EXPORT void
+worker_init2(worker_t *wk,
+    bool_t (*init_func)(void *userinfo),
+    bool_t (*worker_func)(void *userinfo),
+    void (*fini_func)(void *userinfo),
+    uint64_t intval_us, void *userinfo, const char *thread_name)
+{
 	ASSERT(worker_func != NULL);
 
 	wk->run = B_TRUE;
 	mutex_init(&wk->lock);
 	cv_init(&wk->cv);
+	wk->init_func = init_func;
 	wk->worker_func = worker_func;
+	wk->fini_func = fini_func;
 	wk->intval_us = intval_us;
 	wk->userinfo = userinfo;
 	if (thread_name != NULL)
