@@ -13,6 +13,16 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 
+#ifndef	__clang__
+/*
+ * "gcc_struct" is required for the Windows build, because by default
+ * GCC uses MSVC-compatible packing on Windows, which breaks JUnzip.
+ */
+#define	attr_pack_tightly	gcc_struct, __packed__
+#else	/* defined(__clang__) */
+#define	attr_pack_tightly	__packed__
+#endif	/* defined(__clang__) */
+
 // If you don't have stdint.h, the following two lines should work for most 32/64 bit systems
 // typedef unsigned int uint32_t;
 // typedef unsigned short uint16_t;
@@ -30,7 +40,7 @@ struct JZFile {
 JZFile *
 jzfile_from_stdio_file(FILE *fp);
 
-typedef struct __attribute__ ((gcc_struct, __packed__)) {
+typedef struct __attribute__ ((attr_pack_tightly)) {
     uint32_t signature;
     uint16_t versionNeededToExtract; // unsupported
     uint16_t generalPurposeBitFlag; // unsupported
@@ -44,7 +54,7 @@ typedef struct __attribute__ ((gcc_struct, __packed__)) {
     uint16_t extraFieldLength; // unsupported
 } JZLocalFileHeader;
 
-typedef struct __attribute__ ((gcc_struct, __packed__)) {
+typedef struct __attribute__ ((attr_pack_tightly)) {
     uint32_t signature;
     uint16_t versionMadeBy; // unsupported
     uint16_t versionNeededToExtract; // unsupported
@@ -64,7 +74,7 @@ typedef struct __attribute__ ((gcc_struct, __packed__)) {
     uint32_t relativeOffsetOflocalHeader;
 } JZGlobalFileHeader;
 
-typedef struct __attribute__ ((gcc_struct, __packed__)) {
+typedef struct __attribute__ ((attr_pack_tightly)) {
     uint16_t compressionMethod;
     uint16_t lastModFileTime;
     uint16_t lastModFileDate;
@@ -74,7 +84,7 @@ typedef struct __attribute__ ((gcc_struct, __packed__)) {
     uint32_t offset;
 } JZFileHeader;
 
-typedef struct __attribute__ ((gcc_struct, __packed__)) {
+typedef struct __attribute__ ((attr_pack_tightly)) {
     uint32_t signature; // 0x06054b50
     uint16_t diskNumber; // unsupported
     uint16_t centralDirectoryDiskNumber; // unsupported
