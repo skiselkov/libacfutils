@@ -65,7 +65,9 @@ $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig"
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
     shapelib proj libcurl openssl tesseract lept"
 
-if [[ "$1" = "--libs" ]]; then
+if [[ "$1" = "--cflags" ]]; then
+	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
+elif [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
 		# This must be appended AFTER --whole-archive, otherwise
 		# it produces linkage errors on Windows.
@@ -85,4 +87,4 @@ fi
 echo $WHOLE_ARCH_ON \
     $(pkg-config $@ $PACKAGES) \
     ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF \
-    $OPENSSL_EXTRA $DBGEXTRA
+    $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA}
