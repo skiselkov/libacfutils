@@ -180,7 +180,7 @@ glutils_destroy_quads(glutils_quads_t *quads)
 {
 	if (quads->vbo != 0) {
 		glDeleteBuffers(1, &quads->vbo);
-		memset(quads, 0, sizeof (&quads));
+		memset(quads, 0, sizeof (*quads));
 	}
 }
 
