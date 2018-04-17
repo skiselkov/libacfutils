@@ -135,7 +135,7 @@ shader_prog_from_file_v(const char *progname, const char *vtx_file,
 		attr_idx = va_arg(ap, GLuint);
 
 		ASSERT(vtx_shader != 0);
-		glBindAttribLocation(vtx_shader, attr_idx, attr_name);
+		glBindAttribLocation(prog, attr_idx, attr_name);
 	}
 
 	glLinkProgram(prog);
