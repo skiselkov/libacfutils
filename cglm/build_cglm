@@ -22,4 +22,5 @@ CGLM_DIR="cglm-0.4.1"
 
 if ! [ -d "${CGLM_DIR}" ]; then
 	tar xJf "${CGLM}"
+	( cd "${CGLM_DIR}" && patch -p1 < ../cglm.patch )
 fi
