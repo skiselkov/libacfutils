@@ -59,6 +59,11 @@ API_EXPORT void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos,
     vect2_t size);
 API_EXPORT void mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size);
+API_EXPORT void mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos,
+    vect2_t size, const GLfloat *pvm);
+API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
+    vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
+    const GLfloat *pvm);
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 
 #define	ft_err2str	ACFSYM(ft_err2str)

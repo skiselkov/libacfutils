@@ -37,10 +37,21 @@
 #include <acfutils/mt_cairo_render.h>
 #include <acfutils/safe_alloc.h>
 #include <acfutils/glutils.h>
+#include <acfutils/shader.h>
 #include <acfutils/thread.h>
 #include <acfutils/time.h>
 
-#include <XPLMGraphics.h>
+#ifdef	_USE_MATH_DEFINES
+#undef	_USE_MATH_DEFINES
+#endif
+
+#if	IBM
+#ifdef	__SSE2__
+#undef	__SSE2__
+#endif
+#endif	/* IBM */
+
+#include <cglm/cglm.h>
 
 typedef struct {
 	GLfloat		pos[3];
@@ -84,12 +95,27 @@ struct mt_cairo_render_s {
 	} last_draw;
 	GLuint			vtx_buf;
 	GLuint			idx_buf;
+	GLuint			shader;
 };
 
-enum {
-	VTX_ATTRIB_POS =	0,
-	VTX_ATTRIB_TEX0 =	8
-};
+static const char *vert_shader =
+    "#version 120\n"
+    "uniform mat4	pvm;\n"
+    "attribute vec3	vtx_pos;\n"
+    "attribute vec2	vtx_tex0;\n"
+    "varying vec2	tex_coord;\n"
+    "void main() {\n"
+    "	tex_coord = vtx_tex0;\n"
+    "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "}\n";
+
+static const char *frag_shader =
+    "#version 120\n"
+    "uniform sampler2D	texture;\n"
+    "varying vec2	tex_coord;\n"
+    "void main() {\n"
+    "	gl_FragColor = texture2D(texture, tex_coord);\n"
+    "}\n";
 
 /*
  * This weird macro construct is needed to implement freetype error code
@@ -232,6 +258,10 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
 
 	mtcr->last_draw.pos = NULL_VECT2;
+	mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
+	    vert_shader, frag_shader, "vtx_pos", VTX_ATTRIB_POS,
+	    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
+	VERIFY(mtcr->shader != 0);
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -269,6 +299,8 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 	}
 	if (mtcr->pbo != 0)
 		glDeleteBuffers(1, &mtcr->pbo);
+	if (mtcr->shader != 0)
+		glDeleteProgram(mtcr->shader);
 
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
@@ -350,6 +382,8 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 {
 	render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 
+	glActiveTexture(GL_TEXTURE0);
+
 	rs_tex_alloc(rs);
 	if (rs->chg || !rs->rdy) {
 		cairo_surface_flush(rs->surf);
@@ -409,16 +443,6 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	return (B_TRUE);
 }
 
-/*
- * Same as mt_cairo_render_draw_subrect, but renders the entire surface
- * to the passed coordinates.
- */
-void
-mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
-{
-	mt_cairo_render_draw_subrect(mtcr, ZERO_VECT2, VECT2(1, 1), pos, size);
-}
-
 static void
 prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
     double x1, double x2, double y1, double y2)
@@ -468,6 +492,39 @@ prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
 }
 
 /*
+ * Same as mt_cairo_render_draw_subrect, but renders the entire surface
+ * to the passed coordinates.
+ */
+void
+mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
+{
+	mt_cairo_render_draw_subrect(mtcr, ZERO_VECT2, VECT2(1, 1), pos, size);
+}
+
+void
+mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
+    const GLfloat *pvm)
+{
+	mt_cairo_render_draw_subrect_pvm(mtcr, ZERO_VECT2, VECT2(1, 1), pos,
+	    size, pvm);
+}
+
+void
+mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
+    vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
+{
+	ALIGN16(mat4 mv_matrix);
+	ALIGN16(mat4 proj_matrix);
+	ALIGN16(mat4 pvm);
+
+	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mv_matrix);
+	glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat *)proj_matrix);
+	glm_mat4_mul(proj_matrix, mv_matrix, pvm);
+	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
+	    (GLfloat *)pvm);
+}
+
+/*
  * Draws the rendered surface at offset pos.xy, at a size of size.xy.
  * src_pos and src_sz allow you to specify only a sub-rectangle of the
  * surface to be rendered.
@@ -480,8 +537,9 @@ prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
  * by first calling mt_cairo_render_once_wait.
  */
 void
-mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
-    vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
+mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
+    vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
+    const GLfloat *pvm)
 {
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
@@ -495,8 +553,6 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 	ASSERT3S(mtcr->cur_rs, >=, 0);
 	ASSERT3S(mtcr->cur_rs, <, 2);
 
-	XPLMSetGraphicsState(0, 1, 0, 0, 1, 0, 0);
-
 	if (!bind_cur_tex(mtcr)) {
 		mutex_exit(&mtcr->lock);
 		return;
@@ -504,8 +560,13 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 
 	mutex_exit(&mtcr->lock);
 
-	glutils_disable_all_client_state();
 	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
+
+	glUseProgram(mtcr->shader);
+
+	glUniformMatrix4fv(glGetUniformLocation(mtcr->shader, "pvm"),
+	    1, GL_FALSE, (const GLfloat *)pvm);
+	glUniform1i(glGetUniformLocation(mtcr->shader, "texture"), 0);
 
 	glEnableVertexAttribArray(VTX_ATTRIB_POS);
 	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
@@ -525,6 +586,7 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 
 	glDisableVertexAttribArray(VTX_ATTRIB_POS);
 	glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
+	glUseProgram(0);
 }
 
 /*
