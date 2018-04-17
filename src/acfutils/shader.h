@@ -63,13 +63,25 @@ enum {
 #define	shader_from_file	ACFSYM(shader_from_file)
 API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
 
+#define	shader_from_text	ACFSYM(shader_from_text)
+API_EXPORT GLuint shader_from_text(GLenum shader_type,
+    const GLchar *shader_text, const char *filename);
+
 #define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
 API_EXPORT GLuint shader_prog_from_file(const char *progname,
-    const char *vtx_file, const char *frag_file, ...);
+    const char *vert_file, const char *frag_file, ...);
 
 #define	shader_prog_from_file_v	ACFSYM(shader_prog_from_file_v)
 API_EXPORT GLuint shader_prog_from_file_v(const char *progname,
-    const char *vtx_file, const char *frag_file, va_list ap);
+    const char *vert_file, const char *frag_file, va_list ap);
+
+#define	shader_prog_from_text	ACFSYM(shader_prog_from_text)
+API_EXPORT GLuint shader_prog_from_text(const char *progname,
+    const char *vert_shader_text, const char *frag_shader_text, ...);
+
+#define	shader_prog_from_text_v	ACFSYM(shader_prog_from_text_v)
+API_EXPORT GLuint shader_prog_from_text_v(const char *progname,
+    const char *vert_shader_text, const char *frag_shader_text, va_list ap);
 
 #ifdef	__cplusplus
 }
