@@ -88,7 +88,21 @@ errout:
 
 GLuint
 shader_prog_from_file(const char *progname, const char *vtx_file,
-    const char *frag_file)
+    const char *frag_file, ...)
+{
+	GLuint res;
+	va_list ap;
+
+	va_start(ap, frag_file);
+	res = shader_prog_from_file_v(progname, vtx_file, frag_file, ap);
+	va_end(ap);
+
+	return (res);
+}
+
+GLuint
+shader_prog_from_file_v(const char *progname, const char *vtx_file,
+    const char *frag_file, va_list ap)
 {
 	GLuint vtx_shader = 0, frag_shader = 0, prog = 0;
 	GLint linked;
@@ -111,6 +125,18 @@ shader_prog_from_file(const char *progname, const char *vtx_file,
 		glAttachShader(prog, vtx_shader);
 	if (frag_shader != 0)
 		glAttachShader(prog, frag_shader);
+
+	for (;;) {
+		const char *attr_name = va_arg(ap, const char *);
+		GLuint attr_idx;
+
+		if (attr_name == NULL)
+			break;
+		attr_idx = va_arg(ap, GLuint);
+
+		ASSERT(vtx_shader != 0);
+		glBindAttribLocation(vtx_shader, attr_idx, attr_name);
+	}
 
 	glLinkProgram(prog);
 	glGetProgramiv(prog, GL_LINK_STATUS, &linked);

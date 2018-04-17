@@ -60,6 +60,19 @@ extern "C" {
 #endif	/* !IBM */
 
 #if	defined(__GNUC__) || defined(__clang__)
+#define	ALIGN(__var__, __bytes__)	\
+	__var__ __attribute__((aligned (__bytes__)))
+#else	/* !defined(__GNUC__) && !defined(__clang__) */
+#define	ALIGN(__var__, __bytes__)	__declspec(align(__bytes__)) __var__
+#endif	/* !defined(__GNUC__) && !defined(__clang__) */
+
+#define	ALIGN4(__var__)		ALIGN(__var__, 4)
+#define	ALIGN8(__var__)		ALIGN(__var__, 8)
+#define	ALIGN16(__var__)	ALIGN(__var__, 16)
+#define	ALIGN32(__var__)	ALIGN(__var__, 32)
+#define	ALIGN64(__var__)	ALIGN(__var__, 64)
+
+#if	defined(__GNUC__) || defined(__clang__)
 #define	PRINTF_ATTR(x)		__attribute__((format(printf, x, x + 1)))
 #define	PRINTF_ATTR2(x,y)	__attribute__((format(printf, x, y)))
 #ifndef	BSWAP32

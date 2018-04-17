@@ -26,6 +26,7 @@
 #ifndef	_ACF_UTILS_SHADER_H_
 #define	_ACF_UTILS_SHADER_H_
 
+#include <stdarg.h>
 #include <GL/glew.h>
 
 #ifdef	__cplusplus
@@ -57,9 +58,14 @@ enum {
 
 #define	shader_from_file	ACFSYM(shader_from_file)
 API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
+
 #define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
 API_EXPORT GLuint shader_prog_from_file(const char *progname,
-    const char *vtx_file, const char *frag_file);
+    const char *vtx_file, const char *frag_file, ...);
+
+#define	shader_prog_from_file_v	ACFSYM(shader_prog_from_file_v)
+API_EXPORT GLuint shader_prog_from_file_v(const char *progname,
+    const char *vtx_file, const char *frag_file, va_list ap);
 
 #ifdef	__cplusplus
 }
