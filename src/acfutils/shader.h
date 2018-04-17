@@ -56,6 +56,10 @@ enum {
 	VTX_ATTRIB_TEX1 =	9
 };
 
+#define	DEFAULT_VTX_ATTRIB_BINDINGS \
+	"vtx_pos", VTX_ATTRIB_POS, "vtx_norm", VTX_ATTRIB_NORM, \
+	"vtx_tex0", VTX_ATTRIB_TEX0, "vtx_tex1", VTX_ATTRIB_TEX1
+
 #define	shader_from_file	ACFSYM(shader_from_file)
 API_EXPORT GLuint shader_from_file(GLenum shader_type, const char *filename);
 
