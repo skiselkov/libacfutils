@@ -28,6 +28,7 @@
 
 #include <GL/glew.h>
 
+#include <acfutils/assert.h>
 #include <acfutils/geom.h>
 
 #ifdef	__cplusplus
@@ -51,6 +52,16 @@ API_EXPORT void glutils_draw_quads(const glutils_quads_t *quads);
 
 API_EXPORT void glutils_enable_vtx_attrs(GLuint first_idx, ...);
 API_EXPORT void glutils_disable_vtx_attrs(GLuint first_idx, ...);
+
+#define	GLUTILS_VALIDATE_INDICES(indices, num_idx, num_vtx) \
+	do { \
+		for (unsigned i = 0; i < (num_idx); i++) { \
+			VERIFY_MSG((indices)[i] < (num_vtx), "invalid index " \
+			    "specification encountered, index %d (value %d) " \
+			    "is outside of vertex range %d", i, (indices)[i], \
+			    (num_vtx)); \
+		} \
+	} while (0)
 
 #ifdef	__cplusplus
 }
