@@ -377,6 +377,25 @@ floormul(double x, double y)
 			FILTER_IN(old_val, new_val, d_t, lag); \
 	} while (0)
 
+/*
+ * Linearly interpolates old_val until it is equal to tgt. The current
+ * time delta is d_t (in seconds). The interpolation speed is step/second.
+ */
+#define	FILTER_IN_LIN(old_val, tgt, d_t, step) \
+	do { \
+		double o = (old_val); \
+		double t = (tgt); \
+		double s; \
+		if (o < t) \
+			s = (d_t) * (step); \
+		else \
+			s = (d_t) * (-(step)); \
+		if ((o < t && o + s > t) || (o > t && o + s < t)) \
+			(old_val) = t; \
+		else \
+			(old_val) += s; \
+	} while (0)
+
 /* file/directory manipulation */
 #define	file_eixsts			ACFSYM(file_exists)
 API_EXPORT bool_t file_exists(const char *path, bool_t *isdir);
