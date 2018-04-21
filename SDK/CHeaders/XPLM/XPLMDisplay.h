@@ -964,6 +964,38 @@ XPLM_API void                 XPLMSetWindowGeometryOS(
                                    int                  inBottom);    
 #endif /* XPLM300 */
 
+#if defined(XPLM301)
+/*
+ * XPLMGetWindowGeometryVR
+ * 
+ * Returns the width and height, in boxels, of a window in VR. Note that you 
+ * are responsible for ensuring your window is in VR (using 
+ * XPLMWindowIsInVR()).                                                        
+ *
+ */
+XPLM_API void                 XPLMGetWindowGeometryVR(
+                                   XPLMWindowID         inWindowID,    
+                                   int *                outWidthBoxels,    /* Can be NULL */
+                                   int *                outHeightBoxels);    /* Can be NULL */
+#endif /* XPLM301 */
+
+#if defined(XPLM301)
+/*
+ * XPLMSetWindowGeometryVR
+ * 
+ * This routine allows you to set the size, in boxels, of a window in VR (that 
+ * is, a window whose positioning mode is xplm_WindowVR). 
+ * 
+ * Note that you are responsible for ensuring your window is in VR (using 
+ * XPLMWindowIsInVR()).                                                        
+ *
+ */
+XPLM_API void                 XPLMSetWindowGeometryVR(
+                                   XPLMWindowID         inWindowID,    
+                                   int                  widthBoxels,    
+                                   int                  heightBoxels);    
+#endif /* XPLM301 */
+
 /*
  * XPLMGetWindowIsVisible
  * 
@@ -999,6 +1031,23 @@ XPLM_API void                 XPLMSetWindowIsVisible(
 XPLM_API int                  XPLMWindowIsPoppedOut(
                                    XPLMWindowID         inWindowID);    
 #endif /* XPLM300 */
+
+#if defined(XPLM301)
+/*
+ * XPLMWindowIsInVR
+ * 
+ * True if this window has been moved to the virtual reality (VR) headset, 
+ * which in turn is true if and only if you have set the window's positioning 
+ * mode to xplm_WindowVR. 
+ * 
+ * Only applies to modern windows. (Windows created using the deprecated 
+ * XPLMCreateWindow(), or windows compiled against a pre-XPLM301 version of 
+ * the SDK cannot be moved to VR.)                                             
+ *
+ */
+XPLM_API int                  XPLMWindowIsInVR(
+                                   XPLMWindowID         inWindowID);    
+#endif /* XPLM301 */
 
 #if defined(XPLM300)
 /*

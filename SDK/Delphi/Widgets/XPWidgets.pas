@@ -76,6 +76,7 @@ INTERFACE
 }
 
 USES   XPWidgetDefs;
+USES   XPLMDisplay;
    {$A4}
 {$IFDEF MSWINDOWS}
    {$DEFINE DELPHI}
@@ -507,6 +508,24 @@ USES   XPWidgetDefs;
                                         inWidget            : XPWidgetID;    
                                         outDescriptor       : Pchar;    
                                         inMaxDescLength     : integer) : integer;    
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPWIDGETS.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+
+   {
+    XPGetWidgetUnderlyingWindow
+    
+    Returns the window (from the XPLMDisplay API) that backs your widget 
+    window. If you have opted in to modern windows, via a call to 
+    XPLMEnableFeature("XPLM_USE_NATIVE_WIDGET_WINDOWS", 1), you can use the 
+    returned window ID for display APIs like XPLMSetWindowPositioningMode(), 
+    allowing you to pop the widget window out into a real OS window, or move it 
+    into VR.                                                                    
+   }
+   FUNCTION XPGetWidgetUnderlyingWindow(
+                                        inWidget            : XPWidgetID) : XPLMWindowID;    
 {$IFDEF DELPHI}
                                        cdecl; external 'XPWIDGETS.DLL';
 {$ELSE}

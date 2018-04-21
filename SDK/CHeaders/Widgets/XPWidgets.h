@@ -79,6 +79,7 @@
  */
 
 #include "XPWidgetDefs.h"
+#include "XPLMDisplay.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -439,6 +440,20 @@ WIDGET_API int                  XPGetWidgetDescriptor(
                                    XPWidgetID           inWidget,    
                                    char *               outDescriptor,    
                                    int                  inMaxDescLength);    
+
+/*
+ * XPGetWidgetUnderlyingWindow
+ * 
+ * Returns the window (from the XPLMDisplay API) that backs your widget 
+ * window. If you have opted in to modern windows, via a call to 
+ * XPLMEnableFeature("XPLM_USE_NATIVE_WIDGET_WINDOWS", 1), you can use the 
+ * returned window ID for display APIs like XPLMSetWindowPositioningMode(), 
+ * allowing you to pop the widget window out into a real OS window, or move it 
+ * into VR.                                                                    
+ *
+ */
+WIDGET_API XPLMWindowID         XPGetWidgetUnderlyingWindow(
+                                   XPWidgetID           inWidget);    
 
 /*
  * XPSetWidgetProperty

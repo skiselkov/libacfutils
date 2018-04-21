@@ -265,6 +265,20 @@ CONST
    XPLM_MSG_LIVERY_LOADED = 108;
 {$ENDIF}
 
+{$IFDEF XPLM301}
+    { Sent to your plugin right before X-Plane enters virtual reality mode (at    }
+    { which time any windows that are not positioned in VR mode will no longer be }
+    { visible to the user).                                                       }
+   XPLM_MSG_ENTERED_VR  = 109;
+{$ENDIF}
+
+{$IFDEF XPLM301}
+    { Sent to your plugin right before X-Plane leaves virtual reality mode (at    }
+    { which time you may want to clean up windows that are positioned in VR       }
+    { mode).                                                                      }
+   XPLM_MSG_EXITING_VR  = 110;
+{$ENDIF}
+
    {
     XPLMSendMessageToPlugin
     

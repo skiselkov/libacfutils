@@ -1004,6 +1004,46 @@ TYPE
 {$ENDIF}
 {$ENDIF}
 
+{$IFDEF XPLM301}
+   {
+    XPLMGetWindowGeometryVR
+    
+    Returns the width and height, in boxels, of a window in VR. Note that you 
+    are responsible for ensuring your window is in VR (using 
+    XPLMWindowIsInVR()).                                                        
+   }
+   PROCEDURE XPLMGetWindowGeometryVR(
+                                        inWindowID          : XPLMWindowID;    
+                                        outWidthBoxels      : Pinteger;    { Can be nil }
+                                        outHeightBoxels     : Pinteger);    { Can be nil }
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF XPLM301}
+   {
+    XPLMSetWindowGeometryVR
+    
+    This routine allows you to set the size, in boxels, of a window in VR (that 
+    is, a window whose positioning mode is xplm_WindowVR). 
+    
+    Note that you are responsible for ensuring your window is in VR (using 
+    XPLMWindowIsInVR()).                                                        
+   }
+   PROCEDURE XPLMSetWindowGeometryVR(
+                                        inWindowID          : XPLMWindowID;    
+                                        widthBoxels         : integer;    
+                                        heightBoxels        : integer);    
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+{$ENDIF}
+
    {
     XPLMGetWindowIsVisible
     
@@ -1044,6 +1084,27 @@ TYPE
     the SDK cannot be popped out.)                                              
    }
    FUNCTION XPLMWindowIsPoppedOut(
+                                        inWindowID          : XPLMWindowID) : integer;    
+{$IFDEF DELPHI}
+                                       cdecl; external 'XPLM.DLL';
+{$ELSE}
+                                       cdecl; external '';
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF XPLM301}
+   {
+    XPLMWindowIsInVR
+    
+    True if this window has been moved to the virtual reality (VR) headset, 
+    which in turn is true if and only if you have set the window's positioning 
+    mode to xplm_WindowVR. 
+    
+    Only applies to modern windows. (Windows created using the deprecated 
+    XPLMCreateWindow(), or windows compiled against a pre-XPLM301 version of 
+    the SDK cannot be moved to VR.)                                             
+   }
+   FUNCTION XPLMWindowIsInVR(
                                         inWindowID          : XPLMWindowID) : integer;    
 {$IFDEF DELPHI}
                                        cdecl; external 'XPLM.DLL';
