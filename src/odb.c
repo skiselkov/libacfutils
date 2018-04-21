@@ -509,8 +509,8 @@ odb_refresh_us(odb_t *odb)
 		}
 		free(buf);
 	} else {
-		logMsg("Error updating obstacle database from %s: "
-		    "network error %d", FAA_DOF_URL, res);
+		logMsg("Error updating obstacle database from %s: %s",
+		    FAA_DOF_URL, curl_easy_strerror(res));
 		odb->refresh_times[ODB_REGION_US] = -1u;
 	}
 
