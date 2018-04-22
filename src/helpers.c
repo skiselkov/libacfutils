@@ -803,6 +803,40 @@ file2str_name(long *len_p, const char *filename)
 	return (contents);
 }
 
+API_EXPORT void *
+file2buf(const char *filename, size_t *bufsz)
+{
+	ssize_t s;
+	void *buf;
+	FILE *fp = fopen(filename, "rb");
+
+	if (fp == NULL) {
+		*bufsz = 0;
+		return (NULL);
+	}
+	fseek(fp, 0, SEEK_END);
+	s = ftell(fp);
+	if (s <= 0) {
+		*bufsz = 0;
+		fclose(fp);
+		return (NULL);
+	}
+	fseek(fp, 0, SEEK_SET);
+
+	buf = safe_malloc(s);
+	if (fread(buf, 1, s, fp) < (size_t)s) {
+		*bufsz = 0;
+		free(buf);
+		fclose(fp);
+		return (NULL);
+	}
+
+	fclose(fp);
+	*bufsz = s;
+
+	return (buf);
+}
+
 ssize_t
 filesz(const char *filename)
 {

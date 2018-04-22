@@ -279,6 +279,8 @@ API_EXPORT char *file2str(const char *comp, ...);
 API_EXPORT char *file2str_ext(long *len_p, const char *comp, ...);
 #define	file2str_name			ACFSYM(file2str_name)
 API_EXPORT char *file2str_name(long *len_p, const char *filename);
+#define	file2buf			ACFSYM(file2buf)
+API_EXPORT void *file2buf(const char *filename, size_t *bufsz);
 #define	filesz				ACFSYM(filesz)
 API_EXPORT ssize_t filesz(const char *filename);
 
