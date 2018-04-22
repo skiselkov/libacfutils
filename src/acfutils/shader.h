@@ -62,15 +62,15 @@ typedef struct {
  *
  * @field filename An optional filename (set to NULL if not used). This
  *	attempts to load the shader from the provided filename. The filename
- *	extension and case IS significant. Use ".spirv" for SPIR-V shaders.
- *	If a filename ends in any other extension other than .spirv, it is
+ *	extension and case IS significant. Use ".spv" for SPIR-V shaders.
+ *	If a filename ends in any other extension other than ".spv", it is
  *	treated as a GLSL shader.
  *	If you provide a SPIR-V shader and SPIR-V is not supported by the
  *	driver, we search for a fallback shader with the extension replaced
  *	".vert" for vertex shaders and ".frag" for fragment shaders. The
  *	second fallback filename optiona ttempted is ".glsl.vert" for vertex
  *	shaders and ".glsl.frag" for fragment shaders.
- *	For example, if you are loading a vertex shader named "myshader.spirv",
+ *	For example, if you are loading a vertex shader named "myshader.spv",
  *	if the driver doesn't support SPIR-V, the library also looks for
  *	"myshader.vert" and "myshader.glsl.vert".
  *	If SPIR-V is supported, the library ONLY attempts to load the SPIR-V

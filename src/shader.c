@@ -231,7 +231,7 @@ shader_from_file(GLenum shader_type, const char *filename,
 	}
 	ext++;
 
-	if (strcmp(ext, "spirv") == 0) {
+	if (strcmp(ext, "spv") == 0) {
 		return (shader_from_spirv(shader_type, filename,
 		    entry_pt, spec_const));
 	}
