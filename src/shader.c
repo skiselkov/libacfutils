@@ -63,8 +63,8 @@ attr_binds_from_args(va_list ap)
 		n_attrs++;
 	}
 	va_end(ap2);
-
-	binds = safe_calloc(n_attrs, sizeof (*binds));
+	/* +1 to terminate the list with an empty bind */
+	binds = safe_calloc(n_attrs + 1, sizeof (*binds));
 	for (int i = 0; i < n_attrs; i++) {
 		binds[i].name = va_arg(ap, const char *);
 		binds[i].idx = va_arg(ap, GLuint);
