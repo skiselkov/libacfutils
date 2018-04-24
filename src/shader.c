@@ -78,7 +78,7 @@ attr_binds_from_args(va_list ap)
  * isn't supported. This attempts to locate a shader by replacing the filename
  * extension of the original shader with:
  * - .vert or .frag
- * - .vert.glsl or .frag.glsl
+ * - .glsl
  * If found, the shader is compiled and returned. Otherwise returns 0.
  */
 static GLuint
@@ -109,7 +109,7 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 		shader = shader_from_file(shader_type, alt_filename,
 		    NULL, NULL);
 	} else {
-		snprintf(new_ext, 12, "%s.glsl", alt_ext);
+		strcpy(new_ext, "glsl");
 		if (file_exists(alt_filename, &is_dir) && !is_dir) {
 			shader = shader_from_file(shader_type,
 			    alt_filename, NULL, NULL);
@@ -146,13 +146,14 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 		entry_pt = "main";
 
 	if (!GLEW_ARB_spirv_extensions) {
+		logMsg("[[[[SPIR-V not supported, falling back to GLSL]]]]\n");
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename));
 	}
 
 	for (n_spec = 0; spec_const != NULL && !spec_const[n_spec].is_last;
 	    n_spec++)
-			;
+		;
 	ASSERT(spec_const == NULL ||
 	    (spec_const[n_spec].idx == 0 && spec_const[n_spec].val == 0));
 	spec_indices = safe_calloc(n_spec, sizeof (*spec_indices));

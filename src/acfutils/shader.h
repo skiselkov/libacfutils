@@ -72,7 +72,7 @@ typedef struct {
  *	shaders and ".glsl.frag" for fragment shaders.
  *	For example, if you are loading a vertex shader named "myshader.spv",
  *	if the driver doesn't support SPIR-V, the library also looks for
- *	"myshader.vert" and "myshader.glsl.vert".
+ *	"myshader.vert" and "myshader.glsl".
  *	If SPIR-V is supported, the library ONLY attempts to load the SPIR-V
  *	shader.
  * @field glsl Direct GLSL program text to use in compiling the shader.
@@ -145,6 +145,14 @@ enum {
 #define	DEFAULT_VTX_ATTRIB_BINDINGS \
 	"vtx_pos", VTX_ATTRIB_POS, "vtx_norm", VTX_ATTRIB_NORM, \
 	"vtx_tex0", VTX_ATTRIB_TEX0, "vtx_tex1", VTX_ATTRIB_TEX1
+
+static shader_attr_bind_t UNUSED_ATTR default_vtx_attr_binds[] = {
+	{ .name = "vtx_pos", .idx = VTX_ATTRIB_POS },
+	{ .name = "vtx_norm", .idx = VTX_ATTRIB_NORM },
+	{ .name = "vtx_tex0", .idx = VTX_ATTRIB_TEX0 },
+	{ .name = "vtx_tex1", .idx = VTX_ATTRIB_TEX1 },
+	{ /* list terminator */ }
+};
 
 #define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
 API_EXPORT GLuint shader_prog_from_file(const char *progname,

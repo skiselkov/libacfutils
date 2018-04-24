@@ -185,22 +185,29 @@ glutils_destroy_quads(glutils_quads_t *quads)
 }
 
 API_EXPORT void
-glutils_draw_quads(const glutils_quads_t *quads)
+glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
 {
-	glEnableVertexAttribArray(VTX_ATTRIB_POS);
-	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
+	GLint pos_loc, tex0_loc;
+
+	ASSERT(prog != 0);
+
+	pos_loc = glGetAttribLocation(prog, "vtx_pos");
+	tex0_loc = glGetAttribLocation(prog, "vtx_tex0");
+
+	glEnableVertexAttribArray(pos_loc);
+	glEnableVertexAttribArray(tex0_loc);
 
 	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
-	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
 	    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
-	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
+	glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
 	    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
 
 	glDrawArrays(GL_TRIANGLES, 0, quads->num_vtx);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(VTX_ATTRIB_POS);
-	glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
+	glDisableVertexAttribArray(pos_loc);
+	glDisableVertexAttribArray(tex0_loc);
 }
 
 API_EXPORT void
