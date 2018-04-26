@@ -209,25 +209,3 @@ glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
 	glDisableVertexAttribArray(pos_loc);
 	glDisableVertexAttribArray(tex0_loc);
 }
-
-API_EXPORT void
-glutils_enable_vtx_attrs(GLuint first_idx, ...)
-{
-	va_list ap;
-	va_start(ap, first_idx);
-	for (GLuint idx = first_idx; idx != (GLuint)-1;
-	    idx = va_arg(ap, GLuint))
-		glEnableVertexAttribArray(idx);
-	va_end(ap);
-}
-
-API_EXPORT void
-glutils_disable_vtx_attrs(GLuint first_idx, ...)
-{
-	va_list ap;
-	va_start(ap, first_idx);
-	for (GLuint idx = first_idx; idx != (GLuint)-1;
-	    idx = va_arg(ap, GLuint))
-		glDisableVertexAttribArray(idx);
-	va_end(ap);
-}

@@ -50,9 +50,6 @@ API_EXPORT void glutils_init_3D_quads(glutils_quads_t *quads,
 API_EXPORT void glutils_destroy_quads(glutils_quads_t *quads);
 API_EXPORT void glutils_draw_quads(const glutils_quads_t *quads, GLint prog);
 
-API_EXPORT void glutils_enable_vtx_attrs(GLuint first_idx, ...);
-API_EXPORT void glutils_disable_vtx_attrs(GLuint first_idx, ...);
-
 #define	GLUTILS_VALIDATE_INDICES(indices, num_idx, num_vtx) \
 	do { \
 		for (unsigned i = 0; i < (num_idx); i++) { \
