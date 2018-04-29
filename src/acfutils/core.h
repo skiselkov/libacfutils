@@ -30,6 +30,9 @@
 extern "C" {
 #endif
 
+#define	UNUSED_ATTR	__attribute__((unused))
+#define	UNUSED(x)	(void)(x)
+
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
 
 #if	(IBM || defined(_MSC_VER)) && ACFUTILS_DLL

@@ -20,6 +20,7 @@
 #define	_ACF_UTILS_MATH_H_
 
 #include "assert.h"
+#include "math_core.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -53,22 +54,6 @@ wavg_impl(double x, double y, double w, const char *file, int line)
 	return (x + (y - x) * w);
 }
 #define wavg(x, y, w)	wavg_impl((x), (y), (w), __FILE__, __LINE__)
-
-#define	DEFN_CLAMP(name, type, assert_chk) \
-static inline type \
-name(type x, type min_val, type max_val) \
-{ \
-	assert_chk(min_val, <=, max_val); \
-	if (x < min_val) \
-		return (min_val); \
-	if (x > max_val) \
-		return (max_val); \
-	return (x); \
-}
-
-DEFN_CLAMP(clamp, double, ASSERT3F)
-DEFN_CLAMP(clampl, long, ASSERT3S)
-DEFN_CLAMP(clampi, int, ASSERT3S)
 
 /*
  * Given two values min_val and max_val (such that min_val < max_val),

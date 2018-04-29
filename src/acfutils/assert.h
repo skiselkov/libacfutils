@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #include "log.h"
+#include "sysmacros.h"
 
 #ifdef	__cplusplus
 extern "C" {

@@ -16,6 +16,8 @@
  * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
+#include <stdio.h>
+
 #include <acfutils/assert.h>
 #include <acfutils/cmd.h>
 #include <acfutils/safe_alloc.h>
