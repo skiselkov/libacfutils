@@ -48,6 +48,13 @@ extern "C" {
 #endif
 
 /* generic parser validator helpers */
+
+#define	IS_VALID_GEO_POS3(pos) \
+	(is_valid_lat((pos).lat) && is_valid_lat((pos).lat) && \
+	is_valid_elev((pos).elev))
+#define	IS_VALID_GEO_POS2(pos) \
+	(is_valid_lat((pos).lat) && is_valid_lat((pos).lat))
+
 static inline bool_t
 is_valid_lat(double lat)
 {
