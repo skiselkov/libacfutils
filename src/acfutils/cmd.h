@@ -30,13 +30,6 @@ extern "C" {
 typedef int (*cmd_cb_t)(XPLMCommandRef ref, XPLMCommandPhase phase,
     void *refcon);
 
-API_EXPORT XPLMCommandRef cmd_bind_create(const char *fmt, cmd_cb_t cb,
-    bool_t before, void *refcon, ...);
-API_EXPORT XPLMCommandRef cmd_bind_create_v(const char *fmt, cmd_cb_t cb,
-    bool_t before, void *refcon, va_list ap);
-API_EXPORT XPLMCommandRef fcmd_bind_create(const char *fmt, cmd_cb_t cb,
-    bool_t before, void *refcon, ...);
-
 API_EXPORT XPLMCommandRef cmd_bind(const char *fmt, cmd_cb_t cb,
     bool_t before, void *refcon, ...);
 API_EXPORT XPLMCommandRef cmd_bind_v(const char *fmt, cmd_cb_t cb,
