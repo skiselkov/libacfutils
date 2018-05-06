@@ -197,6 +197,63 @@ rel_hdg_impl(double hdg1, double hdg2, const char *file, int line)
 	}
 }
 
+bool_t
+is_valid_vor_freq(double freq_mhz)
+{
+	unsigned freq_khz = freq_mhz * 1000;
+
+	/* Check correct frequency band */
+	if (freq_khz < 108000 || freq_khz > 117950)
+		return (B_FALSE);
+	/*
+	 * Check the LOC band - freq must be multiple of 200 kHz or
+	 * remainder must be 50 kHz.
+	 */
+	if (freq_khz >= 108000 && freq_khz <= 112000 &&
+	    freq_khz % 200 != 0 && freq_khz % 200 != 50)
+		return (B_FALSE);
+	/* Above 112 MHz, frequency must be multiple of 50 kHz */
+	if (freq_khz % 50 != 0)
+		return (B_FALSE);
+
+	return (B_TRUE);
+}
+
+bool_t
+is_valid_loc_freq(double freq_mhz)
+{
+	unsigned freq_khz = freq_mhz * 1000;
+
+	/* Check correct frequency band */
+	if (freq_khz < 108100 || freq_khz > 111950)
+		return (B_FALSE);
+	/* Check 200 kHz spacing with 100 kHz or 150 kHz remainder. */
+	if (freq_khz % 200 != 100 && freq_khz % 200 != 150)
+		return (B_FALSE);
+
+	return (B_TRUE);
+}
+
+bool_t
+is_valid_tacan_freq(double freq_mhz)
+{
+	unsigned freq_khz = freq_mhz * 1000;
+
+	/* this is quite a guess! */
+	if (freq_khz < 133000 || freq_khz > 136000 ||
+	    freq_khz % 100 != 0)
+		return (B_FALSE);
+	return (B_TRUE);
+}
+
+bool_t
+is_valid_ndb_freq(double freq_khz)
+{
+	unsigned freq_hz = freq_khz * 1000;
+	/* 177 kHz for an NDB is the lowest I've ever seen */
+	return (freq_hz >= 177000 && freq_hz <= 1750000);
+}
+
 /*
  * Checks if a string is a valid ICAO airport code. ICAO airport codes always:
  * 1) are 4 characters long
