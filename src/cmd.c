@@ -35,6 +35,7 @@ cmd_bind_v(const char *fmt, cmd_cb_t cb, bool_t before, void *refcon,
 	len = vsnprintf(NULL, 0, fmt, ap2);
 	va_end(ap2);
 	name = safe_malloc(len + 1);
+	VERIFY3S(vsnprintf(name, len + 1, fmt, ap), ==, len);
 
 	ref = XPLMFindCommand(name);
 	if (ref != NULL)
@@ -85,6 +86,7 @@ cmd_unbind_v(const char *fmt, cmd_cb_t cb, bool_t before, void *refcon,
 	len = snprintf(NULL, 0, fmt, ap);
 	va_end(ap2);
 	name = safe_malloc(len + 1);
+	VERIFY3S(vsnprintf(name, len + 1, fmt, ap), ==, len);
 
 	ref = XPLMFindCommand(name);
 
