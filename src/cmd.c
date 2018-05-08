@@ -69,7 +69,14 @@ fcmd_bind(const char *fmt, cmd_cb_t cb, bool_t before, void *refcon, ...)
 	ref = cmd_bind_v(fmt, cb, before, refcon, ap);
 	va_end(ap);
 
-	VERIFY_MSG(ref != NULL, "Command %s not found", fmt);
+	if (ref == NULL) {
+		char name[256];
+		va_start(ap, refcon);
+		vsnprintf(name, sizeof (name), fmt, ap);
+		va_end(ap);
+		VERIFY_MSG(0, "Command %s not found", name);
+	}
+
 	return (ref);
 }
 
@@ -83,7 +90,7 @@ cmd_unbind_v(const char *fmt, cmd_cb_t cb, bool_t before, void *refcon,
 	int len;
 
 	va_copy(ap2, ap);
-	len = snprintf(NULL, 0, fmt, ap);
+	len = vsnprintf(NULL, 0, fmt, ap2);
 	va_end(ap2);
 	name = safe_malloc(len + 1);
 	VERIFY3S(vsnprintf(name, len + 1, fmt, ap), ==, len);
@@ -123,5 +130,11 @@ fcmd_unbind(const char *fmt, cmd_cb_t cb, bool_t before, void *refcon, ...)
 	res = cmd_unbind_v(fmt, cb, before, refcon, ap);
 	va_end(ap);
 
-	VERIFY_MSG(res, "Command %s not found", fmt);
+	if (!res) {
+		char name[256];
+		va_start(ap, refcon);
+		vsnprintf(name, sizeof (name), fmt, ap);
+		va_end(ap);
+		VERIFY_MSG(0, "Command %s not found", name);
+	}
 }
