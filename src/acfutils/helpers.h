@@ -127,6 +127,8 @@ API_EXPORT bool_t is_valid_icao_code(const char *icao);
 #define	extract_icao_country_code	ACFSYM(extract_icao_country_code)
 API_EXPORT const char *extract_icao_country_code(const char *icao);
 
+#define	is_valid_xpdr_code	ACFSYM(is_valid_xpdr_code)
+API_EXPORT bool_t is_valid_xpdr_code(int code);
 #define	is_valid_vor_freq	ACFSYM(is_valid_vor_freq)
 API_EXPORT bool_t is_valid_vor_freq(double freq_mhz);
 #define	is_valid_loc_freq	ACFSYM(is_valid_loc_freq)

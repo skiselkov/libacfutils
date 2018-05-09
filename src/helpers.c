@@ -197,6 +197,16 @@ rel_hdg_impl(double hdg1, double hdg2, const char *file, int line)
 	}
 }
 
+API_EXPORT bool_t
+is_valid_xpdr_code(int code)
+{
+	return (code >= 0 && code <= 7777 &&
+	    (code % 10) <= 7 &&
+	    ((code / 10) % 10) <= 7 &&
+	    ((code / 100) % 10) <= 7 &&
+	    ((code / 1000) % 10) <= 7);
+}
+
 bool_t
 is_valid_vor_freq(double freq_mhz)
 {
