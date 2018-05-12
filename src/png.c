@@ -45,7 +45,8 @@ typedef struct {
  * with all that libpng nonsense.
  */
 uint8_t *
-png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height)
+png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
+    int req_color_type)
 {
 	FILE *volatile fp = NULL;
 	size_t rowbytes;
@@ -100,8 +101,9 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height)
 	w = png_get_image_width(pngp, infop);
 	h = png_get_image_height(pngp, infop);
 
-	if (png_get_color_type(pngp, infop) != PNG_COLOR_TYPE_RGBA) {
-		logMsg("Bad image file %s: need color type RGBA", filename);
+	if (png_get_color_type(pngp, infop) != req_color_type) {
+		logMsg("Bad image file %s: need color type %d, got %d",
+		    filename, req_color_type, png_get_color_type(pngp, infop));
 		goto out;
 	}
 	if (png_get_bit_depth(pngp, infop) != 8) {
@@ -148,7 +150,15 @@ out:
 uint8_t *
 png_load_from_file_rgba(const char *filename, int *width, int *height)
 {
-	return (png_load_impl(NULL, (void *)filename, width, height));
+	return (png_load_impl(NULL, (void *)filename, width, height,
+	    PNG_COLOR_TYPE_RGBA));
+}
+
+uint8_t *
+png_load_from_file_grey(const char *filename, int *width, int *height)
+{
+	return (png_load_impl(NULL, (void *)filename, width, height,
+	    PNG_COLOR_TYPE_GRAY));
 }
 
 static void
@@ -165,7 +175,8 @@ uint8_t *
 png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
 {
 	bufread_t br = { .bufp = buf, .len = len, .cur = 0 };
-	return (png_load_impl(bufread, &br, width, height));
+	return (png_load_impl(bufread, &br, width, height,
+	    PNG_COLOR_TYPE_RGBA));
 }
 
 static bool_t
