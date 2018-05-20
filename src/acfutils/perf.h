@@ -67,6 +67,9 @@ extern "C" {
 #define	LBS2KG(lbs)	((lbs) * 0.45359237)
 #define	KG2LBS(kg)	((kg) / 0.45359237)
 
+#define	LBF2NEWTON(lb)	(LBS2KG(lb) * EARTH_GRAVITY)
+#define	NEWTON2LBF(f)	(KG2LBS((f) / EARTH_GRAVITY))
+
 /*
  * Pressure unit conversions
  */
