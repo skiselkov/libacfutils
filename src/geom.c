@@ -173,10 +173,11 @@ vect3_unit(vect3_t a, double *l)
 {
 	double len;
 	len = vect3_abs(a);
+	/* Always be sure to give the caller the length, even if it's zero! */
+	if (l != NULL)
+		*l = len;
 	if (len == 0)
 		return (NULL_VECT3);
-	if (l)
-		*l = len;
 	return (VECT3(a.x / len, a.y / len, a.z / len));
 }
 
@@ -188,10 +189,11 @@ vect2_unit(vect2_t a, double *l)
 {
 	double len;
 	len = vect2_abs(a);
+	/* Always be sure to give the caller the length, even if it's zero! */
+	if (l != NULL)
+		*l = len;
 	if (len == 0)
 		return (NULL_VECT2);
-	if (l)
-		*l = len;
 	return (VECT2(a.x / len, a.y / len));
 }
 
