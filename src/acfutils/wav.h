@@ -27,7 +27,12 @@
 #define	_ACF_UTILS_WAV_H_
 
 #include <stdint.h>
+
+#if	!LIN
 #include <al.h>
+#else
+#include <AL/al.h>
+#endif
 
 #include "geom.h"
 #include "types.h"
@@ -65,6 +70,8 @@ typedef struct wav_s {
 
 API_EXPORT char **openal_list_output_devs(size_t *num_p);
 API_EXPORT alc_t *openal_init(const char *devname, bool_t shared);
+API_EXPORT alc_t *openal_init2(const char *devname, bool_t shared,
+    const int *attrs);
 API_EXPORT void openal_fini(alc_t *alc);
 
 API_EXPORT wav_t *wav_load(const char *filename, const char *descr_name,

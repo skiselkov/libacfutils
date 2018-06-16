@@ -23,7 +23,7 @@ CONFIG -= thread exceptions qt rtti release
 
 VERSION = 1.0.0
 
-INCLUDEPATH += ../src ../OpenAL/include ../SDK/CHeaders/XPLM
+INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../glew
 INCLUDEPATH += ../lzma/C
@@ -65,6 +65,8 @@ win32 {
 		CONFIG += dll
 		LIBS += -Wl,--output-def,acfutils.def
 	}
+
+	INCLUDEPATH += ../OpenAL/include 
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
@@ -91,6 +93,11 @@ linux-g++-64 {
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
 	INCLUDEPATH += $$[LIBCLIPBOARD]/include
+
+	QMAKE_CFLAGS += \
+	    $$system("PKG_CONFIG_PATH=../openal/openal-soft-1.18.2/build pkg-config --cflags openal")
+	LIBS += \
+	    $$system("PKG_CONFIG_PATH=../openal/openal-soft-1.18.2/build pkg-config --libs openal")
 }
 
 macx {

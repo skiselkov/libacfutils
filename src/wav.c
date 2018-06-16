@@ -29,7 +29,12 @@
 #include <string.h>
 #include <errno.h>
 
+#if	!LIN
 #include <alc.h>
+#else
+#include <AL/alc.h>
+#endif
+
 #include <opusfile.h>
 
 #include <acfutils/assert.h>
@@ -170,6 +175,12 @@ openal_list_output_devs(size_t *num_p)
 alc_t *
 openal_init(const char *devname, bool_t shared)
 {
+	return (openal_init2(devname, shared, NULL));
+}
+
+alc_t *
+openal_init2(const char *devname, bool_t shared, const int *attrs)
+{
 	alc_t	*alc;
 	alc_t	sav;
 
@@ -189,7 +200,7 @@ openal_init(const char *devname, bool_t shared)
 			(void) ctx_restore(NULL, &sav);
 			return (B_FALSE);
 		}
-		ctx = alcCreateContext(dev, NULL);
+		ctx = alcCreateContext(dev, attrs);
 		if ((err = alcGetError(dev)) != ALC_NO_ERROR) {
 			logMsg("Cannot init audio system: create context "
 			    "failed (0x%x)", err);
