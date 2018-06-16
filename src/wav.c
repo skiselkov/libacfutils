@@ -572,8 +572,11 @@ wav_load(const char *filename, const char *descr_name, alc_t *alc)
 	} else {
 		wav = wav_load_wav(filename, alc);
 	}
-	if (wav != NULL)
+	if (wav != NULL) {
 		wav->name = strdup(descr_name);
+		wav->cone_outer = 360;
+		wav->cone_inner = 360;
+	}
 
 	return (wav);
 }
@@ -619,6 +622,7 @@ wav_get_gain(wav_t *wav)
 	WAV_OP_PARAM(alGetSourcef, AL_GAIN, NAN, &gain);
 	return (gain);
 }
+
 
 /*
  * Sets the whether the WAV will loop continuously while playing.
@@ -719,6 +723,42 @@ wav_get_rolloff_fact(wav_t *wav)
 	ALfloat r;
 	WAV_OP_PARAM(alGetSourcef, AL_ROLLOFF_FACTOR, NAN, &r);
 	return (r);
+}
+
+void
+wav_set_dir(wav_t *wav, vect3_t dir)
+{
+	if (!VECT3_EQ(wav->dir, dir)) {
+		WAV_SET_PARAM(alSource3f, AL_DIRECTION, dir.x, dir.y, dir.z);
+		wav->dir = dir;
+	}
+}
+
+void
+wav_set_cone_inner(wav_t *wav, double cone_inner)
+{
+	if (wav->cone_inner != cone_inner) {
+		WAV_SET_PARAM(alSourcef, AL_CONE_INNER_ANGLE, cone_inner);
+		wav->cone_inner = cone_inner;
+	}
+}
+
+void
+wav_set_cone_outer(wav_t *wav, double cone_outer)
+{
+	if (wav->cone_outer != cone_outer) {
+		WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_ANGLE, cone_outer);
+		wav->cone_outer = cone_outer;
+	}
+}
+
+void
+wav_set_gain_outer(wav_t *wav, double gain_outer)
+{
+	if (wav->gain_outer != gain_outer) {
+		WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_GAIN, gain_outer);
+		wav->gain_outer = gain_outer;
+	}
 }
 
 /*

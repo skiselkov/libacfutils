@@ -184,8 +184,8 @@ glutils_destroy_quads(glutils_quads_t *quads)
 	}
 }
 
-API_EXPORT void
-glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
+static void
+glutils_draw_common(GLenum mode, GLuint vbo, size_t num_vtx, GLint prog)
 {
 	GLint pos_loc, tex0_loc;
 
@@ -197,15 +197,62 @@ glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
 	glEnableVertexAttribArray(pos_loc);
 	glEnableVertexAttribArray(tex0_loc);
 
-	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
 	    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
 	glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
 	    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
 
-	glDrawArrays(GL_TRIANGLES, 0, quads->num_vtx);
+	glDrawArrays(mode, 0, num_vtx);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glDisableVertexAttribArray(pos_loc);
 	glDisableVertexAttribArray(tex0_loc);
+}
+
+API_EXPORT void
+glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
+{
+	glutils_draw_common(GL_TRIANGLES, quads->vbo, quads->num_vtx, prog);
+}
+
+
+API_EXPORT void
+glutils_init_3D_lines(glutils_lines_t *lines, vect3_t *p, size_t num_pts)
+{
+	vtx_t vtx_data[num_pts];
+
+	ASSERT(p != NULL);
+
+	memset(vtx_data, 0, sizeof (vtx_data));
+	for (size_t i = 0; i < num_pts; i++) {
+		vtx_data[i].pos[0] = p[i].x;
+		vtx_data[i].pos[1] = p[i].y;
+		vtx_data[i].pos[2] = p[i].z;
+	}
+
+	glGenBuffers(1, &lines->vbo);
+	lines->num_vtx = num_pts;
+
+	VERIFY(lines->vbo != 0);
+	glBindBuffer(GL_ARRAY_BUFFER, lines->vbo);
+	glBufferData(GL_ARRAY_BUFFER, num_pts * sizeof (*vtx_data),
+	    vtx_data, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+API_EXPORT void
+glutils_draw_lines(const glutils_lines_t *lines, GLint prog)
+{
+	glutils_draw_common(GL_LINE_STRIP, lines->vbo, lines->num_vtx, prog);
+}
+
+
+API_EXPORT void
+glutils_destroy_lines(glutils_lines_t *lines)
+{
+	if (lines->vbo != 0) {
+		glDeleteBuffers(1, &lines->vbo);
+		memset(lines, 0, sizeof (*lines));
+	}
 }

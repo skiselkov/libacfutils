@@ -55,6 +55,11 @@ typedef struct wav_s {
 	ALuint		albuf;
 	ALuint		alsrc;
 
+	vect3_t		dir;
+	double		cone_inner;
+	double		cone_outer;
+	double		gain_outer;
+
 	uint64_t	play_start;
 } wav_t;
 
@@ -82,6 +87,12 @@ API_EXPORT void wav_set_max_dist(wav_t *wav, double d);
 API_EXPORT double wav_get_max_dist(wav_t *wav);
 API_EXPORT void wav_set_rolloff_fact(wav_t *wav, double r);
 API_EXPORT double wav_get_rolloff_fact(wav_t *wav);
+
+/* Directional parameters */
+API_EXPORT void wav_set_dir(wav_t *wav, vect3_t dir);
+API_EXPORT void wav_set_cone_inner(wav_t *wav, double cone_inner);
+API_EXPORT void wav_set_cone_outer(wav_t *wav, double cone_outer);
+API_EXPORT void wav_set_gain_outer(wav_t *wav, double gain_outer);
 
 API_EXPORT bool_t wav_play(wav_t *wav);
 API_EXPORT bool_t wav_is_playing(wav_t *wav);
