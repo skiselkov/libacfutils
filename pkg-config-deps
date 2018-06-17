@@ -68,7 +68,7 @@ PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
 
 if [[ "$1" = "--cflags" ]]; then
 	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
-	if [[ "$ARCH" = "linux-64" ]]; then
+	if [[ "$ARCH" = "linux-64" ]] || [[ "$ARCH" = "mac-64" ]]; then
 		PACKAGES="${PACKAGES} openal"
 	fi
 elif [[ "$1" = "--libs" ]]; then
@@ -80,6 +80,8 @@ elif [[ "$1" = "--libs" ]]; then
 	fi
 	if [[ "$ARCH" = "linux-64" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
+	fi
+	if [[ "$ARCH" = "linux-64" ]] || [[ "$ARCH" = "mac-64" ]]; then
 		PACKAGES="${PACKAGES} openal"
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"

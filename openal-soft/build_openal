@@ -21,7 +21,22 @@ DIR="${FILE/%.tar.bz2/}"
 [ -d "$DIR" ] || tar xjf "$FILE"
 
 cd "$DIR/build"
-cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX=$(pwd)/linux-64 \
-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+case $(uname) in
+	Linux)
+		ARCH=linux-64
+		EXTRA_FLAGS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+		;;
+	Darwin)
+		ARCH=mac-64
+		EXTRA_FLAGS="-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
+		    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9"
+		;;
+	*)
+		ARCH=win-64
+		EXTRA_FLAGS=""
+		;;
+esac
+
+cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX=$(pwd)/"$ARCH" $EXTRA_FLAGS ..
 make -j 8 && make install
 cd ..
