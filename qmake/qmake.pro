@@ -68,14 +68,16 @@ win32 {
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
+	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --static-openal \
+	    --cflags")
 
 	contains(dll, 1) {
 		LIBS += $$system("../pkg-config-deps win-64 --whole-archive \
-		    --libs")
+		     --static-openal --libs")
 	}
 	contains(dll, 0) {
-		LIBS += $$system("../pkg-config-deps win-64 --libs")
+		LIBS += $$system("../pkg-config-deps win-64  --static-openal \
+		    --libs")
 	}
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
@@ -88,7 +90,8 @@ linux-g++-64 {
 	# The stack protector forces us to depend on libc,
 	# but we'd prefer to be static.
 	QMAKE_CFLAGS += -fno-stack-protector
-	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
+	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --static-openal \
+	    --cflags")
 	INCLUDEPATH += $$[LIBCLIPBOARD]/include
 }
 
@@ -98,7 +101,8 @@ macx {
 }
 
 macx-clang {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
+	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --static-openal \
+	    --cflags")
 }
 
 HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h
