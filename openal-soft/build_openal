@@ -23,11 +23,19 @@ DIR="${FILE/%.tar.bz2/}"
 function do_build() {
 	ARCH="$1"
 	EXTRA_FLAGS="$2"
+	case $(uname) in
+	Linux)
+		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
+		    | wc -l) + 1 ))
+		;;
+	Darwin)
+		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
+	esac
 
 	cd "$DIR-$ARCH/build"
 	cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
 	    $EXTRA_FLAGS ..
-	make -j 8 && make install
+	make -j "$NCPUS" && make install
 	cd -
 }
 
@@ -37,8 +45,10 @@ case $(uname) in
 		tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64" && \
 		sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
 		    "$DIR-win-64/XCompile.txt" && \
+		sed -i ' /dllexport/ d;' "$DIR-win-64/CMakeLists.txt" && \
 		do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
-		    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt"
+		    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt \
+		    -DCMAKE_C_FLAGS=-fvisibility=hidden"
 
 		rm -fr "$DIR-linux-64" && \
 		tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
