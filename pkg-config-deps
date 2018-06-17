@@ -29,6 +29,9 @@
 # Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
+PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
+    shapelib proj libcurl openssl tesseract lept"
+
 ARCH="$1"
 shift
 if [[ "$1" = "--whole-archive" ]]; then
@@ -40,6 +43,10 @@ if [[ "$1" = "--whole-archive" ]]; then
 else
 	WHOLE_ARCH_ON=""
 	WHOLE_ARCH_OFF=""
+fi
+if [[ "$1" = "--static-openal" ]]; then
+	PACKAGES="$PACKAGES openal"
+	shift
 fi
 
 cd "$(dirname "$0")"
@@ -62,9 +69,6 @@ $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/openal-soft/openal-soft-1.18.2-$ARCH/build/install/lib/pkgconfig"
-
-PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj libcurl openssl tesseract lept openal"
 
 if [[ "$1" = "--cflags" ]]; then
 	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
