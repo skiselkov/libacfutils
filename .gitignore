@@ -89,4 +89,6 @@ ssl/openssl-linux-64
 
 cglm/cglm-0.4.1
 
-openal-soft/openal-soft-1.18.2
+openal-soft/openal-soft-1.18.2-win-64
+openal-soft/openal-soft-1.18.2-mac-64
+openal-soft/openal-soft-1.18.2-linux-64

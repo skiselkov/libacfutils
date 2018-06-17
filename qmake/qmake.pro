@@ -65,8 +65,6 @@ win32 {
 		CONFIG += dll
 		LIBS += -Wl,--output-def,acfutils.def
 	}
-
-	INCLUDEPATH += ../OpenAL/include 
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
@@ -81,7 +79,6 @@ win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	}
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
-	LIBS += -L../OpenAL/libs/Win64 -lOpenAL32
 	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
 	LIBS += -ldbghelp
 }
@@ -93,16 +90,11 @@ linux-g++-64 {
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
 	INCLUDEPATH += $$[LIBCLIPBOARD]/include
-
-	QMAKE_CFLAGS += \
-	    $$system("PKG_CONFIG_PATH=../openal/openal-soft-1.18.2/build pkg-config --cflags openal")
-	LIBS += \
-	    $$system("PKG_CONFIG_PATH=../openal/openal-soft-1.18.2/build pkg-config --libs openal")
 }
 
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
-	QMAKE_CFLAGS += -mmacosx-version-min=10.7
+	QMAKE_CFLAGS += -mmacosx-version-min=10.9
 }
 
 macx-clang {

@@ -18,25 +18,40 @@
 FILE="openal-soft-1.18.2.tar.bz2"
 DIR="${FILE/%.tar.bz2/}"
 
-[ -d "$DIR" ] || tar xjf "$FILE"
+[ -d "$DIR" ] && rm -rf "$DIR"
 
-cd "$DIR/build"
+function do_build() {
+	ARCH="$1"
+	EXTRA_FLAGS="$2"
+
+	cd "$DIR-$ARCH/build"
+	cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
+	    $EXTRA_FLAGS ..
+	make -j 8 && make install
+	cd -
+}
+
 case $(uname) in
 	Linux)
-		ARCH=linux-64
-		EXTRA_FLAGS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+		rm -fr "$DIR-win-64" && \
+		tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64" && \
+		sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
+		    "$DIR-win-64/XCompile.txt" && \
+		do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
+		    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt"
+
+		rm -fr "$DIR-linux-64" && \
+		tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
+		do_build "linux-64" "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 		;;
 	Darwin)
-		ARCH=mac-64
-		EXTRA_FLAGS="-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
+		rm -fr "$DIR-mac-64" && \
+		tar xjvf "$FILE" && mv "$DIR" "$DIR-mac-64" && \
+		do_build "mac-64" "-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
 		    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9"
 		;;
 	*)
-		ARCH=win-64
-		EXTRA_FLAGS=""
+		echo "Unsupported build platform" >&2
+		exit 1
 		;;
 esac
-
-cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX=$(pwd)/"$ARCH" $EXTRA_FLAGS ..
-make -j 8 && make install
-cd ..

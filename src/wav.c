@@ -29,11 +29,7 @@
 #include <string.h>
 #include <errno.h>
 
-#if	!LIN
 #include <alc.h>
-#else
-#include <AL/alc.h>
-#endif
 
 #include <opusfile.h>
 

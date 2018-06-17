@@ -28,11 +28,7 @@
 
 #include <stdint.h>
 
-#if	!LIN
 #include <al.h>
-#else
-#include <AL/al.h>
-#endif
 
 #include "geom.h"
 #include "types.h"
