@@ -61,13 +61,22 @@ typedef struct wav_s {
 	double		cone_outer;
 	double		gain_outer;
 
+	vect3_t		pos;
+	vect3_t		vel;
+	bool_t		loop;
+	double		ref_dist;
+	double		max_dist;
+	double		rolloff_fact;
+	float		gain;
+	float		pitch;
+
 	uint64_t	play_start;
 } wav_t;
 
 API_EXPORT char **openal_list_output_devs(size_t *num_p);
 API_EXPORT alc_t *openal_init(const char *devname, bool_t shared);
 API_EXPORT alc_t *openal_init2(const char *devname, bool_t shared,
-    const int *attrs);
+    const int *attrs, bool_t thread_local);
 API_EXPORT void openal_fini(alc_t *alc);
 
 API_EXPORT wav_t *wav_load(const char *filename, const char *descr_name,
@@ -82,7 +91,7 @@ API_EXPORT void wav_set_pitch(wav_t *wav, float pitch);
 API_EXPORT float wav_get_pitch(wav_t *wav);
 API_EXPORT void wav_set_position(wav_t *wav, vect3_t pos);
 API_EXPORT vect3_t wav_get_position(wav_t *wav);
-API_EXPORT API_EXPORT void wav_set_velocity(wav_t *wav, vect3_t pos);
+API_EXPORT void wav_set_velocity(wav_t *wav, vect3_t vel);
 API_EXPORT vect3_t wav_get_velocity(wav_t *wav);
 API_EXPORT void wav_set_ref_dist(wav_t *wav, double d);
 API_EXPORT double wav_get_ref_dist(wav_t *wav);
@@ -96,6 +105,9 @@ API_EXPORT void wav_set_dir(wav_t *wav, vect3_t dir);
 API_EXPORT void wav_set_cone_inner(wav_t *wav, double cone_inner);
 API_EXPORT void wav_set_cone_outer(wav_t *wav, double cone_outer);
 API_EXPORT void wav_set_gain_outer(wav_t *wav, double gain_outer);
+API_EXPORT void wav_set_gain_outerhf(wav_t *wav, double gain_outerhf);
+
+API_EXPORT void wav_set_air_absorption_fact(wav_t *wav, double fact);
 
 API_EXPORT bool_t wav_play(wav_t *wav);
 API_EXPORT bool_t wav_is_playing(wav_t *wav);
@@ -106,6 +118,9 @@ API_EXPORT void alc_listener_set_pos(alc_t *alc, vect3_t pos);
 API_EXPORT vect3_t alc_listener_get_pos(alc_t *alc);
 API_EXPORT void alc_listener_set_orient(alc_t *alc, vect3_t orient);
 API_EXPORT void alc_listener_set_velocity(alc_t *alc, vect3_t vel);
+
+API_EXPORT alc_t *alc_global_save(alc_t *new_alc);
+API_EXPORT void alc_global_restore(alc_t *new_alc, alc_t *old_alc);
 
 #ifdef	__cplusplus
 }

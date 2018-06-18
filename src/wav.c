@@ -30,6 +30,8 @@
 #include <errno.h>
 
 #include <alc.h>
+#include <alext.h>
+#include <efx.h>
 
 #include <opusfile.h>
 
@@ -54,7 +56,7 @@
 #define	WAV_OP_PARAM(al_op, al_param_name, err_ret, ...) \
 	do { \
 		ALuint err; \
-		alc_t sav; \
+		alc_t sav = { NULL }; \
 		if (wav == NULL || wav->alsrc == 0) \
 			return err_ret; \
 		VERIFY(ctx_save(wav->alc, &sav)); \
@@ -74,7 +76,7 @@
 #define	LISTENER_OP_PARAM(al_op, al_param_name, err_ret, ...) \
 	do { \
 		ALuint err; \
-		alc_t sav; \
+		alc_t sav = { NULL }; \
 		VERIFY(ctx_save(alc, &sav)); \
 		al_op(al_param_name, __VA_ARGS__); \
 		if ((err = alGetError()) != AL_NO_ERROR) { \
@@ -92,6 +94,7 @@
 struct alc {
 	ALCdevice	*dev;
 	ALCcontext	*ctx;
+	bool_t		thread_local;
 };
 
 /*
@@ -104,12 +107,22 @@ ctx_save(alc_t *alc, alc_t *sav)
 {
 	ALuint err;
 
-	(void) alGetError(); // cleanup after other OpenAL users
+	ASSERT(sav != NULL);
+
+	/* Thread-local contexts do not switch */
+	if (alc->thread_local)
+		return (B_TRUE);
+
+	(void) alGetError(); /* cleanup after other OpenAL users */
 
 	if (alc != NULL && alc->ctx == NULL)
 		return (B_TRUE);
 
 	sav->ctx = alcGetCurrentContext();
+	/* Avoid ctx_save recursion */
+	if (alc != NULL && sav->ctx == alc->ctx)
+		return (B_TRUE);
+
 	if (sav->ctx != NULL) {
 		sav->dev = alcGetContextsDevice(sav->ctx);
 		VERIFY(sav->dev != NULL);
@@ -135,7 +148,17 @@ ctx_restore(alc_t *alc, alc_t *sav)
 {
 	ALuint err;
 
+	ASSERT(sav != NULL);
+
+	/* Thread-local contexts do not switch */
+	if (alc->thread_local)
+		return (B_TRUE);
+
 	if (alc != NULL && alc->ctx == NULL)
+		return (B_TRUE);
+
+	/* Avoid ctx_restore recursion */
+	if (alc != NULL && sav->ctx == alc->ctx)
 		return (B_TRUE);
 
 	if (sav->ctx != NULL) {
@@ -171,19 +194,26 @@ openal_list_output_devs(size_t *num_p)
 alc_t *
 openal_init(const char *devname, bool_t shared)
 {
-	return (openal_init2(devname, shared, NULL));
+	return (openal_init2(devname, shared, NULL, B_FALSE));
 }
 
 alc_t *
-openal_init2(const char *devname, bool_t shared, const int *attrs)
+openal_init2(const char *devname, bool_t shared, const int *attrs,
+    bool_t thread_local)
 {
 	alc_t	*alc;
-	alc_t	sav;
+	alc_t	sav = { NULL };
 
-	if (!ctx_save(NULL, &sav))
+	VERIFY(!shared || !thread_local);
+	/* Clear error state */
+	alGetError();
+
+	if (!thread_local && !ctx_save(NULL, &sav))
 		return (NULL);
 
 	alc = safe_calloc(1, sizeof (*alc));
+	alc->thread_local = thread_local;
+
 	if (!shared || sav.ctx == NULL) {
 		ALCdevice *dev = NULL;
 		ALCcontext *ctx = NULL;
@@ -193,7 +223,8 @@ openal_init2(const char *devname, bool_t shared, const int *attrs)
 		if (dev == NULL) {
 			logMsg("Cannot init audio system: device open failed.");
 			free(alc);
-			(void) ctx_restore(NULL, &sav);
+			if (!thread_local)
+				(void) ctx_restore(NULL, &sav);
 			return (B_FALSE);
 		}
 		ctx = alcCreateContext(dev, attrs);
@@ -207,7 +238,7 @@ openal_init2(const char *devname, bool_t shared, const int *attrs)
 		}
 		VERIFY(ctx != NULL);
 		/* No current context, install our own */
-		if (shared && sav.ctx == NULL) {
+		if (!thread_local && shared && sav.ctx == NULL) {
 			sav.ctx = ctx;
 			sav.dev = dev;
 			alcMakeContextCurrent(sav.ctx);
@@ -222,9 +253,13 @@ openal_init2(const char *devname, bool_t shared, const int *attrs)
 			alc->dev = dev;
 			alc->ctx = ctx;
 		}
+		if (thread_local) {
+			alcSetThreadContext(ctx);
+			VERIFY3U(alGetError(), ==, AL_NO_ERROR);
+		}
 	}
 
-	if (!ctx_restore(alc, &sav)) {
+	if (!thread_local && !ctx_restore(alc, &sav)) {
 		if (!shared) {
 			alcDestroyContext(alc->ctx);
 			alcCloseDevice(alc->dev);
@@ -241,6 +276,8 @@ openal_fini(alc_t *alc)
 {
 	ASSERT(alc != NULL);
 
+	if (alc->thread_local)
+		alcSetThreadContext(NULL);
 	if (alc->dev != NULL) {
 		alcDestroyContext(alc->ctx);
 		alcCloseDevice(alc->dev);
@@ -581,8 +618,15 @@ wav_load(const char *filename, const char *descr_name, alc_t *alc)
 	}
 	if (wav != NULL) {
 		wav->name = strdup(descr_name);
+
+		/* set up some defaults */
 		wav->cone_outer = 360;
 		wav->cone_inner = 360;
+		wav->ref_dist = 1.0;
+		wav->max_dist = 1e10;
+		wav->rolloff_fact = 1.0;
+		wav->gain = 1.0;
+		wav->pitch = 1.0;
 	}
 
 	return (wav);
@@ -619,17 +663,15 @@ wav_free(wav_t *wav)
 void
 wav_set_gain(wav_t *wav, float gain)
 {
+	wav->gain = gain;
 	WAV_SET_PARAM(alSourcef, AL_GAIN, gain);
 }
 
 float
 wav_get_gain(wav_t *wav)
 {
-	ALfloat gain;
-	WAV_OP_PARAM(alGetSourcef, AL_GAIN, NAN, &gain);
-	return (gain);
+	return (wav->gain);
 }
-
 
 /*
  * Sets the whether the WAV will loop continuously while playing.
@@ -637,99 +679,92 @@ wav_get_gain(wav_t *wav)
 void
 wav_set_loop(wav_t *wav, bool_t loop)
 {
+	wav->loop = loop;
 	WAV_SET_PARAM(alSourcei, AL_LOOPING, loop);
 }
 
 bool_t
 wav_get_loop(wav_t *wav)
 {
-	ALint looping;
-	WAV_OP_PARAM(alGetSourcei, AL_LOOPING, B_FALSE, &looping);
-	return (looping);
+	return (wav->loop);
 }
 
 void
 wav_set_pitch(wav_t *wav, float pitch)
 {
+	wav->pitch = pitch;
 	WAV_SET_PARAM(alSourcef, AL_PITCH, pitch);
 }
 
 float
 wav_get_pitch(wav_t *wav)
 {
-	ALfloat pitch;
-	WAV_OP_PARAM(alGetSourcef, AL_PITCH, NAN, &pitch);
-	return (pitch);
+	return (wav->pitch);
 }
 
 void
 wav_set_position(wav_t *wav, vect3_t pos)
 {
+	wav->pos = pos;
 	WAV_SET_PARAM(alSource3f, AL_POSITION, pos.x, pos.y, pos.z);
 }
 
 vect3_t
 wav_get_position(wav_t *wav)
 {
-	ALfloat x, y, z;
-	WAV_OP_PARAM(alGetSource3f, AL_POSITION, NULL_VECT3, &x, &y, &z);
-	return (VECT3(x, y, z));
+	return (wav->pos);
 }
 
 void
 wav_set_velocity(wav_t *wav, vect3_t vel)
 {
+	wav->vel = vel;
 	WAV_SET_PARAM(alSource3f, AL_VELOCITY, vel.x, vel.y, vel.z);
 }
 
 vect3_t
 wav_get_velocity(wav_t *wav)
 {
-	ALfloat x, y, z;
-	WAV_OP_PARAM(alGetSource3f, AL_VELOCITY, NULL_VECT3, &x, &y, &z);
-	return (VECT3(x, y, z));
+	return (wav->vel);
 }
 
 void
 wav_set_ref_dist(wav_t *wav, double d)
 {
+	wav->ref_dist = d;
 	WAV_SET_PARAM(alSourcef, AL_REFERENCE_DISTANCE, d);
 }
 
 double
 wav_get_ref_dist(wav_t *wav)
 {
-	ALfloat d;
-	WAV_OP_PARAM(alGetSourcef, AL_REFERENCE_DISTANCE, NAN, &d);
-	return (d);
+	return (wav->ref_dist);
 }
 
 void
 wav_set_max_dist(wav_t *wav, double d)
 {
+	wav->max_dist = d;
 	WAV_SET_PARAM(alSourcef, AL_MAX_DISTANCE, d);
 }
 
 double
 wav_get_max_dist(wav_t *wav)
 {
-	ALfloat d;
-	WAV_OP_PARAM(alGetSourcef, AL_MAX_DISTANCE, NAN, &d);
-	return (d);
+	return (wav->max_dist);
 }
 
 void
 wav_set_rolloff_fact(wav_t *wav, double r)
 {
+	wav->rolloff_fact = r;
 	WAV_SET_PARAM(alSourcef, AL_ROLLOFF_FACTOR, r);
 }
 
 double
 wav_get_rolloff_fact(wav_t *wav)
 {
-	ALfloat r;
-	WAV_OP_PARAM(alGetSourcef, AL_ROLLOFF_FACTOR, NAN, &r);
-	return (r);
+	return (wav->rolloff_fact);
 }
 
 void
@@ -766,6 +801,18 @@ wav_set_gain_outer(wav_t *wav, double gain_outer)
 		WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_GAIN, gain_outer);
 		wav->gain_outer = gain_outer;
 	}
+}
+
+void
+wav_set_gain_outerhf(wav_t *wav, double gain_outerhf)
+{
+	WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_GAINHF, gain_outerhf);
+}
+
+void
+wav_set_air_absorption_fact(wav_t *wav, double fact)
+{
+	WAV_SET_PARAM(alSourcei, AL_AIR_ABSORPTION_FACTOR, fact);
 }
 
 /*
@@ -866,4 +913,23 @@ void
 alc_listener_set_velocity(alc_t *alc, vect3_t vel)
 {
 	LISTENER_SET_PARAM(alListener3f, AL_VELOCITY, vel.x, vel.y, vel.z);
+}
+
+alc_t *
+alc_global_save(alc_t *new_alc)
+{
+	alc_t *old_alc = calloc(1, sizeof (*old_alc));
+
+	VERIFY(ctx_save(new_alc, old_alc));
+	VERIFY3P(new_alc->ctx, !=, old_alc->ctx);
+
+	return (old_alc);
+}
+
+void
+alc_global_restore(alc_t *new_alc, alc_t *old_alc)
+{
+	VERIFY3P(new_alc->ctx, !=, old_alc->ctx);
+	VERIFY(ctx_restore(new_alc, old_alc));
+	free(old_alc);
 }

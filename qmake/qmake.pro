@@ -41,6 +41,9 @@ DEFINES += GL_GLEXT_PROTOTYPES
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210
 
+# We want OpenAL soft extensions
+DEFINES += AL_ALEXT_PROTOTYPES
+
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 
 TARGET = acfutils
