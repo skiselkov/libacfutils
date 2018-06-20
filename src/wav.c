@@ -900,12 +900,11 @@ alc_listener_get_pos(alc_t *alc)
 void
 alc_listener_set_orient(alc_t *alc, vect3_t orient)
 {
-	ALfloat v[6] = {
-		sin(DEG2RAD(orient.z)),
-		sin(DEG2RAD(orient.x)),
-		-cos(DEG2RAD(orient.z)),
-		0, 1, 0		/* Assume viewer is always upright */
-	};
+	vect3_t at = vect3_rot(vect3_rot(VECT3(0, 0, -1), orient.x, 0),
+	    orient.y, 1);
+	vect3_t up = vect3_rot(vect3_rot(vect3_rot(VECT3(0, 1, 0),
+	    orient.x, 0), orient.z, 2), orient.y, 1);
+	ALfloat v[6] = { at.x, at.y, at.z, up.x, up.y, up.z };
 	LISTENER_SET_PARAM(alListenerfv, AL_ORIENTATION, v);
 }
 

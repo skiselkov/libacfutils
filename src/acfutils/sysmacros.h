@@ -221,7 +221,7 @@ highbit64(unsigned long long x)
 			s = (d_t) * (step); \
 		else \
 			s = (d_t) * (-(step)); \
-		if ((o < t && o + s > t) || (o > t && o + s < t)) \
+		if ((o <= t && o + s > t) || (o >= t && o + s < t)) \
 			(old_val) = t; \
 		else \
 			(old_val) += s; \
