@@ -56,7 +56,8 @@
 #define	WAV_OP_PARAM(al_op, al_param_name, err_ret, ...) \
 	do { \
 		ALuint err; \
-		alc_t sav = { NULL }; \
+		alc_t sav; \
+		memset(&sav, 0, sizeof (sav)); \
 		if (wav == NULL || wav->alsrc == 0) \
 			return err_ret; \
 		VERIFY(ctx_save(wav->alc, &sav)); \
@@ -76,7 +77,8 @@
 #define	LISTENER_OP_PARAM(al_op, al_param_name, err_ret, ...) \
 	do { \
 		ALuint err; \
-		alc_t sav = { NULL }; \
+		alc_t sav; \
+		memset(&sav, 0, sizeof (sav)); \
 		VERIFY(ctx_save(alc, &sav)); \
 		al_op(al_param_name, __VA_ARGS__); \
 		if ((err = alGetError()) != AL_NO_ERROR) { \
@@ -202,12 +204,13 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
     bool_t thread_local)
 {
 	alc_t	*alc;
-	alc_t	sav = { NULL };
+	alc_t	sav;
 
 	VERIFY(!shared || !thread_local);
 	/* Clear error state */
 	alGetError();
 
+	memset(&sav, 0, sizeof (sav));
 	if (!thread_local && !ctx_save(NULL, &sav))
 		return (NULL);
 
