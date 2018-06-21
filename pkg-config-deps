@@ -31,6 +31,7 @@
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
     shapelib proj libcurl openssl tesseract lept"
+STATIC_OPENAL=0
 
 ARCH="$1"
 shift
@@ -46,6 +47,7 @@ else
 fi
 if [[ "$1" = "--static-openal" ]]; then
 	PACKAGES="$PACKAGES openal"
+	STATIC_OPENAL=1
 	shift
 fi
 
@@ -78,6 +80,9 @@ elif [[ "$1" = "--libs" ]]; then
 		# it produces linkage errors on Windows.
 		OPENSSL_EXTRA="-lcrypt32 -lws2_32 -lgdi32"
 		DBGEXTRA="-ldbghelp -lpsapi"
+		if [[ "$STATIC_OPENAL" = 1 ]]; then
+			OPENAL_EXTRA="-lole32 -lwinmm"
+		fi
 	fi
 	if [[ "$ARCH" = "linux-64" ]]; then
 		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
@@ -92,4 +97,4 @@ fi
 echo $WHOLE_ARCH_ON \
     $(pkg-config $@ $PACKAGES) \
     ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF \
-    $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA}
+    $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${OPENAL_EXTRA}
