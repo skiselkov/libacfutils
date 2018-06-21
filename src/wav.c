@@ -663,13 +663,16 @@ wav_free(wav_t *wav)
 void
 wav_set_gain(wav_t *wav, float gain)
 {
-	wav->gain = gain;
+	/* This MUST go first, because if `wav' is NULL, we want to return */
 	WAV_SET_PARAM(alSourcef, AL_GAIN, gain);
+	wav->gain = gain;
 }
 
 float
 wav_get_gain(wav_t *wav)
 {
+	if (wav == NULL)
+		return (0);
 	return (wav->gain);
 }
 
@@ -679,98 +682,112 @@ wav_get_gain(wav_t *wav)
 void
 wav_set_loop(wav_t *wav, bool_t loop)
 {
-	wav->loop = loop;
 	WAV_SET_PARAM(alSourcei, AL_LOOPING, loop);
+	wav->loop = loop;
 }
 
 bool_t
 wav_get_loop(wav_t *wav)
 {
+	if (wav == NULL)
+		return (B_FALSE);
 	return (wav->loop);
 }
 
 void
 wav_set_pitch(wav_t *wav, float pitch)
 {
-	wav->pitch = pitch;
 	WAV_SET_PARAM(alSourcef, AL_PITCH, pitch);
+	wav->pitch = pitch;
 }
 
 float
 wav_get_pitch(wav_t *wav)
 {
+	if (wav == NULL)
+		return (0);
 	return (wav->pitch);
 }
 
 void
 wav_set_position(wav_t *wav, vect3_t pos)
 {
-	wav->pos = pos;
 	WAV_SET_PARAM(alSource3f, AL_POSITION, pos.x, pos.y, pos.z);
+	wav->pos = pos;
 }
 
 vect3_t
 wav_get_position(wav_t *wav)
 {
+	if (wav == NULL)
+		return (NULL_VECT3);
 	return (wav->pos);
 }
 
 void
 wav_set_velocity(wav_t *wav, vect3_t vel)
 {
-	wav->vel = vel;
 	WAV_SET_PARAM(alSource3f, AL_VELOCITY, vel.x, vel.y, vel.z);
+	wav->vel = vel;
 }
 
 vect3_t
 wav_get_velocity(wav_t *wav)
 {
+	if (wav == NULL)
+		return (NULL_VECT3);
 	return (wav->vel);
 }
 
 void
 wav_set_ref_dist(wav_t *wav, double d)
 {
-	wav->ref_dist = d;
 	WAV_SET_PARAM(alSourcef, AL_REFERENCE_DISTANCE, d);
+	wav->ref_dist = d;
 }
 
 double
 wav_get_ref_dist(wav_t *wav)
 {
+	if (wav == NULL)
+		return (0);
 	return (wav->ref_dist);
 }
 
 void
 wav_set_max_dist(wav_t *wav, double d)
 {
-	wav->max_dist = d;
 	WAV_SET_PARAM(alSourcef, AL_MAX_DISTANCE, d);
+	wav->max_dist = d;
 }
 
 double
 wav_get_max_dist(wav_t *wav)
 {
+	if (wav == NULL)
+		return (0);
 	return (wav->max_dist);
 }
 
 void
 wav_set_rolloff_fact(wav_t *wav, double r)
 {
-	wav->rolloff_fact = r;
 	WAV_SET_PARAM(alSourcef, AL_ROLLOFF_FACTOR, r);
+	wav->rolloff_fact = r;
 }
 
 double
 wav_get_rolloff_fact(wav_t *wav)
 {
+	if (wav == NULL)
+		return (0);
 	return (wav->rolloff_fact);
 }
 
 void
 wav_set_dir(wav_t *wav, vect3_t dir)
 {
-	if (!VECT3_EQ(wav->dir, dir)) {
+	if (wav != NULL && !VECT3_EQ(wav->dir, dir)) {
 		WAV_SET_PARAM(alSource3f, AL_DIRECTION, dir.x, dir.y, dir.z);
 		wav->dir = dir;
 	}
@@ -779,7 +796,7 @@ wav_set_dir(wav_t *wav, vect3_t dir)
 void
 wav_set_cone_inner(wav_t *wav, double cone_inner)
 {
-	if (wav->cone_inner != cone_inner) {
+	if (wav != NULL && wav->cone_inner != cone_inner) {
 		WAV_SET_PARAM(alSourcef, AL_CONE_INNER_ANGLE, cone_inner);
 		wav->cone_inner = cone_inner;
 	}
@@ -788,7 +805,7 @@ wav_set_cone_inner(wav_t *wav, double cone_inner)
 void
 wav_set_cone_outer(wav_t *wav, double cone_outer)
 {
-	if (wav->cone_outer != cone_outer) {
+	if (wav != NULL && wav->cone_outer != cone_outer) {
 		WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_ANGLE, cone_outer);
 		wav->cone_outer = cone_outer;
 	}
@@ -797,7 +814,7 @@ wav_set_cone_outer(wav_t *wav, double cone_outer)
 void
 wav_set_gain_outer(wav_t *wav, double gain_outer)
 {
-	if (wav->gain_outer != gain_outer) {
+	if (wav != NULL && wav->gain_outer != gain_outer) {
 		WAV_SET_PARAM(alSourcef, AL_CONE_OUTER_GAIN, gain_outer);
 		wav->gain_outer = gain_outer;
 	}
@@ -846,7 +863,7 @@ wav_play(wav_t *wav)
 bool_t
 wav_is_playing(wav_t *wav)
 {
-	return (wav->play_start != 0 && (wav_get_loop(wav) ||
+	return (wav != NULL && wav->play_start != 0 && (wav_get_loop(wav) ||
 	    USEC2SEC(microclock() - wav->play_start) < wav->duration));
 }
 
@@ -860,10 +877,7 @@ wav_stop(wav_t *wav)
 	ALuint err;
 	alc_t sav;
 
-	if (wav == NULL)
-		return;
-
-	if (wav->alsrc == 0)
+	if (wav == NULL || wav->alsrc == 0)
 		return;
 
 	VERIFY(ctx_save(wav->alc, &sav));
