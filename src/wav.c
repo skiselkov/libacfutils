@@ -112,7 +112,7 @@ ctx_save(alc_t *alc, alc_t *sav)
 	ASSERT(sav != NULL);
 
 	/* Thread-local contexts do not switch */
-	if (alc->thread_local)
+	if (alc != NULL && alc->thread_local)
 		return (B_TRUE);
 
 	(void) alGetError(); /* cleanup after other OpenAL users */
@@ -152,11 +152,8 @@ ctx_restore(alc_t *alc, alc_t *sav)
 
 	ASSERT(sav != NULL);
 
-	/* Thread-local contexts do not switch */
-	if (alc->thread_local)
-		return (B_TRUE);
-
-	if (alc != NULL && alc->ctx == NULL)
+	/* Thread-local contexts do not switch, or nothing to restore */
+	if (alc != NULL && (alc->thread_local || alc->ctx == NULL))
 		return (B_TRUE);
 
 	/* Avoid ctx_restore recursion */
