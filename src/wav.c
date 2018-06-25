@@ -770,6 +770,12 @@ wav_get_max_dist(wav_t *wav)
 }
 
 void
+wav_set_spacialize(wav_t *wav, bool_t flag)
+{
+	WAV_SET_PARAM(alSourcei, AL_SOURCE_SPATIALIZE_SOFT, flag);
+}
+
+void
 wav_set_rolloff_fact(wav_t *wav, double r)
 {
 	WAV_SET_PARAM(alSourcef, AL_ROLLOFF_FACTOR, r);
