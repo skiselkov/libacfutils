@@ -105,6 +105,13 @@ extern "C" {
 #endif	/* __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__ */
 
 #define	DESTROY(x)	do { free(x); (x) = NULL; } while (0)
+#define	DESTROY_OP(var, zero_val, destroy_op) \
+	do { \
+		if ((var) != (zero_val)) { \
+			destroy_op; \
+			(var) = (zero_val); \
+		} \
+	} while (0)
 
 #ifdef	WINDOWS
 #define	PATHSEP	"\\"
