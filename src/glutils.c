@@ -30,6 +30,12 @@
 #include <acfutils/glutils.h>
 #include <acfutils/shader.h>
 
+#ifdef	_USE_MATH_DEFINES
+#undef	_USE_MATH_DEFINES
+#endif
+
+#include <cglm/cglm.h>
+
 typedef struct {
 	GLfloat	pos[3];
 	GLfloat	tex0[2];
@@ -255,4 +261,15 @@ glutils_destroy_lines(glutils_lines_t *lines)
 		glDeleteBuffers(1, &lines->vbo);
 		memset(lines, 0, sizeof (*lines));
 	}
+}
+
+API_EXPORT void
+glutils_vp2pvm(GLfloat pvm[16])
+{
+	int vp[4];
+	mat4 pvm_mat;
+
+	glGetIntegerv(GL_VIEWPORT, vp);
+	glm_ortho(vp[0], vp[0] + vp[2], vp[1], vp[1] + vp[3], 0, 1, pvm_mat);
+	memcpy(pvm, pvm_mat, sizeof (GLfloat) * 16);
 }

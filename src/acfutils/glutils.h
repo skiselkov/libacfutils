@@ -60,6 +60,8 @@ API_EXPORT void glutils_init_3D_lines(glutils_lines_t *lines,
 API_EXPORT void glutils_destroy_lines(glutils_lines_t *lines);
 API_EXPORT void glutils_draw_lines(const glutils_lines_t *lines, GLint prog);
 
+API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
+
 #define	GLUTILS_VALIDATE_INDICES(indices, num_idx, num_vtx) \
 	do { \
 		for (unsigned i = 0; i < (num_idx); i++) { \
