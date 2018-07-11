@@ -52,6 +52,12 @@ dr_find(dr_t *dr, const char *fmt, ...)
 	return (B_TRUE);
 }
 
+bool_t
+dr_writable(dr_t *dr)
+{
+	return (dr->writable);
+}
+
 int
 dr_geti(dr_t *dr)
 {

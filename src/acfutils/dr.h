@@ -58,6 +58,8 @@ API_EXPORT bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
 		} \
 	} while (0)
 
+API_EXPORT bool_t dr_writable(dr_t *dr);
+
 API_EXPORT int dr_geti(dr_t *dr);
 API_EXPORT void dr_seti(dr_t *dr, int i);
 
