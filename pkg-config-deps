@@ -30,7 +30,7 @@
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj libcurl openssl tesseract lept libxml2"
+    shapelib proj libcurl openssl tesseract lept libxml-2.0"
 STATIC_OPENAL=0
 
 ARCH="$1"
