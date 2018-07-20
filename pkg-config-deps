@@ -30,7 +30,7 @@
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
 PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj libcurl openssl tesseract lept"
+    shapelib proj libcurl openssl tesseract lept libxml2"
 STATIC_OPENAL=0
 
 ARCH="$1"
@@ -70,6 +70,7 @@ $(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
 $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
+$(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\
 $(pwd)/openal-soft/openal-soft-1.18.2-$ARCH/build/install/lib/pkgconfig"
 
 if [[ "$1" = "--cflags" ]]; then

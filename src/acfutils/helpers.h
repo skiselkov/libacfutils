@@ -200,6 +200,9 @@ API_EXPORT void strlcpy(char *restrict dest, const char *restrict src,
 API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 #endif	/* IBM */
 
+#define	strtolower			ACFSYM(strtolower)
+API_EXPORT void strtolower(char *str);
+
 /*
  * return x rounded up to the nearest power-of-2.
  */

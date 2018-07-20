@@ -62,13 +62,6 @@ typedef struct {
 static void conf_set_common(conf_t *conf, const char *key,
     const char *fmt, ...) PRINTF_ATTR(3);
 
-static void
-strtolower(char *str)
-{
-	for (; *str != 0; str++)
-		*str = tolower(*str);
-}
-
 static int
 conf_key_compar(const void *a, const void *b)
 {

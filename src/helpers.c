@@ -735,6 +735,13 @@ getline(char **line_p, size_t *cap_p, FILE *fp)
 }
 #endif	/* IBM */
 
+API_EXPORT void
+strtolower(char *str)
+{
+	for (int i = 0, n = strlen(str); i < n; i++)
+		str[i] = tolower(str[i]);
+}
+
 /*
  * Creates a file path string from individual path components. The
  * components are provided as separate filename arguments and the list needs

@@ -23,11 +23,19 @@ function build_dep() {
 	PRODFILE="$5"
 	PATCHFILES="$6"
 
-	SRCDIR="${TARBALL/%.tar.*/}"
+	if [[ "$SRCDIR" = "" ]]; then
+		SRCDIR="$(basename "${TARBALL/%.tar.*/}")"
+	fi
+
+	if [[ "$BUILDDIR" = "" ]]; then
+		BUILDDIR="$PRODNAME-$PLATFORM"
+	fi
 
 	if [ -n "$do_clean" ]; then
-		echo rm -rf "$PRODNAME-$PLATFORM" "$SRCDIR"
-		rm -rf "$PRODNAME-$PLATFORM" "$SRCDIR"
+		echo rm -rf "$BUILDDIR" "$SRCDIR"
+		rm -rf "$BUILDDIR" "$SRCDIR"
+		SRCDIR=""
+		BUILDDIR=""
 		return
 	fi
 
@@ -64,14 +72,18 @@ function build_dep() {
 			done
 		fi
 	fi
-	if [ -f "$PRODNAME-$PLATFORM/$PRODFILE" ] && \
-	    [ "$PRODNAME-$PLATFORM/$PRODFILE" -nt "$TARBALL" ]; then
+	if [ -f "$BUILDDIR/$PRODFILE" ] && \
+	    [ "$BUILDDIR/$PRODFILE" -nt "$TARBALL" ]; then
+		SRCDIR=""
+		BUILDDIR=""
 		return
 	fi
 	(
-		rm -rf "$PRODNAME-$PLATFORM"
-		mkdir "$PRODNAME-$PLATFORM"
-		cd "$PRODNAME-$PLATFORM"
+		if [[ "$BUILDDIR" != "$SRCDIR" ]]; then
+			rm -rf "$BUILDDIR"
+			mkdir "$BUILDDIR"
+		fi
+		cd "$BUILDDIR"
 
 		if [ -n "$CUSTPREPCMD" ]; then
 			eval "$CUSTPREPCMD" || exit 1
@@ -101,4 +113,6 @@ $LDFLAGS_ADDTL" \
 			make install || exit 1
 		fi
 	)
+	SRCDIR=""
+	BUILDDIR=""
 }
