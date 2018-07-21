@@ -232,6 +232,8 @@ API_EXPORT bool_t remove_directory(const char *dirname);
 #define	remove_file			ACFSYM(remove_file)
 API_EXPORT bool_t remove_file(const char *filename, bool_t notfound_ok);
 
+API_EXPORT char *lacf_dirname(const char *filename);
+
 #if	IBM
 
 /* A minimally compatible POSIX-style directory reading implementation */

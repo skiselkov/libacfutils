@@ -1195,6 +1195,25 @@ remove_file(const char *filename, bool_t notfound_ok)
 #endif	/* !IBM */
 }
 
+API_EXPORT char *
+lacf_dirname(const char *filename)
+{
+	int l = strlen(filename);
+	char *p;
+	char *str;
+
+	if (l == 0)
+		return (strdup(""));
+
+	p = strrchr(filename, DIRSEP);
+	if (p == NULL)
+		return (strdup(""));
+	str = malloc((p - filename) + 1);
+	strlcpy(str, filename, (p - filename) + 1);
+
+	return (str);
+}
+
 #if	IBM
 
 DIR *
