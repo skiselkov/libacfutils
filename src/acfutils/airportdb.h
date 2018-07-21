@@ -42,6 +42,18 @@ typedef struct airport airport_t;
 typedef struct runway runway_t;
 typedef struct runway_end runway_end_t;
 
+typedef enum {
+	RWY_SURF_ASPHALT = 1,
+	RWY_SURF_CONCRETE = 2,
+	RWY_SURF_GRASS = 3,
+	RWY_SURF_DIRT = 4,
+	RWY_SURF_GRAVEL = 5,
+	RWY_SURF_DRY_LAKEBED = 12,
+	RWY_SURF_WATER = 13,
+	RWY_SURF_SNOWICE = 14,
+	RWY_SURF_TRANSPARENT = 15
+} rwy_surf_t;
+
 struct runway_end {
 	char		id[4];		/* runway ID, nul-terminated */
 	geo_pos3_t	thr;		/* threshold position (elev in FEET!) */
@@ -64,6 +76,7 @@ struct runway {
 	runway_end_t	ends[2];
 	char		joint_id[8];
 	char		rev_joint_id[8];
+	rwy_surf_t	surf;
 
 	/* computed on load_airport */
 	double		length;		/* meters */
@@ -75,6 +88,23 @@ struct runway {
 	avl_node_t	node;
 };
 
+typedef enum {
+	FREQ_TYPE_REC,	/* pre-recorded message ATIS, AWOS or ASOS */
+	FREQ_TYPE_CTAF,
+	FREQ_TYPE_CLNC,
+	FREQ_TYPE_GND,
+	FREQ_TYPE_TWR,
+	FREQ_TYPE_APP,
+	FREQ_TYPE_DEP
+} freq_type_t;
+
+typedef struct {
+	freq_type_t	type;
+	uint64_t	freq;	/* Hz */
+	char		name[32];
+	list_node_t	node;
+} freq_info_t;
+
 struct airport {
 	char		icao[5];	/* 4-letter ID, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
@@ -83,6 +113,7 @@ struct airport {
 	double		TA;		/* transition altitude in feet */
 	double		TL;		/* transition level in feet */
 	avl_tree_t	rwys;
+	list_t		freqs;
 
 	bool_t		load_complete;	/* true if we've done load_airport */
 	vect3_t		ecef;		/* refpt ECEF coordinates */

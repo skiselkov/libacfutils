@@ -66,6 +66,16 @@ API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     const GLfloat *pvm);
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 
+/*
+ * Must ONLY be called from the rendering callback.
+ */
+typedef struct {
+	unsigned	x, y;
+	unsigned	w, h;
+} mtcr_rect_t;
+API_EXPORT void mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
+    mtcr_rect_t *rects, size_t num);
+
 #define	ft_err2str	ACFSYM(ft_err2str)
 API_EXPORT const char *ft_err2str(FT_Error err);
 #define	try_load_font	ACFSYM(try_load_font)

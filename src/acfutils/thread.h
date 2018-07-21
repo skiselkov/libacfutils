@@ -20,6 +20,7 @@
 #define	_ACF_UTILS_THREAD_H_
 
 #include <stdlib.h>
+#include <string.h>
 
 #if APL || LIN
 #include <pthread.h>
@@ -107,10 +108,18 @@ extern "C" {
 #if	APL || LIN
 
 #define	thread_t		pthread_t
+#define	thread_id_t		pthread_t
 #define	mutex_t			pthread_mutex_t
 #define	condvar_t		pthread_cond_t
+#define	curthread		pthread_self()
 
-#define	mutex_init(mtx)		pthread_mutex_init((mtx), NULL)
+#define	mutex_init(mtx)	\
+	do { \
+		pthread_mutexattr_t attr; \
+		pthread_mutexattr_init(&attr); \
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
+		pthread_mutex_init((mtx), &attr); \
+	} while (0)
 #define	mutex_destroy(mtx)	pthread_mutex_destroy((mtx))
 #define	mutex_enter(mtx)	pthread_mutex_lock((mtx))
 #define	mutex_exit(mtx)		pthread_mutex_unlock((mtx))
@@ -141,11 +150,13 @@ extern "C" {
 #else	/* !APL && !LIN */
 
 #define	thread_t	HANDLE
+#define	thread_id_t	DWORD
 typedef struct {
 	bool_t			inited;
 	CRITICAL_SECTION	cs;
 } mutex_t;
 #define	condvar_t	CONDITION_VARIABLE
+#define	curthread	GetCurrentThreadId()
 
 #define	mutex_init(x) \
 	do { \
@@ -191,6 +202,93 @@ typedef struct {
 #define	cv_broadcast	WakeAllConditionVariable
 
 #endif	/* !APL && !LIN */
+
+API_EXPORT void lacf_mask_sigpipe(void);
+
+typedef struct {
+	mutex_t			lock;
+	condvar_t		cv;
+	bool_t			write_locked;
+	thread_id_t		writer;
+	unsigned		refcount;
+	unsigned		waiters;
+} rwmutex_t;
+
+static void rwmutex_init(rwmutex_t *rw) UNUSED_ATTR;
+static void rwmutex_destroy(rwmutex_t *rw) UNUSED_ATTR;
+static void rwmutex_enter(rwmutex_t *rw, bool_t write) UNUSED_ATTR;
+static void rwmutex_exit(rwmutex_t *rw) UNUSED_ATTR;
+
+static void
+rwmutex_init(rwmutex_t *rw)
+{
+	memset(rw, 0, sizeof (*rw));
+	mutex_init(&rw->lock);
+	cv_init(&rw->cv);
+}
+
+static void
+rwmutex_destroy(rwmutex_t *rw)
+{
+	ASSERT3U(rw->refcount, ==, 0);
+	cv_destroy(&rw->cv);
+	mutex_destroy(&rw->lock);
+}
+
+static void
+rwmutex_enter(rwmutex_t *rw, bool_t write)
+{
+	mutex_enter(&rw->lock);
+
+	if (rw->write_locked && rw->writer != curthread) {
+		rw->waiters++;
+		while (rw->write_locked)
+			cv_wait(&rw->cv, &rw->lock);
+		rw->waiters--;
+	}
+	if (write) {
+		if (rw->refcount > 0 && rw->writer != curthread) {
+			rw->waiters++;
+			while (rw->refcount > 0)
+				cv_wait(&rw->cv, &rw->lock);
+			rw->waiters--;
+		}
+		rw->write_locked = B_TRUE;
+		rw->writer = curthread;
+	}
+	rw->refcount++;
+
+	mutex_exit(&rw->lock);
+}
+
+static void
+rwmutex_exit(rwmutex_t *rw)
+{
+	mutex_enter(&rw->lock);
+	ASSERT3U(rw->refcount, >, 0);
+	rw->refcount--;
+	if (rw->refcount == 0 && rw->write_locked) {
+		ASSERT3U(rw->writer, ==, curthread);
+		rw->write_locked = B_FALSE;
+		rw->writer = 0;
+	}
+	if (rw->waiters > 0)
+		cv_broadcast(&rw->cv);
+	mutex_exit(&rw->lock);
+}
+
+static inline void
+rwmutex_upgrade(rwmutex_t *rw)
+{
+	rwmutex_exit(rw);
+	rwmutex_enter(rw, B_TRUE);
+}
+
+static inline bool_t
+rwmutex_held_write(rwmutex_t *rw)
+{
+	return (rw->writer == curthread);
+}
 
 #ifdef __cplusplus
 }

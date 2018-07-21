@@ -23,12 +23,36 @@
 #include <acfutils/worker.h>
 #include <acfutils/time.h>
 
+#if	!IBM
+#include <signal.h>
+#endif
+
+void
+lacf_mask_sigpipe(void)
+{
+#if	!IBM
+	sigset_t set;
+
+	pthread_sigmask(SIG_BLOCK, NULL, &set);
+	if (!sigismember(&set, SIGPIPE)) {
+		sigaddset(&set, SIGPIPE);
+		pthread_sigmask(SIG_BLOCK, &set, NULL);
+	}
+#endif	/* !IBM */
+}
+
 static void
 worker(void *ui)
 {
 	worker_t *wk = ui;
 
 	thread_set_name(wk->name);
+
+	/*
+	 * SIGPIPE is almost never desired on worker threads (typically due
+	 * to writing to broken network sockets).
+	 */
+	lacf_mask_sigpipe();
 
 	mutex_enter(&wk->lock);
 
@@ -37,13 +61,26 @@ worker(void *ui)
 			goto init_fail;
 	}
 	while (wk->run) {
-		if (wk->intval_us == 0) {
+		bool_t result;
+		uint64_t intval_us = wk->intval_us;
+
+		if (intval_us == 0) {
 			cv_wait(&wk->cv, &wk->lock);
 			if (!wk->run)
 				break;
 		}
-
-		if (!wk->worker_func(wk->userinfo))
+		/*
+		 * Avoid holding the worker lock in the user callback, as
+		 * that can result in locking inversions if the worker needs
+		 * to grab locks, while external threads might be holding
+		 * those locks and trying to wake us up.
+		 */
+		wk->inside_cb = B_TRUE;
+		mutex_exit(&wk->lock);
+		result = wk->worker_func(wk->userinfo);
+		mutex_enter(&wk->lock);
+		wk->inside_cb = B_FALSE;
+		if (!result)
 			break;
 		/*
 		 * If another thread is waiting on us to finish executing,
@@ -51,9 +88,9 @@ worker(void *ui)
 		 */
 		cv_broadcast(&wk->cv);
 
-		if (wk->intval_us != 0) {
+		if (intval_us != 0) {
 			cv_timedwait(&wk->cv, &wk->lock,
-			    microclock() + wk->intval_us);
+			    microclock() + intval_us);
 		}
 	}
 	if (wk->fini_func != NULL)
@@ -120,6 +157,9 @@ API_EXPORT void
 worker_set_interval(worker_t *wk, uint64_t intval_us)
 {
 	mutex_enter(&wk->lock);
+	/* If the worker is in the callback, wait for it to exit first */
+	while (wk->inside_cb)
+		cv_wait(&wk->cv, &wk->lock);
 	if (wk->intval_us != intval_us) {
 		wk->intval_us = intval_us;
 		cv_broadcast(&wk->cv);
@@ -139,7 +179,10 @@ void
 worker_wake_up_wait(worker_t *wk)
 {
 	mutex_enter(&wk->lock);
-	/* First wake up the thread */
+	/* If the worker is in the callback, wait for it to exit first */
+	while (wk->inside_cb)
+		cv_wait(&wk->cv, &wk->lock);
+	/* Now we are certain the worker is sleeping, wake it up again */
 	cv_broadcast(&wk->cv);
 	/* And then wait for it to finish */
 	cv_wait(&wk->cv, &wk->lock);

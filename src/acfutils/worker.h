@@ -30,6 +30,7 @@ typedef struct {
 	condvar_t	cv;
 	uint64_t	intval_us;
 	bool_t		run;
+	bool_t		inside_cb;
 	thread_t	thread;
 	bool_t		(*init_func)(void *userinfo);
 	bool_t		(*worker_func)(void *userinfo);
@@ -50,7 +51,6 @@ API_EXPORT void worker_fini(worker_t *wk);
 API_EXPORT void worker_set_interval(worker_t *wk, uint64_t intval_us);
 API_EXPORT void worker_wake_up(worker_t *wk);
 API_EXPORT void worker_wake_up_wait(worker_t *wk);
-
 
 #ifdef	__cplusplus
 }

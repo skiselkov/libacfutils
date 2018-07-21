@@ -20,8 +20,10 @@
 #define	_ACFUTILS_CMD_H_
 
 #include <stdarg.h>
+
 #include <XPLMUtilities.h>
-#include <acfutils/types.h>
+
+#include <acfutils/sysmacros.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -29,6 +31,11 @@ extern "C" {
 
 typedef int (*cmd_cb_t)(XPLMCommandRef ref, XPLMCommandPhase phase,
     void *refcon);
+
+API_EXPORT XPLMCommandRef cmd_find(const char *fmt, ...) PRINTF_ATTR(1);
+API_EXPORT XPLMCommandRef fcmd_find(const char *fmt, ...) PRINTF_ATTR(1);
+API_EXPORT XPLMCommandRef cmd_find_v(const char *fmt, va_list ap);
+API_EXPORT XPLMCommandRef fcmd_find_v(const char *fmt, va_list ap);
 
 API_EXPORT XPLMCommandRef cmd_bind(const char *fmt, cmd_cb_t cb,
     bool_t before, void *refcon, ...);
