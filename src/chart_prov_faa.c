@@ -66,8 +66,7 @@ dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 		dl_info->bufcap += REALLOC_STEP;
 		if (dl_info->bufcap > MAX_DL_SIZE) {
 			logMsg("Error downloading %s: too much data received "
-			    "(%lld bytes)", dl_info->url,
-			    (long long)dl_info->bufcap);
+			    "(%ld bytes)", dl_info->url, (long)dl_info->bufcap);
 			return (0);
 		}
 		dl_info->buf = realloc(dl_info->buf, dl_info->bufcap);

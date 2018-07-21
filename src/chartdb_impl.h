@@ -31,17 +31,6 @@ extern "C" {
 #define	MAX_CHART_NAME		48
 #define	MAX_CHART_FILENAME	32
 
-typedef enum {
-	CHART_TYPE_UNKNOWN,	/* Unknown chart type */
-	CHART_TYPE_APD,		/* Airport Diagram */
-	CHART_TYPE_IAP,		/* Instrument Approach Procedure */
-	CHART_TYPE_DP,		/* Departure Procedure */
-	CHART_TYPE_ODP,		/* Obstacle Departure Procedure */
-	CHART_TYPE_STAR,	/* Standard Terminal Arrival */
-	CHART_TYPE_MIN,		/* Takeoff Minimums */
-	NUM_CHART_TYPES
-} chart_type_t;
-
 typedef struct chart_arpt_s chart_arpt_t;
 typedef struct chartdb_s chartdb_t;
 

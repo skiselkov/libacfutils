@@ -345,13 +345,14 @@ chartdb_purge(chartdb_t *cdb)
 }
 
 API_EXPORT char **
-chartdb_get_chart_names(chartdb_t *cdb, const char *icao, size_t *num_charts)
+chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
+    size_t *num_charts)
 {
 	chart_arpt_t srch, *arpt;
 	avl_index_t where;
 	char **charts;
 	chart_t *chart;
-	size_t i;
+	size_t i, num;
 
 	mutex_enter(&cdb->lock);
 
@@ -364,17 +365,46 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, size_t *num_charts)
 		return (NULL);
 	}
 
-	charts = calloc(avl_numnodes(&arpt->charts), sizeof (*charts));
+	for (chart = avl_first(&arpt->charts), num = 0; chart != NULL;
+	    chart = AVL_NEXT(&arpt->charts, chart)) {
+		if (chart->type == type)
+			num++;
+	}
+	charts = calloc(num, sizeof (*charts));
 	for (chart = avl_first(&arpt->charts), i = 0; chart != NULL;
-	    chart = AVL_NEXT(&arpt->charts, chart), i++) {
-		charts[i] = strdup(chart->name);
+	    chart = AVL_NEXT(&arpt->charts, chart)) {
+		if (chart->type == type) {
+			ASSERT3U(i, <, num);
+			charts[i] = strdup(chart->name);
+			i++;
+		}
 	}
 
 	mutex_exit(&cdb->lock);
 
-	*num_charts = i;
+	*num_charts = num;
 
 	return (charts);
+}
+
+API_EXPORT void
+chartdb_get_chart_codename(chartdb_t *cdb, const char *icao,
+    const char *chartname, char codename[32])
+{
+	chart_arpt_t *arpt, srch_arpt;
+	chart_t *chart, srch_chart;
+
+	mutex_enter(&cdb->lock);
+
+	strlcpy(srch_arpt.icao, icao, sizeof (srch_arpt.icao));
+	arpt = avl_find(&cdb->arpts, &srch_arpt, NULL);
+	VERIFY(arpt != NULL);
+	strlcpy(srch_chart.name, chartname, sizeof (srch_chart.name));
+	chart = avl_find(&arpt->charts, &srch_chart, NULL);
+	VERIFY(chart != NULL);
+	strlcpy(codename, chart->codename, 32);
+
+	mutex_exit(&cdb->lock);
 }
 
 API_EXPORT void
