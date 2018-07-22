@@ -110,7 +110,13 @@ extern "C" {
 #define	mutex_t			pthread_mutex_t
 #define	condvar_t		pthread_cond_t
 
-#define	mutex_init(mtx)		pthread_mutex_init((mtx), NULL)
+#define	mutex_init(mtx)	\
+	do { \
+		pthread_mutexattr_t attr; \
+		pthread_mutexattr_init(&attr); \
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
+		pthread_mutex_init((mtx), &attr); \
+	} while (0)
 #define	mutex_destroy(mtx)	pthread_mutex_destroy((mtx))
 #define	mutex_enter(mtx)	pthread_mutex_lock((mtx))
 #define	mutex_exit(mtx)		pthread_mutex_unlock((mtx))
