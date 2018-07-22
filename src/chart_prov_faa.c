@@ -160,8 +160,6 @@ download_common(chartdb_t *cdb, const char *url, const char *filepath,
 			logMsg("%s %s: %s", error_prefix, url,
 			    curl_easy_strerror(res));
 			result = B_FALSE;
-		} else if (code == 304) {
-			printf(" =========== NOT MODIFIED\n");
 		} else if (code != 304) {
 			/*
 			 * Code `304' indicates we have a cached good copy.

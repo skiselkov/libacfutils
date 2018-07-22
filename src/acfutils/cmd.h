@@ -20,8 +20,10 @@
 #define	_ACFUTILS_CMD_H_
 
 #include <stdarg.h>
+
 #include <XPLMUtilities.h>
-#include <acfutils/types.h>
+
+#include <acfutils/sysmacros.h>
 
 #ifdef	__cplusplus
 extern "C" {
