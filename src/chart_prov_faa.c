@@ -212,6 +212,14 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 			strlcpy(chart->codename, content,
 			    sizeof (chart->codename));
 		} else if (strcmp((char *)node->name, "pdf_name") == 0) {
+			/*
+			 * "DELETED_JOB.PDF" in the PDF filename means that
+			 * the chart no longer exists, so get rid of it.
+			 */
+			if (strcmp(content, "DELETED_JOB.PDF") == 0) {
+				chart->type = CHART_TYPE_UNKNOWN;
+				break;
+			}
 			strlcpy(chart->filename, content,
 			    sizeof (chart->filename));
 		} else if (strcmp((char *)node->name, "chart_code") == 0) {

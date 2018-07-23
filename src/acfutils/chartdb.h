@@ -28,6 +28,8 @@
 
 #include <stdlib.h>
 
+#include <cairo.h>
+
 #include <acfutils/core.h>
 
 #ifdef	__cplusplus
@@ -60,11 +62,8 @@ API_EXPORT void chartdb_get_chart_codename(chartdb_t *cdb, const char *icao,
     const char *chartname, char codename[32]);
 API_EXPORT void chartdb_free_str_list(char **l, size_t num);
 
-API_EXPORT uint8_t *chartdb_get_chart_image(chartdb_t *cdb, const char *icao,
-    const char *chart_name, double zoom, double rotate,
-    unsigned *width, unsigned *height);
-API_EXPORT void chartdb_release_chart_image(chartdb_t *cdb,
-    const char *icao, const char *chart_name);
+API_EXPORT cairo_surface_t *chartdb_get_chart_surface(chartdb_t *cdb,
+    const char *icao, const char *chart_name, double zoom);
 
 #ifdef	__cplusplus
 }

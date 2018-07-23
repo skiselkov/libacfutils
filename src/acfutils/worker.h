@@ -30,6 +30,7 @@ typedef struct {
 	condvar_t	cv;
 	uint64_t	intval_us;
 	bool_t		run;
+	bool_t		inside_cb;
 	thread_t	thread;
 	bool_t		(*init_func)(void *userinfo);
 	bool_t		(*worker_func)(void *userinfo);

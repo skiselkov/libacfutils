@@ -48,13 +48,8 @@ typedef struct {
 	char		filename[MAX_CHART_FILENAME];
 
 	/* protected by chartdb_t->lock */
-	unsigned	refcnt;
-	condvar_t	refcnt_cv;
-	uint8_t		*pixels;
-	unsigned	width;
-	unsigned	height;
+	cairo_surface_t	*surf;
 	double		zoom;
-	double		rotate;
 
 	avl_node_t	node;
 	list_node_t	loader_node;

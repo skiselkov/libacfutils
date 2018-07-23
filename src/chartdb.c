@@ -72,7 +72,8 @@ arpt_compar(const void *a, const void *b)
 static void
 chart_destroy(chart_t *chart)
 {
-	free(chart->pixels);
+	if (chart->surf != NULL)
+		cairo_surface_destroy(chart->surf);
 	free(chart);
 }
 
@@ -101,9 +102,6 @@ loader_init(void *userinfo)
 	if (!prov[cdb->prov].init(cdb))
 		return (B_FALSE);
 
-	mutex_enter(&cdb->lock);
-	mutex_exit(&cdb->lock);
-
 	return (B_TRUE);
 }
 
@@ -114,12 +112,9 @@ loader_purge(chartdb_t *cdb)
 	    arpt = AVL_NEXT(&cdb->arpts, arpt)) {
 		for (chart_t *chart = avl_first(&arpt->charts); chart != NULL;
 		    chart = AVL_NEXT(&arpt->charts, chart)) {
-			if (chart->refcnt == 0) {
-				free(chart->pixels);
-				chart->pixels = NULL;
-				chart->zoom = 0;
-				chart->width = 0;
-				chart->height = 0;
+			if (chart->surf != NULL) {
+				cairo_surface_destroy(chart->surf);
+				chart->surf = NULL;
 			}
 		}
 	}
@@ -165,6 +160,7 @@ chartdb_add_chart(chart_arpt_t *arpt, chart_t *chart)
 		return (B_FALSE);
 	}
 	avl_insert(&arpt->charts, chart, where);
+	chart->arpt = arpt;
 	mutex_exit(&cdb->lock);
 
 	return (B_TRUE);
@@ -198,8 +194,8 @@ pdf_convert(const char *imagemagick_path, char *old_path, double zoom)
 	strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
 
 	snprintf(cmd, sizeof (cmd), "\"%s\" -flatten -quality 20 -density %d "
-	    "\"%s\" \"%s\"", imagemagick_path, (int)(100 * zoom), old_path,
-	    new_path);
+	    "-depth 8 \"%s\" \"%s\"", imagemagick_path, (int)(100 * zoom),
+	    old_path, new_path);
 	if (system(cmd) != 0) {
 		logMsg("Error converting chart %s to PNG: %s", old_path,
 		    strerror(errno));
@@ -217,8 +213,8 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 {
 	char *path;
 	char *ext;
-	uint8_t *buf;
-	int w, h;
+	cairo_surface_t *surf;
+	cairo_status_t st;
 
 	if (!prov[cdb->prov].get_chart(chart))
 		return;
@@ -232,18 +228,16 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 			goto out;
 	}
 
-	buf = png_load_from_file_rgba(path, &w, &h);
-	if (buf != NULL) {
+	surf = cairo_image_surface_create_from_png(path);
+	if ((st = cairo_surface_status(surf)) == CAIRO_STATUS_SUCCESS) {
 		mutex_enter(&cdb->lock);
-
-		while (chart->refcnt != 0)
-			cv_wait(&chart->refcnt_cv, &cdb->lock);
-		free(chart->pixels);
-		chart->pixels = buf;
-		chart->width = w;
-		chart->height = h;
-
+		if (chart->surf != NULL)
+			cairo_surface_destroy(chart->surf);
+		chart->surf = surf;
 		mutex_exit(&cdb->lock);
+	} else {
+		logMsg("Can't load PNG file %s: %s", path,
+		    cairo_status_to_string(st));
 	}
 
 out:
@@ -305,6 +299,9 @@ chartdb_init(const char *cache_path, const char *imagemagick_path,
 	cdb->prov_info = provider_info;
 	strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
+	list_create(&cdb->loader_queue, sizeof (chart_t),
+	    offsetof(chart_t, loader_node));
+
 	worker_init2(&cdb->loader, loader_init, loader, loader_fini, 0, cdb,
 	    "chartdb");
 
@@ -318,6 +315,9 @@ void chartdb_fini(chartdb_t *cdb)
 	chart_arpt_t *arpt;
 
 	worker_fini(&cdb->loader);
+
+	while(list_remove_head(&cdb->loader_queue) != NULL)
+		;
 
 	cookie = NULL;
 	while ((arpt = avl_destroy_nodes(&cdb->arpts, &cookie)) != NULL)
@@ -434,12 +434,12 @@ chart_find(chartdb_t *cdb, const char *icao,
 	return (avl_find(&arpt->charts, &srch_chart, NULL));
 }
 
-API_EXPORT uint8_t *
-chartdb_get_chart_image(chartdb_t *cdb, const char *icao,
-    const char *chart_name, double zoom, double rotate,
-    unsigned *width, unsigned *height)
+API_EXPORT cairo_surface_t *
+chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
+    const char *chart_name, double zoom)
 {
 	chart_t *chart;
+	cairo_surface_t *surf = NULL;
 
 	mutex_enter(&cdb->lock);
 
@@ -449,45 +449,17 @@ chartdb_get_chart_image(chartdb_t *cdb, const char *icao,
 		return (NULL);
 	}
 
-	if ((chart->pixels == NULL || chart->zoom != zoom ||
-	    chart->rotate != rotate) &&
+	if ((chart->surf == NULL || chart->zoom != zoom) &&
 	    !list_link_active(&chart->loader_node)) {
 		chart->zoom = zoom;
-		chart->rotate = rotate;
 		list_insert_tail(&cdb->loader_queue, chart);
 		worker_wake_up(&cdb->loader);
 	}
 
-	if (chart->pixels == NULL) {
-		mutex_exit(&cdb->lock);
-		return (NULL);
-	}
-
-	chart->refcnt++;
+	if (chart->surf != NULL)
+		surf = cairo_surface_reference(chart->surf);
 
 	mutex_exit(&cdb->lock);
 
-	*width = chart->width;
-	*height = chart->height;
-
-	return (chart->pixels);
-}
-
-API_EXPORT void
-chartdb_release_chart_image(chartdb_t *cdb, const char *icao,
-    const char *chart_name)
-{
-	chart_t *chart;
-
-	mutex_enter(&cdb->lock);
-
-	chart = chart_find(cdb, icao, chart_name);
-	VERIFY(chart != NULL);
-	VERIFY3U(chart->refcnt, >, 0);
-
-	chart->refcnt--;
-	if (chart->refcnt == 0)
-		cv_broadcast(&chart->refcnt_cv);
-
-	mutex_exit(&cdb->lock);
+	return (surf);
 }
