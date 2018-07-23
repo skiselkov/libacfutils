@@ -37,14 +37,14 @@ extern "C" {
 typedef struct chartdb_s chartdb_t;
 
 typedef enum {
-	CHART_TYPE_UNKNOWN,	/* Unknown chart type */
-	CHART_TYPE_APD,		/* Airport Diagram */
-	CHART_TYPE_IAP,		/* Instrument Approach Procedure */
-	CHART_TYPE_DP,		/* Departure Procedure */
-	CHART_TYPE_ODP,		/* Obstacle Departure Procedure */
-	CHART_TYPE_STAR,	/* Standard Terminal Arrival */
-	CHART_TYPE_MIN,		/* Takeoff Minimums */
-	NUM_CHART_TYPES
+	CHART_TYPE_UNKNOWN = 0,		/* Unknown chart type */
+	CHART_TYPE_APD = 1 << 0,	/* Airport Diagram */
+	CHART_TYPE_IAP = 1 << 1,	/* Instrument Approach Procedure */
+	CHART_TYPE_DP = 1 << 2,		/* Departure Procedure */
+	CHART_TYPE_ODP = 1 << 3,	/* Obstacle Departure Procedure */
+	CHART_TYPE_STAR = 1 << 4,	/* Standard Terminal Arrival */
+	CHART_TYPE_MIN = 1 << 5,	/* Takeoff Minimums */
+	CHART_TYPE_ALL = 0xffffffffu
 } chart_type_t;
 
 API_EXPORT chartdb_t *chartdb_init(const char *cache_path,

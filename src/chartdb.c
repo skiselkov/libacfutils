@@ -367,13 +367,18 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 
 	for (chart = avl_first(&arpt->charts), num = 0; chart != NULL;
 	    chart = AVL_NEXT(&arpt->charts, chart)) {
-		if (chart->type == type)
+		if (chart->type & type)
 			num++;
+	}
+	if (num == 0) {
+		mutex_exit(&cdb->lock);
+		*num_charts = 0;
+		return (NULL);
 	}
 	charts = calloc(num, sizeof (*charts));
 	for (chart = avl_first(&arpt->charts), i = 0; chart != NULL;
 	    chart = AVL_NEXT(&arpt->charts, chart)) {
-		if (chart->type == type) {
+		if (chart->type & type) {
 			ASSERT3U(i, <, num);
 			charts[i] = strdup(chart->name);
 			i++;
