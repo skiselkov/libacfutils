@@ -335,6 +335,9 @@ errout:
 bool_t
 chart_faa_init(chartdb_t *cdb)
 {
+	/* FAA charts have unique filenames, so switch to flat DB */
+	cdb->flat_db = B_TRUE;
+
 	if (!update_index(cdb) || !load_index(cdb))
 		goto errout;
 

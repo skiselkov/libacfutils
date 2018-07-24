@@ -50,8 +50,8 @@ typedef enum {
 } chart_type_t;
 
 API_EXPORT chartdb_t *chartdb_init(const char *cache_path,
-    const char *imagemagick_path, unsigned airac,
-    const char *provider_name, void *provider_info);
+    const char *pdftoppm_path, const char *pdfinfo_path,
+    unsigned airac, const char *provider_name, void *provider_info);
 API_EXPORT void chartdb_fini(chartdb_t *cdb);
 
 API_EXPORT void chartdb_set_load_limit(chartdb_t *cdb, unsigned num);
@@ -59,12 +59,11 @@ API_EXPORT void chartdb_purge(chartdb_t *cdb);
 
 API_EXPORT char **chartdb_get_chart_names(chartdb_t *cdb, const char *icao,
     chart_type_t type, size_t *num_charts);
-API_EXPORT void chartdb_get_chart_codename(chartdb_t *cdb, const char *icao,
-    const char *chartname, char codename[32]);
 API_EXPORT void chartdb_free_str_list(char **l, size_t num);
 
-API_EXPORT cairo_surface_t *chartdb_get_chart_surface(chartdb_t *cdb,
-    const char *icao, const char *chart_name, double zoom);
+API_EXPORT bool_t chartdb_get_chart_surface(chartdb_t *cdb,
+    const char *icao, const char *chart_name, int page, double zoom,
+    bool_t night, cairo_surface_t **surf, int *num_pages);
 
 #ifdef	__cplusplus
 }

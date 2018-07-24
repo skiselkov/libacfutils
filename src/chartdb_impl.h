@@ -50,6 +50,11 @@ typedef struct {
 	/* protected by chartdb_t->lock */
 	cairo_surface_t	*surf;
 	double		zoom;
+	int		cur_page;
+	int		load_page;
+	int		num_pages;
+	bool_t		load_error;
+	bool_t		night;
 
 	avl_node_t	node;
 	list_node_t	loader_node;
@@ -72,10 +77,14 @@ struct chartdb_s {
 	/* immutable once created */
 	unsigned	airac;
 	char		*path;
-	char		*imagemagick_path;
+	char		*pdftoppm_path;
+	char		*pdfinfo_path;
 	chart_prov_id_t	prov;
 	char		prov_name[32];
 	avl_tree_t	arpts;
+
+	/* immutable after provider init */
+	bool_t		flat_db;
 
 	/* private to chart provider */
 	void		*prov_info;
