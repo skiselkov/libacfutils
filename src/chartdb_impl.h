@@ -53,6 +53,7 @@ typedef struct {
 
 	avl_node_t	node;
 	list_node_t	loader_node;
+	list_node_t	load_seq_node;
 } chart_t;
 
 struct chart_arpt_s {
@@ -82,6 +83,8 @@ struct chartdb_s {
 
 	/* protected by `lock' */
 	list_t		loader_queue;
+	list_t		load_seq;
+	unsigned	load_limit;
 };
 
 typedef struct {

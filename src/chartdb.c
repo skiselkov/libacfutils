@@ -118,6 +118,8 @@ loader_purge(chartdb_t *cdb)
 			}
 		}
 	}
+	while (list_remove_head(&cdb->load_seq) != NULL)
+		;
 }
 
 chart_arpt_t *
@@ -187,22 +189,56 @@ pdf_convert(const char *imagemagick_path, char *old_path, double zoom)
 {
 	char *ext, *new_path;
 	char cmd[3 * MAX_PATH];
+#if	IBM
+	TCHAR cmdT[3 * MAX_PATH];
+	STARTUPINFOW si;
+	PROCESS_INFORMATION pi;
+#endif	/* IBM */
 
+	zoom = clamp(zoom, 0.1, 10.0);
 	new_path = strdup(old_path);
 	ext = strrchr(new_path, '.');
 	VERIFY(ext != NULL);
 	strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
 
-	snprintf(cmd, sizeof (cmd), "\"%s\" -flatten -quality 20 -density %d "
-	    "-depth 8 \"%s\" \"%s\"", imagemagick_path, (int)(100 * zoom),
-	    old_path, new_path);
+	/*
+	 * As the ImageMagick conversion process can be rather CPU-intensive,
+	 * run with reduced priority to avoid starving the sim, even if that
+	 * means taking longer.
+	 */
+#if	IBM
+	snprintf(cmd, sizeof (cmd), "\"%s\" -quality 20 -density %d "
+	    "-background white -depth 8 \"%s\" \"%s\"",
+	    imagemagick_path, (int)(100 * zoom), old_path, new_path);
+	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+
+	if (CreateProcess(NULL, cmdT, NULL, NULL, FALSE,
+	    CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS, NULL, NULL,
+	    &si, &pi)) {
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	} else {
+		win_perror(GetLastError(), "Error converting chart %s to "
+		    "PNG", old_path);
+	}
+#else	/* !IBM */
+	snprintf(cmd, sizeof (cmd), "nice \"%s\" -quality 20 "
+	    "-background white -density %d -depth 8 \"%s\" \"%s\"",
+	    imagemagick_path, (int)(100 * zoom), old_path, new_path);
+
 	if (system(cmd) != 0) {
-		logMsg("Error converting chart %s to PNG: %s", old_path,
-		    strerror(errno));
+		logMsg("Error converting chart %s to PNG: %s. Command that "
+		    "failed: \"%s\"", old_path, strerror(errno), cmd);
 		free(new_path);
 		free(old_path);
 		return (NULL);
 	}
+#endif	/* !IBM */
 	free(old_path);
 
 	return (new_path);
@@ -258,6 +294,19 @@ loader(void *userinfo)
 			mutex_exit(&cdb->lock);
 			loader_load(cdb, chart);
 			mutex_enter(&cdb->lock);
+			/* Move to the head of the load sequence list */
+			if (list_link_active(&chart->load_seq_node))
+				list_remove(&cdb->load_seq, chart);
+			list_insert_head(&cdb->load_seq, chart);
+			while (list_count(&cdb->load_seq) > cdb->load_limit) {
+				chart_t *c = list_tail(&cdb->load_seq);
+
+				if (c->surf != NULL) {
+					cairo_surface_destroy(c->surf);
+					c->surf = NULL;
+				}
+				list_remove(&cdb->load_seq, c);
+			}
 		}
 	}
 	mutex_exit(&cdb->lock);
@@ -297,10 +346,13 @@ chartdb_init(const char *cache_path, const char *imagemagick_path,
 	cdb->imagemagick_path = strdup(imagemagick_path);
 	cdb->airac = airac;
 	cdb->prov_info = provider_info;
+	cdb->load_limit = 4;
 	strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
 	list_create(&cdb->loader_queue, sizeof (chart_t),
 	    offsetof(chart_t, loader_node));
+	list_create(&cdb->load_seq, sizeof (chart_t),
+	    offsetof(chart_t, load_seq_node));
 
 	worker_init2(&cdb->loader, loader_init, loader, loader_fini, 0, cdb,
 	    "chartdb");
@@ -316,6 +368,8 @@ void chartdb_fini(chartdb_t *cdb)
 
 	worker_fini(&cdb->loader);
 
+	while(list_remove_head(&cdb->load_seq) != NULL)
+		;
 	while(list_remove_head(&cdb->loader_queue) != NULL)
 		;
 
