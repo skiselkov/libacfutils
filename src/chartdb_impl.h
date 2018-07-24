@@ -55,6 +55,7 @@ typedef struct {
 	int		num_pages;
 	bool_t		load_error;
 	bool_t		night;
+	bool_t		refreshed;
 
 	avl_node_t	node;
 	list_node_t	loader_node;

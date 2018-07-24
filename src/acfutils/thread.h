@@ -198,6 +198,8 @@ typedef struct {
 
 #endif	/* !APL && !LIN */
 
+API_EXPORT void lacf_mask_sigpipe(void);
+
 #ifdef __cplusplus
 }
 #endif

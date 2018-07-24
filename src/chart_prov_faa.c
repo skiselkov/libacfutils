@@ -30,6 +30,7 @@
 
 #include "acfutils/compress.h"
 #include "acfutils/helpers.h"
+#include "acfutils/thread.h"
 #include "chart_prov_faa.h"
 
 #define	SERVER_NAME	"https://aeronav.faa.gov"
@@ -132,6 +133,7 @@ download_common(chartdb_t *cdb, const char *url, const char *filepath,
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dl_info);
 	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
 	res = curl_easy_perform(curl);
 	if (res == CURLE_OK)
@@ -188,6 +190,13 @@ update_index(chartdb_t *cdb)
 	snprintf(url, sizeof (url), INDEX_URL, cdb->airac);
 	result = download_common(cdb, url, index_path,
 	    "Error downloading chart index");
+	if (!result && file_exists(index_path, NULL)) {
+		logMsg("WARNING: failed to contact FAA servers to refresh "
+		    "the chart index. This means that downloading new FAA "
+		    "charts will most likely not be possible. I will still "
+		    "make any locally cached charts available to you.");
+		result = B_TRUE;
+	}
 
 	free(index_path);
 
@@ -371,6 +380,13 @@ chart_faa_get_chart(chart_t *chart)
 	filepath = chartdb_mkpath(chart);
 	snprintf(url, sizeof (url), CHART_URL, cdb->airac, chart->filename);
 	result = download_common(cdb, url, filepath, "Error downloading chart");
+	if (!result && file_exists(filepath, NULL)) {
+		logMsg("WARNING: failed to contact FAA servers to refresh "
+		    "chart \"%s\". However, we appear to still have a locally "
+		    "cached copy of this chart available, so I will display "
+		    "that one instead.", chart->filename);
+		result = B_TRUE;
+	}
 	free(filepath);
 
 	return (result);

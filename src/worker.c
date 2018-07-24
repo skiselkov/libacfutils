@@ -23,12 +23,36 @@
 #include <acfutils/worker.h>
 #include <acfutils/time.h>
 
+#if	!IBM
+#include <signal.h>
+#endif
+
+void
+lacf_mask_sigpipe(void)
+{
+#if	!IBM
+	sigset_t set;
+
+	pthread_sigmask(SIG_BLOCK, NULL, &set);
+	if (!sigismember(&set, SIGPIPE)) {
+		sigaddset(&set, SIGPIPE);
+		pthread_sigmask(SIG_BLOCK, &set, NULL);
+	}
+#endif	/* !IBM */
+}
+
 static void
 worker(void *ui)
 {
 	worker_t *wk = ui;
 
 	thread_set_name(wk->name);
+
+	/*
+	 * SIGPIPE is almost never desired on worker threads (typically due
+	 * to writing to broken network sockets).
+	 */
+	lacf_mask_sigpipe();
 
 	mutex_enter(&wk->lock);
 

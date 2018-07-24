@@ -427,15 +427,22 @@ invert_surface(cairo_surface_t *surf)
 static void
 loader_load(chartdb_t *cdb, chart_t *chart)
 {
-	char *path;
+	char *path = chartdb_mkpath(chart);
 	char *ext;
 	cairo_surface_t *surf;
 	cairo_status_t st;
 
-	if (!prov[cdb->prov].get_chart(chart))
-		return;
+	if (!chart->refreshed || !file_exists(path, NULL)) {
+		chart->refreshed = B_TRUE;
+		if (!prov[cdb->prov].get_chart(chart)) {
+			mutex_enter(&cdb->lock);
+			chart->load_error = B_TRUE;
+			mutex_exit(&cdb->lock);
+			free(path);
+			return;
+		}
+	}
 
-	path = chartdb_mkpath(chart);
 	ext = strrchr(path, '.');
 	if (ext != NULL &&
 	    (strcmp(&ext[1], "pdf") == 0 || strcmp(&ext[1], "PDF") == 0)) {

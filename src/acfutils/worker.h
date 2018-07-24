@@ -52,7 +52,6 @@ API_EXPORT void worker_set_interval(worker_t *wk, uint64_t intval_us);
 API_EXPORT void worker_wake_up(worker_t *wk);
 API_EXPORT void worker_wake_up_wait(worker_t *wk);
 
-
 #ifdef	__cplusplus
 }
 #endif
