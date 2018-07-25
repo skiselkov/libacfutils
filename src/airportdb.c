@@ -106,6 +106,8 @@
  * *) '1' records identify airports. See parse_apt_dat_1_line.
  * *) '21' records identify runway-related lighting fixtures (PAPIs/VASIs).
  *	See parse_apt_dat_21_line.
+ * *) '50' through '56' records identify frequency information.
+ *	See parse_apt_dat_freq_line.
  * *) '100' records identify runways. See parse_apt_dat_100_line.
  * *) '1302' records identify airport meta-information, such as TA, TL,
  *	reference point location, etc.
@@ -155,7 +157,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		6
+#define	ARPTDB_CACHE_VERSION		7
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -612,6 +614,8 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line)
 	arpt = safe_calloc(1, sizeof (*arpt));
 	avl_create(&arpt->rwys, runway_compar, sizeof (runway_t),
 	    offsetof(runway_t, node));
+	list_create(&arpt->freqs, sizeof (freq_info_t),
+	    offsetof(freq_info_t, node));
 	strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
 	strtoupper(arpt->icao);
 	arpt->refpt = pos;
@@ -829,6 +833,55 @@ validate_rwy_end(const runway_end_t *re, char error_descr[128])
 	return (B_TRUE);
 }
 
+static void
+parse_apt_dat_freq_line(airport_t *arpt, char *line)
+{
+	char **comps;
+	size_t ncomps;
+	freq_info_t *freq;
+
+	/*
+	 * Remove spurious underscores and dashes that some sceneries insist
+	 * on using in frequency names. Do this before the strsplit pass, so
+	 * we subdivide at those boundaries.
+	 */
+	for (size_t i = 0, n = strlen(line); i < n; i++) {
+		if (line[i] == '_' || line[i] == '-')
+			line[i] = ' ';
+	}
+
+	comps = strsplit(line, " ", B_TRUE, &ncomps);
+	if (ncomps < 3)
+		goto out;
+	freq = calloc(1, sizeof (*freq));
+	freq->type = atoi(comps[0]) - 50;
+	freq->freq = atoll(comps[1]) * 10000;
+	for (size_t i = 2; i < ncomps; i++) {
+		strtoupper(comps[i]);
+		/*
+		 * Some poorly written apt.dats include the airport identifier
+		 * in the frequency name (e.g. "LZIB ATIS" for the ATIS
+		 * frequency at airport LZIB). This is redundant and just
+		 * wastes space, so remove that. And some even more stupidly
+		 * contain the word "frequency" - DOH!
+		 */
+		if ((strcmp(comps[i], arpt->icao) == 0 ||
+		    strcmp(comps[i], "FREQUENCY") == 0) && ncomps > 3) {
+			continue;
+		}
+		if (freq->name[0] != '\0') {
+			strncat(&freq->name[strlen(freq->name)], " ",
+			    sizeof (freq->name) - strlen(freq->name));
+		}
+		strncat(&freq->name[strlen(freq->name)], comps[i],
+		    sizeof (freq->name) - strlen(freq->name));
+	}
+	list_insert_tail(&arpt->freqs, freq);
+
+out:
+	free_strlist(comps, ncomps);
+}
+
 /*
  * Parses an apt.dat runway line. Standard apt.dat runway lines simply
  * denote the runway's surface type, width (in meters) the position of
@@ -839,7 +892,7 @@ validate_rwy_end(const runway_end_t *re, char error_descr[128])
  * creation process.
  */
 static void
-parse_apt_dat_100_line(airport_t *arpt, const char *line)
+parse_apt_dat_100_line(airport_t *arpt, const char *line, bool_t hard_surf_only)
 {
 	char **comps;
 	size_t ncomps;
@@ -849,13 +902,15 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line)
 
 	comps = strsplit(line, " ", B_TRUE, &ncomps);
 	ASSERT(strcmp(comps[0], "100") == 0);
-	if (ncomps < 8 + 9 + 5 || !rwy_is_hard(atoi(comps[2])))
+	if (ncomps < 8 + 9 + 5 ||
+	    (hard_surf_only && !rwy_is_hard(atoi(comps[2]))))
 		goto out;
 
 	rwy = safe_calloc(1, sizeof (*rwy));
 
 	rwy->arpt = arpt;
 	rwy->width = atof(comps[1]);
+	rwy->surf = atoi(comps[2]);
 
 	copy_rwy_ID(comps[8 + 0], rwy->ends[0].id);
 	rwy->ends[0].thr = GEO_POS3(atof(comps[8 + 1]), atof(comps[8 + 2]),
@@ -979,11 +1034,19 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok)
 		if (arpt == NULL)
 			continue;
 
-		if (strstr(line, "100 ") == line) {
-			parse_apt_dat_100_line(arpt, line);
-		} else if (strstr(line, "21 ") == line) {
+		if (strncmp(line, "100 ", 4) == 0) {
+			parse_apt_dat_100_line(arpt, line, db->ifr_only);
+		} else if (strncmp(line, "50 ", 3) == 0 ||
+		    strncmp(line, "51 ", 3) == 0 ||
+		    strncmp(line, "52 ", 3) == 0 ||
+		    strncmp(line, "53 ", 3) == 0 ||
+		    strncmp(line, "54 ", 3) == 0 ||
+		    strncmp(line, "55 ", 3) == 0 ||
+		    strncmp(line, "56 ", 3) == 0) {
+			parse_apt_dat_freq_line(arpt, line);
+		} else if (strncmp(line, "21 ", 3) == 0) {
 			parse_apt_dat_21_line(arpt, line);
-		} else if (strstr(line, "1302 ") == line) {
+		} else if (strncmp(line, "1302 ", 5) == 0) {
 			comps = strsplit(line, " ", B_TRUE, &ncomps);
 			/*
 			 * '1302' lines are meta-info lines introduced since
@@ -1064,12 +1127,12 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 		ASSERT(!isnan(rwy->ends[1].tch));
 		ASSERT(!isnan(rwy->ends[0].thr.elev));
 		ASSERT(!isnan(rwy->ends[1].thr.elev));
-		fprintf(fp, "100 %.2f 1 0 0 0 0 0 "
+		fprintf(fp, "100 %.2f %d 0 0 0 0 0 "
 		    "%s %f %f %.1f %.1f 0 0 0 0 "
 		    "%s %f %f %.1f %.1f "
 		    "GPA1:%.02f GPA2:%.02f TCH1:%.0f TCH2:%.0f "
 		    "TELEV1:%.0f TELEV2:%.0f\n",
-		    rwy->width,
+		    rwy->width, rwy->surf,
 		    rwy->ends[0].id, rwy->ends[0].thr.lat,
 		    rwy->ends[0].thr.lon, rwy->ends[0].displ,
 		    rwy->ends[0].blast,
@@ -1079,6 +1142,11 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 		    rwy->ends[0].gpa, rwy->ends[1].gpa,
 		    rwy->ends[0].tch, rwy->ends[1].tch,
 		    rwy->ends[0].thr.elev, rwy->ends[1].thr.elev);
+	}
+	for (const freq_info_t *freq = list_head(&arpt->freqs); freq != NULL;
+	    freq = list_next(&arpt->freqs, freq)) {
+		fprintf(fp, "%d %llu %s\n", freq->type + 50,
+		    (unsigned long long)freq->freq / 10000, freq->name);
 	}
 	fprintf(fp, "\n");
 	fclose(fp);
@@ -2104,6 +2172,7 @@ free_airport(airport_t *arpt)
 {
 	void *cookie = NULL;
 	runway_t *rwy;
+	freq_info_t *freq;
 
 	if (arpt->load_complete)
 		unload_airport(arpt);
@@ -2111,6 +2180,9 @@ free_airport(airport_t *arpt)
 	while ((rwy = avl_destroy_nodes(&arpt->rwys, &cookie)) != NULL)
 		free(rwy);
 	avl_destroy(&arpt->rwys);
+	while ((freq = list_remove_head(&arpt->freqs)) != NULL)
+		free(freq);
+	list_destroy(&arpt->freqs);
 	ASSERT(!list_link_active(&arpt->cur_arpts_node));
 	free(arpt);
 }

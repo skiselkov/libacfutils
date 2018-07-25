@@ -65,6 +65,9 @@ API_EXPORT bool_t chartdb_get_chart_surface(chartdb_t *cdb,
     const char *icao, const char *chart_name, int page, double zoom,
     bool_t night, cairo_surface_t **surf, int *num_pages);
 
+API_EXPORT char *chartdb_get_arpt_name(chartdb_t *cdb, const char *icao);
+API_EXPORT char *chartdb_get_arpt_city(chartdb_t *cdb, const char *icao);
+API_EXPORT char *chartdb_get_arpt_state(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_metar(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_taf(chartdb_t *cdb, const char *icao);
 

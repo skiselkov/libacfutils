@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-#define	MAX_CHART_NAME		48
-#define	MAX_CHART_FILENAME	32
+#define	MAX_CHART_NAME		64
+#define	MAX_CHART_FILENAME	64
 
 typedef struct chart_arpt_s chart_arpt_t;
 typedef struct chartdb_s chartdb_t;
@@ -44,10 +44,10 @@ typedef enum {
 typedef struct {
 	/* immutable once created */
 	chart_arpt_t	*arpt;
-	char		name[MAX_CHART_NAME];
-	char		codename[MAX_CHART_NAME];
+	char		*name;
+	char		*codename;
 	chart_type_t	type;
-	char		filename[MAX_CHART_FILENAME];
+	char		*filename;
 
 	/* protected by chartdb_t->lock */
 	cairo_surface_t	*surf;
@@ -68,6 +68,9 @@ struct chart_arpt_s {
 	/* immutable once created */
 	chartdb_t	*db;
 	char		icao[8];
+	char		*name;
+	char		*city;
+	char		state[4];
 	avl_tree_t	charts;
 	char		*metar;
 	time_t		metar_load_t;
@@ -101,6 +104,11 @@ struct chartdb_s {
 	list_t		loader_queue;
 	list_t		load_seq;
 	unsigned	load_limit;
+
+	chart_t		loader_cmd_purge;
+	chart_t		loader_cmd_metar;
+	chart_t		loader_cmd_taf;
+
 };
 
 typedef struct {
@@ -112,7 +120,8 @@ typedef struct {
 	char		*(*get_taf)(chartdb_t *cdb, const char *icao);
 } chart_prov_t;
 
-chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao);
+chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao,
+    const char *name, const char *city_name, const char *state_id);
 bool_t chartdb_add_chart(chart_arpt_t *arpt, chart_t *chart);
 char *chartdb_mkpath(chart_t *chart);
 

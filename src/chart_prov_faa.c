@@ -230,10 +230,11 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 			continue;
 		content = (char *)node->children[0].content;
 		if (strcmp((char *)node->name, "chart_name") == 0) {
-			strlcpy(chart->name, content, sizeof (chart->name));
+			free(chart->name);
+			chart->name = strdup(content);
 		} else if (strcmp((char *)node->name, "faanfd18") == 0) {
-			strlcpy(chart->codename, content,
-			    sizeof (chart->codename));
+			free(chart->codename);
+			chart->codename = strdup(content);
 		} else if (strcmp((char *)node->name, "pdf_name") == 0) {
 			/*
 			 * "DELETED_JOB.PDF" in the PDF filename means that
@@ -243,8 +244,8 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 				chart->type = CHART_TYPE_UNKNOWN;
 				break;
 			}
-			strlcpy(chart->filename, content,
-			    sizeof (chart->filename));
+			free(chart->filename);
+			chart->filename = strdup(content);
 		} else if (strcmp((char *)node->name, "chart_code") == 0) {
 			if (strcmp(content, "APD") == 0)
 				chart->type = CHART_TYPE_APD;
@@ -265,20 +266,25 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 
 	if (chart->name[0] == '\0' || chart->type == CHART_TYPE_UNKNOWN ||
 	    !chartdb_add_chart(arpt, chart)) {
+		free(chart->name);
+		free(chart->codename);
+		free(chart->filename);
 		free(chart);
 	}
 }
 
 static void
-load_airport(chartdb_t *cdb, const xmlNode *arpt_node)
+load_airport(chartdb_t *cdb, const xmlNode *arpt_node, const char *city_id,
+    const char *state_id)
 {
 	char *icao_ident = (char *)xmlGetProp(arpt_node,
 	    (xmlChar *)"icao_ident");
 	char *apt_ident = (char *)xmlGetProp(arpt_node, (xmlChar *)"apt_ident");
+	char *apt_name = (char *)xmlGetProp(arpt_node, (xmlChar *)"ID");
 	chart_arpt_t *arpt;
 	char icao[8];
 
-	if (icao_ident == NULL || apt_ident == NULL) {
+	if (icao_ident == NULL || apt_ident == NULL || apt_name == NULL) {
 		/* Malformed file */
 		goto out;
 	}
@@ -295,7 +301,7 @@ load_airport(chartdb_t *cdb, const xmlNode *arpt_node)
 		/* No valid ID present, skip the airport */
 		goto out;
 	}
-	arpt = chartdb_add_arpt(cdb, icao);
+	arpt = chartdb_add_arpt(cdb, icao, apt_name, city_id, state_id);
 
 	for (const xmlNode *rec = arpt_node->children; rec != NULL;
 	    rec = rec->next) {
@@ -309,6 +315,44 @@ out:
 		xmlFree(icao_ident);
 	if (apt_ident != NULL)
 		xmlFree(apt_ident);
+	if (apt_name != NULL)
+		xmlFree(apt_name);
+}
+
+static void
+load_city(chartdb_t *cdb, const xmlNode *city_node, const char *state_id)
+{
+	char *city_id = (char *)xmlGetProp(city_node, (xmlChar *)"ID");
+
+	if (city_id == NULL)
+		return;
+
+	for (const xmlNode *arpt_node = city_node->children; arpt_node != NULL;
+	    arpt_node = arpt_node->next) {
+		if (arpt_node->name == NULL ||
+		    strcmp((char *)arpt_node->name, "airport_name") != 0)
+			continue;
+		load_airport(cdb, arpt_node, city_id, state_id);
+	}
+	xmlFree(city_id);
+}
+
+static void
+load_state(chartdb_t *cdb, const xmlNode *state_node)
+{
+	char *state_id = (char *)xmlGetProp(state_node, (xmlChar *)"ID");
+
+	if (state_id == NULL)
+		return;
+
+	for (const xmlNode *city_node = state_node->children; city_node != NULL;
+	    city_node = city_node->next) {
+		if (city_node->name == NULL ||
+		    strcmp((char *)city_node->name, "city_name") != 0)
+			continue;
+		load_city(cdb, city_node, state_id);
+	}
+	xmlFree(state_id);
 }
 
 static bool_t
@@ -317,7 +361,7 @@ load_index(chartdb_t *cdb)
 	char *index_path = mk_index_path(cdb);
 	xmlDoc *doc = NULL;
 	xmlXPathContext *xpath_ctx = NULL;
-	xmlXPathObject *arpts_obj = NULL;
+	xmlXPathObject *states_obj = NULL;
 
 	doc = xmlParseFile(index_path);
 	if (doc == NULL) {
@@ -331,12 +375,12 @@ load_index(chartdb_t *cdb)
 		    index_path);
 		goto errout;
 	}
-	arpts_obj = xmlXPathEvalExpression((xmlChar *)
-	    "/digital_tpp/state_code/city_name/airport_name", xpath_ctx);
-	for (int i = 0; i < arpts_obj->nodesetval->nodeNr; i++)
-		load_airport(cdb, arpts_obj->nodesetval->nodeTab[i]);
-	xmlXPathFreeObject(arpts_obj);
-	arpts_obj = NULL;
+	states_obj = xmlXPathEvalExpression((xmlChar *)
+	    "/digital_tpp/state_code", xpath_ctx);
+	for (int i = 0; i < states_obj->nodesetval->nodeNr; i++)
+		load_state(cdb, states_obj->nodesetval->nodeTab[i]);
+	xmlXPathFreeObject(states_obj);
+	states_obj = NULL;
 
 	xmlXPathFreeContext(xpath_ctx);
 	xmlFreeDoc(doc);
@@ -344,8 +388,8 @@ load_index(chartdb_t *cdb)
 
 	return (B_TRUE);
 errout:
-	if (arpts_obj != NULL)
-		xmlXPathFreeObject(arpts_obj);
+	if (states_obj != NULL)
+		xmlXPathFreeObject(states_obj);
 	if (xpath_ctx != NULL)
 		xmlXPathFreeContext(xpath_ctx);
 	if (doc != NULL)

@@ -53,9 +53,7 @@ static chart_prov_t prov[NUM_PROVIDERS] = {
     }
 };
 
-static chart_t loader_cmd_purge = { NULL };
-static chart_t loader_cmd_metar = { NULL };
-static chart_t loader_cmd_taf = { NULL };
+static chart_arpt_t *arpt_find(chartdb_t *cdb, const char *icao);
 
 static int
 chart_name_compar(const void *a, const void *b)
@@ -88,6 +86,9 @@ chart_destroy(chart_t *chart)
 {
 	if (chart->surf != NULL)
 		cairo_surface_destroy(chart->surf);
+	free(chart->name);
+	free(chart->codename);
+	free(chart->filename);
 	free(chart);
 }
 
@@ -102,6 +103,8 @@ arpt_destroy(chart_arpt_t *arpt)
 		chart_destroy(chart);
 	avl_destroy(&arpt->charts);
 
+	free(arpt->name);
+	free(arpt->city);
 	free(arpt->metar);
 	free(arpt->taf);
 
@@ -140,7 +143,8 @@ loader_purge(chartdb_t *cdb)
 }
 
 chart_arpt_t *
-chartdb_add_arpt(chartdb_t *cdb, const char *icao)
+chartdb_add_arpt(chartdb_t *cdb, const char *icao, const char *name,
+    const char *city_name, const char *state_id)
 {
 	chart_arpt_t *arpt, srch;
 	avl_index_t where;
@@ -156,10 +160,12 @@ chartdb_add_arpt(chartdb_t *cdb, const char *icao)
 		avl_create(&arpt->charts, chart_name_compar, sizeof (chart_t),
 		    offsetof(chart_t, node));
 		strlcpy(arpt->icao, icao, sizeof (arpt->icao));
+		arpt->name = strdup(name);
+		arpt->city = strdup(city_name);
+		strlcpy(arpt->state, state_id, sizeof (arpt->state));
 		arpt->db = cdb;
 		avl_insert(&cdb->arpts, arpt, where);
 	}
-
 	mutex_exit(&cdb->lock);
 
 	return (arpt);
@@ -508,11 +514,12 @@ loader(void *userinfo)
 
 	mutex_enter(&cdb->lock);
 	while ((chart = list_remove_head(&cdb->loader_queue)) != NULL) {
-		if (chart == &loader_cmd_purge) {
+		if (chart == &cdb->loader_cmd_purge) {
 			loader_purge(cdb);
-		} else if (chart == &loader_cmd_metar) {
+		} else if (chart == &cdb->loader_cmd_metar) {
 			char *metar;
 
+			chart->arpt->metar_load_t = time(NULL);
 			mutex_exit(&cdb->lock);
 			metar = prov[cdb->prov].get_metar(cdb,
 			    chart->arpt->icao);
@@ -520,24 +527,21 @@ loader(void *userinfo)
 			if (chart->arpt->metar != NULL)
 				free(chart->arpt->metar);
 			chart->arpt->metar = metar;
-			if (metar != NULL) {
-				chart->arpt->metar_load_t = time(NULL);
-			} else {
+			if (metar == NULL) {
 				chart->arpt->metar_load_t = time(NULL) -
 				    (MAX_METAR_AGE - RETRY_INTVAL);
 			}
-		} else if (chart == &loader_cmd_taf) {
+		} else if (chart == &cdb->loader_cmd_taf) {
 			char *taf;
 
+			chart->arpt->taf_load_t = time(NULL);
 			mutex_exit(&cdb->lock);
 			taf = prov[cdb->prov].get_taf(cdb, chart->arpt->icao);
 			mutex_enter(&cdb->lock);
 			if (chart->arpt->taf != NULL)
 				free(chart->arpt->taf);
 			chart->arpt->taf = taf;
-			if (taf != NULL) {
-				chart->arpt->taf_load_t = time(NULL);
-			} else {
+			if (taf == NULL) {
 				chart->arpt->taf_load_t = time(NULL) -
 				    (MAX_TAF_AGE - RETRY_INTVAL);
 			}
@@ -646,7 +650,7 @@ chartdb_purge(chartdb_t *cdb)
 	/* purge the queue */
 	while (list_remove_head(&cdb->loader_queue) != NULL)
 		;
-	list_insert_tail(&cdb->loader_queue, &loader_cmd_purge);
+	list_insert_tail(&cdb->loader_queue, &cdb->loader_cmd_purge);
 	worker_wake_up(&cdb->loader);
 
 	mutex_exit(&cdb->lock);
@@ -656,17 +660,14 @@ API_EXPORT char **
 chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
     size_t *num_charts)
 {
-	chart_arpt_t srch, *arpt;
-	avl_index_t where;
+	chart_arpt_t *arpt;
 	char **charts;
 	chart_t *chart;
 	size_t i, num;
 
 	mutex_enter(&cdb->lock);
 
-	strlcpy(srch.icao, icao, sizeof (srch.icao));
-	arpt = avl_find(&cdb->arpts, &srch, &where);
-
+	arpt = arpt_find(cdb, icao);
 	if (arpt == NULL) {
 		mutex_exit(&cdb->lock);
 		*num_charts = 0;
@@ -706,19 +707,34 @@ chartdb_free_str_list(char **l, size_t num)
 	free_strlist(l, num);
 }
 
-static chart_t *
-chart_find(chartdb_t *cdb, const char *icao,
-    const char *chart_name)
+static chart_arpt_t *
+arpt_find(chartdb_t *cdb, const char *icao)
 {
-	chart_arpt_t *arpt, srch_arpt;
-	chart_t srch_chart;
+	chart_arpt_t srch;
+	switch (strlen(icao)) {
+	case 3:
+		/*
+		 * In the US it's common to omit the leading 'K', especially
+		 * for non-ICAO airports. Adapt to them.
+		 */
+		snprintf(srch.icao, sizeof (srch.icao), "K%s", icao);
+		break;
+	case 4:
+		strlcpy(srch.icao, icao, sizeof (srch.icao));
+		break;
+	default:
+		return (NULL);
+	}
+	return (avl_find(&cdb->arpts, &srch, NULL));
+}
 
-	strlcpy(srch_arpt.icao, icao, sizeof (srch_arpt.icao));
-	arpt = avl_find(&cdb->arpts, &srch_arpt, NULL);
+static chart_t *
+chart_find(chartdb_t *cdb, const char *icao, const char *chart_name)
+{
+	chart_arpt_t *arpt = arpt_find(cdb, icao);
+	chart_t srch_chart = { .name = (char *)chart_name };
 	if (arpt == NULL)
 		return (NULL);
-	strlcpy(srch_chart.name, chart_name, sizeof (srch_chart.name));
-
 	return (avl_find(&arpt->charts, &srch_chart, NULL));
 }
 
@@ -765,12 +781,11 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 {
 	char *result = NULL;
 	time_t now = time(NULL);
-	chart_arpt_t srch, *arpt;
+	chart_arpt_t *arpt;
 
 	mutex_enter(&cdb->lock);
 
-	strlcpy(srch.icao, icao, sizeof (srch.icao));
-	arpt = avl_find(&cdb->arpts, &srch, NULL);
+	arpt = arpt_find(cdb, icao);
 	if (arpt == NULL) {
 		mutex_exit(&cdb->lock);
 		return (NULL);
@@ -791,21 +806,25 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 			result = strdup(arpt->taf);
 	} else {
 		if (metar) {
-			if (!list_link_active(&loader_cmd_metar.loader_node)) {
+			if (!list_link_active(
+			    &cdb->loader_cmd_metar.loader_node)) {
 				/* Initiate async download of METAR */
-				loader_cmd_metar.arpt = arpt;
+				cdb->loader_cmd_metar.arpt = arpt;
 				list_insert_tail(&cdb->loader_queue,
-				    &loader_cmd_metar);
+				    &cdb->loader_cmd_metar);
+				worker_wake_up(&cdb->loader);
 			}
 			/* If we have an old METAR, return that for now */
 			if (arpt->metar != NULL)
 				result = strdup(arpt->metar);
 		} else {
-			if (!list_link_active(&loader_cmd_taf.loader_node)) {
+			if (!list_link_active(
+			    &cdb->loader_cmd_taf.loader_node)) {
 				/* Initiate async download of TAF */
-				loader_cmd_taf.arpt = arpt;
+				cdb->loader_cmd_taf.arpt = arpt;
 				list_insert_tail(&cdb->loader_queue,
-				    &loader_cmd_taf);
+				    &cdb->loader_cmd_taf);
+				worker_wake_up(&cdb->loader);
 			}
 			/* If we have an old TAF, return that for now */
 			if (arpt->taf != NULL)
@@ -815,6 +834,39 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 
 	mutex_exit(&cdb->lock);
 	return (result);
+}
+
+#define	ARPT_GET_COMMON(field_name) \
+	do { \
+		chart_arpt_t *arpt; \
+		char *field_name; \
+		mutex_enter(&cdb->lock); \
+		arpt = arpt_find(cdb, icao); \
+		if (arpt == NULL) { \
+			mutex_exit(&cdb->lock); \
+			return (NULL); \
+		} \
+		field_name = strdup(arpt->field_name); \
+		mutex_exit(&cdb->lock); \
+		return (field_name); \
+	} while (0)
+
+API_EXPORT char *
+chartdb_get_arpt_name(chartdb_t *cdb, const char *icao)
+{
+	ARPT_GET_COMMON(name);
+}
+
+API_EXPORT char *
+chartdb_get_arpt_city(chartdb_t *cdb, const char *icao)
+{
+	ARPT_GET_COMMON(city);
+}
+
+API_EXPORT char *
+chartdb_get_arpt_state(chartdb_t *cdb, const char *icao)
+{
+	ARPT_GET_COMMON(state);
 }
 
 API_EXPORT char *
