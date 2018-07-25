@@ -19,6 +19,8 @@
 #ifndef	_CHARTDB_IMPL_H_
 #define	_CHARTDB_IMPL_H_
 
+#include <time.h>
+
 #include "acfutils/avl.h"
 #include "acfutils/list.h"
 #include "acfutils/thread.h"
@@ -67,6 +69,10 @@ struct chart_arpt_s {
 	chartdb_t	*db;
 	char		icao[8];
 	avl_tree_t	charts;
+	char		*metar;
+	time_t		metar_load_t;
+	char		*taf;
+	time_t		taf_load_t;
 
 	avl_node_t	node;
 };
@@ -102,6 +108,8 @@ typedef struct {
 	bool_t		(*init)(chartdb_t *cdb);
 	void		(*fini)(chartdb_t *cdb);
 	bool_t		(*get_chart)(chart_t *chart);
+	char		*(*get_metar)(chartdb_t *cdb, const char *icao);
+	char		*(*get_taf)(chartdb_t *cdb, const char *icao);
 } chart_prov_t;
 
 chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao);

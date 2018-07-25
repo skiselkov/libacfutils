@@ -742,6 +742,13 @@ strtolower(char *str)
 		str[i] = tolower(str[i]);
 }
 
+API_EXPORT void
+strtoupper(char *str)
+{
+	for (int i = 0, n = strlen(str); i < n; i++)
+		str[i] = toupper(str[i]);
+}
+
 /*
  * Creates a file path string from individual path components. The
  * components are provided as separate filename arguments and the list needs

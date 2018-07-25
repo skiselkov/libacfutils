@@ -202,6 +202,8 @@ API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 
 #define	strtolower			ACFSYM(strtolower)
 API_EXPORT void strtolower(char *str);
+#define	strtoupper			ACFSYM(strtoupper)
+API_EXPORT void strtoupper(char *str);
 
 /*
  * return x rounded up to the nearest power-of-2.

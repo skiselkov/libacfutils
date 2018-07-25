@@ -38,16 +38,24 @@
 #include "chartdb_impl.h"
 #include "chart_prov_faa.h"
 
+#define	MAX_METAR_AGE	60	/* seconds */
+#define	MAX_TAF_AGE	300	/* seconds */
+#define	RETRY_INTVAL	30	/* seconds */
+
 static chart_prov_t prov[NUM_PROVIDERS] = {
     {
 	.name = "aeronav.faa.gov",
 	.init = chart_faa_init,
 	.fini = chart_faa_fini,
-	.get_chart = chart_faa_get_chart
+	.get_chart = chart_faa_get_chart,
+	.get_metar = chart_faa_get_metar,
+	.get_taf = chart_faa_get_taf
     }
 };
 
 static chart_t loader_cmd_purge = { NULL };
+static chart_t loader_cmd_metar = { NULL };
+static chart_t loader_cmd_taf = { NULL };
 
 static int
 chart_name_compar(const void *a, const void *b)
@@ -93,6 +101,9 @@ arpt_destroy(chart_arpt_t *arpt)
 	while ((chart = avl_destroy_nodes(&arpt->charts, &cookie)) != NULL)
 		chart_destroy(chart);
 	avl_destroy(&arpt->charts);
+
+	free(arpt->metar);
+	free(arpt->taf);
 
 	free(arpt);
 }
@@ -499,6 +510,37 @@ loader(void *userinfo)
 	while ((chart = list_remove_head(&cdb->loader_queue)) != NULL) {
 		if (chart == &loader_cmd_purge) {
 			loader_purge(cdb);
+		} else if (chart == &loader_cmd_metar) {
+			char *metar;
+
+			mutex_exit(&cdb->lock);
+			metar = prov[cdb->prov].get_metar(cdb,
+			    chart->arpt->icao);
+			mutex_enter(&cdb->lock);
+			if (chart->arpt->metar != NULL)
+				free(chart->arpt->metar);
+			chart->arpt->metar = metar;
+			if (metar != NULL) {
+				chart->arpt->metar_load_t = time(NULL);
+			} else {
+				chart->arpt->metar_load_t = time(NULL) -
+				    (MAX_METAR_AGE - RETRY_INTVAL);
+			}
+		} else if (chart == &loader_cmd_taf) {
+			char *taf;
+
+			mutex_exit(&cdb->lock);
+			taf = prov[cdb->prov].get_taf(cdb, chart->arpt->icao);
+			mutex_enter(&cdb->lock);
+			if (chart->arpt->taf != NULL)
+				free(chart->arpt->taf);
+			chart->arpt->taf = taf;
+			if (taf != NULL) {
+				chart->arpt->taf_load_t = time(NULL);
+			} else {
+				chart->arpt->taf_load_t = time(NULL) -
+				    (MAX_TAF_AGE - RETRY_INTVAL);
+			}
 		} else {
 			mutex_exit(&cdb->lock);
 			loader_load(cdb, chart);
@@ -716,4 +758,73 @@ chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
 	mutex_exit(&cdb->lock);
 
 	return (B_TRUE);
+}
+
+static char *
+get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
+{
+	char *result = NULL;
+	time_t now = time(NULL);
+	chart_arpt_t srch, *arpt;
+
+	mutex_enter(&cdb->lock);
+
+	strlcpy(srch.icao, icao, sizeof (srch.icao));
+	arpt = avl_find(&cdb->arpts, &srch, NULL);
+	if (arpt == NULL) {
+		mutex_exit(&cdb->lock);
+		return (NULL);
+	}
+
+	/*
+	 * We could have NULLs in the cache here if the download
+	 * failed. In that case, wait a little before retrying
+	 * another download.
+	 */
+	if (metar && now - arpt->metar_load_t < MAX_METAR_AGE) {
+		/* Fresh METAR still cached, return that. */
+		if (arpt->metar != NULL)
+			result = strdup(arpt->metar);
+	} else if (!metar && now - arpt->taf_load_t < MAX_TAF_AGE) {
+		/* Fresh TAF still cached, return that. */
+		if (arpt->taf != NULL)
+			result = strdup(arpt->taf);
+	} else {
+		if (metar) {
+			if (!list_link_active(&loader_cmd_metar.loader_node)) {
+				/* Initiate async download of METAR */
+				loader_cmd_metar.arpt = arpt;
+				list_insert_tail(&cdb->loader_queue,
+				    &loader_cmd_metar);
+			}
+			/* If we have an old METAR, return that for now */
+			if (arpt->metar != NULL)
+				result = strdup(arpt->metar);
+		} else {
+			if (!list_link_active(&loader_cmd_taf.loader_node)) {
+				/* Initiate async download of TAF */
+				loader_cmd_taf.arpt = arpt;
+				list_insert_tail(&cdb->loader_queue,
+				    &loader_cmd_taf);
+			}
+			/* If we have an old TAF, return that for now */
+			if (arpt->taf != NULL)
+				result = strdup(arpt->taf);
+		}
+	}
+
+	mutex_exit(&cdb->lock);
+	return (result);
+}
+
+API_EXPORT char *
+chartdb_get_metar(chartdb_t *cdb, const char *icao)
+{
+	return (get_metar_taf_common(cdb, icao, B_TRUE));
+}
+
+API_EXPORT char *
+chartdb_get_taf(chartdb_t *cdb, const char *icao)
+{
+	return (get_metar_taf_common(cdb, icao, B_FALSE));
 }

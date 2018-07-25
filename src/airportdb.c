@@ -205,13 +205,6 @@ static void free_airport(airport_t *arpt);
 static bool_t load_airport(airport_t *arpt);
 static void load_rwy_info(runway_t *rwy);
 
-static inline void
-strtoupper(char *str)
-{
-	for (int i = 0, n = strlen(str); i < n; i++)
-		str[i] = toupper(str[i]);
-}
-
 /*
  * Given an arbitrary geographical position, returns the geo_table tile
  * coordinate which the input position corresponds to. If div_by_10 is

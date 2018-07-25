@@ -105,9 +105,34 @@ append_if_mod_since_hdr(struct curl_slist *hdrs, const char *path)
 	return (hdrs);
 }
 
+static bool_t
+write_dl(dl_info_t *dl_info, const char *filepath, const char *url,
+    const char *error_prefix)
+{
+	char *dname = lacf_dirname(filepath);
+	FILE *fp;
+
+	if (!create_directory_recursive(dname)) {
+		free(dname);
+		return (B_FALSE);
+	}
+	free(dname);
+	fp = fopen(filepath, "wb");
+
+	if (fp == NULL) {
+		logMsg("%s %s: error writing disk file %s: %s",
+		    error_prefix, url, filepath, strerror(errno));
+		return (B_FALSE);
+	}
+	fwrite(dl_info->buf, 1, dl_info->bufsz, fp);
+	fclose(fp);
+
+	return (B_TRUE);
+}
+
 bool_t
 download_common(chartdb_t *cdb, const char *url, const char *filepath,
-    const char *error_prefix)
+    const char *error_prefix, dl_info_t *raw_output)
 {
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
@@ -122,7 +147,8 @@ download_common(chartdb_t *cdb, const char *url, const char *filepath,
 	dl_info.cdb = cdb;
 	dl_info.url = url;
 
-	hdrs = append_if_mod_since_hdr(hdrs, filepath);
+	if (filepath != NULL)
+		hdrs = append_if_mod_since_hdr(hdrs, filepath);
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -139,23 +165,9 @@ download_common(chartdb_t *cdb, const char *url, const char *filepath,
 	if (res == CURLE_OK)
 		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
 	if (res == CURLE_OK && code == 200 && dl_info.bufsz != 0) {
-		char *dname = lacf_dirname(filepath);
-		FILE *fp;
-
-		if (!create_directory_recursive(dname)) {
-			free(dname);
-			goto out;
-		}
-		free(dname);
-		fp = fopen(filepath, "wb");
-
-		if (fp != NULL) {
-			fwrite(dl_info.buf, 1, dl_info.bufsz, fp);
-			fclose(fp);
-		} else {
-			logMsg("%s %s: error writing disk file %s: %s",
-			    error_prefix, url, filepath, strerror(errno));
-			result = B_FALSE;
+		if (filepath != NULL) {
+			result = write_dl(&dl_info, filepath, url,
+			    error_prefix);
 		}
 	} else {
 		if (res != CURLE_OK) {
@@ -171,11 +183,13 @@ download_common(chartdb_t *cdb, const char *url, const char *filepath,
 			result = B_FALSE;
 		}
 	}
-out:
 	curl_easy_cleanup(curl);
 	if (hdrs != NULL)
 		curl_slist_free_all(hdrs);
-	free(dl_info.buf);
+	if (raw_output != NULL)
+		*raw_output = dl_info;
+	else
+		free(dl_info.buf);
 
 	return (result);
 }
@@ -189,7 +203,7 @@ update_index(chartdb_t *cdb)
 
 	snprintf(url, sizeof (url), INDEX_URL, cdb->airac);
 	result = download_common(cdb, url, index_path,
-	    "Error downloading chart index");
+	    "Error downloading chart index", NULL);
 	if (!result && file_exists(index_path, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
 		    "the chart index. This means that downloading new FAA "
@@ -379,7 +393,8 @@ chart_faa_get_chart(chart_t *chart)
 
 	filepath = chartdb_mkpath(chart);
 	snprintf(url, sizeof (url), CHART_URL, cdb->airac, chart->filename);
-	result = download_common(cdb, url, filepath, "Error downloading chart");
+	result = download_common(cdb, url, filepath, "Error downloading chart",
+	    NULL);
 	if (!result && file_exists(filepath, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
 		    "chart \"%s\". However, we appear to still have a locally "
@@ -390,4 +405,79 @@ chart_faa_get_chart(chart_t *chart)
 	free(filepath);
 
 	return (result);
+}
+
+char *
+get_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
+    const char *node_name)
+{
+	dl_info_t info;
+	char url[256];
+	char error_reason[128];
+	xmlDoc *doc = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *xpath_obj = NULL;
+	char query[128];
+	char *result;
+
+	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
+	    "dataserver_current/httpparam?dataSource=%s&"
+	    "requestType=retrieve&format=xml&stationString=%s&hoursBeforeNow=1",
+	    source, icao);
+	snprintf(error_reason, sizeof (error_reason), "Error downloading %s",
+	    node_name);
+	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
+	    node_name);
+
+	if (!download_common(cdb, url, NULL, error_reason, &info))
+		return (NULL);
+
+	doc = xmlParseMemory((char *)info.buf, info.bufsz);
+	if (doc == NULL) {
+		logMsg("Error parsing %s: XML parsing error", node_name);
+		goto errout;
+	}
+	xpath_ctx = xmlXPathNewContext(doc);
+	if (xpath_ctx == NULL) {
+		logMsg("Error creating XPath context for XML");
+		goto errout;
+	}
+	xpath_obj = xmlXPathEvalExpression((xmlChar *)query, xpath_ctx);
+	if (xpath_obj->nodesetval->nodeNr == 0 ||
+	    xpath_obj->nodesetval->nodeTab[0]->children == NULL ||
+	    xpath_obj->nodesetval->nodeTab[0]->children->content == NULL) {
+		logMsg("Error parsing %s, valid but incorrect XML structure",
+		    node_name);
+		goto errout;
+	}
+	result = strdup(
+	    (char *)xpath_obj->nodesetval->nodeTab[0]->children->content);
+	xmlXPathFreeObject(xpath_obj);
+	xmlXPathFreeContext(xpath_ctx);
+	xmlFreeDoc(doc);
+	free(info.buf);
+
+	return (result);
+errout:
+	if (xpath_obj != NULL)
+		xmlXPathFreeObject(xpath_obj);
+	if (xpath_ctx != NULL)
+		xmlXPathFreeContext(xpath_ctx);
+	if (doc != NULL)
+		xmlFreeDoc(doc);
+	free(info.buf);
+
+	return (NULL);
+}
+
+char *
+chart_faa_get_metar(chartdb_t *cdb, const char *icao)
+{
+	return (get_metar_taf_common(cdb, icao, "metars", "METAR"));
+}
+
+char *
+chart_faa_get_taf(chartdb_t *cdb, const char *icao)
+{
+	return (get_metar_taf_common(cdb, icao, "tafs", "TAF"));
 }
