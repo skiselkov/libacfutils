@@ -51,7 +51,7 @@ typedef enum {
 	RWY_SURF_DRY_LAKEBED = 12,
 	RWY_SURF_WATER = 13,
 	RWY_SURF_SNOWICE = 14,
-	RWY_SURF_UNKNOWN = 15
+	RWY_SURF_TRANSPARENT = 15
 } rwy_surf_t;
 
 struct runway_end {

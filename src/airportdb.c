@@ -855,7 +855,7 @@ parse_apt_dat_freq_line(airport_t *arpt, char *line)
 		goto out;
 	freq = calloc(1, sizeof (*freq));
 	freq->type = atoi(comps[0]) - 50;
-	freq->freq = atoll(comps[1]) * 10000;
+	freq->freq = ceil((atoll(comps[1]) * 10000) / 25000.0) * 25000.0;
 	for (size_t i = 2; i < ncomps; i++) {
 		strtoupper(comps[i]);
 		/*
@@ -1145,8 +1145,8 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	}
 	for (const freq_info_t *freq = list_head(&arpt->freqs); freq != NULL;
 	    freq = list_next(&arpt->freqs, freq)) {
-		fprintf(fp, "%d %llu %s\n", freq->type + 50,
-		    (unsigned long long)freq->freq / 10000, freq->name);
+		fprintf(fp, "%d %ld %s\n", freq->type + 50,
+		    (unsigned long)floor(freq->freq / 10000), freq->name);
 	}
 	fprintf(fp, "\n");
 	fclose(fp);
