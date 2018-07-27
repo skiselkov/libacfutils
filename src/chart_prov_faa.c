@@ -28,55 +28,14 @@
 #include <sys/stat.h>
 #endif	/* !IBM */
 
-#include "acfutils/compress.h"
 #include "acfutils/helpers.h"
 #include "acfutils/thread.h"
 #include "chart_prov_faa.h"
+#include "chart_prov_common.h"
 
 #define	SERVER_NAME	"https://aeronav.faa.gov"
 #define	INDEX_URL	SERVER_NAME "/d-tpp/%d/xml_data/d-TPP_Metafile.xml"
 #define	CHART_URL	SERVER_NAME "/d-tpp/%d/%s"
-
-#define	REALLOC_STEP	(8 << 20)	/* bytes */
-#define	MAX_DL_SIZE	(128 << 20)	/* bytes */
-#define	DL_TIMEOUT	300L		/* seconds */
-#define	LOW_SPD_LIM	50L		/* bytes/s */
-#define	LOW_SPD_TIME	30L		/* seconds */
-
-typedef struct {
-	const char	*url;
-	chartdb_t	*cdb;
-	uint8_t		*buf;
-	size_t		bufcap;
-	size_t		bufsz;
-} dl_info_t;
-
-static size_t
-dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
-{
-	dl_info_t *dl_info = userdata;
-	size_t bytes = size * nmemb;
-
-	ASSERT(dl_info != NULL);
-
-	/* Respond to an early termination request */
-	if (!dl_info->cdb->loader.run)
-		return (0);
-
-	if (dl_info->bufcap < dl_info->bufsz + bytes) {
-		dl_info->bufcap += REALLOC_STEP;
-		if (dl_info->bufcap > MAX_DL_SIZE) {
-			logMsg("Error downloading %s: too much data received "
-			    "(%ld bytes)", dl_info->url, (long)dl_info->bufcap);
-			return (0);
-		}
-		dl_info->buf = realloc(dl_info->buf, dl_info->bufcap);
-	}
-	memcpy(&dl_info->buf[dl_info->bufsz], ptr, bytes);
-	dl_info->bufsz += bytes;
-
-	return (bytes);
-}
 
 static char *
 mk_index_path(chartdb_t *cdb)
@@ -88,113 +47,7 @@ mk_index_path(chartdb_t *cdb)
 	    "d-TPP_Metafile.xml", NULL));
 }
 
-static struct curl_slist *
-append_if_mod_since_hdr(struct curl_slist *hdrs, const char *path)
-{
-	struct stat st;
-
-	if (file_exists(path, NULL) && stat(path, &st) == 0) {
-		char buf[64];
-		time_t t = st.st_mtime;
-
-		strftime(buf, sizeof (buf),
-		    "If-Modified-Since: %a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
-		hdrs = curl_slist_append(hdrs, buf);
-	}
-
-	return (hdrs);
-}
-
 static bool_t
-write_dl(dl_info_t *dl_info, const char *filepath, const char *url,
-    const char *error_prefix)
-{
-	char *dname = lacf_dirname(filepath);
-	FILE *fp;
-
-	if (!create_directory_recursive(dname)) {
-		free(dname);
-		return (B_FALSE);
-	}
-	free(dname);
-	fp = fopen(filepath, "wb");
-
-	if (fp == NULL) {
-		logMsg("%s %s: error writing disk file %s: %s",
-		    error_prefix, url, filepath, strerror(errno));
-		return (B_FALSE);
-	}
-	fwrite(dl_info->buf, 1, dl_info->bufsz, fp);
-	fclose(fp);
-
-	return (B_TRUE);
-}
-
-bool_t
-download_common(chartdb_t *cdb, const char *url, const char *filepath,
-    const char *error_prefix, dl_info_t *raw_output)
-{
-	CURL *curl;
-	struct curl_slist *hdrs = NULL;
-	dl_info_t dl_info = { NULL };
-	CURLcode res;
-	long code = 0;
-	bool_t result = B_TRUE;
-
-	curl = curl_easy_init();
-	VERIFY(curl != NULL);
-
-	dl_info.cdb = cdb;
-	dl_info.url = url;
-
-	if (filepath != NULL)
-		hdrs = append_if_mod_since_hdr(hdrs, filepath);
-
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, DL_TIMEOUT);
-	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
-	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dl_info);
-	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hdrs);
-	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-
-	res = curl_easy_perform(curl);
-	if (res == CURLE_OK)
-		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-	if (res == CURLE_OK && code == 200 && dl_info.bufsz != 0) {
-		if (filepath != NULL) {
-			result = write_dl(&dl_info, filepath, url,
-			    error_prefix);
-		}
-	} else {
-		if (res != CURLE_OK) {
-			logMsg("%s %s: %s", error_prefix, url,
-			    curl_easy_strerror(res));
-			result = B_FALSE;
-		} else if (code != 304) {
-			/*
-			 * Code `304' indicates we have a cached good copy.
-			 */
-			logMsg("%s %s: HTTP error %ld", error_prefix, url,
-			    code);
-			result = B_FALSE;
-		}
-	}
-	curl_easy_cleanup(curl);
-	if (hdrs != NULL)
-		curl_slist_free_all(hdrs);
-	if (raw_output != NULL)
-		*raw_output = dl_info;
-	else
-		free(dl_info.buf);
-
-	return (result);
-}
-
-bool_t
 update_index(chartdb_t *cdb)
 {
 	char url[128];
@@ -202,7 +55,7 @@ update_index(chartdb_t *cdb)
 	bool_t result = B_FALSE;
 
 	snprintf(url, sizeof (url), INDEX_URL, cdb->airac);
-	result = download_common(cdb, url, index_path,
+	result = chart_download(cdb, url, index_path,
 	    "Error downloading chart index", NULL);
 	if (!result && file_exists(index_path, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
@@ -437,7 +290,7 @@ chart_faa_get_chart(chart_t *chart)
 
 	filepath = chartdb_mkpath(chart);
 	snprintf(url, sizeof (url), CHART_URL, cdb->airac, chart->filename);
-	result = download_common(cdb, url, filepath, "Error downloading chart",
+	result = chart_download(cdb, url, filepath, "Error downloading chart",
 	    NULL);
 	if (!result && file_exists(filepath, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
@@ -451,7 +304,7 @@ chart_faa_get_chart(chart_t *chart)
 	return (result);
 }
 
-char *
+static char *
 get_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
     const char *node_name)
 {
@@ -473,7 +326,7 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
 	    node_name);
 
-	if (!download_common(cdb, url, NULL, error_reason, &info))
+	if (!chart_download(cdb, url, NULL, error_reason, &info))
 		return (NULL);
 
 	doc = xmlParseMemory((char *)info.buf, info.bufsz);

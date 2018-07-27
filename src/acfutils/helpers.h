@@ -147,6 +147,8 @@ API_EXPORT void copy_rwy_ID(const char *src, char dst[4]);
 API_EXPORT const char *airac_cycle2eff_date(int cycle);
 #define	airac_cycle2exp_date	ACFSYM(airac_cycle2exp_date)
 API_EXPORT const char *airac_cycle2exp_date(int cycle);
+#define	airac_time2cycle	ACFSYM(airac_time2cycle)
+API_EXPORT int airac_time2cycle(time_t t);
 
 /* CSV file & string processing helpers */
 #define	parser_get_next_line		ACFSYM(parser_get_next_line)

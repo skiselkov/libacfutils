@@ -30,7 +30,7 @@
 
 #include <cairo.h>
 
-#include <acfutils/core.h>
+#include <acfutils/types.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -49,6 +49,11 @@ typedef enum {
 	CHART_TYPE_ALL = 0xffffffffu
 } chart_type_t;
 
+typedef struct {
+	const char	*username;
+	const char	*password;
+} chart_prov_info_login_t;
+
 API_EXPORT chartdb_t *chartdb_init(const char *cache_path,
     const char *pdftoppm_path, const char *pdfinfo_path,
     unsigned airac, const char *provider_name, void *provider_info);
@@ -65,6 +70,7 @@ API_EXPORT bool_t chartdb_get_chart_surface(chartdb_t *cdb,
     const char *icao, const char *chart_name, int page, double zoom,
     bool_t night, cairo_surface_t **surf, int *num_pages);
 
+API_EXPORT bool_t chartdb_is_arpt_known(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_name(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_city(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_state(chartdb_t *cdb, const char *icao);

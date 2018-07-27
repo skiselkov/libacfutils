@@ -24,6 +24,9 @@
 #if	IBM
 #include <io.h>
 #include <fcntl.h>
+#else
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 
 #include "acfutils/assert.h"
@@ -37,6 +40,7 @@
 
 #include "chartdb_impl.h"
 #include "chart_prov_faa.h"
+#include "chart_prov_autorouter.h"
 
 #define	MAX_METAR_AGE	60	/* seconds */
 #define	MAX_TAF_AGE	300	/* seconds */
@@ -50,6 +54,13 @@ static chart_prov_t prov[NUM_PROVIDERS] = {
 	.get_chart = chart_faa_get_chart,
 	.get_metar = chart_faa_get_metar,
 	.get_taf = chart_faa_get_taf
+    },
+    {
+	.name = "autorouter.aero",
+	.init = chart_autorouter_init,
+	.fini = chart_autorouter_fini,
+	.get_chart = chart_autorouter_get_chart,
+	.arpt_lazyload = chart_autorouter_arpt_lazyload
     }
 };
 
@@ -107,8 +118,49 @@ arpt_destroy(chart_arpt_t *arpt)
 	free(arpt->city);
 	free(arpt->metar);
 	free(arpt->taf);
+	free(arpt->codename);
 
 	free(arpt);
+}
+
+static void
+remove_old_airacs(chartdb_t *cdb)
+{
+	char *dpath = mkpathname(cdb->path, cdb->prov_name, NULL);
+	DIR *dp;
+	struct dirent *de;
+	time_t now = time(NULL);
+
+	if (!file_exists(dpath, NULL))
+		goto out;
+
+	dp = opendir(dpath);
+	if (dp == NULL) {
+		logMsg("Error accessing directory %s: %s", dpath,
+		    strerror(errno));
+		goto out;
+	}
+	while ((de = readdir(dp)) != NULL) {
+		unsigned nr = 0;
+		char *subpath;
+		struct stat st;
+
+		if (strlen(de->d_name) != 4 ||
+		    sscanf(de->d_name, "%u", &nr) != 1 ||
+		    nr < 1000 || nr >= cdb->airac) {
+			continue;
+		}
+		subpath = mkpathname(dpath, de->d_name, NULL);
+		if (stat(subpath, &st) == 0) {
+			if (now - st.st_mtime > 30 * 86400)
+				remove_directory(subpath);
+		}
+		free(subpath);
+	}
+
+	closedir(dp);
+out:
+	free(dpath);
 }
 
 static bool_t
@@ -118,6 +170,9 @@ loader_init(void *userinfo)
 
 	ASSERT(cdb != NULL);
 	ASSERT3U(cdb->prov, <, NUM_PROVIDERS);
+
+	/* Expunge outdated AIRACs */
+	remove_old_airacs(cdb);
 
 	if (!prov[cdb->prov].init(cdb))
 		return (B_FALSE);
@@ -187,6 +242,7 @@ chartdb_add_chart(chart_arpt_t *arpt, chart_t *chart)
 	avl_insert(&arpt->charts, chart, where);
 	chart->arpt = arpt;
 	chart->num_pages = -1;
+	arpt->load_complete = B_TRUE;
 	mutex_exit(&cdb->lock);
 
 	return (B_TRUE);
@@ -511,12 +567,22 @@ loader(void *userinfo)
 {
 	chartdb_t *cdb = userinfo;
 	chart_t *chart;
+	chart_arpt_t *arpt;
 
 	mutex_enter(&cdb->lock);
+	while ((arpt = list_remove_head(&cdb->loader_arpt_queue)) != NULL) {
+		if (arpt->load_complete ||
+		    prov[cdb->prov].arpt_lazyload == NULL)
+			continue;
+		mutex_exit(&cdb->lock);
+		prov[cdb->prov].arpt_lazyload(arpt);
+		mutex_enter(&cdb->lock);
+	}
 	while ((chart = list_remove_head(&cdb->loader_queue)) != NULL) {
 		if (chart == &cdb->loader_cmd_purge) {
 			loader_purge(cdb);
-		} else if (chart == &cdb->loader_cmd_metar) {
+		} else if (chart == &cdb->loader_cmd_metar &&
+		    prov[cdb->prov].get_metar != NULL) {
 			char *metar;
 
 			chart->arpt->metar_load_t = time(NULL);
@@ -531,7 +597,8 @@ loader(void *userinfo)
 				chart->arpt->metar_load_t = time(NULL) -
 				    (MAX_METAR_AGE - RETRY_INTVAL);
 			}
-		} else if (chart == &cdb->loader_cmd_taf) {
+		} else if (chart == &cdb->loader_cmd_taf &&
+		    prov[cdb->prov].get_taf != NULL) {
 			char *taf;
 
 			chart->arpt->taf_load_t = time(NULL);
@@ -602,12 +669,15 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	cdb->pdftoppm_path = strdup(pdftoppm_path);
 	cdb->pdfinfo_path = strdup(pdfinfo_path);
 	cdb->airac = airac;
+	cdb->prov = pid;
 	cdb->prov_info = provider_info;
 	cdb->load_limit = 4;
 	strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
 	list_create(&cdb->loader_queue, sizeof (chart_t),
 	    offsetof(chart_t, loader_node));
+	list_create(&cdb->loader_arpt_queue, sizeof (chart_arpt_t),
+	    offsetof(chart_arpt_t, loader_node));
 	list_create(&cdb->load_seq, sizeof (chart_t),
 	    offsetof(chart_t, load_seq_node));
 
@@ -627,8 +697,13 @@ void chartdb_fini(chartdb_t *cdb)
 
 	while(list_remove_head(&cdb->load_seq) != NULL)
 		;
+	list_destroy(&cdb->load_seq);
 	while(list_remove_head(&cdb->loader_queue) != NULL)
 		;
+	list_destroy(&cdb->loader_queue);
+	while(list_remove_head(&cdb->loader_arpt_queue) != NULL)
+		;
+	list_destroy(&cdb->loader_arpt_queue);
 
 	cookie = NULL;
 	while ((arpt = avl_destroy_nodes(&cdb->arpts, &cookie)) != NULL)
@@ -669,6 +744,22 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 
 	arpt = arpt_find(cdb, icao);
 	if (arpt == NULL) {
+		mutex_exit(&cdb->lock);
+		*num_charts = 0;
+		return (NULL);
+	}
+	if (!arpt->load_complete) {
+		if (!list_link_active(&arpt->loader_node)) {
+			list_insert_tail(&cdb->loader_arpt_queue, arpt);
+			/*
+			 * If an airport change has been detected, dump
+			 * everything the loader is doing and try and get
+			 * the airport load in as quickly as possible.
+			 */
+			while (list_remove_head(&cdb->loader_queue) != NULL)
+				;
+			worker_wake_up(&cdb->loader);
+		}
 		mutex_exit(&cdb->lock);
 		*num_charts = 0;
 		return (NULL);
@@ -759,6 +850,11 @@ chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
 		chart->zoom = zoom;
 		chart->load_page = page;
 		chart->night = night;
+		/*
+		 * Dump everything else in the queue so we get in first.
+		 */
+		while (list_remove_head(&cdb->loader_queue) != NULL)
+			;
 		list_insert_tail(&cdb->loader_queue, chart);
 		worker_wake_up(&cdb->loader);
 	}
@@ -836,6 +932,16 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 	return (result);
 }
 
+API_EXPORT bool_t
+chartdb_is_arpt_known(chartdb_t *cdb, const char *icao)
+{
+	chart_arpt_t *arpt;
+	mutex_enter(&cdb->lock);
+	arpt = arpt_find(cdb, icao);
+	mutex_exit(&cdb->lock);
+	return (arpt != NULL);
+}
+
 #define	ARPT_GET_COMMON(field_name) \
 	do { \
 		chart_arpt_t *arpt; \
@@ -872,11 +978,15 @@ chartdb_get_arpt_state(chartdb_t *cdb, const char *icao)
 API_EXPORT char *
 chartdb_get_metar(chartdb_t *cdb, const char *icao)
 {
+	if (prov[cdb->prov].get_metar == NULL)
+		return (NULL);
 	return (get_metar_taf_common(cdb, icao, B_TRUE));
 }
 
 API_EXPORT char *
 chartdb_get_taf(chartdb_t *cdb, const char *icao)
 {
+	if (prov[cdb->prov].get_taf == NULL)
+		return (NULL);
 	return (get_metar_taf_common(cdb, icao, B_FALSE));
 }

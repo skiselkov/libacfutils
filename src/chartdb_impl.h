@@ -22,6 +22,7 @@
 #include <time.h>
 
 #include "acfutils/avl.h"
+#include "acfutils/chartdb.h"
 #include "acfutils/list.h"
 #include "acfutils/thread.h"
 #include "acfutils/worker.h"
@@ -38,6 +39,7 @@ typedef struct chartdb_s chartdb_t;
 
 typedef enum {
 	PROV_AERONAV_FAA_GOV,
+	PROV_AUTOROUTER_AERO,
 	NUM_PROVIDERS
 } chart_prov_id_t;
 
@@ -76,8 +78,11 @@ struct chart_arpt_s {
 	time_t		metar_load_t;
 	char		*taf;
 	time_t		taf_load_t;
+	char		*codename;
+	bool_t		load_complete;
 
 	avl_node_t	node;
+	list_node_t	loader_node;
 };
 
 struct chartdb_s {
@@ -102,6 +107,7 @@ struct chartdb_s {
 
 	/* protected by `lock' */
 	list_t		loader_queue;
+	list_t		loader_arpt_queue;
 	list_t		load_seq;
 	unsigned	load_limit;
 
@@ -116,6 +122,7 @@ typedef struct {
 	bool_t		(*init)(chartdb_t *cdb);
 	void		(*fini)(chartdb_t *cdb);
 	bool_t		(*get_chart)(chart_t *chart);
+	void		(*arpt_lazyload)(chart_arpt_t *arpt);
 	char		*(*get_metar)(chartdb_t *cdb, const char *icao);
 	char		*(*get_taf)(chartdb_t *cdb, const char *icao);
 } chart_prov_t;

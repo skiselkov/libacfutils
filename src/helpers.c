@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
+#include <time.h>
 
 #if	IBM
 #include <windows.h>
@@ -408,6 +409,53 @@ airac_cycle2exp_date(int cycle)
 	return (airac_cycle2eff_date(cycle));
 }
 
+static int
+month2nr(const char *month)
+{
+	const char *months[12] = {
+	    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+	    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+	};
+
+	for (int i = 0; i < 12; i++) {
+		if (strcmp(month, months[i]) == 0)
+			return (i);
+	}
+	VERIFY_MSG(0, "Invalid month specified: \"%s\"", month);
+}
+
+int
+airac_time2cycle(time_t t)
+{
+	struct tm *t_tm = gmtime(&t);
+	int cycle_nr = 1414;
+
+	for (int i = 0; airac_eff_dates[i].year > 0; i++) {
+		if (t_tm->tm_year + 1900 != airac_eff_dates[i].year + 2000)
+			continue;
+		for (int j = 0; j < 14; j++) {
+			struct tm cyc_tm = { 0 };
+			time_t cyc_t;
+			const char *cycle = airac_eff_dates[i].cycles[j];
+			char day[3] = { cycle[0], cycle[1], '\0' };
+			char month[4] = { cycle[3], cycle[4], cycle[5], '\0' };
+
+			cyc_tm.tm_year = airac_eff_dates[i].year + 100;
+			cyc_tm.tm_mday = atoi(day);
+			cyc_tm.tm_mon = month2nr(month);
+			cyc_tm.tm_wday = -1;
+			cyc_tm.tm_yday = -1;
+			cyc_tm.tm_isdst = -1;
+			cyc_t = mktime(&cyc_tm);
+			if (t < cyc_t)
+				return (cycle_nr);
+			cycle_nr = airac_eff_dates[i].year * 100 + j + 1;
+		}
+	}
+
+	return (-1);
+}
+
 /*
  * Grabs the next non-empty, non-comment line from a file, having stripped
  * away all leading and trailing whitespace.
@@ -677,7 +725,7 @@ unescape_percent(char *str)
 			unsigned val;
 			sscanf(dig, "%x", &val);
 			str[i] = val;
-			memmove(&str[i + 1], &str[i + 3], n - 3);
+			memmove(&str[i + 1], &str[i + 3], (n - i) - 2);
 			n -= 2;
 		}
 	}
@@ -1171,6 +1219,10 @@ remove_directory(const char *dirname)
 		}
 	}
 	closedir(dp);
+	if (rmdir(dirname) != 0) {
+		logMsg("Error removing %s: %s", dirname, strerror(errno));
+		goto errout;
+	}
 	return (B_TRUE);
 errout:
 	closedir(dp);
