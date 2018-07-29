@@ -94,7 +94,7 @@ webdav_foreach_dirlist(chartdb_t *cdb, CURL *curl, const char *path,
 	    (doc = xmlParseFile(cachefile)) == NULL) {
 		bool_t result = chart_download_multi(&curl, cdb, url,
 		    cachefile, "PROPFIND", login->username, login->password,
-		    "Error downloading chart index", &dl);
+		    -1, "Error downloading chart index", &dl);
 		if (result == B_FALSE || dl.buf == NULL)
 			goto errout;
 		doc = xmlParseMemory((char *)dl.buf, dl.bufsz);
@@ -419,8 +419,8 @@ chart_autorouter_get_chart(chart_t *chart)
 	filepath = chartdb_mkpath(chart);
 	snprintf(url, sizeof (url), "%s%s", BASE_URL, chart->codename);
 	result = chart_download_multi(&curl, cdb, url, filepath, NULL,
-	    login->username, login->password, "Error downloading chart index",
-	    NULL);
+	    login->username, login->password, -1,
+	    "Error downloading chart index", NULL);
 	if (!result && file_exists(filepath, NULL)) {
 		logMsg("WARNING: failed to contact autorouter servers to "
 		    "refresh chart \"%s\". However, we appear to still have "
@@ -446,4 +446,16 @@ chart_autorouter_arpt_lazyload(chart_arpt_t *arpt)
 	if (curl != NULL)
 		curl_easy_cleanup(curl);
 	free(cachefile);
+}
+
+bool_t
+chart_autorouter_test_conn(const chart_prov_info_login_t *creds)
+{
+	CURL *curl = NULL;
+	bool_t result = chart_download_multi(&curl, NULL,
+	    BASE_URL INDEX_URL_PATH, NULL, "PROPFIND", creds->username,
+	    creds->password, 5, "Error testing chart connection", NULL);
+	if (curl != NULL)
+		curl_easy_cleanup(curl);
+	return (result);
 }

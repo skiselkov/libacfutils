@@ -37,8 +37,6 @@ extern "C" {
 bool_t chart_faa_init(chartdb_t *cdb);
 void chart_faa_fini(chartdb_t *cdb);
 bool_t chart_faa_get_chart(chart_t *chart);
-char *chart_faa_get_metar(chartdb_t *cdb, const char *icao);
-char *chart_faa_get_taf(chartdb_t *cdb, const char *icao);
 
 #ifdef	__cplusplus
 }

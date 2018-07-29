@@ -58,8 +58,10 @@ API_EXPORT chartdb_t *chartdb_init(const char *cache_path,
     const char *pdftoppm_path, const char *pdfinfo_path,
     unsigned airac, const char *provider_name, void *provider_info);
 API_EXPORT void chartdb_fini(chartdb_t *cdb);
+API_EXPORT bool_t chartdb_test_connection(const char *provider_name,
+    const chart_prov_info_login_t *creds);
 
-API_EXPORT void chartdb_set_load_limit(chartdb_t *cdb, unsigned num);
+API_EXPORT void chartdb_set_load_limit(chartdb_t *cdb, uint64_t bytes);
 API_EXPORT void chartdb_purge(chartdb_t *cdb);
 
 API_EXPORT char **chartdb_get_chart_names(chartdb_t *cdb, const char *icao,

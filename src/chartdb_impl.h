@@ -109,7 +109,7 @@ struct chartdb_s {
 	list_t		loader_queue;
 	list_t		loader_arpt_queue;
 	list_t		load_seq;
-	unsigned	load_limit;
+	uint64_t	load_limit;
 
 	chart_t		loader_cmd_purge;
 	chart_t		loader_cmd_metar;
@@ -123,8 +123,7 @@ typedef struct {
 	void		(*fini)(chartdb_t *cdb);
 	bool_t		(*get_chart)(chart_t *chart);
 	void		(*arpt_lazyload)(chart_arpt_t *arpt);
-	char		*(*get_metar)(chartdb_t *cdb, const char *icao);
-	char		*(*get_taf)(chartdb_t *cdb, const char *icao);
+	bool_t		(*test_conn)(const chart_prov_info_login_t *creds);
 } chart_prov_t;
 
 chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao,

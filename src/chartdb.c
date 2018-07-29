@@ -27,7 +27,19 @@
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
+
+#if	IBM
+#include <windows.h>
+#elif	APL
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif	/* APL */
+
+#include <curl/curl.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
 
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"
@@ -39,6 +51,7 @@
 #include "acfutils/worker.h"
 
 #include "chartdb_impl.h"
+#include "chart_prov_common.h"
 #include "chart_prov_faa.h"
 #include "chart_prov_autorouter.h"
 
@@ -51,20 +64,56 @@ static chart_prov_t prov[NUM_PROVIDERS] = {
 	.name = "aeronav.faa.gov",
 	.init = chart_faa_init,
 	.fini = chart_faa_fini,
-	.get_chart = chart_faa_get_chart,
-	.get_metar = chart_faa_get_metar,
-	.get_taf = chart_faa_get_taf
+	.get_chart = chart_faa_get_chart
     },
     {
 	.name = "autorouter.aero",
 	.init = chart_autorouter_init,
 	.fini = chart_autorouter_fini,
 	.get_chart = chart_autorouter_get_chart,
-	.arpt_lazyload = chart_autorouter_arpt_lazyload
+	.arpt_lazyload = chart_autorouter_arpt_lazyload,
+	.test_conn = chart_autorouter_test_conn
     }
 };
 
 static chart_arpt_t *arpt_find(chartdb_t *cdb, const char *icao);
+static char *download_metar(chartdb_t *cdb, const char *icao);
+static char *download_taf(chartdb_t *cdb, const char *icao);
+
+#if	IBM
+
+static uint64_t
+physmem(void)
+{
+	MEMORYSTATUSEX status;
+	status.dwLength = sizeof(status);
+	VERIFY(GlobalMemoryStatusEx(&status));
+	return (status.ullTotalPhys);
+}
+
+#elif	APL
+
+static uint64_t
+physmem(void)
+{
+	int mib[2] = { CTL_HW, HW_MEMSIZE }
+	int64_t mem;
+	size_t length = sizeof(int64_t);
+	sysctl(mib, 2, &mem, &length, NULL, 0);
+	return (mem);
+}
+
+#else	/* LIN */
+
+static uint64_t
+physmem(void)
+{
+	uint64_t pages = sysconf(_SC_PHYS_PAGES);
+	uint64_t page_size = sysconf(_SC_PAGE_SIZE);
+	return (pages * page_size);
+}
+
+#endif	/* LIN */
 
 static int
 chart_name_compar(const void *a, const void *b)
@@ -406,7 +455,7 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	 * means taking longer.
 	 */
 #if	IBM
-	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d "
+	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d -cropbox "
 	    "\"%s\" > \"%s\"", pdftoppm_path, page + 1, page + 1,
 	    (int)(100 * zoom), old_path, new_path);
 	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
@@ -435,7 +484,7 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	CloseHandle(pi.hThread);
 #else	/* !IBM */
 	snprintf(cmd, sizeof (cmd), "%sLD_LIBRARY_PATH=\"%s\" nice \"%s\" "
-	    "-png -f %d -l %d -r %d \"%s\" > \"%s\"",
+	    "-png -f %d -l %d -r %d -cropbox \"%s\" > \"%s\"",
 #if	APL	/* Apply the Apple-specific prefix */
 	    "DY",
 #else
@@ -562,6 +611,24 @@ out:
 	free(path);
 }
 
+static uint64_t
+chart_mem_usage(chartdb_t *cdb)
+{
+	uint64_t total = 0;
+
+	for (chart_t *c = list_head(&cdb->load_seq); c != NULL;
+	    c = list_next(&cdb->load_seq, c)) {
+		if (c->surf != NULL) {
+			unsigned w = cairo_image_surface_get_stride(c->surf);
+			unsigned h = cairo_image_surface_get_height(c->surf);
+
+			total += w * h * 4;
+		}
+	}
+
+	return (total);
+}
+
 static bool_t
 loader(void *userinfo)
 {
@@ -581,14 +648,12 @@ loader(void *userinfo)
 	while ((chart = list_remove_head(&cdb->loader_queue)) != NULL) {
 		if (chart == &cdb->loader_cmd_purge) {
 			loader_purge(cdb);
-		} else if (chart == &cdb->loader_cmd_metar &&
-		    prov[cdb->prov].get_metar != NULL) {
+		} else if (chart == &cdb->loader_cmd_metar) {
 			char *metar;
 
 			chart->arpt->metar_load_t = time(NULL);
 			mutex_exit(&cdb->lock);
-			metar = prov[cdb->prov].get_metar(cdb,
-			    chart->arpt->icao);
+			metar = download_metar(cdb, chart->arpt->icao);
 			mutex_enter(&cdb->lock);
 			if (chart->arpt->metar != NULL)
 				free(chart->arpt->metar);
@@ -597,13 +662,12 @@ loader(void *userinfo)
 				chart->arpt->metar_load_t = time(NULL) -
 				    (MAX_METAR_AGE - RETRY_INTVAL);
 			}
-		} else if (chart == &cdb->loader_cmd_taf &&
-		    prov[cdb->prov].get_taf != NULL) {
+		} else if (chart == &cdb->loader_cmd_taf) {
 			char *taf;
 
 			chart->arpt->taf_load_t = time(NULL);
 			mutex_exit(&cdb->lock);
-			taf = prov[cdb->prov].get_taf(cdb, chart->arpt->icao);
+			taf = download_taf(cdb, chart->arpt->icao);
 			mutex_enter(&cdb->lock);
 			if (chart->arpt->taf != NULL)
 				free(chart->arpt->taf);
@@ -620,7 +684,9 @@ loader(void *userinfo)
 			if (list_link_active(&chart->load_seq_node))
 				list_remove(&cdb->load_seq, chart);
 			list_insert_head(&cdb->load_seq, chart);
-			while (list_count(&cdb->load_seq) > cdb->load_limit) {
+
+			while (list_count(&cdb->load_seq) > 1 &&
+			    chart_mem_usage(cdb) > cdb->load_limit) {
 				chart_t *c = list_tail(&cdb->load_seq);
 
 				if (c->surf != NULL) {
@@ -671,7 +737,7 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	cdb->airac = airac;
 	cdb->prov = pid;
 	cdb->prov_info = provider_info;
-	cdb->load_limit = 4;
+	cdb->load_limit = (physmem() >> 4);	/* 1/16th of physical memory */
 	strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
 	list_create(&cdb->loader_queue, sizeof (chart_t),
@@ -715,6 +781,30 @@ void chartdb_fini(chartdb_t *cdb)
 	free(cdb->pdftoppm_path);
 	free(cdb->pdfinfo_path);
 	free(cdb);
+}
+
+API_EXPORT bool_t
+chartdb_test_connection(const char *provider_name,
+    const chart_prov_info_login_t *creds)
+{
+	for (chart_prov_id_t pid = 0; pid < NUM_PROVIDERS; pid++) {
+		if (strcmp(provider_name, prov[pid].name) == 0) {
+			if (prov[pid].test_conn == NULL)
+				return (B_TRUE);
+			return (prov[pid].test_conn(creds));
+		}
+	}
+	return (B_FALSE);
+}
+
+API_EXPORT void
+chartdb_set_load_limit(chartdb_t *cdb, uint64_t bytes)
+{
+	bytes = MAX(bytes, 16 << 20);
+	if (cdb->load_limit != bytes) {
+		cdb->load_limit = bytes;
+		worker_wake_up(&cdb->loader);
+	}
 }
 
 API_EXPORT void
@@ -978,15 +1068,93 @@ chartdb_get_arpt_state(chartdb_t *cdb, const char *icao)
 API_EXPORT char *
 chartdb_get_metar(chartdb_t *cdb, const char *icao)
 {
-	if (prov[cdb->prov].get_metar == NULL)
-		return (NULL);
 	return (get_metar_taf_common(cdb, icao, B_TRUE));
 }
 
 API_EXPORT char *
 chartdb_get_taf(chartdb_t *cdb, const char *icao)
 {
-	if (prov[cdb->prov].get_taf == NULL)
-		return (NULL);
 	return (get_metar_taf_common(cdb, icao, B_FALSE));
+}
+
+static char *
+download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
+    const char *node_name)
+{
+	dl_info_t info;
+	char url[256];
+	char error_reason[128];
+	xmlDoc *doc = NULL;
+	xmlXPathContext *xpath_ctx = NULL;
+	xmlXPathObject *xpath_obj = NULL;
+	char query[128];
+	char *result;
+
+	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
+	    "dataserver_current/httpparam?dataSource=%s&"
+	    "requestType=retrieve&format=xml&stationString=%s&hoursBeforeNow=1",
+	    source, icao);
+	snprintf(error_reason, sizeof (error_reason), "Error downloading %s",
+	    node_name);
+	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
+	    node_name);
+
+	if (!chart_download(cdb, url, NULL, error_reason, &info))
+		return (NULL);
+	doc = xmlParseMemory((char *)info.buf, info.bufsz);
+	if (doc == NULL) {
+		logMsg("Error parsing %s: XML parsing error", node_name);
+		goto errout;
+	}
+	xpath_ctx = xmlXPathNewContext(doc);
+	if (xpath_ctx == NULL) {
+		logMsg("Error creating XPath context for XML");
+		goto errout;
+	}
+	xpath_obj = xmlXPathEvalExpression((xmlChar *)query, xpath_ctx);
+	if (xpath_obj->nodesetval->nodeNr == 0 ||
+	    xpath_obj->nodesetval->nodeTab[0]->children == NULL ||
+	    xpath_obj->nodesetval->nodeTab[0]->children->content == NULL) {
+		char *path = mkpathname(cdb->path, "metar.xml", NULL);
+
+		logMsg("Error parsing %s, valid but incorrect XML structure. "
+		    "For debugging purposes, I'm going to dump the raw data "
+		    "into a file named %s.", node_name, path);
+		FILE *fp = fopen(path, "wb");
+		if (fp != NULL) {
+			fwrite(info.buf, 1, info.bufsz, fp);
+			fclose(fp);
+		}
+		free(path);
+		goto errout;
+	}
+	result = strdup(
+	    (char *)xpath_obj->nodesetval->nodeTab[0]->children->content);
+	xmlXPathFreeObject(xpath_obj);
+	xmlXPathFreeContext(xpath_ctx);
+	xmlFreeDoc(doc);
+	free(info.buf);
+	return (result);
+errout:
+	if (xpath_obj != NULL)
+		xmlXPathFreeObject(xpath_obj);
+	if (xpath_ctx != NULL)
+		xmlXPathFreeContext(xpath_ctx);
+	if (doc != NULL)
+		xmlFreeDoc(doc);
+	free(info.buf);
+
+	return (NULL);
+}
+
+static char *
+download_metar(chartdb_t *cdb, const char *icao)
+{
+	return (download_metar_taf_common(cdb, icao, "metars", "METAR"));
+}
+
+static char *
+download_taf(chartdb_t *cdb, const char *icao)
+{
+	return (download_metar_taf_common(cdb, icao, "tafs", "TAF"));
 }

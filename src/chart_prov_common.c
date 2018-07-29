@@ -42,7 +42,7 @@ dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 	ASSERT(dl_info != NULL);
 
 	/* Respond to an early termination request */
-	if (!dl_info->cdb->loader.run)
+	if (dl_info->cdb != NULL && !dl_info->cdb->loader.run)
 		return (0);
 
 	if (dl_info->bufcap < dl_info->bufsz + bytes) {
@@ -105,7 +105,8 @@ write_dl(dl_info_t *dl_info, const char *filepath, const char *url,
 bool_t
 chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
     const char *filepath, const char *method, const char *username,
-    const char *password, const char *error_prefix, dl_info_t *raw_output)
+    const char *password, int timeout, const char *error_prefix,
+    dl_info_t *raw_output)
 {
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
@@ -123,7 +124,8 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 		curl = curl_easy_init();
 		VERIFY(curl != NULL);
 
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, DL_TIMEOUT);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT,
+		    timeout < 0 ? DL_TIMEOUT : timeout);
 		curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
 		curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
@@ -199,7 +201,7 @@ chart_download(chartdb_t *cdb, const char *url, const char *filepath,
 {
 	CURL *curl = NULL;
 	bool_t result = chart_download_multi(&curl, cdb, url, filepath,
-	    NULL, NULL, NULL, error_prefix, raw_output);
+	    NULL, NULL, NULL, -1, error_prefix, raw_output);
 	curl_easy_cleanup(curl);
 	return (result);
 }

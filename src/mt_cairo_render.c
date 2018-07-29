@@ -253,6 +253,12 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 			return (NULL);
 		}
 	}
+	/* empty both surfaces to assure their data is populated */
+	for (int i = 0; i < 2; i++) {
+		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_CLEAR);
+		cairo_paint(mtcr->rs[i].cr);
+		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_OVER);
+	}
 	glGenBuffers(1, &mtcr->pbo);
 	glGenBuffers(1, &mtcr->vtx_buf);
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
@@ -622,6 +628,46 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	mutex_exit(&mtcr->lock);
 
 	return (tex);
+}
+
+API_EXPORT void
+mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
+    mtcr_rect_t *rects, size_t num)
+{
+	/*
+	 * We should be safe to access the surface ordering here, because
+	 * this should ONLY be called from the worker thread.
+	 */
+	cairo_surface_t *surf1, *surf2;
+	uint8_t *buf1, *buf2;
+	int stride;
+
+	if (mtcr->cur_rs == -1)
+		return;
+
+	surf1 = mtcr->rs[!mtcr->cur_rs].surf;	/* target */
+	surf2 = mtcr->rs[mtcr->cur_rs].surf;	/* source */
+	buf1 = cairo_image_surface_get_data(surf1);
+	buf2 = cairo_image_surface_get_data(surf2);
+	stride = cairo_image_surface_get_stride(surf1);
+
+	cairo_surface_flush(surf1);
+	cairo_surface_flush(surf2);
+	for (size_t i = 0; i < num; i++) {
+		ASSERT3U(rects[i].x, <, mtcr->w);
+		ASSERT3U(rects[i].y, <, mtcr->h);
+		ASSERT3U(rects[i].x + rects[i].w, <=, mtcr->w);
+		ASSERT3U(rects[i].y + rects[i].h, <=, mtcr->h);
+		for (unsigned row = rects[i].y; row < rects[i].y + rects[i].h;
+		    row++) {
+			uint8_t *p1 = &buf1[4 * rects[i].x +
+			    row * stride];
+			const uint8_t *p2 = &buf2[4 * rects[i].x +
+			    row * stride];
+			memcpy(p1, p2, 4 * rects[i].w);
+		}
+	}
+	cairo_surface_mark_dirty(surf1);
 }
 
 /*
