@@ -110,7 +110,7 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 {
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
-	dl_info_t dl_info = { NULL };
+	dl_info_t dl_info = { .cdb = NULL };
 	CURLcode res;
 	long code = 0;
 	bool_t result = B_TRUE;

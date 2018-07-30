@@ -434,7 +434,7 @@ airac_time2cycle(time_t t)
 		if (t_tm->tm_year + 1900 != airac_eff_dates[i].year + 2000)
 			continue;
 		for (int j = 0; j < 14; j++) {
-			struct tm cyc_tm = { 0 };
+			struct tm cyc_tm = { .tm_sec = 0 };
 			time_t cyc_t;
 			const char *cycle = airac_eff_dates[i].cycles[j];
 			char day[3] = { cycle[0], cycle[1], '\0' };

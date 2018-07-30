@@ -50,13 +50,6 @@ extern "C" {
 #endif
 #endif	/* !IBM */
 
-#if	defined(__GNUC__) || defined(__clang__)
-#define	ALIGN(__var__, __bytes__)	\
-	__var__ __attribute__((aligned (__bytes__)))
-#else	/* !defined(__GNUC__) && !defined(__clang__) */
-#define	ALIGN(__var__, __bytes__)	__declspec(align(__bytes__)) __var__
-#endif	/* !defined(__GNUC__) && !defined(__clang__) */
-
 #define	ALIGN4(__var__)		ALIGN(__var__, 4)
 #define	ALIGN8(__var__)		ALIGN(__var__, 8)
 #define	ALIGN16(__var__)	ALIGN(__var__, 16)

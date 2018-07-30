@@ -35,7 +35,6 @@ extern "C" {
 #define	MAX_CHART_FILENAME	64
 
 typedef struct chart_arpt_s chart_arpt_t;
-typedef struct chartdb_s chartdb_t;
 
 typedef enum {
 	PROV_AERONAV_FAA_GOV,

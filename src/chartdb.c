@@ -96,7 +96,7 @@ physmem(void)
 static uint64_t
 physmem(void)
 {
-	int mib[2] = { CTL_HW, HW_MEMSIZE }
+	int mib[2] = { CTL_HW, HW_MEMSIZE };
 	int64_t mem;
 	size_t length = sizeof(int64_t);
 	sysctl(mib, 2, &mem, &length, NULL, 0);
@@ -1111,7 +1111,7 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	xmlXPathObject *xpath_obj = NULL;
 	char query[128];
 	char *result;
-	chart_prov_info_login_t login = { NULL };
+	chart_prov_info_login_t login = { .username = NULL };
 
 	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
 	    "dataserver_current/httpparam?dataSource=%s&"

@@ -519,9 +519,9 @@ void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
-	ALIGN16(mat4 mv_matrix);
-	ALIGN16(mat4 proj_matrix);
-	ALIGN16(mat4 pvm);
+	mat4 mv_matrix;
+	mat4 proj_matrix;
+	mat4 pvm;
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mv_matrix);
 	glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat *)proj_matrix);
