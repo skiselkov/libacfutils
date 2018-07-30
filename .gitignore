@@ -96,7 +96,9 @@ openal-soft/openal-soft-1.18.2-linux-64
 libxml2/libxml2-2.9.4
 libxml2/libxml2-linux-64
 libxml2/libxml2-win-64
+libxml2/libxml2-mac-64
 
 libjpeg/jpegsrc.v9c
 libjpeg/libjpeg-linux-64
 libjpeg/libjpeg-win-64
+libjpeg/libjpeg-mac-64
