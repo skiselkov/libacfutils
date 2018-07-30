@@ -55,7 +55,7 @@ update_index(chartdb_t *cdb)
 	bool_t result = B_FALSE;
 
 	snprintf(url, sizeof (url), INDEX_URL, cdb->airac);
-	result = chart_download(cdb, url, index_path,
+	result = chart_download(cdb, url, index_path, cdb->prov_info,
 	    "Error downloading chart index", NULL);
 	if (!result && file_exists(index_path, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
@@ -290,8 +290,8 @@ chart_faa_get_chart(chart_t *chart)
 
 	filepath = chartdb_mkpath(chart);
 	snprintf(url, sizeof (url), CHART_URL, cdb->airac, chart->filename);
-	result = chart_download(cdb, url, filepath, "Error downloading chart",
-	    NULL);
+	result = chart_download(cdb, url, filepath, cdb->prov_info,
+	    "Error downloading chart", NULL);
 	if (!result && file_exists(filepath, NULL)) {
 		logMsg("WARNING: failed to contact FAA servers to refresh "
 		    "chart \"%s\". However, we appear to still have a locally "

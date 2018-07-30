@@ -340,7 +340,7 @@ pdf_count_pages(const char *pdfinfo_path, const char *path)
 	snprintf(cmd, sizeof (cmd), "\"%s\" \"%s\"", pdfinfo_path, path);
 	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
 
-	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
@@ -436,10 +436,12 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	char cmd[3 * MAX_PATH];
 	char *dpath;
 #if	IBM
+	SECURITY_ATTRIBUTES sa;
 	TCHAR cmdT[3 * MAX_PATH];
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
 	DWORD exit_code;
+	HANDLE out_file;
 #endif	/* IBM */
 
 	zoom = clamp(zoom, 0.1, 10.0);
@@ -455,22 +457,38 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	 * means taking longer.
 	 */
 #if	IBM
+	sa.nLength = sizeof(sa);
+	sa.bInheritHandle = TRUE;
+	sa.lpSecurityDescriptor = NULL;
+
+	out_file = CreateFileA(new_path, GENERIC_WRITE,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_ALWAYS,
+	    FILE_ATTRIBUTE_NORMAL, NULL);
+	if (out_file == INVALID_HANDLE_VALUE) {
+		win_perror(GetLastError(), "Error converting chart %s to PNG: "
+		    "failed to open output file %s", old_path, new_path);
+		goto errout;
+	}
 	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d -cropbox "
-	    "\"%s\" > \"%s\"", pdftoppm_path, page + 1, page + 1,
-	    (int)(100 * zoom), old_path, new_path);
+	    "\"%s\"", pdftoppm_path, page + 1, page + 1,
+	    (int)(100 * zoom), old_path);
 	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
 
 	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
+	si.cb = sizeof(si);
+	si.hStdOutput = out_file;
+	si.dwFlags |= STARTF_USESTDHANDLES;
 
-	if (!CreateProcess(NULL, cmdT, NULL, NULL, FALSE,
+	if (!CreateProcess(NULL, cmdT, NULL, NULL, TRUE,
 	    CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS,
 	    NULL, NULL, &si, &pi)) {
 		win_perror(GetLastError(), "Error converting chart %s to "
 		    "PNG", old_path);
 		goto errout;
 	}
+	CloseHandle(out_file);
+	out_file = INVALID_HANDLE_VALUE;
 	WaitForSingleObject(pi.hProcess, INFINITE);
 	VERIFY(GetExitCodeProcess(pi.hProcess, &exit_code));
 	if (exit_code != 0) {
@@ -502,6 +520,10 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	free(dpath);
 	return (new_path);
 errout:
+#if	IBM
+	if (out_file != INVALID_HANDLE_VALUE)
+		CloseHandle(out_file);
+#endif	/* IBM */
 	free(dpath);
 	free(new_path);
 	free(old_path);
@@ -1089,6 +1111,7 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	xmlXPathObject *xpath_obj = NULL;
 	char query[128];
 	char *result;
+	chart_prov_info_login_t login = { NULL };
 
 	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
 	    "dataserver_current/httpparam?dataSource=%s&"
@@ -1099,7 +1122,18 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
 	    node_name);
 
-	if (!chart_download(cdb, url, NULL, error_reason, &info))
+	if (cdb->prov_info != NULL) {
+		/*
+		 * If the caller supplied a CAINFO path, we ONLY want to use
+		 * that for the METAR download. We do NOT want to send in any
+		 * user credentials, which might be meant for the main chart
+		 * data provider.
+		 */
+		chart_prov_info_login_t *prov_login = cdb->prov_info;
+		login.cainfo = prov_login->cainfo;
+	}
+
+	if (!chart_download(cdb, url, NULL, &login, error_reason, &info))
 		return (NULL);
 	doc = xmlParseMemory((char *)info.buf, info.bufsz);
 	if (doc == NULL) {

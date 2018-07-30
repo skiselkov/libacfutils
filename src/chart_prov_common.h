@@ -45,11 +45,12 @@ typedef struct {
 } dl_info_t;
 
 bool_t chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
-    const char *filepath, const char *method, const char *username,
-    const char *password, int timeout, const char *error_prefix,
+    const char *filepath, const char *method,
+    const chart_prov_info_login_t *login, int timeout,
+    const char *error_prefix, dl_info_t *raw_output);
+bool_t chart_download(chartdb_t *cdb, const char *url, const char *filepath,
+    const chart_prov_info_login_t *login, const char *error_prefix,
     dl_info_t *raw_output);
-bool_t chart_download(chartdb_t *cdb, const char *url,
-    const char *filepath, const char *error_prefix, dl_info_t *raw_output);
 void word_subst(char *name, const char **subst);
 
 #ifdef	__cplusplus

@@ -104,9 +104,9 @@ write_dl(dl_info_t *dl_info, const char *filepath, const char *url,
 
 bool_t
 chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
-    const char *filepath, const char *method, const char *username,
-    const char *password, int timeout, const char *error_prefix,
-    dl_info_t *raw_output)
+    const char *filepath, const char *method,
+    const chart_prov_info_login_t *login, int timeout,
+    const char *error_prefix, dl_info_t *raw_output)
 {
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
@@ -132,10 +132,16 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 		curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-		if (username != NULL)
-			curl_easy_setopt(curl, CURLOPT_USERNAME, username);
-		if (password != NULL)
-			curl_easy_setopt(curl, CURLOPT_PASSWORD, password);
+		if (login != NULL && login->username != NULL) {
+			curl_easy_setopt(curl, CURLOPT_USERNAME,
+			    login->username);
+		}
+		if (login != NULL && login->password != NULL) {
+			curl_easy_setopt(curl, CURLOPT_PASSWORD,
+			    login->password);
+		}
+		if (login != NULL && login->cainfo != NULL)
+			curl_easy_setopt(curl, CURLOPT_CAINFO, login->cainfo);
 		*curl_p = curl;
 	}
 
@@ -197,11 +203,12 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 
 bool_t
 chart_download(chartdb_t *cdb, const char *url, const char *filepath,
-    const char *error_prefix, dl_info_t *raw_output)
+    const chart_prov_info_login_t *login, const char *error_prefix,
+    dl_info_t *raw_output)
 {
 	CURL *curl = NULL;
-	bool_t result = chart_download_multi(&curl, cdb, url, filepath,
-	    NULL, NULL, NULL, -1, error_prefix, raw_output);
+	bool_t result = chart_download_multi(&curl, cdb, url, filepath, NULL,
+	    login, -1, error_prefix, raw_output);
 	curl_easy_cleanup(curl);
 	return (result);
 }

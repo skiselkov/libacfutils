@@ -52,6 +52,7 @@ typedef enum {
 typedef struct {
 	char	*username;
 	char	*password;
+	char	*cainfo;
 } chart_prov_info_login_t;
 
 API_EXPORT chartdb_t *chartdb_init(const char *cache_path,

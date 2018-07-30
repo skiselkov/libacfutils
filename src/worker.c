@@ -54,12 +54,12 @@ worker(void *ui)
 	 */
 	lacf_mask_sigpipe();
 
-	mutex_enter(&wk->lock);
-
 	if (wk->init_func != NULL) {
 		if (!wk->init_func(wk->userinfo))
-			goto init_fail;
+			return;
 	}
+
+	mutex_enter(&wk->lock);
 	while (wk->run) {
 		bool_t result;
 		uint64_t intval_us = wk->intval_us;
@@ -93,10 +93,10 @@ worker(void *ui)
 			    microclock() + intval_us);
 		}
 	}
+	mutex_exit(&wk->lock);
+
 	if (wk->fini_func != NULL)
 		wk->fini_func(wk->userinfo);
-init_fail:
-	mutex_exit(&wk->lock);
 }
 
 void
