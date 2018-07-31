@@ -1114,8 +1114,8 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	chart_prov_info_login_t login = { .username = NULL };
 
 	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
-	    "dataserver_current/httpparam?dataSource=%s&"
-	    "requestType=retrieve&format=xml&stationString=%s&hoursBeforeNow=1",
+	    "dataserver_current/httpparam?dataSource=%s&requestType=retrieve&"
+	    "format=xml&stationString=%s&hoursBeforeNow=2",
 	    source, icao);
 	snprintf(error_reason, sizeof (error_reason), "Error downloading %s",
 	    node_name);
