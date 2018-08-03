@@ -152,6 +152,11 @@ ft_err2str(FT_Error err)
 static void
 worker(mt_cairo_render_t *mtcr)
 {
+	char name[32];
+
+	snprintf(name, sizeof (name), "mtcr %dx%d", mtcr->w, mtcr->h);
+	thread_set_name(name);
+
 	mutex_enter(&mtcr->lock);
 
 	while (!mtcr->shutdown) {
