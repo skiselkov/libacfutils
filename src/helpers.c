@@ -797,6 +797,28 @@ strtoupper(char *str)
 		str[i] = toupper(str[i]);
 }
 
+API_EXPORT size_t
+utf8_charlen(const char *str)
+{
+	if ((str[0] & 0xe0) == 0xc0 && str[1] != 0)
+		return (2);
+	if ((str[0] & 0xf0) == 0xe0 && str[1] != 0 && str[2] != 0)
+		return (3);
+	if ((str[0] & 0xf8) == 0xf0 && str[1] != 0 && str[2] != 0 &&
+	    str[3] != 0)
+		return (4);
+	return (1);
+}
+
+API_EXPORT size_t
+utf8_strlen(const char *str)
+{
+	const char *s;
+	for (s = str; s[0] != 0;)
+		s += utf8_charlen(str);
+	return (s - str);
+}
+
 /*
  * Creates a file path string from individual path components. The
  * components are provided as separate filename arguments and the list needs

@@ -207,6 +207,30 @@ API_EXPORT void strtolower(char *str);
 #define	strtoupper			ACFSYM(strtoupper)
 API_EXPORT void strtoupper(char *str);
 
+static inline char *
+sprintf_alloc(const char *fmt, ...)
+{
+	va_list ap;
+	int l;
+	char *str;
+
+	va_start(ap, fmt);
+	l = vsnprintf(NULL, 0, fmt, ap);
+	va_end(ap);
+	ASSERT(l >= 0);
+	str = malloc(l + 1);
+	va_start(ap, fmt);
+	VERIFY3S(vsnprintf(str, l + 1, fmt, ap), ==, l);
+	va_end(ap);
+
+	return (str);
+}
+
+#define	utf8_charlen	ACFSYM(utf8_charlen)
+API_EXPORT size_t utf8_charlen(const char *str);
+#define	utf8_strlen	ACFSYM(utf8_strlen)
+API_EXPORT size_t utf8_strlen(const char *str);
+
 /*
  * return x rounded up to the nearest power-of-2.
  */
