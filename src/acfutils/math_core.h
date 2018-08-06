@@ -28,9 +28,12 @@ extern "C" {
 
 #define	DEFN_CLAMP(name, type, assert_chk) \
 static inline type \
-name(type x, type min_val, type max_val) \
+name(const char *filename, int line, type x, type min_val, type max_val) \
 { \
-	assert_chk(min_val, <=, max_val); \
+	if ((min_val) > (max_val)) { \
+		logMsg("Actual assert location: %s:%d", filename, line); \
+		assert_chk(min_val, <=, max_val); \
+	} \
 	if (x < min_val) \
 		return (min_val); \
 	if (x > max_val) \
@@ -38,9 +41,17 @@ name(type x, type min_val, type max_val) \
 	return (x); \
 }
 
-DEFN_CLAMP(clamp, double, ASSERT3F)
-DEFN_CLAMP(clampl, long, ASSERT3S)
-DEFN_CLAMP(clampi, int, ASSERT3S)
+DEFN_CLAMP(clamp_impl, double, VERIFY3F)
+
+DEFN_CLAMP(clampl_impl, long, VERIFY3S)
+DEFN_CLAMP(clampi_impl, int, VERIFY3S)
+
+#define	clamp(x, min_val, max_val)	\
+	clamp_impl(__FILE__, __LINE__, (x), (min_val), (max_val))
+#define	clampl(x, min_val, max_val)	\
+	clampl_impl(__FILE__, __LINE__, (x), (min_val), (max_val))
+#define	clampi(x, min_val, max_val)	\
+	clampi_impl(__FILE__, __LINE__, (x), (min_val), (max_val))
 
 #ifdef	__cplusplus
 }
