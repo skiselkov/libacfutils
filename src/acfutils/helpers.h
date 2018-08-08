@@ -58,7 +58,7 @@ extern "C" {
 static inline bool_t
 is_valid_lat(double lat)
 {
-	enum { ARPT_LAT_LIMIT = 80 };
+	enum { ARPT_LAT_LIMIT = 83 };
 	return (!isnan(lat) && fabs(lat) < ARPT_LAT_LIMIT);
 }
 
