@@ -19,6 +19,7 @@
 #ifndef	_ACF_UTILS_CRC64_H_
 #define	_ACF_UTILS_CRC64_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <acfutils/core.h>
 
