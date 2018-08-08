@@ -476,7 +476,6 @@ odb_refresh_us(odb_t *odb)
 	curl_easy_setopt(curl, CURLOPT_URL, FAA_DOF_URL);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, UPDATE_TIMEOUT);
-	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dl_info);
 
