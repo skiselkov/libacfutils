@@ -97,7 +97,7 @@ API_EXPORT void wav_set_ref_dist(wav_t *wav, double d);
 API_EXPORT double wav_get_ref_dist(wav_t *wav);
 API_EXPORT void wav_set_max_dist(wav_t *wav, double d);
 API_EXPORT double wav_get_max_dist(wav_t *wav);
-API_EXPORT void wav_set_spacialize(wav_t *wav, bool_t flag);
+API_EXPORT void wav_set_spatialize(wav_t *wav, bool_t flag);
 API_EXPORT void wav_set_rolloff_fact(wav_t *wav, double r);
 API_EXPORT double wav_get_rolloff_fact(wav_t *wav);
 
