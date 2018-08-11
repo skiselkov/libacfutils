@@ -1230,7 +1230,6 @@ remove_directory(const char *dirname)
 		if (S_ISDIR(st.st_mode)) {
 			if (!remove_directory(filename))
 				goto errout;
-			err = rmdir(filename);
 		} else {
 			err = unlink(filename);
 		}
