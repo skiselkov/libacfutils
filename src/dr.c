@@ -117,6 +117,7 @@ void
 dr_setf(dr_t *dr, double f)
 {
 	ASSERT_MSG(dr->writable, "%s", dr->name);
+	ASSERT_MSG(!isnan(f), "%s", dr->name);
 	if (dr->type & xplmType_Int)
 		XPLMSetDatai(dr->dr, f);
 	else if (dr->type & xplmType_Float)
@@ -250,6 +251,8 @@ void
 dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
 {
 	ASSERT_MSG(dr->writable, "%s", dr->name);
+	for (unsigned x = 0; x < num; x++)
+		ASSERT_MSG(!isnan(df[x]), "%s[%d]", dr->name, x);
 	if (dr->type & xplmType_IntArray) {
 		int i[num];
 		for (unsigned x = 0; x < num; x++)
