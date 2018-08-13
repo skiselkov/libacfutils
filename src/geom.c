@@ -25,6 +25,7 @@
 #include <acfutils/math.h>
 #include <acfutils/helpers.h>
 #include <acfutils/geom.h>
+#include <acfutils/perf.h>
 #include <acfutils/safe_alloc.h>
 
 /*
@@ -461,9 +462,8 @@ geo2sph(geo_pos3_t pos, const ellip_t *ellip)
 }
 
 vect3_t
-geo2ecef(geo_pos3_t pos, const ellip_t *ellip)
+geo2ecef_mtr(geo_pos3_t pos, const ellip_t *ellip)
 {
-	double	h = pos.elev / 3.281;	/* convert to meters */
 	double	lat_r = DEG2RAD(pos.lat);
 	double	lon_r = DEG2RAD(pos.lon);
 	double	Rc;	/* curvature of the prime vertical */
@@ -473,11 +473,18 @@ geo2ecef(geo_pos3_t pos, const ellip_t *ellip)
 
 	Rc = ellip->a / sqrt(1 - ellip->ecc2 * POW2(sin_lat));
 
-	res.x = (Rc + h) * cos_lat * cos_lon;
-	res.y = (Rc + h) * cos_lat * sin_lon;
-	res.z = (Rc * (1 - ellip->ecc2) + h) * sin_lat;
+	res.x = (Rc + pos.elev) * cos_lat * cos_lon;
+	res.y = (Rc + pos.elev) * cos_lat * sin_lon;
+	res.z = (Rc * (1 - ellip->ecc2) + pos.elev) * sin_lat;
 
 	return (res);
+}
+
+vect3_t
+geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip)
+{
+	return (geo2ecef_mtr(GEO_POS3(pos.lat, pos.lon, FEET2MET(pos.elev)),
+	    ellip));
 }
 
 geo_pos3_t
@@ -1166,8 +1173,8 @@ gc_distance(geo_pos2_t start, geo_pos2_t end)
 	 * Convert both coordinates into 3D vectors and calculate the angle
 	 * between them. GC distance is proportional to that angle.
 	 */
-	vect3_t	start_v = geo2ecef(GEO2_TO_GEO3(start, 0), &wgs84);
-	vect3_t	end_v = geo2ecef(GEO2_TO_GEO3(end, 0), &wgs84);
+	vect3_t	start_v = geo2ecef_mtr(GEO2_TO_GEO3(start, 0), &wgs84);
+	vect3_t	end_v = geo2ecef_mtr(GEO2_TO_GEO3(end, 0), &wgs84);
 	vect3_t	s2e = vect3_sub(end_v, start_v);
 	double	s2e_abs = vect3_abs(s2e);
 	double	alpha = asin(s2e_abs / 2 / EARTH_MSL);
@@ -1180,8 +1187,8 @@ gc_point_hdg(geo_pos2_t start, geo_pos2_t end, double arg)
 	/* FIXME: THIS IS BROKEN !!! */
 	vect3_t	start_v, end_v, norm_v, an_v, incl_v;
 
-	start_v = geo2ecef(GEO2_TO_GEO3(start, 0), &wgs84);
-	end_v = geo2ecef(GEO2_TO_GEO3(end, 0), &wgs84);
+	start_v = geo2ecef_mtr(GEO2_TO_GEO3(start, 0), &wgs84);
+	end_v = geo2ecef_mtr(GEO2_TO_GEO3(end, 0), &wgs84);
 	norm_v = vect3_set_abs(vect3_xprod(end_v, start_v), EARTH_MSL);
 	an_v = vect3_set_abs(vect3_xprod(norm_v, VECT3(0, 0, 1)), EARTH_MSL);
 	incl_v = vect3_xprod(norm_v, an_v);
@@ -1307,7 +1314,7 @@ geo2fpp(geo_pos2_t pos, const fpp_t *fpp)
 	vect2_t res_v;
 
 	if (fpp->ellip != NULL)
-		pos_v = geo2ecef(GEO2_TO_GEO3(pos, 0), fpp->ellip);
+		pos_v = geo2ecef_mtr(GEO2_TO_GEO3(pos, 0), fpp->ellip);
 	else
 		pos_v = sph2ecef(GEO2_TO_GEO3(pos, 0));
 	pos_v = sph_xlate_vect(pos_v, &fpp->xlate);

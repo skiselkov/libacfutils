@@ -210,7 +210,8 @@ API_EXPORT vect2_t vect2_neg(vect2_t v);
 API_EXPORT ellip_t ellip_init(double semi_major, double semi_minor,
     double flattening);
 API_EXPORT geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip);
-API_EXPORT vect3_t geo2ecef(geo_pos3_t pos, const ellip_t *ellip);
+API_EXPORT vect3_t geo2ecef_mtr(geo_pos3_t pos, const ellip_t *ellip);
+API_EXPORT vect3_t geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip);
 API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
 API_EXPORT geo_pos3_t ecef2sph(vect3_t v);
 API_EXPORT vect3_t sph2ecef(geo_pos3_t pos);
