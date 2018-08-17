@@ -218,7 +218,7 @@ sprintf_alloc(const char *fmt, ...)
 	l = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
 	ASSERT(l >= 0);
-	str = malloc(l + 1);
+	str = (char *)malloc(l + 1);
 	va_start(ap, fmt);
 	VERIFY3S(vsnprintf(str, l + 1, fmt, ap), ==, l);
 	va_end(ap);
