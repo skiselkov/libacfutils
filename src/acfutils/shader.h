@@ -146,6 +146,8 @@ enum {
 	"vtx_pos", VTX_ATTRIB_POS, "vtx_norm", VTX_ATTRIB_NORM, \
 	"vtx_tex0", VTX_ATTRIB_TEX0, "vtx_tex1", VTX_ATTRIB_TEX1
 
+/* MSVC doesn't speak C99 */
+#if	defined(__GNUC__) || defined(__clang__)
 static shader_attr_bind_t UNUSED_ATTR default_vtx_attr_binds[] = {
 	{ .name = "vtx_pos", .idx = VTX_ATTRIB_POS },
 	{ .name = "vtx_norm", .idx = VTX_ATTRIB_NORM },
@@ -153,6 +155,7 @@ static shader_attr_bind_t UNUSED_ATTR default_vtx_attr_binds[] = {
 	{ .name = "vtx_tex1", .idx = VTX_ATTRIB_TEX1 },
 	{ /* list terminator */ }
 };
+#endif	/* defined(__GNUC__) || defined(__clang__) */
 
 #define	shader_prog_from_file	ACFSYM(shader_prog_from_file)
 API_EXPORT GLuint shader_prog_from_file(const char *progname,
