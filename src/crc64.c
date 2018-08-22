@@ -86,3 +86,14 @@ crc64_rand(void)
 	rand_seed = crc64(&rand_seed, sizeof (rand_seed));
 	return (rand_seed);
 }
+
+/*
+ * Returns a random number from the PRNG, but instead of returning a 64-bit
+ * integer between 0 and UINT64_MAX, this function returns a double value
+ * from 0.0 to 1.0 (inclusive).
+ */
+double
+crc64_rand_fract(void)
+{
+	return (crc64_rand() / (double)UINT64_MAX);
+}

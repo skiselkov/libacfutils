@@ -27,15 +27,17 @@
 extern "C" {
 #endif
 
-#define	crc64_init	ACFSYM(crc64_init)
+#define	crc64_init		ACFSYM(crc64_init)
 API_EXPORT void crc64_init();
-#define	crc64		ACFSYM(crc64)
+#define	crc64			ACFSYM(crc64)
 API_EXPORT uint64_t crc64(const void *input, size_t sz);
 
-#define	crc64_srand	ACFSYM(crc64_srand)
+#define	crc64_srand		ACFSYM(crc64_srand)
 API_EXPORT void crc64_srand(uint64_t seed);
-#define	crc64_rand	ACFSYM(crc64_rand)
+#define	crc64_rand		ACFSYM(crc64_rand)
 API_EXPORT uint64_t crc64_rand(void);
+#define	crc64_rand_fract	ACFSYM(crc64_rand_fract)
+API_EXPORT double crc64_rand_fract(void);
 
 #ifdef	__cplusplus
 }
