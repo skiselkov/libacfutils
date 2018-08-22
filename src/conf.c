@@ -245,7 +245,10 @@ bool_t conf_write(const conf_t *conf, FILE *fp)
 static conf_key_t *
 conf_find(const conf_t *conf, const char *key)
 {
-	const conf_key_t srch = { .key = (char *)key };
+	char buf[strlen(key) + 1];
+	const conf_key_t srch = { .key = buf };
+	strlcpy(buf, key, sizeof (buf));
+	strtolower(buf);
 	return (avl_find(&conf->tree, &srch, NULL));
 }
 
