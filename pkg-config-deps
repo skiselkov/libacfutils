@@ -95,7 +95,7 @@ elif [[ "$1" = "--libs" ]]; then
 	fi
 fi
 
-echo $WHOLE_ARCH_ON \
+echo $WHOLE_ARCH_ON ${LZMA} \
     $(pkg-config $@ $PACKAGES) \
-    ${CLIPBOARD} ${LZMA} $EXTRA $WHOLE_ARCH_OFF \
+    ${CLIPBOARD} $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${OPENAL_EXTRA}
