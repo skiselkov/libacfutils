@@ -833,6 +833,13 @@ wav_set_gain_outerhf(wav_t *wav, double gain_outerhf)
 }
 
 void
+wav_set_stereo_angles(wav_t *wav, double a1, double a2)
+{
+	ALfloat a[] = {a1, a2};
+	WAV_SET_PARAM(alSourcefv, AL_EXT_STEREO_ANGLES, a);
+}
+
+void
 wav_set_air_absorption_fact(wav_t *wav, double fact)
 {
 	WAV_SET_PARAM(alSourcei, AL_AIR_ABSORPTION_FACTOR, fact);

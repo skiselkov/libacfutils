@@ -107,6 +107,7 @@ API_EXPORT void wav_set_cone_inner(wav_t *wav, double cone_inner);
 API_EXPORT void wav_set_cone_outer(wav_t *wav, double cone_outer);
 API_EXPORT void wav_set_gain_outer(wav_t *wav, double gain_outer);
 API_EXPORT void wav_set_gain_outerhf(wav_t *wav, double gain_outerhf);
+API_EXPORT void wav_set_stereo_angles(wav_t *wav, double a1, double a2);
 
 API_EXPORT void wav_set_air_absorption_fact(wav_t *wav, double fact);
 
