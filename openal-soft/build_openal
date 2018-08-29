@@ -20,6 +20,8 @@ DIR="${FILE/%.tar.bz2/}"
 
 [ -d "$DIR" ] && rm -rf "$DIR"
 
+CONFOPTS_COMMON="-DALSOFT_EMBED_HRTF_DATA=ON"
+
 function do_build() {
 	ARCH="$1"
 	EXTRA_FLAGS="$2"
@@ -48,17 +50,19 @@ case $(uname) in
 		sed -i ' /dllexport/ d;' "$DIR-win-64/CMakeLists.txt" && \
 		do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
 		    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt \
-		    -DCMAKE_C_FLAGS=-fvisibility=hidden"
+		    -DCMAKE_C_FLAGS=-fvisibility=hidden $CONFOPTS_COMMON"
 
 		rm -fr "$DIR-linux-64" && \
 		tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
-		do_build "linux-64" "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+		do_build "linux-64" "-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+		    $CONFOPTS_COMMON"
 		;;
 	Darwin)
 		rm -fr "$DIR-mac-64" && \
 		tar xjvf "$FILE" && mv "$DIR" "$DIR-mac-64" && \
 		do_build "mac-64" "-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
-		    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9"
+		    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9 \
+		    $CONFOPTS_COMMON"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
