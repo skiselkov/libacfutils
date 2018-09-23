@@ -39,6 +39,7 @@ struct dr {
 	XPLMDataRef	dr;
 	XPLMDataTypeID	type;
 	bool_t		writable;
+	bool_t		wide_type;
 	void		*value;
 	ssize_t		count;
 	void		(*read_cb)(dr_t *);
@@ -81,6 +82,8 @@ API_EXPORT void dr_sets(dr_t *dr, char *str);
 API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(4);
 API_EXPORT void dr_create_f(dr_t *dr, float *value, bool_t writable,
+    const char *fmt, ...) PRINTF_ATTR(4);
+API_EXPORT void dr_create_f64(dr_t *dr, double *value, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(4);
 API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(5);

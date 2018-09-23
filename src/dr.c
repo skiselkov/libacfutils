@@ -351,7 +351,10 @@ read_float_cb(void *refcon)
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	if (dr->read_cb != NULL)
 		dr->read_cb(dr);
-	return (*(float *)dr->value);
+	if (dr->wide_type)
+		return (*(double *)dr->value);
+	else
+		return (*(float *)dr->value);
 }
 
 static void
@@ -364,7 +367,10 @@ write_float_cb(void *refcon, float value)
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	if (dr->write_cb != NULL)
 		dr->write_cb(dr, &value);
-	*(float *)dr->value = value;
+	if (dr->wide_type)
+		*(double *)dr->value = value;
+	else
+		*(float *)dr->value = value;
 }
 
 #define	DEF_READ_ARRAY_CB(typename, xp_typename, type_sz) \
@@ -424,7 +430,7 @@ DEF_WRITE_ARRAY_CB(void, Data, sizeof (uint8_t))
 
 static void
 dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
-    bool_t writable, const char *fmt, va_list ap)
+    bool_t writable, bool_t wide_type, const char *fmt, va_list ap)
 {
 	XPLMPluginID dre_plug;
 
@@ -443,6 +449,7 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->count = count;
 	dr->read_cb = NULL;
 	dr->write_cb = NULL;
+	dr->wide_type = wide_type;
 
 	dre_plug = XPLMFindPluginBySignature(
 	    "xplanesdk.examples.DataRefEditor");
@@ -461,20 +468,36 @@ dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Int, value, 1, writable, fmt, ap);
+	dr_create_common(dr, xplmType_Int, value, 1, writable, B_FALSE,
+	    fmt, ap);
 	va_end(ap);
 }
 
 /*
  * Sets up a float dataref that will read and optionally write to
- * an float*.
+ * a float*.
  */
 void
 dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Float, value, 1, writable, fmt, ap);
+	dr_create_common(dr, xplmType_Float, value, 1, writable, B_FALSE,
+	    fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * Sets up a float dataref that will read and optionally write to
+ * a double*.
+ */
+void
+dr_create_f64(dr_t *dr, double *value, bool_t writable, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float, value, 1, writable, B_TRUE,
+	    fmt, ap);
 	va_end(ap);
 }
 
@@ -484,7 +507,8 @@ dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_IntArray, value, n, writable, fmt, ap);
+	dr_create_common(dr, xplmType_IntArray, value, n, writable,
+	    B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -494,7 +518,8 @@ dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_FloatArray, value, n, writable, fmt, ap);
+	dr_create_common(dr, xplmType_FloatArray, value, n, writable,
+	    B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -504,7 +529,8 @@ dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Data, value, n, writable, fmt, ap);
+	dr_create_common(dr, xplmType_Data, value, n, writable, B_FALSE,
+	    fmt, ap);
 	va_end(ap);
 }
 
