@@ -1065,7 +1065,7 @@ kcas2ktas(double kcas, double pressure, double oat)
  * for compressibility).
  *
  * @param mach Mach number.
- * @param oat Static outside static air pressure in hPa.
+ * @param oat Static outside static air pressure in Pa.
  *
  * @return Equivalent airspeed in knots.
  */
