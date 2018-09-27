@@ -162,13 +162,13 @@ conf_read(FILE *fp, int *errline)
 		if (*line == 0)
 			continue;
 
-		if ((sep = strstr(line, "--")) != NULL ||
+		while ((sep = strstr(line, "--")) != NULL ||
 		    (sep = strstr(line, "#")) != NULL) {
 			*sep = 0;
 			strip_space(line);
-			if (*line == 0)
-				continue;
 		}
+		if (*line == 0)
+			continue;
 
 		sep = strstr(line, "=");
 		if (sep == NULL) {
