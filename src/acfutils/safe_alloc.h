@@ -31,8 +31,10 @@ static inline void *
 safe_malloc(size_t size)
 {
 	void *p = malloc(size);
-	VERIFY_MSG(p != NULL, "Cannot allocate %lu bytes: out of memory",
-	    (long unsigned)size);
+	if (size > 0) {
+		VERIFY_MSG(p != NULL, "Cannot allocate %lu bytes: "
+		    "out of memory", (long unsigned)size);
+	}
 	return (p);
 }
 
@@ -40,8 +42,10 @@ static inline void *
 safe_calloc(size_t nmemb, size_t size)
 {
 	void *p = calloc(nmemb, size);
-	VERIFY_MSG(p != NULL, "Cannot allocate %lu bytes: out of memory",
-	    (long unsigned)(nmemb * size));
+	if (nmemb > 0 && size > 0) {
+		VERIFY_MSG(p != NULL, "Cannot allocate %lu bytes: "
+		    "out of memory", (long unsigned)(nmemb * size));
+	}
 	return (p);
 }
 

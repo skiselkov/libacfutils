@@ -24,6 +24,7 @@
 
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
+#include <acfutils/safe_alloc.h>
 
 #define	DRE_MSG_ADD_DATAREF	0x01000000
 
@@ -70,7 +71,7 @@ dr_geti(dr_t *dr)
 	if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data)) {
 		int i;
-		VERIFY3U(dr_getvi(dr, &i, 0, 1), ==, 1);
+		VERIFY3S(dr_getvi(dr, &i, 0, 1), ==, 1);
 		return (i);
 	}
 	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
@@ -140,45 +141,56 @@ dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num)
 	if (dr->type & xplmType_IntArray)
 		return (XPLMGetDatavi(dr->dr, i, off, num));
 	if (dr->type & xplmType_FloatArray) {
-		float f[num];
+		float *f = safe_malloc(num * sizeof (*f));
 		int n = XPLMGetDatavf(dr->dr, num > 0 ? f : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				i[x] = f[x];
 		}
+		free(f);
 		return (n);
 	}
 	if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				i[x] = u[x];
 		}
+		free(u);
 		return (n);
 	}
-	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
+	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	if (num != 0)
+		i[0] = dr_geti(dr);
+	return (1);
 }
 
 void
 dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num)
 {
+	ASSERT(i != NULL);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	if (dr->type & xplmType_IntArray) {
 		XPLMSetDatavi(dr->dr, i, off, num);
 	} else if (dr->type & xplmType_FloatArray) {
-		float f[num];
+		float *f = safe_malloc(num * sizeof (*f));
 		for (unsigned x = 0; x < num; x++)
 			f[x] = i[x];
 		XPLMSetDatavf(dr->dr, f, off, num);
+		free(f);
 	} else if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		for (unsigned x = 0; x < num; x++)
 			u[x] = i[x];
 		XPLMSetDatab(dr->dr, u, off, num);
+		free(u);
 	} else {
-		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
-		    dr->name, dr->type);
+		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
+		    "(type: %x) at offset other than 0 (%d)", dr->name,
+		    dr->type, off);
+		dr_seti(dr, i[0]);
 	}
 }
 
@@ -188,33 +200,40 @@ dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
 	ASSERT(df != NULL || num == 0);
 
 	if (dr->type & xplmType_IntArray) {
-		int i[num];
+		int *i = safe_malloc(num * sizeof (*i));
 		int n = XPLMGetDatavi(dr->dr, num > 0 ? i : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				df[x] = i[x];
 		}
+		free(i);
 		return (n);
 	}
 	if (dr->type & xplmType_FloatArray) {
-		float f[num];
+		float *f = safe_malloc(num * sizeof (*f));
 		int n = XPLMGetDatavf(dr->dr, num > 0 ? f : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				df[x] = f[x];
 		}
+		free(f);
 		return (n);
 	}
 	if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				df[x] = u[x];
 		}
+		free(u);
 		return (n);
 	}
-	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
+	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	if (num != 0)
+		df[0] = dr_getf(dr);
+	return (1);
 }
 
 int
@@ -223,12 +242,13 @@ dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 	ASSERT(ff != NULL || num == 0);
 
 	if (dr->type & xplmType_IntArray) {
-		int i[num];
+		int *i = safe_malloc(num * sizeof (*i));
 		int n = XPLMGetDatavi(dr->dr, num > 0 ? i : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				ff[x] = i[x];
 		}
+		free(i);
 		return (n);
 	}
 	if (dr->type & xplmType_FloatArray) {
@@ -236,63 +256,79 @@ dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 		return (n);
 	}
 	if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		int n = XPLMGetDatab(dr->dr, num > 0 ? u : NULL, off, num);
 		if (num != 0) {
 			for (int x = 0; x < n; x++)
 				ff[x] = u[x];
 		}
+		free(u);
 		return (n);
 	}
-	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
+	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	if (num != 0)
+		ff[0] = dr_getf(dr);
+	return (1);
 }
 
 void
 dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
 {
+	ASSERT(df != NULL);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	for (unsigned x = 0; x < num; x++)
 		ASSERT_MSG(!isnan(df[x]), "%s[%d]", dr->name, x);
 	if (dr->type & xplmType_IntArray) {
-		int i[num];
+		int *i = safe_malloc(num * sizeof (*i));
 		for (unsigned x = 0; x < num; x++)
 			i[x] = df[x];
 		XPLMSetDatavi(dr->dr, i, off, num);
+		free(i);
 	} else if (dr->type & xplmType_FloatArray) {
-		float f[num];
+		float *f = safe_malloc(num * sizeof (*f));
 		for (unsigned x = 0; x < num; x++)
 			f[x] = df[x];
 		XPLMSetDatavf(dr->dr, f, off, num);
+		free(f);
 	} else if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		for (unsigned x = 0; x < num; x++)
 			u[x] = df[x];
 		XPLMSetDatab(dr->dr, u, off, num);
+		free(u);
 	} else {
-		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
-		    dr->name, dr->type);
+		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
+		    "(type: %x) at offset other than 0 (%d)", dr->name,
+		    dr->type, off);
+		dr_setf(dr, df[0]);
 	}
 }
 
 void
 dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 {
+	ASSERT(ff != NULL);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	if (dr->type & xplmType_IntArray) {
-		int i[num];
+		int *i = safe_malloc(num * sizeof (*i));
 		for (unsigned x = 0; x < num; x++)
 			i[x] = ff[x];
 		XPLMSetDatavi(dr->dr, i, off, num);
+		free(i);
 	} else if (dr->type & xplmType_FloatArray) {
 		XPLMSetDatavf(dr->dr, ff, off, num);
 	} else if (dr->type & xplmType_Data) {
-		uint8_t u[num];
+		uint8_t *u = safe_malloc(num * sizeof (*u));
 		for (unsigned x = 0; x < num; x++)
 			u[x] = ff[x];
 		XPLMSetDatab(dr->dr, u, off, num);
+		free(u);
 	} else {
-		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
-		    dr->name, dr->type);
+		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
+		    "(type: %x) at offset other than 0 (%d)", dr->name,
+		    dr->type, off);
+		dr_setf(dr, ff[0]);
 	}
 }
 
