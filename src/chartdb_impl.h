@@ -19,6 +19,7 @@
 #ifndef	_CHARTDB_IMPL_H_
 #define	_CHARTDB_IMPL_H_
 
+#include <cairo.h>
 #include <time.h>
 
 #include "acfutils/avl.h"
@@ -35,6 +36,9 @@ extern "C" {
 #define	MAX_CHART_FILENAME	64
 
 typedef struct chart_arpt_s chart_arpt_t;
+typedef struct chart_s chart_t;
+
+typedef cairo_surface_t *(*chart_load_cb_t)(chart_t *chart);
 
 typedef enum {
 	PROV_AERONAV_FAA_GOV,
@@ -42,13 +46,15 @@ typedef enum {
 	NUM_PROVIDERS
 } chart_prov_id_t;
 
-typedef struct {
+struct chart_s {
 	/* immutable once created */
 	chart_arpt_t	*arpt;
 	char		*name;
 	char		*codename;
 	chart_type_t	type;
 	char		*filename;
+
+	chart_load_cb_t	load_cb;
 
 	/* protected by chartdb_t->lock */
 	cairo_surface_t	*surf;
@@ -63,7 +69,7 @@ typedef struct {
 	avl_node_t	node;
 	list_node_t	loader_node;
 	list_node_t	load_seq_node;
-} chart_t;
+};
 
 struct chart_arpt_s {
 	/* immutable once created */
@@ -113,7 +119,6 @@ struct chartdb_s {
 	chart_t		loader_cmd_purge;
 	chart_t		loader_cmd_metar;
 	chart_t		loader_cmd_taf;
-
 };
 
 typedef struct {
@@ -129,6 +134,15 @@ chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao,
     const char *name, const char *city_name, const char *state_id);
 bool_t chartdb_add_chart(chart_arpt_t *arpt, chart_t *chart);
 char *chartdb_mkpath(chart_t *chart);
+
+char *chartdb_pdf_convert_file(const char *pdftoppm_path, char *old_path,
+    int page, double zoom);
+uint8_t *chartdb_pdf_convert_direct(const char *pdftoppm_path,
+    const uint8_t *pdf_data, size_t len, int page, double zoom,
+    size_t *out_len);
+int chartdb_pdf_count_pages_file(const char *pdfinfo_path, const char *path);
+int chartdb_pdf_count_pages_direct(const char *pdfinfo_path,
+    const uint8_t *buf, size_t len);
 
 #ifdef	__cplusplus
 }

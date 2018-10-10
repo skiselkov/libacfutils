@@ -27,6 +27,7 @@
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #endif
 
@@ -37,7 +38,6 @@
 #if	IBM
 #include <windows.h>
 #elif	APL
-#include <sys/types.h>
 #include <sys/sysctl.h>
 #endif	/* APL */
 
@@ -58,6 +58,8 @@
 #define	MAX_METAR_AGE	60	/* seconds */
 #define	MAX_TAF_AGE	300	/* seconds */
 #define	RETRY_INTVAL	30	/* seconds */
+#define	WRITE_BUFSZ	131072	/* bytes */
+#define	READ_BUFSZ	131072	/* bytes */
 
 static chart_prov_t prov[NUM_PROVIDERS] = {
     {
@@ -318,26 +320,32 @@ chartdb_mkpath(chart_t *chart)
 	}
 }
 
-static int
-pdf_count_pages(const char *pdfinfo_path, const char *path)
+int
+chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
+    size_t len)
 {
 	int num_pages = -1;
-	char cmd[3 * MAX_PATH];
 	char *dpath = lacf_dirname(pdfinfo_path);
-	FILE *fp;
+	int fd_in = -1, fd_out = -1;
 	char *line = NULL;
-	size_t cap = 0;
+	size_t cap = 0, fill = 0;
+	size_t written = 0;
+	char *out_buf = NULL;
+	char **lines = NULL;
+	size_t num_lines;
 
 #if	IBM
 	SECURITY_ATTRIBUTES sa;
+	HANDLE stdin_rd_handle = NULL;
+	HANDLE stdin_wr_handle = NULL;
 	HANDLE stdout_rd_handle = NULL;
 	HANDLE stdout_wr_handle = NULL;
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
+	char cmd[3 * MAX_PATH];
 	TCHAR cmdT[3 * MAX_PATH];
-	int fd;
 
-	snprintf(cmd, sizeof (cmd), "\"%s\" \"%s\"", pdfinfo_path, path);
+	snprintf(cmd, sizeof (cmd), "\"%s\" fd://0", pdfinfo_path);
 	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
 
 	sa.nLength = sizeof(sa);
@@ -345,58 +353,116 @@ pdf_count_pages(const char *pdfinfo_path, const char *path)
 	sa.lpSecurityDescriptor = NULL;
 
 	if (!CreatePipe(&stdout_rd_handle, &stdout_wr_handle, &sa, 0) ||
-	    !SetHandleInformation(stdout_rd_handle, HANDLE_FLAG_INHERIT, 0)) {
+	    !SetHandleInformation(stdout_rd_handle, HANDLE_FLAG_INHERIT, 0) ||
+	    !CreatePipe(&stdin_rd_handle, &stdin_wr_handle, &sa, 0) ||
+	    !SetHandleInformation(stdin_wr_handle, HANDLE_FLAG_INHERIT, 0)) {
 		win_perror(GetLastError(), "Error creating pipe");
-		if (stdout_rd_handle != NULL)
-			CloseHandle(stdout_rd_handle);
-		if (stdout_wr_handle != NULL)
-			CloseHandle(stdout_wr_handle);
 		goto errout;
 	}
 	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 	ZeroMemory(&si, sizeof(STARTUPINFO));
 	si.cb = sizeof(STARTUPINFO);
+	si.hStdInput = stdin_rd_handle;
 	si.hStdOutput = stdout_wr_handle;
 	si.dwFlags |= STARTF_USESTDHANDLES;
 
-	fd = _open_osfhandle((intptr_t)stdout_rd_handle, _O_RDONLY);
-	if (fd == -1) {
+	fd_in = _open_osfhandle((intptr_t)stdin_wr_handle, _O_WRONLY);
+	fd_out = _open_osfhandle((intptr_t)stdout_rd_handle, _O_RDONLY);
+	if (fd_in == -1 || fd_out == -1) {
 		win_perror(GetLastError(), "Error opening pipe as fd");
-		CloseHandle(stdout_rd_handle);
-		CloseHandle(stdout_wr_handle);
-		goto errout;
-	}
-	fp = _fdopen(fd, "r");
-	if (fp == NULL) {
-		win_perror(GetLastError(), "Error opening fd as fp");
-		CloseHandle(stdout_rd_handle);
-		CloseHandle(stdout_wr_handle);
 		goto errout;
 	}
 	if (!CreateProcess(NULL, cmdT, NULL, NULL, TRUE,
 	    CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS,
 	    NULL, NULL, &si, &pi)) {
 		win_perror(GetLastError(), "Error invoking %s", pdfinfo_path);
-		CloseHandle(stdout_rd_handle);
-		CloseHandle(stdout_wr_handle);
 		goto errout;
 	}
 #else	/* !IBM */
+	int child_pid;
+	int stdin_pipe[2] = { -1, -1 };
+	int stdout_pipe[2] = { -1, -1 };
 
-	snprintf(cmd, sizeof (cmd), "%sLD_LIBRARY_PATH=\"%s\" \"%s\" \"%s\"",
-#if	APL
-	    "DY",
-#else	/* LIN */
-	    "",
-#endif	/* LIN */
-	    dpath, pdfinfo_path, path);
-
-	fp = popen(cmd, "r");
-	if (fp == NULL)
+	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0) {
+		logMsg("Error counting PDF pages: pipe failed: %s\n",
+		    strerror(errno));
 		goto errout;
+	}
+
+	child_pid = fork();
+	switch (child_pid) {
+	case -1:
+		logMsg("Error counting PDF pages: fork failed: %s\n",
+		    strerror(errno));
+		goto errout;
+	case 0:
+		dup2(stdin_pipe[0], STDIN_FILENO);
+		dup2(stdout_pipe[1], STDOUT_FILENO);
+		for (int i = 0; i < 2; i++) {
+			close(stdin_pipe[i]);
+			close(stdout_pipe[i]);
+		}
+#if	APL
+		setenv("DYLD_LIBRARY_PATH", dpath, 1);
+#else
+		setenv("LD_LIBRARY_PATH", dpath, 1);
+#endif
+		execl(pdfinfo_path, pdfinfo_path, "fd://0", NULL);
+		logMsg("Error counting PDF pages: execl failed: %s\n",
+		    strerror(errno));
+		exit(EXIT_FAILURE);
+	default:
+		fd_in = dup(stdin_pipe[1]);
+		fd_out = dup(stdout_pipe[0]);
+		VERIFY(fd_in != -1);
+		VERIFY(fd_out != -1);
+		for (int i = 0; i < 2; i++) {
+			close(stdin_pipe[i]);
+			stdin_pipe[i] = -1;
+			close(stdout_pipe[i]);
+			stdout_pipe[i] = -1;
+		}
+		break;
+	}
 #endif	/* !IBM */
 
-	while (getline(&line, &cap, fp) > 0) {
+	while (written < len) {
+		int n = write(fd_in, &buf[written], len - written);
+		if (n == -1) {
+			logMsg("write error: %s\n", strerror(errno));
+			goto errout;
+		}
+		if (n == 0)
+			break;
+		written += n;
+	}
+	close(fd_in);
+	fd_in = -1;
+
+	for (;;) {
+		int n;
+
+		if (cap - fill < READ_BUFSZ) {
+			cap += READ_BUFSZ;
+			out_buf = realloc(out_buf, cap);
+		}
+		n = read(fd_out, &out_buf[fill], cap - fill);
+		if (n == -1) {
+			logMsg("read error: %s\n", strerror(errno));
+			goto errout;
+		}
+		if (n == 0) {
+			/* EOF */
+			break;
+		}
+		fill += n;
+	}
+	close(fd_out);
+	fd_out = -1;
+
+	lines = strsplit(out_buf, "\n", B_TRUE, &num_lines);
+	for (size_t i = 0; i < num_lines; i++) {
+		char *line = lines[i];
 		if (strncmp(line, "Pages:", 6) == 0) {
 			size_t n_comps;
 			char **comps;
@@ -410,45 +476,184 @@ pdf_count_pages(const char *pdfinfo_path, const char *path)
 		}
 	}
 
-	fclose(fp);
-
 #if	IBM
-	_close(fd);
+	WaitForSingleObject(pi.hProcess, INFINITE);
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
-	CloseHandle(stdout_rd_handle);
-	CloseHandle(stdout_wr_handle);
-#endif	/* IBM */
+#else	/* !IBM */
+	/* reap child process */
+	waitpid(child_pid, NULL, 0);
+#endif	/* !IBM */
 
 errout:
+	if (lines != NULL)
+		free_strlist(lines, num_lines);
+	if (fd_in != -1)
+		close(fd_in);
+	if (fd_out != -1)
+		close(fd_out);
+#if	IBM
+	if (stdin_rd_handle != NULL)
+		CloseHandle(stdin_rd_handle);
+	if (stdin_wr_handle != NULL)
+		CloseHandle(stdin_wr_handle);
+	if (stdout_rd_handle != NULL)
+		CloseHandle(stdout_rd_handle);
+	if (stdout_wr_handle != NULL)
+		CloseHandle(stdout_wr_handle);
+#else	/* !IBM */
+	if (stdin_pipe[0] != -1) {
+		close(stdin_pipe[0]);
+		close(stdin_pipe[1]);
+	}
+	if (stdout_pipe[0] != -1) {
+		close(stdout_pipe[0]);
+		close(stdout_pipe[1]);
+	}
+#endif	/* !IBM */
+
 	free(line);
 	free(dpath);
+	free(out_buf);
 	if (num_pages == -1)
-		logMsg("Unable to read page count from %s", path);
+		logMsg("Unable to read page count");
 
 	return (num_pages);
 }
 
-static char *
-pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
+int
+chartdb_pdf_count_pages_file(const char *pdfinfo_path, const char *path)
 {
-	char *ext, *new_path;
-	char cmd[3 * MAX_PATH];
-	char *dpath;
-#if	IBM
-	SECURITY_ATTRIBUTES sa;
-	TCHAR cmdT[3 * MAX_PATH];
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	DWORD exit_code;
-	HANDLE out_file;
-#endif	/* IBM */
+	uint8_t *buf = NULL;
+	size_t len = 0, fill = 0;
+	FILE *infp = fopen(path, "rb");
+	int pages = -1;
 
-	zoom = clamp(zoom, 0.1, 10.0);
+	if (infp == NULL) {
+		logMsg("Error counting PDF pages %s: can't read input: %s",
+		    path, strerror(errno));
+		return (-1);
+	}
+	for (;;) {
+		int ret;
+
+		if (len - fill < READ_BUFSZ) {
+			len += READ_BUFSZ;
+			buf = realloc(buf, len);
+		}
+		ret = fread(&buf[fill], 1, len - fill, infp);
+		if (ret > 0)
+			fill += ret;
+		if (ret < READ_BUFSZ) {
+			if (ferror(infp)) {
+				logMsg("Error counting PDF pages %s: "
+				    "error reading input", path);
+				goto errout;
+			}
+			break;
+		}
+	}
+	pages = chartdb_pdf_count_pages_direct(pdfinfo_path, buf, fill);
+errout:
+	fclose(infp);
+	free(buf);
+
+	return (pages);
+}
+
+char *
+chartdb_pdf_convert_file(const char *pdftoppm_path, char *old_path, int page,
+    double zoom)
+{
+	char *ext = NULL, *new_path = NULL;
+	uint8_t *pdf_buf = NULL;
+	size_t pdf_len = 0, pdf_fill = 0;
+	uint8_t *png_buf = NULL;
+	size_t png_len;
+	FILE *infp = NULL, *outfp = NULL;
+
+	infp = fopen(old_path, "rb");
+	if (infp == NULL) {
+		logMsg("Error converting chart %s: can't read input: %s",
+		    old_path, strerror(errno));
+		return (NULL);
+	}
+	for (;;) {
+		int ret;
+
+		if (pdf_len - pdf_fill < READ_BUFSZ) {
+			pdf_len += READ_BUFSZ;
+			pdf_buf = realloc(pdf_buf, pdf_len);
+		}
+		ret = fread(&pdf_buf[pdf_fill], 1, pdf_len - pdf_fill, infp);
+		if (ret > 0)
+			pdf_fill += ret;
+		if (ret < READ_BUFSZ) {
+			if (ferror(infp)) {
+				logMsg("Error converting chart %s: "
+				    "error reading input", old_path);
+				goto errout;
+			}
+			break;
+		}
+	}
+	fclose(infp);
+	infp = NULL;
+
+	png_buf = chartdb_pdf_convert_direct(pdftoppm_path, pdf_buf, pdf_fill,
+	    page, zoom, &png_len);
+	if (png_buf == NULL)
+		goto errout;
+
 	new_path = strdup(old_path);
 	ext = strrchr(new_path, '.');
 	VERIFY(ext != NULL);
 	strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
+
+	outfp = fopen(new_path, "wb");
+	if (outfp == NULL) {
+		logMsg("Error converting chart %s: can't write output "
+		    "file %s: %s", old_path, new_path, strerror(errno));
+		goto errout;
+	}
+	if (fwrite(png_buf, 1, png_len, outfp) < png_len) {
+		logMsg("Error converting chart %s: can't write output to "
+		    "file %s", old_path, new_path);
+		goto errout;
+	}
+	fclose(outfp);
+	outfp = NULL;
+
+	free(pdf_buf);
+	free(png_buf);
+
+	return (new_path);
+errout:
+	if (infp != NULL)
+		fclose(infp);
+	if (outfp != NULL)
+		fclose(outfp);
+	free(new_path);
+	free(pdf_buf);
+	free(png_buf);
+	return (NULL);
+}
+
+uint8_t *
+chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
+    size_t len, int page, double zoom, size_t *out_len)
+{
+	char *dpath;
+	int fd_in = -1, fd_out = -1;
+	int exit_code;
+#if	!IBM
+	int child_pid;
+#endif
+	size_t written = 0;
+	uint8_t *png_buf = NULL;
+	int png_buf_sz = 0, png_buf_fill = 0;
+
+	zoom = clamp(zoom, 0.1, 10.0);
 	dpath = lacf_dirname(pdftoppm_path);
 
 	/*
@@ -457,76 +662,191 @@ pdf_convert(const char *pdftoppm_path, char *old_path, int page, double zoom)
 	 * means taking longer.
 	 */
 #if	IBM
+	SECURITY_ATTRIBUTES sa;
+	HANDLE stdin_rd_handle = NULL;
+	HANDLE stdin_wr_handle = NULL;
+	HANDLE stdout_rd_handle = NULL;
+	HANDLE stdout_wr_handle = NULL;
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	char cmd[3 * MAX_PATH];
+	TCHAR cmdT[3 * MAX_PATH];
+	DWORD exit_code_win;
+
 	sa.nLength = sizeof(sa);
 	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
 
-	out_file = CreateFileA(new_path, GENERIC_WRITE,
-	    FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_ALWAYS,
-	    FILE_ATTRIBUTE_NORMAL, NULL);
-	if (out_file == INVALID_HANDLE_VALUE) {
-		win_perror(GetLastError(), "Error converting chart %s to PNG: "
-		    "failed to open output file %s", old_path, new_path);
+	if (!CreatePipe(&stdout_rd_handle, &stdout_wr_handle, &sa, 0) ||
+	    !SetHandleInformation(stdout_rd_handle, HANDLE_FLAG_INHERIT, 0) ||
+	    !CreatePipe(&stdin_rd_handle, &stdin_wr_handle, &sa, 0) ||
+	    !SetHandleInformation(stdin_wr_handle, HANDLE_FLAG_INHERIT, 0)) {
+		win_perror(GetLastError(), "Error creating pipes");
 		goto errout;
 	}
-	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d -cropbox "
-	    "\"%s\"", pdftoppm_path, page + 1, page + 1,
-	    (int)(100 * zoom), old_path);
-	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
-
-	ZeroMemory(&si, sizeof(si));
-	ZeroMemory(&pi, sizeof(pi));
-	si.cb = sizeof(si);
-	si.hStdOutput = out_file;
+	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	si.cb = sizeof(STARTUPINFO);
+	si.hStdInput = stdin_rd_handle;
+	si.hStdOutput = stdout_wr_handle;
 	si.dwFlags |= STARTF_USESTDHANDLES;
+
+	fd_in = _open_osfhandle((intptr_t)stdin_wr_handle, _O_WRONLY);
+	fd_out = _open_osfhandle((intptr_t)stdout_rd_handle, _O_RDONLY);
+	if (fd_in == -1 || fd_out == -1) {
+		win_perror(GetLastError(), "Error opening pipe as fd");
+		goto errout;
+	}
+
+	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d -cropbox",
+	    pdftoppm_path, page + 1, page + 1, (int)(100 * zoom));
+	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
 
 	if (!CreateProcess(NULL, cmdT, NULL, NULL, TRUE,
 	    CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS,
 	    NULL, NULL, &si, &pi)) {
-		win_perror(GetLastError(), "Error converting chart %s to "
-		    "PNG", old_path);
+		win_perror(GetLastError(), "Error converting chart to PNG");
 		goto errout;
 	}
-	CloseHandle(out_file);
-	out_file = INVALID_HANDLE_VALUE;
+#else	/* !IBM */
+	int stdin_pipe[2] = { -1, -1 };
+	int stdout_pipe[2] = { -1, -1 };
+	char page_nr[8], zoom_nr[8];
+
+	if (pipe(stdin_pipe) < 0 || pipe(stdout_pipe) < 0) {
+		logMsg("Error converting chart to PNG: "
+		    "error creating pipes: %s", strerror(errno));
+		goto errout;
+	}
+	snprintf(page_nr, sizeof (page_nr), "%d", page + 1);
+	snprintf(zoom_nr, sizeof (zoom_nr), "%d", (int)(100 * zoom));
+
+	child_pid = fork();
+	switch (child_pid) {
+	case -1:
+		logMsg("Error converting chart to PNG: fork failed: %s",
+		    strerror(errno));
+		goto errout;
+	case 0:
+		dup2(stdin_pipe[0], STDIN_FILENO);
+		dup2(stdout_pipe[1], STDOUT_FILENO);
+		for (int i = 0; i < 2; i++) {
+			close(stdin_pipe[i]);
+			close(stdout_pipe[i]);
+		}
+#if	APL
+		setenv("DYLD_LIBRARY_PATH", dpath, 1);
+#else	/* !APL */
+		setenv("LD_LIBRARY_PATH", dpath, 1);
+#endif	/* !APL */
+		/* drop exec priority so the sim doesn't stutter */
+		if (nice(10)) { /*shut up GCC */ }
+		execl(pdftoppm_path, pdftoppm_path, "-png", "-f", page_nr,
+		    "-l", page_nr, "-r", zoom_nr, "-cropbox", NULL);
+		logMsg("Error converting chart to PNG: execv failed: %s",
+		    strerror(errno));
+		exit(EXIT_FAILURE);
+	default:
+		fd_in = dup(stdin_pipe[1]);
+		fd_out = dup(stdout_pipe[0]);
+		for (int i = 0; i < 2; i++) {
+			close(stdin_pipe[i]);
+			stdin_pipe[i] = -1;
+			close(stdout_pipe[i]);
+			stdout_pipe[i] = -1;
+		}
+		break;
+	}
+#endif	/* !IBM */
+
+	while (written < len) {
+		int ret = write(fd_in, &pdf_data[written],
+		    MIN(len - written, WRITE_BUFSZ));
+
+		if (ret > 0) {
+			written += ret;
+		} else {
+			logMsg("Error converting chart to PNG: "
+			    "error writing to pipe: %s", strerror(errno));
+			goto errout;
+		}
+	}
+	close(fd_in);
+	fd_in = -1;
+
+	for (;;) {
+		int ret;
+
+		if (png_buf_sz - png_buf_fill < READ_BUFSZ) {
+			png_buf_sz += READ_BUFSZ;
+			png_buf = realloc(png_buf, png_buf_sz);
+		}
+		ret = read(fd_out, &png_buf[png_buf_fill],
+		    png_buf_sz - png_buf_fill);
+		if (ret <= 0)
+			break;
+		png_buf_fill += ret;
+	}
+	close(fd_out);
+
+#if	IBM
+	CloseHandle(stdin_rd_handle);
+	CloseHandle(stdin_wr_handle);
+	CloseHandle(stdout_rd_handle);
+	CloseHandle(stdout_wr_handle);
+
 	WaitForSingleObject(pi.hProcess, INFINITE);
-	VERIFY(GetExitCodeProcess(pi.hProcess, &exit_code));
-	if (exit_code != 0) {
-		logMsg("Error converting chart %s to PNG. Command that "
-		    "failed: \"%s\"", old_path, cmd);
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		goto errout;
-	}
+	VERIFY(GetExitCodeProcess(pi.hProcess, &exit_code_win));
+	exit_code = exit_code_win;
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 #else	/* !IBM */
-	snprintf(cmd, sizeof (cmd), "%sLD_LIBRARY_PATH=\"%s\" nice \"%s\" "
-	    "-png -f %d -l %d -r %d -cropbox \"%s\" > \"%s\"",
-#if	APL	/* Apply the Apple-specific prefix */
-	    "DY",
-#else
-	    "",
-#endif
-	    dpath, pdftoppm_path, page + 1, page + 1, (int)(100 * zoom),
-	    old_path, new_path);
-	if (system(cmd) != 0) {
-		logMsg("Error converting chart %s to PNG: %s. Command that "
-		    "failed: \"%s\"", old_path, strerror(errno), cmd);
+	while (waitpid(child_pid, &exit_code, 0) < 0) {
+		if (errno != EINTR) {
+			logMsg("Error converting chart to PNG: "
+			    "waitpid failed: %s", strerror(errno));
+			goto errout;
+		}
+	}
+	/* chunk out the exit code only */
+	exit_code = WEXITSTATUS(exit_code);
+#endif	/* !IBM */
+
+	if (exit_code != 0) {
+		logMsg("Error converting chart to PNG. Command returned "
+		    "error code %d", exit_code);
 		goto errout;
 	}
-#endif	/* !IBM */
-	free(old_path);
+
 	free(dpath);
-	return (new_path);
+	*out_len = png_buf_fill;
+	return (png_buf);
 errout:
+	if (fd_in != -1)
+		close(fd_in);
+	if (fd_out != -1)
+		close(fd_out);
 #if	IBM
-	if (out_file != INVALID_HANDLE_VALUE)
-		CloseHandle(out_file);
-#endif	/* IBM */
+	if (stdout_rd_handle != NULL)
+		CloseHandle(stdout_rd_handle);
+	if (stdout_wr_handle != NULL)
+		CloseHandle(stdout_wr_handle);
+	if (stdin_rd_handle != NULL)
+		CloseHandle(stdin_rd_handle);
+	if (stdin_wr_handle != NULL)
+		CloseHandle(stdin_wr_handle);
+#else	/* !IBM */
+	if (stdin_pipe[0] != -1) {
+		close(stdin_pipe[0]);
+		close(stdin_pipe[1]);
+	}
+	if (stdout_pipe[0] != -1) {
+		close(stdout_pipe[0]);
+		close(stdout_pipe[1]);
+	}
+#endif	/* !IBM */
 	free(dpath);
-	free(new_path);
-	free(old_path);
+	free(png_buf);
 	return (NULL);
 }
 
@@ -568,22 +888,23 @@ invert_surface(cairo_surface_t *surf)
 	cairo_surface_mark_dirty(surf);
 }
 
-static void
-loader_load(chartdb_t *cdb, chart_t *chart)
+static cairo_surface_t *
+chart_get_surface(chartdb_t *cdb, chart_t *chart)
 {
-	char *path = chartdb_mkpath(chart);
-	char *ext;
-	cairo_surface_t *surf;
-	cairo_status_t st;
+	char *path, *ext;
+	cairo_surface_t *surf = NULL;
 
+	if (chart->load_cb != NULL)
+		return (chart->load_cb(chart));
+
+	path = chartdb_mkpath(chart);
 	if (!chart->refreshed || !file_exists(path, NULL)) {
 		chart->refreshed = B_TRUE;
 		if (!prov[cdb->prov].get_chart(chart)) {
 			mutex_enter(&cdb->lock);
 			chart->load_error = B_TRUE;
 			mutex_exit(&cdb->lock);
-			free(path);
-			return;
+			goto out;
 		}
 	}
 
@@ -591,8 +912,8 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 	if (ext != NULL &&
 	    (strcmp(&ext[1], "pdf") == 0 || strcmp(&ext[1], "PDF") == 0)) {
 		if (chart->num_pages == -1) {
-			chart->num_pages = pdf_count_pages(cdb->pdfinfo_path,
-			    path);
+			chart->num_pages = chartdb_pdf_count_pages_file(
+			    cdb->pdfinfo_path, path);
 		}
 		if (chart->num_pages == -1) {
 			mutex_enter(&cdb->lock);
@@ -600,8 +921,8 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 			mutex_exit(&cdb->lock);
 			goto out;
 		}
-		path = pdf_convert(cdb->pdftoppm_path, path, chart->load_page,
-		    chart->zoom);
+		path = chartdb_pdf_convert_file(cdb->pdftoppm_path, path,
+		    chart->load_page, chart->zoom);
 		if (path == NULL) {
 			mutex_enter(&cdb->lock);
 			chart->load_page = chart->cur_page;
@@ -610,8 +931,21 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 			goto out;
 		}
 	}
-
 	surf = cairo_image_surface_create_from_png(path);
+
+out:
+	free(path);
+	return (surf);
+}
+
+static void
+loader_load(chartdb_t *cdb, chart_t *chart)
+{
+	cairo_surface_t *surf = chart_get_surface(cdb, chart);
+	cairo_status_t st;
+
+	if (surf == NULL)
+		return;
 	if ((st = cairo_surface_status(surf)) == CAIRO_STATUS_SUCCESS) {
 		if (chart->night)
 			invert_surface(surf);
@@ -622,15 +956,12 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 		chart->cur_page = chart->load_page;
 		mutex_exit(&cdb->lock);
 	} else {
-		logMsg("Can't load PNG file %s: %s", path,
+		logMsg("Can't load chart %s PNG file %s", chart->name,
 		    cairo_status_to_string(st));
 		mutex_enter(&cdb->lock);
 		chart->load_error = B_TRUE;
 		mutex_exit(&cdb->lock);
 	}
-
-out:
-	free(path);
 }
 
 static uint64_t
