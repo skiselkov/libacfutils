@@ -58,8 +58,13 @@
 #define	MAX_METAR_AGE	60	/* seconds */
 #define	MAX_TAF_AGE	300	/* seconds */
 #define	RETRY_INTVAL	30	/* seconds */
+#if	IBM
+#define	WRITE_BUFSZ	4096	/* bytes */
+#define	READ_BUFSZ	4096	/* bytes */
+#else	/* !IBM */
 #define	WRITE_BUFSZ	131072	/* bytes */
 #define	READ_BUFSZ	131072	/* bytes */
+#endif	/* !IBM */
 
 static chart_prov_t prov[NUM_PROVIDERS] = {
     {
@@ -429,7 +434,7 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 	while (written < len) {
 		int n = write(fd_in, &buf[written], len - written);
 		if (n == -1) {
-			logMsg("write error: %s\n", strerror(errno));
+			logMsg("write error: %s", strerror(errno));
 			goto errout;
 		}
 		if (n == 0)
@@ -440,15 +445,16 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 	fd_in = -1;
 
 	for (;;) {
-		int n;
+		int n, to_read;
 
 		if (cap - fill < READ_BUFSZ) {
 			cap += READ_BUFSZ;
 			out_buf = realloc(out_buf, cap);
 		}
-		n = read(fd_out, &out_buf[fill], cap - fill);
+		to_read = cap - fill;
+		n = read(fd_out, &out_buf[fill], to_read);
 		if (n == -1) {
-			logMsg("read error: %s\n", strerror(errno));
+			logMsg("read error: %s", strerror(errno));
 			goto errout;
 		}
 		if (n == 0) {
@@ -456,6 +462,12 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 			break;
 		}
 		fill += n;
+		/*
+		 * On windows, a short byte count indicates an EOF, so
+		 * we need to exit now, or else we'll block indefinitely.
+		 */
+		if (n < to_read)
+			break;
 	}
 	close(fd_out);
 	fd_out = -1;
@@ -760,34 +772,35 @@ chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
 #endif	/* !IBM */
 
 	while (written < len) {
-		int ret = write(fd_in, &pdf_data[written],
-		    MIN(len - written, WRITE_BUFSZ));
-
-		if (ret > 0) {
-			written += ret;
-		} else {
-			logMsg("Error converting chart to PNG: "
-			    "error writing to pipe: %s", strerror(errno));
+		int n = write(fd_in, &pdf_data[written], len - written);
+		if (n == -1) {
+			logMsg("write error: %s", strerror(errno));
 			goto errout;
 		}
+		if (n == 0)
+			break;
+		written += n;
 	}
 	close(fd_in);
 	fd_in = -1;
 
 	for (;;) {
-		int ret;
+		int n, to_read;
 
 		if (png_buf_sz - png_buf_fill < READ_BUFSZ) {
 			png_buf_sz += READ_BUFSZ;
 			png_buf = realloc(png_buf, png_buf_sz);
 		}
-		ret = read(fd_out, &png_buf[png_buf_fill],
-		    png_buf_sz - png_buf_fill);
-		if (ret <= 0)
+		to_read = png_buf_sz - png_buf_fill;
+		n = read(fd_out, &png_buf[png_buf_fill], to_read);
+		if (n <= 0)
 			break;
-		png_buf_fill += ret;
+		png_buf_fill += n;
+		if (n < to_read)
+			break;
 	}
 	close(fd_out);
+	fd_out = -1;
 
 #if	IBM
 	CloseHandle(stdin_rd_handle);
