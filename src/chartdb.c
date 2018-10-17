@@ -58,13 +58,8 @@
 #define	MAX_METAR_AGE	60	/* seconds */
 #define	MAX_TAF_AGE	300	/* seconds */
 #define	RETRY_INTVAL	30	/* seconds */
-#if	IBM
 #define	WRITE_BUFSZ	4096	/* bytes */
 #define	READ_BUFSZ	4096	/* bytes */
-#else	/* !IBM */
-#define	WRITE_BUFSZ	131072	/* bytes */
-#define	READ_BUFSZ	131072	/* bytes */
-#endif	/* !IBM */
 
 static chart_prov_t prov[NUM_PROVIDERS] = {
     {
