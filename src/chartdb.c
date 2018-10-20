@@ -61,6 +61,14 @@
 #define	WRITE_BUFSZ	4096	/* bytes */
 #define	READ_BUFSZ	4096	/* bytes */
 
+#define	DESTROY_HANDLE(__handle__)	\
+	do { \
+		if ((__handle__) != NULL) { \
+			CloseHandle((__handle__)); \
+			(__handle__) = NULL; \
+		} \
+	} while (0)
+
 static chart_prov_t prov[NUM_PROVIDERS] = {
     {
 	.name = "aeronav.faa.gov",
@@ -345,6 +353,8 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 	char cmd[3 * MAX_PATH];
 	TCHAR cmdT[3 * MAX_PATH];
 
+	memset(&pi, 0, sizeof (pi));
+
 	snprintf(cmd, sizeof (cmd), "\"%s\" fd://0", pdfinfo_path);
 	MultiByteToWideChar(CP_UTF8, 0, cmd, -1, cmdT, 3 * MAX_PATH);
 
@@ -372,6 +382,12 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 		win_perror(GetLastError(), "Error opening pipe as fd");
 		goto errout;
 	}
+	/*
+	 * OSF open take over the handle!
+	 */
+	stdin_wr_handle = NULL;
+	stdout_rd_handle = NULL;
+
 	if (!CreateProcess(NULL, cmdT, NULL, NULL, TRUE,
 	    CREATE_NO_WINDOW | BELOW_NORMAL_PRIORITY_CLASS,
 	    NULL, NULL, &si, &pi)) {
@@ -485,8 +501,6 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 
 #if	IBM
 	WaitForSingleObject(pi.hProcess, INFINITE);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
 #else	/* !IBM */
 	/* reap child process */
 	waitpid(child_pid, NULL, 0);
@@ -500,14 +514,12 @@ errout:
 	if (fd_out != -1)
 		close(fd_out);
 #if	IBM
-	if (stdin_rd_handle != NULL)
-		CloseHandle(stdin_rd_handle);
-	if (stdin_wr_handle != NULL)
-		CloseHandle(stdin_wr_handle);
-	if (stdout_rd_handle != NULL)
-		CloseHandle(stdout_rd_handle);
-	if (stdout_wr_handle != NULL)
-		CloseHandle(stdout_wr_handle);
+	DESTROY_HANDLE(stdin_rd_handle);
+	DESTROY_HANDLE(stdin_wr_handle);
+	DESTROY_HANDLE(stdout_rd_handle);
+	DESTROY_HANDLE(stdout_wr_handle);
+	DESTROY_HANDLE(pi.hProcess);
+	DESTROY_HANDLE(pi.hThread);
 #else	/* !IBM */
 	if (stdin_pipe[0] != -1) {
 		close(stdin_pipe[0]);
@@ -704,6 +716,11 @@ chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
 		win_perror(GetLastError(), "Error opening pipe as fd");
 		goto errout;
 	}
+	/*
+	 * OSF open take over the handle!
+	 */
+	stdin_wr_handle = NULL;
+	stdout_rd_handle = NULL;
 
 	snprintf(cmd, sizeof (cmd), "\"%s\" -png -f %d -l %d -r %d -cropbox",
 	    pdftoppm_path, page + 1, page + 1, (int)(100 * zoom));
@@ -798,16 +815,20 @@ chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
 	fd_out = -1;
 
 #if	IBM
-	CloseHandle(stdin_rd_handle);
-	CloseHandle(stdin_wr_handle);
-	CloseHandle(stdout_rd_handle);
-	CloseHandle(stdout_wr_handle);
+	DESTROY_HANDLE(stdin_rd_handle);
+	DESTROY_HANDLE(stdin_wr_handle);
+	DESTROY_HANDLE(stdout_rd_handle);
+	DESTROY_HANDLE(stdout_wr_handle);
+	stdin_rd_handle = NULL;
+	stdin_wr_handle = NULL;
+	stdout_rd_handle = NULL;
+	stdout_wr_handle = NULL;
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
 	VERIFY(GetExitCodeProcess(pi.hProcess, &exit_code_win));
 	exit_code = exit_code_win;
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
+	DESTROY_HANDLE(pi.hProcess);
+	DESTROY_HANDLE(pi.hThread);
 #else	/* !IBM */
 	while (waitpid(child_pid, &exit_code, 0) < 0) {
 		if (errno != EINTR) {
@@ -835,14 +856,10 @@ errout:
 	if (fd_out != -1)
 		close(fd_out);
 #if	IBM
-	if (stdout_rd_handle != NULL)
-		CloseHandle(stdout_rd_handle);
-	if (stdout_wr_handle != NULL)
-		CloseHandle(stdout_wr_handle);
-	if (stdin_rd_handle != NULL)
-		CloseHandle(stdin_rd_handle);
-	if (stdin_wr_handle != NULL)
-		CloseHandle(stdin_wr_handle);
+	DESTROY_HANDLE(stdout_rd_handle);
+	DESTROY_HANDLE(stdout_wr_handle);
+	DESTROY_HANDLE(stdin_rd_handle);
+	DESTROY_HANDLE(stdin_wr_handle);
 #else	/* !IBM */
 	if (stdin_pipe[0] != -1) {
 		close(stdin_pipe[0]);
