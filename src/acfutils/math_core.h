@@ -19,12 +19,31 @@
 #ifndef	_ACF_UTILS_MATH_CORE_H_
 #define	_ACF_UTILS_MATH_CORE_H_
 
+#include <math.h>
+
 #include "assert.h"
 #include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+static inline double
+clamp_impl(const char *filename, int line, double x, double min_val,
+    double max_val)
+{
+	if ((min_val) > (max_val)) {
+		logMsg("Actual assert location: %s:%d", filename, line);
+		ASSERT3F(min_val, <=, max_val);
+	}
+	if (isnan(x))
+		return (min_val);
+	if (x < min_val)
+		return (min_val);
+	if (x > max_val)
+		return (max_val);
+	return (x);
+}
 
 #define	DEFN_CLAMP(name, type, assert_chk) \
 static inline type \
@@ -40,8 +59,6 @@ name(const char *filename, int line, type x, type min_val, type max_val) \
 		return (max_val); \
 	return (x); \
 }
-
-DEFN_CLAMP(clamp_impl, double, VERIFY3F)
 
 DEFN_CLAMP(clampl_impl, long, VERIFY3S)
 DEFN_CLAMP(clampi_impl, int, VERIFY3S)
