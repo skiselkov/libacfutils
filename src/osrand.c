@@ -25,6 +25,8 @@
 #include <wincrypt.h>
 #endif	/* !IBM */
 
+#include <acfutils/core.h>
+#include <acfutils/helpers.h>
 #include <acfutils/log.h>
 #include <acfutils/osrand.h>
 
@@ -43,14 +45,16 @@ osrand(void *buf, size_t len)
 #if	IBM
 	HCRYPTPROV prov;
 
-	if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, 0)) {
-		logMsg("Error generating random data: error during "
-		    "CryptAcquireContext");
+	if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, 0) &&
+	    !CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL,
+	    CRYPT_NEWKEYSET)) {
+		win_perror(GetLastError(), "Error generating random data: "
+		    "error during CryptAcquireContext");
 		return (B_FALSE);
 	}
 	if (!CryptGenRandom(prov, len, buf)) {
-		logMsg("Error generating random data: error during "
-		    "CryptGenRandom");
+		win_perror(GetLastError(), "Error generating random data: "
+		    "error during CryptGenRandom");
 		CryptReleaseContext(prov, 0);
 		return (B_FALSE);
 	}
