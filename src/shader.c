@@ -141,12 +141,20 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 	void *buf = NULL;
 	size_t bufsz, n_spec;
 	GLuint *spec_indices = NULL, *spec_values = NULL;
+	GLenum err;
+	/* clear error state */
+	glGetError();
 
 	if (entry_pt == NULL)
 		entry_pt = "main";
 
-	if (!GLEW_ARB_spirv_extensions) {
-		logMsg("[[[[SPIR-V not supported, falling back to GLSL]]]]\n");
+	/*
+	 * AMD driver SPIR-V loader is b0rked AF (crashes in
+	 * glSpecializeShader).
+	 */
+	if (!GLEW_ARB_gl_spirv || !GLEW_ARB_spirv_extensions ||
+	    strcmp("ATI Technologies Inc.", (char *)glGetString(GL_VENDOR)) ==
+	    0) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename));
 	}
@@ -156,8 +164,15 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 		;
 	ASSERT(spec_const == NULL ||
 	    (spec_const[n_spec].idx == 0 && spec_const[n_spec].val == 0));
-	spec_indices = safe_calloc(n_spec, sizeof (*spec_indices));
-	spec_values = safe_calloc(n_spec, sizeof (*spec_values));
+	if (n_spec > 0) {
+		/*
+		 * Windows such a pile of fuck that it returns non-NULL
+		 * for zero-length allocations. And that fucks over the
+		 * AMD driver.
+		 */
+		spec_indices = safe_calloc(n_spec, sizeof (*spec_indices));
+		spec_values = safe_calloc(n_spec, sizeof (*spec_values));
+	}
 	for (size_t i = 0; i < n_spec; i++) {
 		spec_indices[i] = spec_const[i].idx;
 		spec_values[i] = spec_const[i].val;
@@ -176,6 +191,10 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 		goto errout;
 	}
 	glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, buf, bufsz);
+	if ((err = glGetError()) != GL_NO_ERROR) {
+		logMsg("Cannot load SPIR-V %s: error %x", filename, err);
+		goto errout;
+	}
 	glSpecializeShader(shader, entry_pt, n_spec, spec_indices, spec_values);
 
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_result);
@@ -188,7 +207,6 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 		glGetShaderInfoLog(shader, len, NULL, buf);
 		logMsg("Cannot load shader %s: specialization error: %s",
 		    filename, buf);
-		free(buf);
 
 		goto errout;
 	}
