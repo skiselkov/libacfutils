@@ -27,6 +27,13 @@
 #include <acfutils/safe_alloc.h>
 
 #define	DRE_MSG_ADD_DATAREF	0x01000000
+#define	DR_TYPE_CHECK(__check_type, __type)	\
+	__check_type ## _MSG(dr->type & (__type), \
+	    "dataref \"%s\" has bad type %x (%s:%d: %s)", dr->name, \
+	    dr->type, filename, line, varname)
+#define	DR_WRITE_CHECK(__check_type)	\
+	__check_type ## _MSG(dr->writable, "dataref \"%s\" is not writable " \
+	    "(%s:%d: %s)", dr->name, filename, line, varname)
 
 bool_t
 dr_find(dr_t *dr, const char *fmt, ...)
@@ -60,7 +67,7 @@ dr_writable(dr_t *dr)
 }
 
 int
-dr_geti(dr_t *dr)
+dr_geti_impl(dr_t *dr, DR_DEBUG_VARS)
 {
 	if (dr->type & xplmType_Int)
 		return (XPLMGetDatai(dr->dr));
@@ -71,16 +78,18 @@ dr_geti(dr_t *dr)
 	if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data)) {
 		int i;
-		VERIFY3S(dr_getvi(dr, &i, 0, 1), ==, 1);
+		VERIFY3S(dr_getvi_impl(dr, filename, line, varname, &i, 0, 1),
+		    ==, 1);
 		return (i);
 	}
-	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+	VERIFY_MSG(0, "dataref \"%s\" has bad type %x (%s:%d: %s)", dr->name,
+	    dr->type, filename, line, varname);
 }
 
 void
-dr_seti(dr_t *dr, int i)
+dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i)
 {
-	ASSERT_MSG(dr->writable, "%s", dr->name);
+	DR_WRITE_CHECK(VERIFY);
 	if (dr->type & xplmType_Int) {
 		XPLMSetDatai(dr->dr, i);
 	} else if (dr->type & xplmType_Float) {
@@ -89,15 +98,15 @@ dr_seti(dr_t *dr, int i)
 		XPLMSetDatad(dr->dr, i);
 	} else if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data)) {
-		dr_setvi(dr, &i, 0, 1);
+		dr_setvi_impl(dr, filename, line, varname, &i, 0, 1);
 	} else {
-		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
-		    dr->name, dr->type);
+		VERIFY_MSG(0, "dataref \"%s\" has bad type %x (%s:%d: %s)",
+		    dr->name, dr->type, filename, line, varname);
 	}
 }
 
 double
-dr_getf(dr_t *dr)
+dr_getf_impl(dr_t *dr, DR_DEBUG_VARS)
 {
 	if (dr->type & xplmType_Int)
 		return (XPLMGetDatai(dr->dr));
@@ -108,17 +117,20 @@ dr_getf(dr_t *dr)
 	if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data)) {
 		double f;
-		VERIFY3U(dr_getvf(dr, &f, 0, 1), ==, 1);
+		VERIFY3U(dr_getvf_impl(dr, filename, line, varname, &f, 0, 1),
+		    ==, 1);
 		return (f);
 	}
-	VERIFY_MSG(0, "dataref \"%s\" has bad type %x", dr->name, dr->type);
+	VERIFY_MSG(0, "dataref \"%s\" has bad type %x (%s%d: %s)", dr->name,
+	    dr->type, filename, line, varname);
 }
 
 void
-dr_setf(dr_t *dr, double f)
+dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f)
 {
-	ASSERT_MSG(dr->writable, "%s", dr->name);
-	ASSERT_MSG(!isnan(f), "%s", dr->name);
+	DR_WRITE_CHECK(VERIFY);
+	ASSERT_MSG(!isnan(f), "%s (%s%d: %s)", dr->name, filename, line,
+	    varname);
 	if (dr->type & xplmType_Int)
 		XPLMSetDatai(dr->dr, f);
 	else if (dr->type & xplmType_Float)
@@ -127,14 +139,14 @@ dr_setf(dr_t *dr, double f)
 		XPLMSetDatad(dr->dr, f);
 	else if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data))
-		dr_setvf(dr, &f, 0, 1);
+		dr_setvf_impl(dr, filename, line, varname, &f, 0, 1);
 	else
-		VERIFY_MSG(0, "dataref \"%s\" has bad type %x",
-		    dr->name, dr->type);
+		VERIFY_MSG(0, "dataref \"%s\" has bad type %x (%s:%d: %s)",
+		    dr->name, dr->type, filename, line, varname);
 }
 
 int
-dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num)
+dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 {
 	ASSERT(i != NULL || num == 0);
 
@@ -161,17 +173,18 @@ dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num)
 		return (n);
 	}
 	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
-	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	    "offset other than 0 (%d) (%s%d: %s)", dr->name, dr->type, off,
+	    filename, line, varname);
 	if (num != 0)
-		i[0] = dr_geti(dr);
+		i[0] = dr_geti_impl(dr, filename, line, varname);
 	return (1);
 }
 
 void
-dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num)
+dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 {
 	ASSERT(i != NULL);
-	ASSERT_MSG(dr->writable, "%s", dr->name);
+	DR_WRITE_CHECK(VERIFY);
 	if (dr->type & xplmType_IntArray) {
 		XPLMSetDatavi(dr->dr, i, off, num);
 	} else if (dr->type & xplmType_FloatArray) {
@@ -188,14 +201,15 @@ dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num)
 		free(u);
 	} else {
 		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
-		    "(type: %x) at offset other than 0 (%d)", dr->name,
-		    dr->type, off);
-		dr_seti(dr, i[0]);
+		    "(type: %x) at offset other than 0 (%d) (%s:%d: %s)",
+		    dr->name, dr->type, off, filename, line, varname);
+		dr_seti_impl(dr, filename, line, varname, i[0]);
 	}
 }
 
 int
-dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
+dr_getvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
+    unsigned num)
 {
 	ASSERT(df != NULL || num == 0);
 
@@ -230,14 +244,16 @@ dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num)
 		return (n);
 	}
 	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
-	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	    "offset other than 0 (%d) (%s:%d: %s)", dr->name, dr->type, off,
+	    filename, line, varname);
 	if (num != 0)
-		df[0] = dr_getf(dr);
+		df[0] = dr_getf_impl(dr, filename, line, varname);
 	return (1);
 }
 
 int
-dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
+dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
+    unsigned num)
 {
 	ASSERT(ff != NULL || num == 0);
 
@@ -266,17 +282,19 @@ dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 		return (n);
 	}
 	ASSERT_MSG(off == 0, "Attempted read scalar dataref %s (type: %x) at "
-	    "offset other than 0 (%d)", dr->name, dr->type, off);
+	    "offset other than 0 (%d) (%s:%d: %s)", dr->name, dr->type, off,
+	    filename, line, varname);
 	if (num != 0)
-		ff[0] = dr_getf(dr);
+		ff[0] = dr_getf_impl(dr, filename, line, varname);
 	return (1);
 }
 
 void
-dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
+dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
+    unsigned num)
 {
 	ASSERT(df != NULL);
-	ASSERT_MSG(dr->writable, "%s", dr->name);
+	DR_WRITE_CHECK(VERIFY);
 	for (unsigned x = 0; x < num; x++)
 		ASSERT_MSG(!isnan(df[x]), "%s[%d]", dr->name, x);
 	if (dr->type & xplmType_IntArray) {
@@ -299,17 +317,18 @@ dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num)
 		free(u);
 	} else {
 		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
-		    "(type: %x) at offset other than 0 (%d)", dr->name,
-		    dr->type, off);
-		dr_setf(dr, df[0]);
+		    "(type: %x) at offset other than 0 (%d) (%s:%d: %s)",
+		    dr->name, dr->type, off, filename, line, varname);
+		dr_setf_impl(dr, filename, line, varname, df[0]);
 	}
 }
 
 void
-dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
+dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
+    unsigned num)
 {
 	ASSERT(ff != NULL);
-	ASSERT_MSG(dr->writable, "%s", dr->name);
+	DR_WRITE_CHECK(VERIFY);
 	if (dr->type & xplmType_IntArray) {
 		int *i = safe_malloc(num * sizeof (*i));
 		for (unsigned x = 0; x < num; x++)
@@ -326,18 +345,18 @@ dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num)
 		free(u);
 	} else {
 		ASSERT_MSG(off == 0, "Attempted write scalar dataref %s "
-		    "(type: %x) at offset other than 0 (%d)", dr->name,
-		    dr->type, off);
-		dr_setf(dr, ff[0]);
+		    "(type: %x) at offset other than 0 (%d) (%s:%d: %s)",
+		    dr->name, dr->type, off, filename, line, varname);
+		dr_setf_impl(dr, filename, line, varname, ff[0]);
 	}
 }
 
 int
-dr_gets(dr_t *dr, char *str, size_t cap)
+dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str, size_t cap)
 {
 	int n;
 
-	ASSERT_MSG(dr->type & xplmType_Data, "%s", dr->name);
+	DR_TYPE_CHECK(VERIFY, xplmType_Data);
 	n = XPLMGetDatab(dr->dr, str, 0, cap > 0 ? cap - 1 : 0);
 	if (cap != 0)
 		str[n] = '\0';	/* make sure it's properly terminated */
@@ -346,10 +365,10 @@ dr_gets(dr_t *dr, char *str, size_t cap)
 }
 
 void
-dr_sets(dr_t *dr, char *str)
+dr_sets_impl(dr_t *dr, DR_DEBUG_VARS, char *str)
 {
-	ASSERT_MSG(dr->type & xplmType_Data, "%s", dr->name);
-	ASSERT_MSG(dr->writable, "%s", dr->name);
+	DR_TYPE_CHECK(VERIFY, xplmType_Data);
+	DR_WRITE_CHECK(VERIFY);
 	XPLMSetDatab(dr->dr, str, 0, strlen(str));
 }
 

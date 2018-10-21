@@ -24,6 +24,7 @@
 #include <XPLMDataAccess.h>
 
 #include <acfutils/helpers.h>
+#include <acfutils/log.h>
 #include <acfutils/types.h>
 
 #ifdef	__cplusplus
@@ -61,23 +62,54 @@ API_EXPORT bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
 
 API_EXPORT bool_t dr_writable(dr_t *dr);
 
-API_EXPORT int dr_geti(dr_t *dr);
-API_EXPORT void dr_seti(dr_t *dr, int i);
+#define	DR_DEBUG(__varstr)	log_basename(__FILE__), __LINE__, __varstr
+#define	DR_DEBUG_VARS	\
+	const char *filename, int line, const char *varname
 
-API_EXPORT double dr_getf(dr_t *dr);
-API_EXPORT void dr_setf(dr_t *dr, double f);
+#define	dr_geti(__dr)		dr_geti_impl((__dr), DR_DEBUG(#__dr))
+API_EXPORT int dr_geti_impl(dr_t *dr, DR_DEBUG_VARS);
+#define	dr_seti(__dr, __i)	dr_seti_impl((__dr), DR_DEBUG(#__dr), (__i))
+API_EXPORT void dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i);
 
-API_EXPORT int dr_getvi(dr_t *dr, int *i, unsigned off, unsigned num);
-API_EXPORT void dr_setvi(dr_t *dr, int *i, unsigned off, unsigned num);
+#define	dr_getf(__dr)		dr_getf_impl((__dr), DR_DEBUG(#__dr))
+API_EXPORT double dr_getf_impl(dr_t *dr, DR_DEBUG_VARS);
+#define	dr_setf(__dr, __f)	dr_setf_impl((__dr), DR_DEBUG(#__dr), (__f))
+API_EXPORT void dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f);
 
-API_EXPORT int dr_getvf(dr_t *dr, double *df, unsigned off, unsigned num);
-API_EXPORT void dr_setvf(dr_t *dr, double *df, unsigned off, unsigned num);
+#define	dr_getvi(__dr, __i, __off, __num) \
+	dr_getvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT int dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i,
+    unsigned off, unsigned num);
+#define	dr_setvi(__dr, __i, __off, __num) \
+	dr_setvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT void dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i,
+    unsigned off, unsigned num);
 
-API_EXPORT int dr_getvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
-API_EXPORT void dr_setvf32(dr_t *dr, float *ff, unsigned off, unsigned num);
+#define	dr_getvf(__dr, __i, __off, __num) \
+	dr_getvf_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT int dr_getvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df,
+    unsigned off, unsigned num);
+#define	dr_setvf(__dr, __i, __off, __num) \
+	dr_setvf_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT void dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df,
+    unsigned off, unsigned num);
 
-API_EXPORT int dr_gets(dr_t *dr, char *str, size_t cap);
-API_EXPORT void dr_sets(dr_t *dr, char *str);
+#define	dr_getvf32(__dr, __i, __off, __num) \
+	dr_getvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT int dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
+    unsigned off, unsigned num);
+#define	dr_setv32(__dr, __i, __off, __num) \
+	dr_setvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
+API_EXPORT void dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
+    unsigned off, unsigned num);
+
+#define	dr_gets(__dr, __str, __cap) \
+	dr_gets_impl((__dr), DR_DEBUG(#__dr), (__str), (__cap))
+API_EXPORT int dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str,
+    size_t cap);
+#define	dr_sets(__dr, __str) \
+	dr_sets_impl((__dr), DR_DEBUG(#__dr), (__str))
+API_EXPORT void dr_sets_impl(dr_t *dr, DR_DEBUG_VARS, char *str);
 
 API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
     const char *fmt, ...) PRINTF_ATTR(4);
