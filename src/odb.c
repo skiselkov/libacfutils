@@ -114,7 +114,7 @@ latlon2path(int lat, int lon, char dname[32])
 	    DIRSEP, lat, lon);
 }
 
-static obst_type_t
+static inline obst_type_t
 dof2type(const char *type)
 {
 	if (strcmp(type, "BLDG") == 0)
@@ -130,7 +130,7 @@ dof2type(const char *type)
 	return (OBST_OTHER);
 }
 
-static obst_light_t
+static inline obst_light_t
 dof2light(const char *light)
 {
 	switch (light[0]) {
@@ -159,7 +159,7 @@ dof2light(const char *light)
 	}
 }
 
-static const char *
+static inline const char *
 type2dof(obst_type_t type)
 {
 	switch (type) {
@@ -178,7 +178,7 @@ type2dof(obst_type_t type)
 	}
 }
 
-static char
+static inline char
 light2dof(obst_light_t light)
 {
 	switch (light) {
@@ -219,16 +219,17 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
 		obst_light_t light;
 		geo_pos3_t pos;
 		float agl, amsl;
-		char line[256];
 		unsigned quant;
+		char line[256];
 
 		line_end = strchr(line_start, '\n');
 		if (line_end == NULL)
 			line_end = buf + len;
-		strlcpy(line, line_start, MIN((int)sizeof (line),
+		lacf_strlcpy(line, line_start, MIN((int)sizeof (line),
 		    (line_end - line_start) + 1));
 
 		strip_space(line);
+
 		comps = strsplit(line, ",", B_FALSE, &n_comps);
 
 		if (n_comps < 19 || strcmp(comps[0], "OAS") == 0)

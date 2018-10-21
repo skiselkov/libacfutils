@@ -247,7 +247,7 @@ conf_find(const conf_t *conf, const char *key)
 {
 	char buf[strlen(key) + 1];
 	const conf_key_t srch = { .key = buf };
-	strlcpy(buf, key, sizeof (buf));
+	lacf_strlcpy(buf, key, sizeof (buf));
 	strtolower(buf);
 	return (avl_find(&conf->tree, &srch, NULL));
 }

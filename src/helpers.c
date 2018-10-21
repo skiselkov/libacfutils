@@ -351,7 +351,7 @@ copy_rwy_ID(const char *src, char dst[4])
 
 	/* make sure dst is populated with *something* */
 	memset(dst, 0, 4);
-	strlcpy(dst, src, 4);
+	lacf_strlcpy(dst, src, 4);
 
 	/*
 	 * Strip an optional trailing true hdg indicator. If the runway had
@@ -730,19 +730,6 @@ unescape_percent(char *str)
 		}
 	}
 }
-
-#if	IBM || LIN
-/*
- * strlcpy is a BSD function not available on Windows, so we roll a simple
- * version of it ourselves.
- */
-void
-strlcpy(char *restrict dest, const char *restrict src, size_t cap)
-{
-	dest[cap - 1] = '\0';
-	strncpy(dest, src, cap - 1);
-}
-#endif	/* IBM || LIN */
 
 #if	IBM
 /*
@@ -1290,7 +1277,7 @@ lacf_dirname(const char *filename)
 	if (p == NULL)
 		return (strdup(""));
 	str = malloc((p - filename) + 1);
-	strlcpy(str, filename, (p - filename) + 1);
+	lacf_strlcpy(str, filename, (p - filename) + 1);
 
 	return (str);
 }

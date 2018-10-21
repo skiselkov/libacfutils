@@ -113,8 +113,9 @@ acf_file_read(const char *filename)
 		prop = safe_calloc(1, sizeof (*prop));
 		prop->name = safe_malloc(name_end - line - 1);
 		prop->value = safe_malloc(strlen(&name_end[1]) + 1);
-		strlcpy(prop->name, &line[2], name_end - line - 1);
-		strlcpy(prop->value, &name_end[1], strlen(&name_end[1]) + 1);
+		lacf_strlcpy(prop->name, &line[2], name_end - line - 1);
+		lacf_strlcpy(prop->value, &name_end[1], strlen(&name_end[1]) +
+		    1);
 		if (avl_find(&acf->props, prop, &where) != NULL) {
 			logMsg("Error reading acf file %s:%d duplicate "
 			    "property \"%s\" found.", filename, line_num,

@@ -143,7 +143,7 @@ load_airport(chartdb_t *cdb, const xmlNode *arpt_node, const char *city_id,
 	}
 	if (is_valid_icao_code(icao_ident)) {
 		/* Normal ICAO identifier present, use it */
-		strlcpy(icao, icao_ident, sizeof (icao));
+		lacf_strlcpy(icao, icao_ident, sizeof (icao));
 	} else if (strlen(apt_ident) > 0) {
 		/*
 		 * Local non-ICAO identifier, convert it into a pseudo-ICAO

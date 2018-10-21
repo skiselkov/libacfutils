@@ -56,7 +56,7 @@ paste_get_str(char *str, size_t cap)
 		CloseClipboard();
 		return (B_FALSE);
 	}
-	strlcpy(str, h, cap);
+	lacf_strlcpy(str, h, cap);
 	CloseClipboard();
 
 	return (B_TRUE);
@@ -71,7 +71,7 @@ paste_set_str(const char *str)
 	ASSERT(str != NULL);
 	h_result = GlobalAlloc(GMEM_MOVEABLE, strlen(str) + 1);
 	glob_str = GlobalLock(h_result);
-	strlcpy(glob_str, str, strlen(str) + 1);
+	lacf_strlcpy(glob_str, str, strlen(str) + 1);
 	GlobalUnlock(h_result);
 
 	if (!OpenClipboard(NULL))
@@ -172,7 +172,7 @@ paste_get_str(char *str, size_t cap)
 	text = clipboard_text(cb);
 	if (text == NULL)
 		return (B_FALSE);
-	strlcpy(str, text, cap);
+	lacf_strlcpy(str, text, cap);
 
 	return (B_TRUE);
 }

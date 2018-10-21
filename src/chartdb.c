@@ -265,7 +265,7 @@ chartdb_add_arpt(chartdb_t *cdb, const char *icao, const char *name,
 
 	ASSERT(cdb != NULL);
 
-	strlcpy(srch.icao, icao, sizeof (srch.icao));
+	lacf_strlcpy(srch.icao, icao, sizeof (srch.icao));
 
 	mutex_enter(&cdb->lock);
 	arpt = avl_find(&cdb->arpts, &srch, &where);
@@ -273,10 +273,10 @@ chartdb_add_arpt(chartdb_t *cdb, const char *icao, const char *name,
 		arpt = calloc(1, sizeof (*arpt));
 		avl_create(&arpt->charts, chart_name_compar, sizeof (chart_t),
 		    offsetof(chart_t, node));
-		strlcpy(arpt->icao, icao, sizeof (arpt->icao));
+		lacf_strlcpy(arpt->icao, icao, sizeof (arpt->icao));
 		arpt->name = strdup(name);
 		arpt->city = strdup(city_name);
-		strlcpy(arpt->state, state_id, sizeof (arpt->state));
+		lacf_strlcpy(arpt->state, state_id, sizeof (arpt->state));
 		arpt->db = cdb;
 		avl_insert(&cdb->arpts, arpt, where);
 	}
@@ -627,7 +627,7 @@ chartdb_pdf_convert_file(const char *pdftoppm_path, char *old_path, int page,
 	new_path = strdup(old_path);
 	ext = strrchr(new_path, '.');
 	VERIFY(ext != NULL);
-	strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
+	lacf_strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
 
 	outfp = fopen(new_path, "wb");
 	if (outfp == NULL) {
@@ -1116,7 +1116,7 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	cdb->prov = pid;
 	cdb->prov_info = provider_info;
 	cdb->load_limit = (physmem() >> 4);	/* 1/16th of physical memory */
-	strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
+	lacf_strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
 	list_create(&cdb->loader_queue, sizeof (chart_t),
 	    offsetof(chart_t, loader_node));
@@ -1279,7 +1279,7 @@ arpt_find(chartdb_t *cdb, const char *icao)
 		snprintf(srch.icao, sizeof (srch.icao), "K%s", icao);
 		break;
 	case 4:
-		strlcpy(srch.icao, icao, sizeof (srch.icao));
+		lacf_strlcpy(srch.icao, icao, sizeof (srch.icao));
 		break;
 	default:
 		return (NULL);

@@ -28,6 +28,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <math.h>
 #if	APL || LIN
@@ -192,11 +193,20 @@ API_EXPORT void *file2buf(const char *filename, size_t *bufsz);
 #define	filesz				ACFSYM(filesz)
 API_EXPORT ssize_t filesz(const char *filename);
 
+/*
+ * strlcpy is a BSD function not available on Windows, so we roll a simple
+ * version of it ourselves. Also, on BSD it's SLOOOOW. Inline for max perf.
+ */
 #if	IBM || LIN
-#define	strlcpy				ACFSYM(strlcpy)
-API_EXPORT void strlcpy(char *restrict dest, const char *restrict src,
-    size_t cap);
-#endif	/* IBM || LIN */
+#define	strlcpy				lacf_strlcpy
+#endif
+static inline void
+lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap)
+{
+	dest[cap - 1] = '\0';
+	strncpy(dest, src, cap - 1);
+}
+
 #if	IBM
 #define	getline				ACFSYM(getline)
 API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);

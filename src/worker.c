@@ -125,7 +125,7 @@ worker_init2(worker_t *wk,
 	wk->intval_us = intval_us;
 	wk->userinfo = userinfo;
 	if (thread_name != NULL)
-		strlcpy(wk->name, thread_name, sizeof (wk->name));
+		lacf_strlcpy(wk->name, thread_name, sizeof (wk->name));
 	else
 		memset(wk->name, 0, sizeof (wk->name));
 	VERIFY(thread_create(&wk->thread, worker, wk));

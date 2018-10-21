@@ -140,7 +140,7 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 	sep = strrchr(filename, DIRSEP);
 	if (sep == NULL)
 		return;
-	strlcpy(symstxtname, filename, MIN((uintptr_t)(sep - filename) + 1,
+	lacf_strlcpy(symstxtname, filename, MIN((uintptr_t)(sep - filename) + 1,
 	    sizeof (symstxtname)));
 	strncat(symstxtname, DIRSEP_S "syms.txt", sizeof (symstxtname));
 	fp = fopen(symstxtname, "rb");
@@ -164,7 +164,7 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 			break;
 		}
 		prevptr = ptr;
-		strlcpy(prevsym, sym, sizeof (prevsym));
+		lacf_strlcpy(prevsym, sym, sizeof (prevsym));
 	}
 	fclose(fp);
 }
@@ -208,7 +208,7 @@ log_backtrace(int skip_frames)
 	line->SizeOfStruct = sizeof (*line);
 
 	backtrace_buf[0] = '\0';
-	strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
+	lacf_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
 	for (unsigned i = 1 + skip_frames; i < frames; i++) {
 		int frame_nr = i - 1 - skip_frames;

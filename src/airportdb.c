@@ -381,7 +381,7 @@ apt_dat_lookup(airportdb_t *db, const char *icao)
 {
 	airport_t search, *result;
 
-	strlcpy(search.icao, icao, sizeof (search.icao));
+	lacf_strlcpy(search.icao, icao, sizeof (search.icao));
 	strtoupper(search.icao);
 	result = avl_find(&db->apt_dat, &search, NULL);
 	ASSERT(result == NULL || is_valid_icao_code(result->icao));
@@ -616,7 +616,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line)
 	    offsetof(runway_t, node));
 	list_create(&arpt->freqs, sizeof (freq_info_t),
 	    offsetof(freq_info_t, node));
-	strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
+	lacf_strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
 	strtoupper(arpt->icao);
 	arpt->refpt = pos;
 	arpt->TL = TL;
@@ -1467,7 +1467,7 @@ load_CIFP_file(airportdb_t *db, const char *dirpath, const char *filename)
 	/* the filename must be "XXXX.dat" */
 	if (strlen(filename) != 8 || strcmp(&filename[4], ".dat"))
 		return (B_FALSE);
-	strlcpy(icao, filename, sizeof (icao));
+	lacf_strlcpy(icao, filename, sizeof (icao));
 	arpt = apt_dat_lookup(db, icao);
 	if (arpt == NULL)
 		return (B_FALSE);

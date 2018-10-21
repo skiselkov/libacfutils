@@ -226,7 +226,7 @@ parse_chart(chartdb_t *cdb, CURL *curl, const char *path)
 	unescape_percent(comps[2]);
 	if (strlen(comps[2]) < 8)
 		goto out;
-	strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
+	lacf_strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
 	arpt_name = &(comps[2][7]);
 
 	unescape_percent(comps[3]);
@@ -292,7 +292,7 @@ parse_category(chartdb_t *cdb, CURL *curl, const char *path)
 		free_strlist(comps, n_comps);
 		return (B_FALSE);
 	}
-	strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
+	lacf_strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
 	unescape_percent(comps[3]);
 
 	cachefile = mk_arpt_cache_path(cdb, icao, comps[3]);
@@ -325,7 +325,7 @@ parse_airport(chartdb_t *cdb, CURL *curl, const char *path)
 	unescape_percent(comps[2]);
 	if (strlen(comps[2]) < 8)
 		goto out;
-	strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
+	lacf_strlcpy(icao, comps[2], 5);	/* first 4 chars is ICAO */
 	arpt_name = &(comps[2][7]);
 	arpt = chartdb_add_arpt(cdb, icao, arpt_name, country, "");
 	arpt->codename = strdup(path);
