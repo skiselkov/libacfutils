@@ -47,7 +47,9 @@ osrand(void *buf, size_t len)
 
 	if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, 0) &&
 	    !CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL,
-	    CRYPT_NEWKEYSET)) {
+	    CRYPT_NEWKEYSET) &&
+	    !CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL,
+	    CRYPT_NEWKEYSET | CRYPT_MACHINE_KEYSET)) {
 		win_perror(GetLastError(), "Error generating random data: "
 		    "error during CryptAcquireContext");
 		return (B_FALSE);
