@@ -33,6 +33,10 @@
 #include <acfutils/safe_alloc.h>
 #include <acfutils/shader.h>
 
+#define	EXTRA_2D_DEFINES \
+	"#define textureSize2D textureSize\n" \
+	"#define texture2D texture\n"
+
 static GLuint shader_from_file(GLenum shader_type, const char *filename,
     const char *entry_pt, const shader_spec_const_t *spec_const);
 static GLuint shader_from_text(GLenum shader_type,
@@ -86,6 +90,7 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 {
 	char *alt_filename, *alt_ext, *new_ext;
 	bool_t is_dir;
+	bool_t loaded = B_FALSE;
 	GLuint shader = 0;
 
 	switch (shader_type) {
@@ -105,14 +110,25 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 	ASSERT(new_ext != NULL);
 	new_ext++;
 	strcpy(new_ext, alt_ext);
-	if (file_exists(alt_filename, &is_dir) && !is_dir) {
+	if (!loaded && file_exists(alt_filename, &is_dir) && !is_dir) {
 		shader = shader_from_file(shader_type, alt_filename,
 		    NULL, NULL);
-	} else {
+		loaded = (shader != 0);
+	}
+	if (!loaded && GLEW_VERSION_4_2) {
+		strcpy(new_ext, "glsl420");
+		if (file_exists(alt_filename, &is_dir) && !is_dir) {
+			shader = shader_from_file(shader_type,
+			    alt_filename, NULL, NULL);
+			loaded = (shader != 0);
+		}
+	}
+	if (!loaded) {
 		strcpy(new_ext, "glsl");
 		if (file_exists(alt_filename, &is_dir) && !is_dir) {
 			shader = shader_from_file(shader_type,
 			    alt_filename, NULL, NULL);
+			loaded = (shader != 0);
 		} else {
 			logMsg("Error loading shader %s: SPIR-V shaders "
 			    "not supported and no fallback shader found.",
@@ -265,6 +281,36 @@ shader_from_file(GLenum shader_type, const char *filename,
 	return (shader);
 }
 
+static void
+construct_defines(const GLchar *shader_text, GLchar **defines,
+    GLchar **shader_proc)
+{
+	/* just a default guess */
+	int version = 120;
+	GLchar *mod_text = strdup(shader_text);
+	GLchar *ver_start = strstr(mod_text, "#version");
+
+	/*
+	 * Grab the version number from the '#version' directive and slap it
+	 * at the start of our preamble. Then delete the old one.
+	 */
+	if (ver_start != NULL && sscanf(&ver_start[9], "%d", &version) == 1) {
+		for (; *ver_start != '\0' && *ver_start != '\n'; ver_start++)
+			*ver_start = ' ';
+	}
+
+	*shader_proc = mod_text;
+	*defines = sprintf_alloc(
+	    "#version %d\n"
+	    "#define IBM=%d\n"
+	    "#define APL=%d\n"
+	    "#define LIN=%d\n"
+	    "%s"
+	    "#line 0\n",
+	    version, IBM, APL, LIN,
+	    version == 420 ? EXTRA_2D_DEFINES : "");
+}
+
 /*
  * Loads and compiles GLSL shader from a string of text and returns the
  * shader object ID. The shader type is passed in `shader_type'. Returns
@@ -277,6 +323,9 @@ shader_from_text(GLenum shader_type, const GLchar *shader_text,
 {
 	GLint shader = 0;
 	GLint compile_result;
+	GLchar *defines;
+	const GLchar *text[2];
+	GLchar *shader_proc;
 
 	ASSERT(shader_text != NULL);
 	if (filename == NULL)
@@ -288,7 +337,14 @@ shader_from_text(GLenum shader_type, const GLchar *shader_text,
 		    "error 0x%x", filename, glGetError());
 		goto errout;
 	}
-	glShaderSource(shader, 1, (const GLchar *const*)&shader_text, NULL);
+
+	construct_defines(shader_text, &defines, &shader_proc);
+	text[0] = defines;
+	text[1] = shader_proc;
+	glShaderSource(shader, 2, text, NULL);
+	free(defines);
+	free(shader_proc);
+
 	glCompileShader(shader);
 
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_result);
