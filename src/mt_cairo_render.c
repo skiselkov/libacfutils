@@ -456,11 +456,8 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	ASSERT(rs->rdy || rs->in_flight != 0);
 	if (!rs->rdy && !complete_transfer(mtcr, rs, B_FALSE)) {
 		rs = &mtcr->rs[!mtcr->cur_rs];
-		if (rs->tex == 0) {
-			/* No backbuffer to show, hard-wait for completion */
-			rs = &mtcr->rs[mtcr->cur_rs];
-			complete_transfer(mtcr, rs, B_TRUE);
-		}
+		if (rs->tex == 0)
+			return (B_FALSE);
 		if (!rs->rdy && !complete_transfer(mtcr, rs, B_TRUE)) {
 			return (B_FALSE);
 		}
