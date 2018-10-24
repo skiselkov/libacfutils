@@ -174,7 +174,6 @@ worker(mt_cairo_render_t *mtcr)
 		}
 		if (mtcr->shutdown)
 			break;
-
 		mutex_exit(&mtcr->lock);
 
 		/* always draw into the non-current texture */
@@ -391,9 +390,11 @@ rs_tex_alloc(render_surf_t *rs)
 }
 
 static bool_t
-complete_transfer(mt_cairo_render_t *mtcr, render_surf_t *rs)
+complete_transfer(mt_cairo_render_t *mtcr, render_surf_t *rs, bool_t force)
 {
-	if (rs->in_flight != 0 && glClientWaitSync(rs->in_flight, 0, 0) !=
+	if (rs->in_flight == 0)
+		return (rs->rdy);
+	if (glClientWaitSync(rs->in_flight, 0, force ? UINT64_MAX : 0) !=
 	    GL_TIMEOUT_EXPIRED) {
 		rs->rdy = B_TRUE;
 		rs->in_flight = 0;
@@ -405,7 +406,6 @@ complete_transfer(mt_cairo_render_t *mtcr, render_surf_t *rs)
 
 		return (B_TRUE);
 	}
-
 	return (B_FALSE);
 }
 
@@ -454,10 +454,16 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	 * transfer and mark it as ready for display.
 	 */
 	ASSERT(rs->rdy || rs->in_flight != 0);
-	if (!rs->rdy && !complete_transfer(mtcr, rs)) {
+	if (!rs->rdy && !complete_transfer(mtcr, rs, B_FALSE)) {
 		rs = &mtcr->rs[!mtcr->cur_rs];
-		if (!rs->rdy && !complete_transfer(mtcr, rs))
+		if (rs->tex == 0) {
+			/* No backbuffer to show, hard-wait for completion */
+			rs = &mtcr->rs[mtcr->cur_rs];
+			complete_transfer(mtcr, rs, B_TRUE);
+		}
+		if (!rs->rdy && !complete_transfer(mtcr, rs, B_TRUE)) {
 			return (B_FALSE);
+		}
 	}
 
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
