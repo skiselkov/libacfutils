@@ -63,6 +63,8 @@ typedef	struct {
 	bool_t		rdy;
 
 	GLuint		tex;
+	GLuint		pbo;
+	GLsync		in_flight;
 	cairo_surface_t	*surf;
 	cairo_t		*cr;
 } render_surf_t;
@@ -76,8 +78,6 @@ struct mt_cairo_render_s {
 
 	int			cur_rs;
 	render_surf_t		rs[2];
-	GLuint			pbo;
-	GLsync			in_flight;
 
 	thread_t		thr;
 	condvar_t		cv;
@@ -96,6 +96,8 @@ struct mt_cairo_render_s {
 	GLuint			vtx_buf;
 	GLuint			idx_buf;
 	GLuint			shader;
+
+	bool_t			debug;
 };
 
 static const char *vert_shader =
@@ -264,7 +266,6 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 		cairo_paint(mtcr->rs[i].cr);
 		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_OVER);
 	}
-	glGenBuffers(1, &mtcr->pbo);
 	glGenBuffers(1, &mtcr->vtx_buf);
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
 
@@ -307,9 +308,9 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		}
 		if (rs->tex != 0)
 			glDeleteTextures(1, &rs->tex);
+		if (rs->pbo != 0)
+			glDeleteBuffers(1, &rs->pbo);
 	}
-	if (mtcr->pbo != 0)
-		glDeleteBuffers(1, &mtcr->pbo);
 	if (mtcr->shader != 0)
 		glDeleteProgram(mtcr->shader);
 
@@ -380,12 +381,32 @@ rs_tex_alloc(render_surf_t *rs)
 {
 	if (rs->tex == 0) {
 		glGenTextures(1, &rs->tex);
+		glGenBuffers(1, &rs->pbo);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 		    GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 		    GL_LINEAR);
 	}
+}
+
+static bool_t
+complete_transfer(mt_cairo_render_t *mtcr, render_surf_t *rs)
+{
+	if (rs->in_flight != 0 && glClientWaitSync(rs->in_flight, 0, 0) !=
+	    GL_TIMEOUT_EXPIRED) {
+		rs->rdy = B_TRUE;
+		rs->in_flight = 0;
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w,
+		    mtcr->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+		return (B_TRUE);
+	}
+
+	return (B_FALSE);
 }
 
 static bool_t
@@ -396,14 +417,15 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	glActiveTexture(GL_TEXTURE0);
 
 	rs_tex_alloc(rs);
-	if (rs->chg || !rs->rdy) {
+
+	if (rs->chg) {
 		cairo_surface_flush(rs->surf);
-		if (!rs->rdy && mtcr->in_flight == 0) {
+		if (rs->in_flight == 0) {
 			size_t sz = mtcr->w * mtcr->h * 4;
 			void *ptr;
 
 			/* the back-buffer is ready, set up an async xfer */
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
 			glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, 0,
 			    GL_STREAM_DRAW);
 			ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER,
@@ -412,7 +434,7 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 				memcpy(ptr,
 				    cairo_image_surface_get_data(rs->surf), sz);
 				glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-				mtcr->in_flight = glFenceSync(
+				rs->in_flight = glFenceSync(
 				    GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 				rs->chg = B_FALSE;
 				rs->rdy = B_FALSE;
@@ -431,22 +453,11 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	 * If the current surface is in flight, check if it has completed
 	 * transfer and mark it as ready for display.
 	 */
-	ASSERT(rs->rdy || mtcr->in_flight != 0);
-	if (!rs->rdy) {
-		if (glClientWaitSync(mtcr->in_flight, 0, 0) ==
-		    GL_TIMEOUT_EXPIRED) {
-			rs->rdy = B_TRUE;
-			mtcr->in_flight = 0;
-			glBindTexture(GL_TEXTURE_2D, rs->tex);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w,
-			    mtcr->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-		} else {
-			rs = &mtcr->rs[!mtcr->cur_rs];
-			if (!rs->rdy)
-				return (B_FALSE);
-		}
+	ASSERT(rs->rdy || rs->in_flight != 0);
+	if (!rs->rdy && !complete_transfer(mtcr, rs)) {
+		rs = &mtcr->rs[!mtcr->cur_rs];
+		if (!rs->rdy && !complete_transfer(mtcr, rs))
+			return (B_FALSE);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
@@ -555,14 +566,14 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 
-	mutex_enter(&mtcr->lock);
-
 	if (mtcr->cur_rs == -1) {
 	        mutex_exit(&mtcr->lock);
 		return;
 	}
 	ASSERT3S(mtcr->cur_rs, >=, 0);
 	ASSERT3S(mtcr->cur_rs, <, 2);
+
+	mutex_enter(&mtcr->lock);
 
 	if (!bind_cur_tex(mtcr)) {
 		mutex_exit(&mtcr->lock);
