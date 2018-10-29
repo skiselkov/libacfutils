@@ -64,7 +64,7 @@ worker(void *ui)
 		bool_t result;
 		uint64_t intval_us = wk->intval_us;
 
-		if (intval_us == 0) {
+		if (intval_us == 0 && !wk->dontstop) {
 			cv_wait(&wk->cv, &wk->lock);
 			if (!wk->run)
 				break;
@@ -88,10 +88,11 @@ worker(void *ui)
 		 */
 		cv_broadcast(&wk->cv);
 
-		if (intval_us != 0) {
+		if (intval_us != 0 && !wk->dontstop) {
 			cv_timedwait(&wk->cv, &wk->lock,
 			    microclock() + intval_us);
 		}
+		wk->dontstop = B_FALSE;
 	}
 	mutex_exit(&wk->lock);
 
@@ -171,6 +172,7 @@ void
 worker_wake_up(worker_t *wk)
 {
 	mutex_enter(&wk->lock);
+	wk->dontstop = B_TRUE;
 	cv_broadcast(&wk->cv);
 	mutex_exit(&wk->lock);
 }
