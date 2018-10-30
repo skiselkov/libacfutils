@@ -19,6 +19,7 @@
 #ifndef	_ACF_UTILS_THREAD_H_
 #define	_ACF_UTILS_THREAD_H_
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,6 +33,7 @@
 
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
+#include <acfutils/time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,7 +91,10 @@ extern "C" {
  *
  * You can also performed a "timed" wait on a CV using cv_timedwait. The
  * function will exit when either the condition has been signalled, or the
- * timer has expired. You have to check yourself which of these occurred:
+ * timer has expired. The return value of the function indicates whether
+ * the condition was signalled before the timer expired (returns zero),
+ * or if the wait timed out (returns ETIMEDOUT) or another error occurred
+ * (returns -1).
  *
  *		mutex_enter(&my_lock);			-- grab the lock
  *		-- Wait for the CV to be signalled. Time argument is an
@@ -97,10 +102,11 @@ extern "C" {
  *		-- whatever extra time delay you want to apply.
  *		uint64_t deadline = microclock() + timeout_usecs;
  *		while (!condition_met()) {
- *			cv_timedwait(&my_cv, &my_lock, deadline);
- *			if (microclock() > deadline)
+ *			if (cv_timedwait(&my_cv, &my_lock, deadline) ==
+ *			    ETIMEDOUT) {
  *				-- timed out waiting for CV to signal
- *				goto bail_out;
+ *				break;
+ *			}
  *		}
  *		mutex_exit(&my_lock);			-- release the lock
  */
@@ -136,13 +142,13 @@ extern "C" {
 #endif	/* APL */
 
 #define	cv_wait(cv, mtx)	pthread_cond_wait((cv), (mtx))
-#define	cv_timedwait(cond, mtx, microtime) \
-	do { \
-		uint64_t t = (microtime); \
-		struct timespec ts = { .tv_sec = t / 1000000, \
-		    .tv_nsec = (t % 1000000) * 1000 }; \
-		(void) pthread_cond_timedwait((cond), (mtx), &ts); \
-	} while (0)
+static inline int
+cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
+{
+	struct timespec ts = { .tv_sec = limit / 1000000,
+	    .tv_nsec = (limit % 1000000) * 1000 };
+	return (pthread_cond_timedwait(cv, mtx, &ts));
+}
 #define	cv_init(cv)		pthread_cond_init((cv), NULL)
 #define	cv_destroy(cv)		pthread_cond_destroy((cv))
 #define	cv_broadcast(cv)	pthread_cond_broadcast((cv))
@@ -189,14 +195,21 @@ typedef struct {
 
 #define	cv_wait(cv, mtx) \
 	VERIFY(SleepConditionVariableCS((cv), &(mtx)->cs, INFINITE))
-#define	cv_timedwait(cv, mtx, limit) \
-	do { \
-		uint64_t __now = microclock(); \
-		if (__now < (limit)) { \
-			(void) SleepConditionVariableCS((cv), &(mtx)->cs, \
-			    ((limit) - __now) / 1000); \
-		} \
-	} while (0)
+static inline int
+cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
+{
+	uint64_t now = microclock();
+	if (now < limit) {
+		if (SleepConditionVariableCS(cv, &mtx->cs,
+		    (limit - now) / 1000) != 0) {
+			return (0);
+		}
+		if (GetLastError() == ERROR_TIMEOUT)
+			return (ETIMEDOUT);
+		return (-1);
+	}
+	return (ETIMEDOUT);
+}
 #define	cv_init		InitializeConditionVariable
 #define	cv_destroy(cv)	/* no-op */
 #define	cv_broadcast	WakeAllConditionVariable
