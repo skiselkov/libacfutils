@@ -47,6 +47,13 @@ typedef struct {
 	list_node_t	node;
 } tooltip_t;
 
+typedef struct {
+	int		left;
+	int		top;
+	int		right;
+	int		bottom;
+} monitor_t;
+
 struct tooltip_set {
 	XPWidgetID	window;
 	list_t		tooltips;
@@ -95,6 +102,82 @@ create_widget_rel2(int x, int y, bool_t y_from_bottom, int width, int height,
 
 	return (XPCreateWidget(x, y, right, bottom, visible, descr, root,
 	    container, cls));
+}
+
+static void
+find_first_monitor(int idx, int left, int top, int right, int bottom,
+    void *refcon)
+{
+	monitor_t *mon = refcon;
+
+	UNUSED(idx);
+
+	if (mon->left == 0 && mon->right == 0 &&
+	    mon->top == 0 && mon->bottom == 0) {
+		mon->left = left;
+		mon->right = right;
+		mon->top = top;
+		mon->bottom = bottom;
+	}
+}
+
+static monitor_t
+get_first_monitor_bounds(void)
+{
+	monitor_t mon = { 0 };
+
+	XPLMGetAllMonitorBoundsGlobal(find_first_monitor, &mon);
+	if (mon.left == 0 && mon.right == 0 && mon.top == 0 &&
+	    mon.bottom == 0) {
+		XPLMGetScreenSize(&mon.right, &mon.top);
+	} else {
+		/*
+		 * The modern coordinate system uses the top left corner
+		 * as the origin, instead of the bottom left. So we need
+		 * to flip the coordinates around.
+		 */
+		int glob_left, glob_top, glob_right, glob_bottom;
+		int glob_height;
+
+		XPLMGetScreenBoundsGlobal(&glob_left, &glob_top,
+		    &glob_right, &glob_bottom);
+		glob_height = glob_top - glob_bottom;
+		mon.top = glob_height - mon.top;
+		mon.bottom = glob_height - mon.bottom;
+	}
+
+	return (mon);
+}
+
+static void
+center_window_coords(int *left, int *top, int *right, int *bottom)
+{
+	monitor_t mon = get_first_monitor_bounds();
+	int width = (*right) - (*left);
+	int height = (*top) - (*bottom);
+
+	*left = (mon.right + mon.left - width) / 2;
+	*right = (*left) + width;
+	*bottom = (mon.bottom + mon.top - height) / 2;
+	*top = (*bottom) + height;
+}
+
+API_EXPORT void
+widget_win_center(XPWidgetID window)
+{
+	int left, top, right, bottom;
+	XPGetWidgetGeometry(window, &left, &top, &right, &bottom);
+	center_window_coords(&left, &top, &right, &bottom);
+	XPSetWidgetGeometry(window, left, top, right, bottom);
+}
+
+API_EXPORT void
+classic_win_center(XPLMWindowID window)
+{
+	int left, top, right, bottom;
+	XPLMGetWindowGeometry(window, &left, &top, &right, &bottom);
+	center_window_coords(&left, &top, &right, &bottom);
+	XPLMSetWindowGeometry(window, left, top, right, bottom);
 }
 
 tooltip_set_t *

@@ -46,6 +46,9 @@ API_EXPORT XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
     XPWidgetID container, XPWidgetID coord_ref, XPWidgetClass cls);
 
+API_EXPORT void widget_win_center(XPWidgetID window);
+API_EXPORT void classic_win_center(XPLMWindowID window);
+
 API_EXPORT void tooltip_init(void);
 API_EXPORT void tooltip_fini(void);
 
