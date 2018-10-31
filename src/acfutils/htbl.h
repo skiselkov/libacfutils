@@ -34,6 +34,26 @@
 extern "C" {
 #endif
 
+struct htbl_bucket_item_s;
+
+typedef struct {
+	void				*value;
+	list_node_t			node;
+	struct htbl_bucket_item_s	*item;
+} htbl_multi_value_t;
+
+typedef struct htbl_bucket_item_s {
+	list_node_t	bucket_node;
+	union {
+		void		*value;
+		struct {
+			list_t	list;
+			size_t	num;
+		} multi;
+	};
+	uint8_t		key[1];	/* variable length, depends on htbl->key_sz */
+} htbl_bucket_item_t;
+
 typedef struct {
 	size_t		tbl_sz;
 	size_t		key_sz;
