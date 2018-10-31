@@ -64,6 +64,12 @@ is_valid_lat(double lat)
 }
 
 static inline bool_t
+is_valid_lat_polar(double lat)
+{
+	return (!isnan(lat) && fabs(lat) <= 90);
+}
+
+static inline bool_t
 is_valid_lon(double lon)
 {
 	return (!isnan(lon) && fabs(lon) <= 180.0);
