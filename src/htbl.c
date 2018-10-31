@@ -277,10 +277,12 @@ htbl_dump(const htbl_t *htbl, bool_t printable_keys)
 	char	*result = NULL;
 	size_t	result_sz = 0;
 
-	append_format(&result, &result_sz, "(%lu){\n", htbl->num_values);
+	append_format(&result, &result_sz, "(%lu){\n",
+	    (long unsigned)htbl->num_values);
 	for (size_t i = 0; i < htbl->tbl_sz; i++) {
 		list_t *bucket = &htbl->buckets[i];
-		append_format(&result, &result_sz, "  [%lu] =", i);
+		append_format(&result, &result_sz, "  [%lu] =",
+		    (long unsigned)i);
 		if (list_head(bucket) == NULL)
 			append_format(&result, &result_sz, " <empty>");
 		for (const htbl_bucket_item_t *item = list_head(bucket); item;
