@@ -36,6 +36,7 @@ typedef struct airportdb {
 
 	avl_tree_t	apt_dat;
 	avl_tree_t	geo_table;
+	avl_tree_t	arpt_index;
 } airportdb_t;
 
 typedef struct airport airport_t;
@@ -105,6 +106,12 @@ typedef struct {
 	list_node_t	node;
 } freq_info_t;
 
+typedef struct {
+	char		icao[8];
+	geo_pos2_t	pos;
+	avl_node_t	node;
+} arpt_index_t;
+
 struct airport {
 	char		icao[5];	/* 4-letter ID, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
@@ -153,6 +160,9 @@ API_EXPORT void unload_distant_airport_tiles(airportdb_t *db,
 #define	airport_lookup	ACFSYM(airport_lookup)
 API_EXPORT airport_t *airport_lookup(airportdb_t *db, const char *icao,
     geo_pos2_t pos);
+
+#define	airport_lookup_global	ACFSYM(airport_lookup_global)
+API_EXPORT airport_t *airport_lookup_global(airportdb_t *db, const char *icao);
 
 #define	matching_airport_in_tile_with_TATL \
     ACFSYM(matching_airport_in_tile_with_TATL)

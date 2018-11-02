@@ -157,7 +157,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		7
+#define	ARPTDB_CACHE_VERSION		8
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -1748,6 +1748,42 @@ cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats)
 }
 
 static bool_t
+write_index_dat(const airport_t *arpt, FILE *index_file)
+{
+	fprintf(index_file, "%s %f %f\n", arpt->icao, arpt->refpt.lat,
+	    arpt->refpt.lon);
+	return (B_TRUE);
+}
+
+static bool_t
+read_index_dat(airportdb_t *db)
+{
+	char *index_filename = mkpathname(db->cachedir, "index.dat", NULL);
+	FILE *index_file = fopen(index_filename, "r");
+	char *line = NULL;
+	size_t line_cap = 0;
+
+	if (index_file == NULL)
+		return (B_FALSE);
+
+	while (getline(&line, &line_cap, index_file) > 0) {
+		arpt_index_t *idx = safe_calloc(1, sizeof (*idx));
+
+		if (sscanf(line, "%4s %lf %lf", idx->icao,
+		    &idx->pos.lat, &idx->pos.lon) != 3) {
+			free(idx);
+			continue;
+		}
+		avl_add(&db->arpt_index, idx);
+	}
+	free(line);
+	fclose(index_file);
+	free(index_filename);
+
+	return (B_TRUE);
+}
+
+static bool_t
 recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 {
 	char *filename;
@@ -1816,11 +1852,13 @@ recreate_cache(airportdb_t *db)
 	bool_t success = B_TRUE;
 	char *filename;
 	bool_t is_xp11;
+	char *index_filename = NULL;
+	FILE *index_file = NULL;
 
 	list_create(&apt_dat_files, sizeof (apt_dats_entry_t),
 	    offsetof(apt_dats_entry_t, node));
 	find_all_apt_dats(db, &apt_dat_files);
-	if (cache_up_to_date(db, &apt_dat_files))
+	if (cache_up_to_date(db, &apt_dat_files) && read_index_dat(db))
 		goto out;
 
 	/* First scan all the provided apt.dat files */
@@ -1875,26 +1913,43 @@ recreate_cache(airportdb_t *db)
 		success = B_FALSE;
 		goto out;
 	}
+	index_filename = mkpathname(db->cachedir, "index.dat", NULL);
+	index_file = fopen(index_filename, "w");
+	if (index_file == NULL) {
+		logMsg("Error creating airport database index file %s: %s",
+		    index_filename, strerror(errno));
+		success = B_FALSE;
+		goto out;
+	}
 
 	for (airport_t *arpt = avl_first(&db->apt_dat); arpt != NULL;
 	    arpt = AVL_NEXT(&db->apt_dat, arpt)) {
 		char *dirname;
+		arpt_index_t *idx;
 
 		ASSERT(arpt->geo_linked);
 		ASSERT(avl_numnodes(&arpt->rwys) != 0);
 
 		dirname = apt_dat_cache_dir(db, GEO3_TO_GEO2(arpt->refpt),
 		    NULL);
-		if (!create_directory(dirname) || !write_apt_dat(db, arpt)) {
+		if (!create_directory(dirname) || !write_apt_dat(db, arpt) ||
+		    !write_index_dat(arpt, index_file)) {
 			free(dirname);
 			success = B_FALSE;
 			goto out;
 		}
+		idx = safe_calloc(1, sizeof (*idx));
+		strlcpy(idx->icao, arpt->icao, sizeof (idx->icao));
+		idx->pos = GEO3_TO_GEO2(arpt->refpt);
+		avl_add(&db->arpt_index, idx);
 		free(dirname);
 	}
 out:
 	unload_distant_airport_tiles(db, NULL_GEO_POS2);
 	destroy_apt_dats_list(&apt_dat_files);
+	free(index_filename);
+	if (index_file != NULL)
+		fclose(index_file);
 
 	return (success);
 }
@@ -2330,6 +2385,19 @@ unload_distant_airport_tiles(airportdb_t *db, geo_pos2_t my_pos)
 	}
 }
 
+static int
+arpt_index_compar(const void *a, const void *b)
+{
+	const arpt_index_t *ia = a, *ib = b;
+	int res = strcmp(ia->icao, ib->icao);
+
+	if (res < 0)
+		return (-1);
+	if (res > 0)
+		return (1);
+	return (0);
+}
+
 void
 airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 {
@@ -2346,15 +2414,24 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	    offsetof(airport_t, apt_dat_node));
 	avl_create(&db->geo_table, tile_compar, sizeof (tile_t),
 	    offsetof(tile_t, node));
+	avl_create(&db->arpt_index, arpt_index_compar,
+	    sizeof (arpt_index_t), offsetof(arpt_index_t, node));
 }
 
 void
 airportdb_destroy(airportdb_t *db)
 {
 	tile_t *tile;
-	void *cookie = NULL;
+	void *cookie;
+	arpt_index_t *idx;
+
+	cookie = NULL;
+	while ((idx = avl_destroy_nodes(&db->arpt_index, &cookie)) != NULL)
+		free(idx);
+	avl_destroy(&db->arpt_index);
 
 	/* airports are freed in the free_tile function */
+	cookie = NULL;
 	while ((tile = avl_destroy_nodes(&db->geo_table, &cookie)) != NULL)
 		free_tile(db, tile, B_FALSE);
 	avl_destroy(&db->geo_table);
@@ -2369,6 +2446,23 @@ airport_lookup(airportdb_t *db, const char *icao, geo_pos2_t pos)
 {
 	load_airports_in_tile(db, pos);
 	return (apt_dat_lookup(db, icao));
+}
+
+/*
+ * Performs an airport lookup without having to know its approximate location
+ * first.
+ */
+API_EXPORT airport_t *
+airport_lookup_global(airportdb_t *db, const char *icao)
+{
+	arpt_index_t *idx;
+	arpt_index_t srch;
+
+	strlcpy(srch.icao, icao, sizeof (srch.icao));
+	idx = avl_find(&db->arpt_index, &srch, NULL);
+	if (idx == NULL)
+		return (NULL);
+	return (airport_lookup(db, icao, idx->pos));
 }
 
 airport_t *
