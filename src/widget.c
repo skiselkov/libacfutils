@@ -124,7 +124,9 @@ find_first_monitor(int idx, int left, int top, int right, int bottom,
 static monitor_t
 get_first_monitor_bounds(void)
 {
-	monitor_t mon = { 0 };
+	monitor_t mon;
+
+	memset(&mon, 0, sizeof (mon));
 
 	XPLMGetAllMonitorBoundsGlobal(find_first_monitor, &mon);
 	if (mon.left == 0 && mon.right == 0 && mon.top == 0 &&
