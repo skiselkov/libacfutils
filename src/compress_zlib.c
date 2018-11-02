@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <stdio.h>
+
 #include <zlib.h>
 
 #include <acfutils/assert.h>
@@ -138,13 +140,14 @@ zlib_decompress(void *in_buf, size_t len, size_t *out_len_p)
 	VERIFY3S(inflateInit(&strm), ==, Z_OK);
 
 	for (;;) {
-		int ret;
+		int ret, avail_in;
 
 		out_cap += OUT_BUF_SZ;
 		out_buf = realloc(out_buf, out_cap);
 
 		strm.next_in = in_buf + in_prog;
-		strm.avail_in = len - in_prog;
+		avail_in = len - in_prog;
+		strm.avail_in = avail_in;
 		strm.next_out = out_buf + out_len;
 		strm.avail_out = out_cap - out_len;
 		ret = inflate(&strm, Z_NO_FLUSH);
@@ -160,6 +163,7 @@ zlib_decompress(void *in_buf, size_t len, size_t *out_len_p)
 			out_len = 0;
 			goto out;
 		}
+		in_prog += (avail_in - strm.avail_in);
 		out_len += (out_cap - out_len) - strm.avail_out;
 		if (ret == Z_STREAM_END)
 			break;
