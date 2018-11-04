@@ -115,7 +115,8 @@ webdav_foreach_dirlist(chartdb_t *cdb, CURL *curl, const char *path,
 	xpath_obj = xmlXPathEvalExpression(
 	    (xmlChar *)"/d:multistatus/d:response/d:href", xpath_ctx);
 	if (xpath_obj == NULL || xpath_obj->nodesetval->nodeNr < 1) {
-		logMsg("Error parsing chart index: malformed WebDAV dirlist %s %p.", path, xpath_obj);
+		logMsg("Error parsing chart index: malformed WebDAV dirlist "
+		    "%s %p.", path, xpath_obj);
 		goto errout;
 	}
 	for (int i = 0; i < xpath_obj->nodesetval->nodeNr; i++) {
