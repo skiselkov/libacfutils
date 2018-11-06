@@ -1532,6 +1532,8 @@ load_CIFP_dir(airportdb_t *db, const char *dirpath)
 		(void) load_CIFP_file(db, dirpath, de->d_name);
 	}
 
+	closedir(dp);
+
 	return (B_TRUE);
 }
 
@@ -1625,7 +1627,7 @@ airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 		if (success)
 			break;
 	}
-
+	fclose(fp);
 out:
 	free(filename);
 
