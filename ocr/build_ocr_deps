@@ -34,8 +34,13 @@ case `uname` in
 		build_dep "win-64" "$CONFOPTS_LEPTONICA \
 		    --host=x86_64-w64-mingw32" "$LEPTONICA" "liblept" \
 		    "lib/liblept.a" "leptonica.patch" && \
+		( ! [ -d "$(pwd)/liblept-linux-64/lib" ] || \
+		    cp -r $(pwd)/../libpng/libpng-linux-64/lib/libpng* \
+		    $(pwd)/../zlib/zlib-linux-64/lib/libz.a \
+		    "$(pwd)/liblept-linux-64/lib" ) && \
 		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
 		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-linux-64/include/leptonica" \
+		    LIBS="-lpng -lz" \
 		    build_dep "linux-64" "$CONFOPTS_TESSERACT \
 		    --with-extra-libraries=$(pwd)/liblept-linux-64/lib" \
 		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
@@ -56,10 +61,15 @@ case `uname` in
 		build_dep "mac-64" "$CONFOPTS_LEPTONICA" \
 		    "$LEPTONICA" "liblept" "lib/liblept.a" \
 		    "leptonica.patch" && \
+		( ! [ -d "$(pwd)/liblept-mac-64/lib" ] || \
+		    cp -r $(pwd)/../libpng/libpng-mac-64/lib/libpng* \
+		    $(pwd)/../zlib/zlib-mac-64/lib/libz.a \
+		    "$(pwd)/liblept-mac-64/lib" ) && \
 		LDFLAGS="-L$(pwd)/../libpng/libpng-mac-64/lib\\ -lpng\
 \\ -L$(pwd)/../zlib/zlib-mac-64/lib\\ -lz" \
 		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
 		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-mac-64/include/leptonica" \
+		    LIBS="-lpng -lz" \
 		    build_dep "mac-64" "$CONFOPTS_TESSERACT \
 		    --with-extra-libraries=$(pwd)/liblept-mac-64/lib" \
 		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
