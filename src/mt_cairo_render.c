@@ -54,6 +54,9 @@
 
 #include <cglm/cglm.h>
 
+TEXSZ_MK_TOKEN(mt_cairo_render_tex);
+TEXSZ_MK_TOKEN(mt_cairo_render_pbo);
+
 typedef struct {
 	GLfloat		pos[3];
 	GLfloat		tex0[2];
@@ -230,9 +233,9 @@ mt_cairo_render_glob_init(void)
  * @param userinfo An optional user info pointer for the callbacks.
  */
 mt_cairo_render_t *
-mt_cairo_render_init(unsigned w, unsigned h, double fps,
-    mt_cairo_init_cb_t init_cb, mt_cairo_render_cb_t render_cb,
-    mt_cairo_fini_cb_t fini_cb, void *userinfo)
+mt_cairo_render_init_impl(const char *filename, int line,
+    unsigned w, unsigned h, double fps, mt_cairo_init_cb_t init_cb,
+    mt_cairo_render_cb_t render_cb, mt_cairo_fini_cb_t fini_cb, void *userinfo)
 {
 	mt_cairo_render_t *mtcr = safe_calloc(1, sizeof (*mtcr));
 
@@ -253,6 +256,21 @@ mt_cairo_render_init(unsigned w, unsigned h, double fps,
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
 	cv_init(&mtcr->render_done_cv);
+
+	/*
+	 * For simplicity, we will simply assume the caller will use both
+	 * buffers eventually.
+	 */
+	if (glutils_texsz_inited()) {
+		for (int i = 0; i < 2; i++) {
+			TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
+			    filename, line, GL_BGRA, GL_UNSIGNED_BYTE,
+			    mtcr->w, mtcr->h);
+			TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
+			    filename, line, GL_BGRA, GL_UNSIGNED_BYTE,
+			    mtcr->w, mtcr->h);
+		}
+	}
 
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
@@ -311,13 +329,24 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 			cairo_destroy(rs->cr);
 			cairo_surface_destroy(rs->surf);
 		}
-		if (rs->tex != 0)
+		if (rs->tex != 0) {
 			glDeleteTextures(1, &rs->tex);
-		if (rs->pbo != 0)
+		}
+		if (rs->pbo != 0) {
 			glDeleteBuffers(1, &rs->pbo);
+		}
 	}
 	if (mtcr->shader != 0)
 		glDeleteProgram(mtcr->shader);
+
+	if (glutils_texsz_inited()) {
+		for (int i = 0; i < 2; i++) {
+			TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
+			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h);
+			TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
+			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h);
+		}
+	}
 
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
