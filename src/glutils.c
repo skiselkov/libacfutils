@@ -537,6 +537,17 @@ glutils_texsz_get(void)
 	return (texsz.bytes);
 }
 
+API_EXPORT void
+glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo)
+{
+	ASSERT(cb != NULL);
+
+	for (texsz_alloc_t *ta = avl_first(&texsz.allocs); ta != NULL;
+	    ta = AVL_NEXT(&texsz.allocs, ta)) {
+		cb(ta->token, ta->bytes, userinfo);
+	}
+}
+
 API_EXPORT bool_t
 glutils_texsz_inited(void)
 {

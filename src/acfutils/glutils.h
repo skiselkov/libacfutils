@@ -46,6 +46,9 @@ typedef struct {
 	size_t	num_vtx;
 } glutils_lines_t;
 
+typedef void (*glutils_texsz_enum_cb_t)(const char *token, int64_t bytes,
+    void *userinfo);
+
 API_EXPORT void glutils_disable_all_client_state(void);
 
 API_EXPORT GLuint glutils_make_quads_IBO(size_t num_vtx);
@@ -195,6 +198,7 @@ API_EXPORT void glutils_texsz_free_bytes(const char *token,
  * memory load due to custom avionics code.
  */
 API_EXPORT uint64_t glutils_texsz_get(void);
+API_EXPORT void glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo);
 
 API_EXPORT bool_t glutils_texsz_inited(void);
 
