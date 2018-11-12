@@ -437,9 +437,13 @@ texsz_incr(const char *token, const void *instance, const char *filename,
 		    "instance underflow error (incr %ld bytes in zone %s "
 		    "instance %p)", (long)bytes, ta->token, instance);
 		ti->bytes += bytes;
-		if (filename != NULL) {
+		if (filename != NULL && snprintf(ti->allocd_at,
+		    sizeof (ti->allocd_at), "%s:%d", filename, line) >=
+		    (int)sizeof (ti->allocd_at)) {
+			int l = strlen(filename);
+			int off = MAX(l - 26, 0);
 			snprintf(ti->allocd_at, sizeof (ti->allocd_at),
-			    "%s:%d", filename, line);
+			    "%s:%d", &filename[off], line);
 		}
 		if (ti->bytes == 0) {
 			avl_remove(&ta->instances, ti);
