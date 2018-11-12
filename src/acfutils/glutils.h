@@ -200,6 +200,12 @@ API_EXPORT void glutils_texsz_free_bytes(const char *token,
 API_EXPORT uint64_t glutils_texsz_get(void);
 API_EXPORT void glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo);
 
+#define	IF_TEXSZ(__xxx) \
+	do { \
+		if (glutils_texsz_inited()) { \
+			__xxx; \
+		} \
+	} while (0)
 API_EXPORT bool_t glutils_texsz_inited(void);
 
 #ifdef	__cplusplus
