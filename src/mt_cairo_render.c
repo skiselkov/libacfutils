@@ -33,6 +33,7 @@
 #include <GL/glew.h>
 
 #include <acfutils/assert.h>
+#include <acfutils/dr.h>
 #include <acfutils/geom.h>
 #include <acfutils/mt_cairo_render.h>
 #include <acfutils/safe_alloc.h>
@@ -136,6 +137,10 @@ static const struct {
 
 static bool_t glob_inited = B_FALSE;
 
+static struct {
+	dr_t	viewport;
+} drs;
+
 const char *
 ft_err2str(FT_Error err)
 {
@@ -203,6 +208,7 @@ mt_cairo_render_glob_init(void)
 		return;
 	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 	    1, 1));
+	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
 	glob_inited = B_TRUE;
 }
 
@@ -538,13 +544,11 @@ void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
-	mat4 mv_matrix;
-	mat4 proj_matrix;
+	int vp[4];
 	mat4 pvm;
 
-	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mv_matrix);
-	glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat *)proj_matrix);
-	glm_mat4_mul(proj_matrix, mv_matrix, pvm);
+	VERIFY3S(dr_getvi(&drs.viewport, vp, 0, 4), ==, 4);
+	glm_ortho(vp[0], vp[2] - vp[0], vp[1], vp[3] - vp[1], 0, 1, pvm);
 	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
 	    (GLfloat *)pvm);
 }
