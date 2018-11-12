@@ -140,6 +140,7 @@ typedef struct {
 #define	GEO2_TO_GEO3(v, a)	((geo_pos3_t){(v).lat, (v).lon, (a)})
 #define	GEO3_TO_GEO2(v)		((geo_pos2_t){(v).lat, (v).lon})
 #define	GEO3_FT2M(g)		GEO_POS3(g.lat, g.lon, FEET2MET(g.elev))
+#define	GEO3_M2FT(g)		GEO_POS3(g.lat, g.lon, MET2FEET(g.elev))
 
 #define	EARTH_MSL		6371200		/* meters */
 #ifndef	ABS
