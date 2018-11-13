@@ -142,6 +142,9 @@ static bool_t glob_inited = B_FALSE;
 
 static struct {
 	dr_t	viewport;
+	dr_t	proj_matrix;
+	dr_t	mv_matrix;
+	dr_t	draw_call_type;
 } drs;
 
 const char *
@@ -212,6 +215,9 @@ mt_cairo_render_glob_init(void)
 	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 	    1, 1));
 	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
+	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
+	fdr_find(&drs.mv_matrix, "sim/graphics/view/modelview_matrix");
+	fdr_find(&drs.draw_call_type, "sim/graphics/view/draw_call_type");
 	glob_inited = B_TRUE;
 }
 
@@ -573,11 +579,23 @@ void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
-	int vp[4];
 	mat4 pvm;
 
-	VERIFY3S(dr_getvi(&drs.viewport, vp, 0, 4), ==, 4);
-	glm_ortho(vp[0], vp[2] - vp[0], vp[1], vp[3] - vp[1], 0, 1, pvm);
+	if (dr_geti(&drs.draw_call_type) != 0) {
+		int vp[4];
+
+		VERIFY3S(dr_getvi(&drs.viewport, vp, 0, 4), ==, 4);
+		glm_ortho(vp[0], vp[2] - vp[0], vp[1], vp[3] - vp[1], 0, 1,
+		    pvm);
+	} else {
+		mat4 proj, mv;
+
+		VERIFY3S(dr_getvf32(&drs.mv_matrix, (float *)mv, 0, 16),
+		    ==, 16);
+		VERIFY3S(dr_getvf32(&drs.proj_matrix, (float *)proj, 0, 16),
+		    ==, 16);
+		glm_mat4_mul(proj, mv, pvm);
+	}
 	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
 	    (GLfloat *)pvm);
 }
