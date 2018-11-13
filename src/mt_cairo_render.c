@@ -74,6 +74,9 @@ typedef	struct {
 } render_surf_t;
 
 struct mt_cairo_render_s {
+	char			*init_filename;
+	int			init_line;
+
 	unsigned		w, h;
 	double			fps;
 	mt_cairo_render_cb_t	render_cb;
@@ -251,6 +254,8 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	ASSERT(h != 0);
 	ASSERT(render_cb != NULL);
 
+	mtcr->init_filename = strdup(filename);
+	mtcr->init_line = line;
 	mtcr->w = w;
 	mtcr->h = h;
 	mtcr->cur_rs = -1;
@@ -262,21 +267,6 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
 	cv_init(&mtcr->render_done_cv);
-
-	/*
-	 * For simplicity, we will simply assume the caller will use both
-	 * buffers eventually.
-	 */
-	if (glutils_texsz_inited()) {
-		for (int i = 0; i < 2; i++) {
-			TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
-			    filename, line, GL_BGRA, GL_UNSIGNED_BYTE,
-			    mtcr->w, mtcr->h);
-			TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
-			    filename, line, GL_BGRA, GL_UNSIGNED_BYTE,
-			    mtcr->w, mtcr->h);
-		}
-	}
 
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
@@ -337,22 +327,19 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		}
 		if (rs->tex != 0) {
 			glDeleteTextures(1, &rs->tex);
+			IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
+			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 		}
 		if (rs->pbo != 0) {
 			glDeleteBuffers(1, &rs->pbo);
+			IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
+			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 		}
 	}
 	if (mtcr->shader != 0)
 		glDeleteProgram(mtcr->shader);
 
-	if (glutils_texsz_inited()) {
-		for (int i = 0; i < 2; i++) {
-			TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
-			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h);
-			TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
-			    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h);
-		}
-	}
+	free(mtcr->init_filename);
 
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
@@ -417,16 +404,24 @@ bind_tex_sync(mt_cairo_render_t *mtcr, render_surf_t *rs)
 }
 
 static void
-rs_tex_alloc(render_surf_t *rs)
+rs_tex_alloc(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	if (rs->tex == 0) {
 		glGenTextures(1, &rs->tex);
-		glGenBuffers(1, &rs->pbo);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 		    GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 		    GL_LINEAR);
+		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
+		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
+		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+	}
+	if (rs->pbo == 0) {
+		glGenBuffers(1, &rs->pbo);
+		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
+		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
+		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
 }
 
@@ -445,6 +440,11 @@ complete_transfer(mt_cairo_render_t *mtcr, render_surf_t *rs, bool_t force)
 		    mtcr->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, NULL);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
+		glDeleteBuffers(1, &rs->pbo);
+		rs->pbo = 0;
+		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
+		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+
 		return (B_TRUE);
 	}
 	return (B_FALSE);
@@ -457,7 +457,7 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 
 	glActiveTexture(GL_TEXTURE0);
 
-	rs_tex_alloc(rs);
+	rs_tex_alloc(mtcr, rs);
 
 	if (rs->chg) {
 		cairo_surface_flush(rs->surf);
@@ -680,7 +680,7 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 		render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 		/* Upload the texture if it has changed */
 
-		rs_tex_alloc(rs);
+		rs_tex_alloc(mtcr, rs);
 		if (rs->chg) {
 			glBindTexture(GL_TEXTURE_2D, rs->tex);
 			cairo_surface_flush(rs->surf);
