@@ -66,7 +66,7 @@ static struct {
 	mutex_t		lock;
 	int64_t		bytes;
 	avl_tree_t	allocs;
-} texsz = { B_FALSE };
+} texsz = { .inited = B_FALSE };
 
 /*
  * Kills all OpenGL client state arrays. Call this before enabling the OpenGL
