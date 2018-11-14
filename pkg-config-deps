@@ -29,8 +29,8 @@
 # Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
-PACKAGES="cairo freetype2 pixman-1 libpng16 opusfile opus ogg zlib \
-    shapelib proj libcurl openssl tesseract lept libxml-2.0"
+PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
+    libcurl openssl tesseract lept libpng16 libxml-2.0 zlib"
 STATIC_OPENAL=0
 
 ARCH="$1"
