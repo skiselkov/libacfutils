@@ -224,7 +224,7 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("REFDESIAS", acft->ref.des_ias)
 		else PARSE_SCALAR("REFDESMACH", acft->ref.des_mach)
 		else PARSE_SCALAR("REFTOFLAP", acft->ref.to_flap)
-		else PARSE_SCALAR("REFACCELHT", acft->ref.accel_height)
+		else PARSE_SCALAR("REFACCELHT", acft->ref.accel_alt)
 		else PARSE_SCALAR("REFSPDLIM", acft->ref.spd_lim)
 		else PARSE_SCALAR("REFSPDLIMALT", acft->ref.spd_lim_alt)
 		else PARSE_SCALAR("MAXFUEL", acft->max_fuel)
@@ -241,6 +241,8 @@ acft_perf_parse(const char *filename)
 		else PARSE_CURVE("CLFLAP", acft->cl_flap_curve)
 		else PARSE_CURVE("CD", acft->cd_curve)
 		else PARSE_CURVE("CDFLAP", acft->cd_flap_curve)
+		else PARSE_CURVE("HALFBANK", acft->half_bank_curve)
+		else PARSE_CURVE("FULLBANK", acft->full_bank_curve)
 		else {
 			logMsg("Error parsing acft perf file %s:%lu: unknown "
 			    "line", filename, (unsigned long)line_num);
@@ -253,7 +255,7 @@ acft_perf_parse(const char *filename)
 	    acft->ref.clb_ias <= 0 || acft->ref.clb_mach <= 0 ||
 	    acft->ref.crz_ias <= 0 || acft->ref.crz_mach <= 0 ||
 	    acft->ref.des_ias <= 0 || acft->ref.des_mach <= 0 ||
-	    acft->ref.to_flap <= 0 || acft->ref.accel_height <= 0 ||
+	    acft->ref.to_flap <= 0 || acft->ref.accel_alt <= 0 ||
 	    acft->ref.spd_lim <= 0 || acft->ref.spd_lim_alt <= 0 ||
 	    acft->max_fuel <= 0 || acft->max_gw <= 0 ||
 	    acft->eng_type == NULL || acft->eng_max_thr <= 0 ||
@@ -262,7 +264,8 @@ acft_perf_parse(const char *filename)
 	    acft->sfc_dens_curve == NULL || acft->sfc_isa_curve == NULL ||
 	    acft->cl_curve == NULL || acft->cl_flap_curve == NULL ||
 	    acft->cd_curve == NULL || acft->cd_flap_curve == NULL ||
-	    acft->wing_area == 0) {
+	    acft->wing_area == 0 || acft->half_bank_curve == NULL ||
+	    acft->full_bank_curve) {
 		logMsg("Error parsing acft perf file %s: missing or corrupt "
 		    "data fields.", filename);
 		goto errout;
@@ -308,6 +311,10 @@ acft_perf_destroy(acft_perf_t *acft)
 		bezier_free(acft->cd_curve);
 	if (acft->cd_flap_curve)
 		bezier_free(acft->cd_flap_curve);
+	if (acft->half_bank_curve != NULL)
+		bezier_free(acft->half_bank_curve);
+	if (acft->full_bank_curve != NULL)
+		bezier_free(acft->full_bank_curve);
 	free(acft);
 }
 
@@ -960,6 +967,35 @@ acft_get_sfc(const acft_perf_t *acft, double thr, double dens, double isadev)
 	return (quad_bezier_func(thr, acft->sfc_thr_curve) *
 	    quad_bezier_func(dens, acft->sfc_dens_curve) *
 	    quad_bezier_func(isadev, acft->sfc_isa_curve));
+}
+
+double
+perf_get_turn_rate(double bank_ratio, double gs_kts, const flt_perf_t *flt,
+    const acft_perf_t *acft)
+{
+	double half_bank_rate, full_bank_rate;
+
+	ASSERT3F(gs_kts, >=, 0);
+	/* flt can be NULL */
+	ASSERT(acft != NULL);
+
+	if (bank_ratio == 0) {
+		ASSERT(flt != NULL);
+		ASSERT3F(flt->bank_ratio, >, 0);
+		ASSERT3F(flt->bank_ratio, <=, 1.0);
+		bank_ratio = flt->bank_ratio;
+	} else {
+		ASSERT3F(bank_ratio, >, 0);
+		ASSERT3F(bank_ratio, <=, 1.0);
+	}
+
+	half_bank_rate = quad_bezier_func(gs_kts, acft->half_bank_curve);
+	if (bank_ratio <= 0.5)
+		return (2 * bank_ratio * half_bank_rate);
+	full_bank_rate = quad_bezier_func(gs_kts, acft->full_bank_curve);
+
+	return (wavg(half_bank_rate, full_bank_rate,
+	    clamp(2 * (bank_ratio - 0.5), 0, 1)));
 }
 
 /*

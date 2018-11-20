@@ -108,21 +108,22 @@ typedef struct {
 } drag_coeff_t;
 
 typedef struct {
-	double	zfw;
-	double	fuel;
-	double	clb_ias;
-	double	clb_mach;
-	double	crz_ias;
-	double	crz_mach;
-	double	crz_lvl;
-	double	des_ias;
-	double	des_mach;
-	double	to_flap;
-	double	accel_height;
-	double	spd_lim;
-	double	spd_lim_alt;
+	double	zfw;		/* kg */
+	double	fuel;		/* kg */
+	double	clb_ias;	/* knots */
+	double	clb_mach;	/* fraction */
+	double	crz_ias;	/* knots */
+	double	crz_mach;	/* fraction */
+	double	crz_lvl;	/* flight level */
+	double	des_ias;	/* knots */
+	double	des_mach;	/* fraction */
+	double	to_flap;	/* ratio */
+	double	accel_alt;	/* feet AMSL */
+	double	spd_lim;	/* knots IAS */
+	double	spd_lim_alt;	/* feet AMSL */
 
 	double	thr_derate;
+	double	bank_ratio;
 } flt_perf_t;
 
 typedef struct {
@@ -171,6 +172,9 @@ typedef struct {
 	bezier_t	*cd_flap_curve;
 	double		cl_flap_max_aoa;
 	double		wing_area;
+
+	bezier_t	*half_bank_curve;
+	bezier_t	*full_bank_curve;
 } acft_perf_t;
 
 /* Type of acceleration-climb */
@@ -211,6 +215,9 @@ double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
 
 double acft_get_sfc(const acft_perf_t *acft, double thr,
     double dens, double isadev);
+
+double perf_get_turn_rate(double bank_ratio, double gs_kts,
+    const flt_perf_t *flt, const acft_perf_t *acft);
 
 #define	alt2press	ACFSYM(alt2press)
 API_EXPORT double alt2press(double alt, double qnh);
