@@ -1182,27 +1182,10 @@ gc_distance(geo_pos2_t start, geo_pos2_t end)
 }
 
 double
-gc_point_hdg(geo_pos2_t start, geo_pos2_t end, double arg)
+gc_point_hdg(geo_pos2_t start, geo_pos2_t end)
 {
-	/* FIXME: THIS IS BROKEN !!! */
-	vect3_t	start_v, end_v, norm_v, an_v, incl_v;
-
-	start_v = geo2ecef_mtr(GEO2_TO_GEO3(start, 0), &wgs84);
-	end_v = geo2ecef_mtr(GEO2_TO_GEO3(end, 0), &wgs84);
-	norm_v = vect3_set_abs(vect3_xprod(end_v, start_v), EARTH_MSL);
-	an_v = vect3_set_abs(vect3_xprod(norm_v, VECT3(0, 0, 1)), EARTH_MSL);
-	incl_v = vect3_xprod(norm_v, an_v);
-	geo_pos3_t incl = ecef2geo(incl_v, &wgs84);
-	double inclination = incl.lat;
-
-	vect3_t arg_v = {sin(DEG2RAD(arg)) * EARTH_MSL,
-	    cos(DEG2RAD(arg)) * EARTH_MSL, 0};
-	arg_v = VECT3(sin(DEG2RAD(inclination)) * arg_v.x, arg_v.y,
-	    sin(DEG2RAD(inclination)) * arg_v.z);
-	arg_v = vect3_unit(vect3_xprod(arg_v, norm_v), NULL);
-	double xy = sqrt(POW2(arg_v.x) + POW2(arg_v.y));
-
-	return (RAD2DEG(acos(xy)));
+	fpp_t fpp = stereo_fpp_init(start, 0, &wgs84, B_FALSE);
+	return (dir2hdg(geo2fpp(end, &fpp)));
 }
 
 /*

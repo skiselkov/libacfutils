@@ -275,7 +275,7 @@ API_EXPORT vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate);
 #define	gc_distance	ACFSYM(gc_distance)
 API_EXPORT double gc_distance(geo_pos2_t start, geo_pos2_t end);
 #define	gc_point_hdg	ACFSYM(gc_point_hdg)
-API_EXPORT double gc_point_hdg(geo_pos2_t start, geo_pos2_t end, double arg);
+API_EXPORT double gc_point_hdg(geo_pos2_t start, geo_pos2_t end);
 
 /*
  * Generic spherical - to - flat-plane projections.
