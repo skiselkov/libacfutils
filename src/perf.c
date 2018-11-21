@@ -44,11 +44,15 @@
 #define	MAX_LINE_COMPS		2
 
 /*
- * Simulation step for accelclb2dist in seconds. 15 seems to be a good
- * compromise between performance and accuracy (~1% error vs running 1-second
- * steps, but 15x faster).
+ * Simulation step for accelclb2dist in seconds. 5 seems to be a good
+ * compromise between performance and accuracy (~1% error vs running
+ * 1-second steps, but 5x faster).
  */
-#define	SECS_PER_STEP	15.0
+#define	SECS_PER_STEP		5
+/*
+ * Higher accuracy in the departure segment.
+ */
+#define	SECS_PER_STEP_TAKEOFF	1
 #define	ALT_THRESH	1
 #define	KCAS_THRESH	0.1
 #define	MIN_ACCEL	0.0075	/* In m/s^2, equals approx 0.05 KT/s */
@@ -212,19 +216,21 @@ acft_perf_parse(const char *filename)
 			}
 			acft->eng_type = strdup(comps[1]);
 		}
+		else PARSE_SCALAR("NUMENG", acft->num_eng)
 		else PARSE_SCALAR("MAXTHR", acft->eng_max_thr)
 		else PARSE_SCALAR("MINTHR", acft->eng_min_thr)
 		else PARSE_SCALAR("REFZFW", acft->ref.zfw)
 		else PARSE_SCALAR("REFFUEL", acft->ref.fuel)
 		else PARSE_SCALAR("REFCRZLVL", acft->ref.crz_lvl)
 		else PARSE_SCALAR("REFCLBIAS", acft->ref.clb_ias)
+		else PARSE_SCALAR("REFCLBIASINIT", acft->ref.clb_ias_init)
 		else PARSE_SCALAR("REFCLBMACH", acft->ref.clb_mach)
 		else PARSE_SCALAR("REFCRZIAS", acft->ref.crz_ias)
 		else PARSE_SCALAR("REFCRZMACH", acft->ref.crz_mach)
 		else PARSE_SCALAR("REFDESIAS", acft->ref.des_ias)
 		else PARSE_SCALAR("REFDESMACH", acft->ref.des_mach)
 		else PARSE_SCALAR("REFTOFLAP", acft->ref.to_flap)
-		else PARSE_SCALAR("REFACCELHT", acft->ref.accel_alt)
+		else PARSE_SCALAR("REFACCELHT", acft->ref.accel_hgt)
 		else PARSE_SCALAR("REFSPDLIM", acft->ref.spd_lim)
 		else PARSE_SCALAR("REFSPDLIMALT", acft->ref.spd_lim_alt)
 		else PARSE_SCALAR("MAXFUEL", acft->max_fuel)
@@ -233,7 +239,7 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("CLMAX", acft->cl_max_aoa)
 		else PARSE_SCALAR("CLFLAPMAX", acft->cl_flap_max_aoa)
 		else PARSE_CURVE("THRDENS", acft->thr_dens_curve)
-		else PARSE_CURVE("THRISA", acft->thr_isa_curve)
+		else PARSE_CURVE("THRMACH", acft->thr_mach_curve)
 		else PARSE_CURVE("SFCTHR", acft->sfc_thr_curve)
 		else PARSE_CURVE("SFCDENS", acft->sfc_dens_curve)
 		else PARSE_CURVE("SFCISA", acft->sfc_isa_curve)
@@ -250,22 +256,38 @@ acft_perf_parse(const char *filename)
 		}
 	}
 
-	if (acft->acft_type == NULL || acft->ref.zfw <= 0 ||
-	    acft->ref.fuel <= 0 || acft->ref.crz_lvl <= 0 ||
-	    acft->ref.clb_ias <= 0 || acft->ref.clb_mach <= 0 ||
-	    acft->ref.crz_ias <= 0 || acft->ref.crz_mach <= 0 ||
-	    acft->ref.des_ias <= 0 || acft->ref.des_mach <= 0 ||
-	    acft->ref.to_flap <= 0 || acft->ref.accel_alt <= 0 ||
-	    acft->ref.spd_lim <= 0 || acft->ref.spd_lim_alt <= 0 ||
-	    acft->max_fuel <= 0 || acft->max_gw <= 0 ||
-	    acft->eng_type == NULL || acft->eng_max_thr <= 0 ||
-	    acft->eng_min_thr <= 0 || acft->thr_dens_curve == NULL ||
-	    acft->thr_isa_curve == NULL || acft->sfc_thr_curve == NULL ||
-	    acft->sfc_dens_curve == NULL || acft->sfc_isa_curve == NULL ||
-	    acft->cl_curve == NULL || acft->cl_flap_curve == NULL ||
-	    acft->cd_curve == NULL || acft->cd_flap_curve == NULL ||
-	    acft->wing_area == 0 || acft->half_bank_curve == NULL ||
-	    acft->full_bank_curve) {
+	if (acft->acft_type == NULL ||
+	    acft->ref.zfw <= 0 ||
+	    acft->ref.fuel <= 0 ||
+	    acft->ref.crz_lvl <= 0 ||
+	    acft->ref.clb_ias <= 0 ||
+	    acft->ref.clb_ias_init <= 0 ||
+	    acft->ref.clb_mach <= 0 ||
+	    acft->ref.crz_ias <= 0 ||
+	    acft->ref.crz_mach <= 0 ||
+	    acft->ref.des_ias <= 0 ||
+	    acft->ref.des_mach <= 0 ||
+	    acft->ref.to_flap <= 0 ||
+	    acft->ref.accel_hgt <= 0 ||
+	    acft->ref.spd_lim <= 0 ||
+	    acft->ref.spd_lim_alt <= 0 ||
+	    acft->max_fuel <= 0 ||
+	    acft->max_gw <= 0 ||
+	    acft->eng_type == NULL ||
+	    acft->eng_max_thr <= 0 ||
+	    acft->eng_min_thr <= 0 ||
+	    acft->num_eng <= 0 ||
+	    acft->thr_mach_curve == NULL ||
+	    acft->sfc_thr_curve == NULL ||
+	    acft->sfc_dens_curve == NULL ||
+	    acft->sfc_isa_curve == NULL ||
+	    acft->cl_curve == NULL ||
+	    acft->cl_flap_curve == NULL ||
+	    acft->cd_curve == NULL ||
+	    acft->cd_flap_curve == NULL ||
+	    acft->wing_area == 0 ||
+	    acft->half_bank_curve == NULL ||
+	    acft->full_bank_curve == NULL) {
 		logMsg("Error parsing acft perf file %s: missing or corrupt "
 		    "data fields.", filename);
 		goto errout;
@@ -295,8 +317,8 @@ acft_perf_destroy(acft_perf_t *acft)
 		free(acft->eng_type);
 	if (acft->thr_dens_curve)
 		bezier_free(acft->thr_dens_curve);
-	if (acft->thr_isa_curve)
-		bezier_free(acft->thr_isa_curve);
+	if (acft->thr_mach_curve)
+		bezier_free(acft->thr_mach_curve);
 	if (acft->sfc_thr_curve)
 		bezier_free(acft->sfc_thr_curve);
 	if (acft->sfc_dens_curve)
@@ -332,6 +354,16 @@ flt_perf_destroy(flt_perf_t *flt)
 	free(flt);
 }
 
+static double
+get_num_eng(const flt_perf_t *flt, const acft_perf_t *acft)
+{
+	ASSERT(flt != NULL);
+	ASSERT(acft != NULL);
+	if (flt->num_eng > 0 && flt->num_eng <= acft->num_eng)
+		return (flt->num_eng);
+	return (acft->num_eng);
+}
+
 /*
  * Estimates maximum available engine thrust in a given flight situation.
  * This takes into account atmospheric conditions as well as any currently
@@ -345,22 +377,33 @@ flt_perf_destroy(flt_perf_t *flt)
  * @param isadev ISA temperature deviation in degrees C.
  * @param tp_alt Altitude of the tropopause in feet.
  *
- * @return Maximum available engine thrust in kN.
+ * @return Maximum available engine thrust in Newtons.
  */
 double
-eng_max_thr(const flt_perf_t *flt, const acft_perf_t *acft, double alt,
+eng_get_max_thr(const flt_perf_t *flt, const acft_perf_t *acft, double alt,
     double ktas, double qnh, double isadev, double tp_alt)
 {
-	double Ps, Pd, D, dmod, tmod;
+	double Ps, D, dmod, mmod, mach, sat;
+	unsigned num_eng = get_num_eng(flt, acft);
 
 	Ps = alt2press(alt, qnh);
-	Pd = dyn_press(ktas, Ps, isadev2sat(alt2fl(alt < tp_alt ? alt : tp_alt,
-	    qnh), isadev));
-	D = air_density(Ps + Pd, isadev);
-	dmod = quad_bezier_func(D, acft->thr_dens_curve);
-	tmod = quad_bezier_func(isadev, acft->thr_isa_curve);
+	sat = isadev2sat(alt2fl(alt < tp_alt ? alt : tp_alt, qnh), isadev);
+	D = air_density(Ps, isadev);
+	dmod = D / ISA_SL_DENS;
+	if (acft->thr_dens_curve != NULL)
+		dmod *= quad_bezier_func(dmod, acft->thr_dens_curve);
+	mach = ktas2mach(ktas, sat);
+	mmod = quad_bezier_func(mach, acft->thr_mach_curve);
 
-	return (acft->eng_max_thr * dmod * tmod * flt->thr_derate);
+	return (num_eng * acft->eng_max_thr * dmod * mmod * flt->thr_derate);
+}
+
+double
+eng_get_min_thr(const flt_perf_t *flt, const acft_perf_t *acft)
+{
+	ASSERT(flt != NULL);
+	ASSERT(acft != NULL);
+	return (get_num_eng(flt, acft) * acft->eng_min_thr);
 }
 
 /*
@@ -382,35 +425,37 @@ double
 eng_max_thr_avg(const flt_perf_t *flt, const acft_perf_t *acft, double alt1,
     double alt2, double ktas, double qnh, double isadev, double tp_alt)
 {
-	double Ps, Pd, D, avg_temp, thr;
+	double Ps, D, dmod, mmod, avg_temp, thr;
 	double avg_alt = AVG(alt1, alt2);
 	/* convert altitudes to flight levels to calculate avg temp */
 	double alt1_fl = alt2fl(alt1, qnh);
 	double alt2_fl = alt2fl(alt2, qnh);
 	double tp_fl = alt2fl(tp_alt, qnh);
+	unsigned num_eng = get_num_eng(flt, acft);
+	double mach;
 
 	/*
 	 * FIXME: correctly weight the temp average when tp_alt < alt2.
 	 */
 	avg_temp = AVG(isadev2sat(alt1_fl, isadev),
 	    isadev2sat(alt2_fl < tp_fl ? alt2_fl : tp_fl, isadev));
-	/*
-	 * Ps is the average static air pressure between alt1 and alt2. Next
-	 * calculate dynamic pressure rise to get total effective air pressure.
-	 */
+
+	mach = ktas2mach(ktas, avg_temp);
+	mmod = quad_bezier_func(mach, acft->thr_mach_curve);
+	/* Ps is the average static air pressure between alt1 and alt2. */
 	Ps = alt2press(avg_alt, qnh);
-	Pd = dyn_press(ktas, Ps, avg_temp);
 	/*
 	 * Finally grab effective air density.
 	 */
 	isadev = isadev2sat(alt2fl(avg_alt, qnh), avg_temp);
-	D = air_density(Ps + Pd, isadev);
+	D = air_density(Ps, isadev);
+	dmod = D / ISA_SL_DENS;
+	if (acft->thr_dens_curve != NULL)
+		dmod *= quad_bezier_func(dmod, acft->thr_dens_curve);
 	/*
 	 * Derive engine performance.
 	 */
-	thr = quad_bezier_func(D, acft->thr_dens_curve) *
-	    quad_bezier_func(isadev, acft->thr_isa_curve) *
-	    flt->thr_derate;
+	thr = num_eng * dmod * mmod * flt->thr_derate;
 
 	return (thr);
 }
@@ -433,8 +478,10 @@ cl_curve_get_aoa(double Cl, const bezier_t *curve)
 	size_t n;
 
 	candidates = quad_bezier_func_inv(Cl, curve, &n);
-	if (n == 0 || n == SIZE_MAX)
-		return (NAN);
+	if (n == 0 || n == SIZE_MAX) {
+		/* No AoA will provide enough lift, guess at some value */
+		return (10);
+	}
 
 	aoa = candidates[0];
 	for (size_t i = 1; i < n; i++) {
@@ -594,8 +641,8 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 	double tas_targ = KT2MPS(kcas2ktas(kcas_targ, Ps, oat));
 	double Pd = dyn_press(ktas_now, Ps, oat);
 	double D = air_density(Ps + Pd, oat);
-	double thr = accel ? eng_max_thr(flt, acft, alt, ktas_now, qnh,
-	    isadev, tp_alt) : acft->eng_min_thr;
+	double thr = accel ? eng_get_max_thr(flt, acft, alt, ktas_now, qnh,
+	    isadev, tp_alt) : eng_get_min_thr(flt, acft);
 	double burn = *burnp;
 	double t = *timep;
 	double altm = FEET2MET(alt);
@@ -625,8 +672,10 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 		*timep = t;
 	}
 
-	if (t > 0)
-		burn += acft_get_sfc(acft, thr, D, isadev) * (t / SECS_PER_HR);
+	if (t > 0) {
+		burn += acft_get_sfc(flt, acft, thr, D, isadev) *
+		    (t / SECS_PER_HR);
+	}
 
 	*burnp = burn;
 	(*distp) += MET2NM(tas_now * t + 0.5 * delta_v * POW2(t) +
@@ -675,8 +724,8 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	double tas_now = KT2MPS(ktas_now);
 	double Pd = dyn_press(ktas_now, Ps, oat);
 	double D = air_density(Ps + Pd, oat);
-	double thr = clb ? eng_max_thr(flt, acft, alt, ktas_now, qnh, isadev,
-	    tp_alt) : acft->eng_min_thr;
+	double thr = (clb ? eng_get_max_thr(flt, acft, alt, ktas_now, qnh,
+	    isadev, tp_alt) : eng_get_min_thr(flt, acft));
 	double burn = *burnp;
 	double t = *timep;
 	double altm = FEET2MET(alt);
@@ -708,13 +757,61 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	*kcasp = ktas2kcas(ktas_now, Ps, oat);
 
 	/* use average air density to use in burn estimation */
-	burn += acft_get_sfc(acft, thr, AVG(D, D2), isadev) * (t / SECS_PER_HR);
+	burn += acft_get_sfc(flt, acft, thr, AVG(D, D2), isadev) *
+	    (t / SECS_PER_HR);
 
 	*burnp = burn;
 	(*distp) += MET2NM(sqrt(POW2(tas_now * t) +
 	    FEET2MET(POW2((*altp) - alt))) + wind_mps * t);
 
 	return (B_TRUE);
+}
+
+/*
+ * ACCEL_THEN_CLB first accelerates to kcas2 and then climbs.
+ * ACCEL_TAKEOFF first accelerates to flt->clb_ias_init, then climbs until
+ * reaching accel_alt, then does a 50/50 time split to reach target climb spd.
+ * ACCEL_AND_CLB does a 50/50 time split.
+ * If `flap_ratio_act' is not NULL, it is set to:
+ * 1) `flap_ratio_takeoff', when in 1st and 2nd segment climb, or
+ * 2) `flap_ratio', otherwise
+ */
+static double
+accel_time_split(accelclb_t type, double kcas, double clbias, double alt,
+    double accel_alt, double t, double flap_ratio, double flap_ratio_takeoff,
+    double *flap_ratio_act)
+{
+	if (flap_ratio_act != NULL)
+		*flap_ratio_act = flap_ratio;
+
+	switch (type) {
+	case ACCEL_THEN_CLB:
+		return (t);
+	case ACCEL_TAKEOFF:
+		if (kcas < clbias) {
+			if (flap_ratio_act != NULL)
+				*flap_ratio_act = flap_ratio_takeoff;
+			return (t);
+		}
+		if (alt < accel_alt) {
+			if (flap_ratio_act != NULL)
+				*flap_ratio_act = flap_ratio_takeoff;
+			return (0);
+		}
+		return (t / 2);
+	default:
+		VERIFY3U(type, ==, ACCEL_AND_CLB);
+		return (t / 2);
+	}
+}
+
+static double
+select_step(accelclb_t type)
+{
+	if (type == ACCEL_TAKEOFF)
+		return (SECS_PER_STEP_TAKEOFF);
+	else
+		return (SECS_PER_STEP);
 }
 
 /*
@@ -754,20 +851,24 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
  *	maneuver in NM.
  */
 double
-accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
-    double isadev, double qnh, double tp_alt, double fuel, vect2_t dir,
+accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
+    double qnh, double tp_alt, double accel_alt, double fuel, vect2_t dir,
     double alt1, double kcas1, vect2_t wind1,
     double alt2, double kcas2, vect2_t wind2,
-    double flap_ratio, double mach_lim, accelclb_t type, double *burnp)
+    double flap_ratio, double mach_lim, accelclb_t type, double *burnp,
+    double *kcas_out)
 {
 	double alt = alt1, kcas = kcas1, burn = 0, dist = 0;
+	double step = select_step(type);
+	double flap_ratio_act;
 
-	ASSERT(alt1 <= alt2);
-	ASSERT(fuel >= 0);
+	ASSERT3F(alt1, <=, alt2);
+	ASSERT3F(fuel, >=, 0);
+	ASSERT(!isnan(accel_alt) || type != ACCEL_TAKEOFF);
 	dir = vect2_unit(dir, NULL);
 
-	/* Iterate in steps of SECS_PER_STEP. */
-	while (alt2 - alt > ALT_THRESH || kcas2 - kcas > KCAS_THRESH) {
+	/* Iterate in steps of `step'. */
+	while (alt2 - alt > ALT_THRESH && kcas2 - kcas > KCAS_THRESH) {
 		double wind_mps, alt_fract, accel_t, clb_t, ktas_lim_mach,
 		    kcas_lim_mach, oat, kcas_lim;
 		double Ps;
@@ -800,27 +901,22 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
 		double old_kcas = kcas;
 #endif	/* STEP_DEBUG */
 
-		/*
-		 * ACCEL_THEN_CLB and ACCEL_TAKEOFF first accelerate to kcas2
-		 * and then climb. ACCEL_AND_CLB does a 50/50 time split.
-		 */
-		if (type == ACCEL_THEN_CLB || type == ACCEL_TAKEOFF)
-			accel_t = SECS_PER_STEP;
-		else
-			accel_t = SECS_PER_STEP / 2;
+		accel_t = accel_time_split(type, kcas, flt->clb_ias_init,
+		    alt, accel_alt, step, flap_ratio, flt->to_flap,
+		    &flap_ratio_act);
 
-		if (!spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
+		if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
 		    type == ACCEL_TAKEOFF && alt == alt1, alt, &kcas, kcas_lim,
-		    wind_mps, flt->zfw + fuel - burn, flap_ratio, acft, flt,
-		    &dist, &accel_t, &burn)) {
+		    wind_mps, flt->zfw + fuel - burn, flap_ratio_act, acft,
+		    flt, &dist, &accel_t, &burn)) {
 			return (NAN);
 		}
 
-		clb_t = SECS_PER_STEP - accel_t;
+		clb_t = step - accel_t;
 		if (clb_t > 0 && alt2 - alt > ALT_THRESH &&
 		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, &alt, &kcas,
-		    alt2, wind_mps, flt->zfw + fuel - burn, flap_ratio, acft,
-		    flt, &dist, &clb_t, &burn)) {
+		    alt2, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
+		    acft, flt, &dist, &clb_t, &burn)) {
 			return (NAN);
 		}
 
@@ -838,30 +934,35 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
 	}
 	if (burnp != NULL)
 		*burnp = burn;
+	if (kcas_out != NULL)
+		*kcas_out = kcas;
 
 	return (dist);
 }
 
 double
 dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
-    double isadev, double qnh, double tp_alt, double fuel, vect2_t dir,
-    double flap_ratio, double *alt, double *kcas, vect2_t wind,
-    double alt_tgt, double kcas_tgt, double mach_lim, double dist_tgt,
-    accelclb_t type, double *burnp)
+    double isadev, double qnh, double tp_alt, double accel_alt,
+    double fuel, vect2_t dir, double flap_ratio, double *alt,
+    double *kcas, vect2_t wind, double alt_tgt, double kcas_tgt,
+    double mach_lim, double dist_tgt, accelclb_t type, double *burnp)
 {
 	double alt1 = *alt;
 	double dist = 0, burn = 0;
 	double wind_mps = KT2MPS(vect2_dotprod(wind, dir));
+	double step = select_step(type);
+	double flap_ratio_act;
 
 	ASSERT(*alt <= alt_tgt);
 	ASSERT(*kcas <= kcas_tgt);
+	ASSERT(!isnan(accel_alt) || type != ACCEL_TAKEOFF);
 
 	while (dist < dist_tgt && (alt_tgt - (*alt) > ALT_THRESH ||
 	    kcas_tgt - (*kcas) > KCAS_THRESH)) {
 		double tas_mps = KT2MPS(kcas2ktas(*kcas, alt2press(*alt, qnh),
 		    isadev2sat(alt2fl(*alt, qnh), isadev)));
 		double rmng = NM2MET(dist_tgt - dist);
-		double t_rmng = MIN(rmng / tas_mps, SECS_PER_STEP);
+		double t_rmng = MIN(rmng / tas_mps, step);
 		double accel_t, clb_t, oat, Ps, ktas_lim_mach, kcas_lim_mach,
 		    kcas_lim;
 
@@ -882,19 +983,18 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		 * ACCEL_THEN_CLB and ACCEL_TAKEOFF first accelerate to kcas2
 		 * and then climb. ACCEL_AND_CLB does a 50/50 time split.
 		 */
-		if (type == ACCEL_THEN_CLB || type == ACCEL_TAKEOFF)
-			accel_t = t_rmng;
-		else
-			accel_t = t_rmng / 2;
+		accel_t = accel_time_split(type, *kcas, flt->clb_ias_init,
+		    *alt, accel_alt, t_rmng, flap_ratio, flt->to_flap,
+		    &flap_ratio_act);
 
 #ifdef	STEP_DEBUG
 		double old_alt = *alt;
 		double old_kcas = *kcas;
 #endif	/* STEP_DEBUG */
 
-		if (!spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
+		if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
 		    type == ACCEL_TAKEOFF && (*alt) == alt1, *alt, kcas,
-		    kcas_lim, wind_mps, flt->zfw + fuel - burn, flap_ratio,
+		    kcas_lim, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
 		    acft, flt, &dist, &accel_t, &burn)) {
 			return (NAN);
 		}
@@ -902,7 +1002,7 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		clb_t = t_rmng - accel_t;
 		if (clb_t > 0 && alt_tgt - (*alt) > ALT_THRESH &&
 		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, alt, kcas,
-		    alt_tgt, wind_mps, flt->zfw + fuel - burn, flap_ratio,
+		    alt_tgt, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
 		    acft, flt, &dist, &clb_t, &burn)) {
 			return (NAN);
 		}
@@ -954,7 +1054,7 @@ perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft)
  * a given instant.
  *
  * @param acft Aircraft performance specification structure.
- * @param thr Thrust setting on the engine in kN.
+ * @param thr Thrust setting on the engine in Newtons.
  * @param dens Air density in kg/m^3.
  * @param isadev ISA temperature deviation in degrees C.
  *
@@ -962,9 +1062,11 @@ perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft)
  *	conditions in kg/hr.
  */
 double
-acft_get_sfc(const acft_perf_t *acft, double thr, double dens, double isadev)
+acft_get_sfc(const flt_perf_t *flt, const acft_perf_t *acft, double thr,
+    double dens, double isadev)
 {
-	return (quad_bezier_func(thr, acft->sfc_thr_curve) *
+	return (get_num_eng(flt, acft) *
+	    quad_bezier_func(thr, acft->sfc_thr_curve) *
 	    quad_bezier_func(dens, acft->sfc_dens_curve) *
 	    quad_bezier_func(isadev, acft->sfc_isa_curve));
 }
