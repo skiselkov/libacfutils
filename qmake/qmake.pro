@@ -23,12 +23,14 @@ CONFIG -= thread exceptions qt rtti release
 
 VERSION = 1.0.0
 
+debug = $$[DEBUG]
+
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../glew
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
-QMAKE_CFLAGS += -std=c99 -O2 -g -W -Wall -Wextra -Werror -fvisibility=hidden
+QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
 
 # _GNU_SOURCE needed on Linux for getline()
@@ -56,6 +58,9 @@ contains(dll, 0) {
 contains(dll, 1) {
 	DEFINES += GLEW_BUILD
 	DEFINES += ACFUTILS_DLL=1
+}
+contains(debug, 0) {
+	QMAKE_CFLAGS += -O2
 }
 
 win32 {
