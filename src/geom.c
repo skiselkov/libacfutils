@@ -1478,7 +1478,7 @@ quad_bezier_func(double x, const bezier_t *func)
 
 	/* Point lies on a curve segment */
 	for (size_t i = 0; i + 2 < func->n_pts; i += 2) {
-		if (func->pts[i].x <= x) {
+		if (x <= func->pts[i + 2].x) {
 			vect2_t p0 = func->pts[i], p1 = func->pts[i + 1];
 			vect2_t p2 = func->pts[i + 2];
 			double y, t, ts[2];
