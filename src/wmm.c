@@ -153,7 +153,7 @@ double
 wmm_mag2true(const wmm_t *wmm, double m, geo_pos3_t p)
 {
 	ASSERT(is_valid_hdg(m));
-	return (m + wmm_get_decl(wmm, p));
+	return (normalize_hdg(m + wmm_get_decl(wmm, p)));
 }
 
 /*
@@ -170,5 +170,5 @@ double
 wmm_true2mag(const wmm_t *wmm, double t, geo_pos3_t p)
 {
 	ASSERT(is_valid_hdg(t));
-	return (t - wmm_get_decl(wmm, p));
+	return (normalize_hdg(t - wmm_get_decl(wmm, p)));
 }
