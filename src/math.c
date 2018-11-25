@@ -21,6 +21,7 @@
 #include <acfutils/geom.h>
 #include <acfutils/helpers.h>
 #include <acfutils/math.h>
+#include <acfutils/safe_alloc.h>
 
 /*
  * Solves quadratic equation ax^2 + bx + c = 0. Solutions are placed in 'x'.
@@ -108,4 +109,44 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 	}
 
 	return (NAN);
+}
+
+double *
+fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
+{
+	double *out = NULL;
+	size_t cap = 0, num = 0;
+
+	ASSERT(points != NULL);
+	ASSERT(num_out != NULL);
+	ASSERT(!IS_NULL_VECT(points[0]));
+	ASSERT(!IS_NULL_VECT(points[1]));
+
+	for (int i = 0; !IS_NULL_VECT(points[i + 1]); i++) {
+		vect2_t p1 = points[i], p2 = points[i + 1];
+		double min_val = MIN(p1.y, p2.y);
+		double max_val = MAX(p1.y, p2.y);
+
+		if (min_val <= y && y <= max_val)
+			cap++;
+	}
+	if (cap == 0) {
+		*num_out = 0;
+		return (NULL);
+	}
+
+	out = safe_calloc(cap, sizeof (*out));
+	for (int i = 0; !IS_NULL_VECT(points[i + 1]); i++) {
+		vect2_t p1 = points[i], p2 = points[i + 1];
+		double min_val = MIN(p1.y, p2.y);
+		double max_val = MAX(p1.y, p2.y);
+
+		if (min_val <= y && y <= max_val)
+			out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
+	}
+	ASSERT3U(cap, ==, num);
+
+	*num_out = num;
+
+	return (out);
 }

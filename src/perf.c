@@ -27,9 +27,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <stddef.h>
 
 #include <acfutils/assert.h>
+#include <acfutils/avl.h>
 #include <acfutils/math.h>
+#include <acfutils/list.h>
 #include <acfutils/log.h>
 #include <acfutils/helpers.h>
 #include <acfutils/perf.h>
@@ -53,32 +56,332 @@
  * Higher accuracy in the departure segment.
  */
 #define	SECS_PER_STEP_TAKEOFF	1
+/*
+ * Higher accuracy in the deceleration phase.
+ */
+#define	SECS_PER_STEP_DECEL	1
+/*
+ * Cruise phase doesn't need high accuracy.
+ */
+#define	SECS_PER_STEP_CRZ	10
 #define	ALT_THRESH	1
 #define	KCAS_THRESH	0.1
 #define	MIN_ACCEL	0.0075	/* In m/s^2, equals approx 0.05 KT/s */
 
-/*
- * Parses a set of bezier curve points from the input CSV file. Used to parse
- * curve points for performance curves.
- *
- * @param fp FILE pointer from which to read lines.
- * @param curvep Pointer that will be filled with the parsed curve.
- * @param numpoints Number of points to fill in the curve (and input lines).
- * @param line_num Current file line number. Used to pass to
- *	parse_get_next_line to track file parsing progress.
- *
- * @return B_TRUE on successful parse, B_FALSE on failure.
- */
-static bool_t
-parse_curves(FILE *fp, bezier_t **curvep, size_t numpoints, size_t *line_num)
-{
-	bezier_t	*curve;
-	char		*line = NULL;
-	size_t		line_cap = 0;
-	ssize_t		line_len = 0;
+#define	MAX_ITER_STEPS	100000
 
-	ASSERT(*curvep == NULL);
-	curve = bezier_alloc(numpoints);
+typedef struct {
+	double		vs;		/* vertical speed in m/s */
+	double		fused;		/* fuel used in kg */
+	double		fused_t;	/* fuel used time in seconds */
+	double		ff;		/* fuel flow in kg/s */
+} perf_table_cell_t;
+
+typedef struct {
+	double			isa;		/* ISA deviation in degrees C */
+	double			ias;		/* IAS in m/s */
+	double			mach;		/* mach limit */
+	unsigned		num_wts;	/* number of weights */
+	unsigned		num_alts;	/* number of altitudes */
+	double			*wts;		/* weights in kg */
+	double			*alts;		/* altitudes in meters */
+	perf_table_cell_t	**rows;		/* one pointer set per alt */
+
+	avl_node_t		ias_node;
+	avl_node_t		mach_node;
+	list_node_t		isa_node;
+} perf_table_t;
+
+struct perf_table_set_s {
+	avl_tree_t	by_isa;
+};
+
+typedef struct {
+	double		isa;
+	avl_tree_t	by_ias;
+	avl_tree_t	by_mach;
+	list_t		tables;
+	avl_node_t	ts_node;
+} perf_table_isa_t;
+
+static bool_t perf_table_parse(FILE *fp, perf_table_set_t *set,
+    unsigned num_eng, size_t *line_num);
+static void perf_table_free(perf_table_t *table);
+
+static int
+perf_isas_compar(const void *a, const void *b)
+{
+	const perf_table_isa_t *ia = a, *ib = b;
+
+	if (ia->isa < ib->isa)
+		return (-1);
+	if (ia->isa > ib->isa)
+		return (-1);
+
+	return (0);
+}
+
+static int
+perf_tables_ias_compar(const void *a, const void *b)
+{
+	const perf_table_t *ta = a, *tb = b;
+
+	ASSERT(!isnan(ta->ias));
+	ASSERT(!isnan(tb->ias));
+	if (ta->ias < tb->ias)
+		return (-1);
+	if (ta->ias > tb->ias)
+		return (1);
+
+	return (0);
+}
+
+static int
+perf_tables_mach_compar(const void *a, const void *b)
+{
+	const perf_table_t *ta = a, *tb = b;
+
+	ASSERT(!isnan(ta->mach));
+	ASSERT(!isnan(tb->mach));
+	if (ta->mach < tb->mach)
+		return (-1);
+	if (ta->mach > tb->mach)
+		return (1);
+
+	return (0);
+}
+
+static perf_table_set_t *
+perf_table_set_alloc(void)
+{
+	perf_table_set_t *ts = safe_calloc(1, sizeof (*ts));
+
+	avl_create(&ts->by_isa, perf_isas_compar, sizeof (perf_table_isa_t),
+	    offsetof(perf_table_isa_t, ts_node));
+
+	return (ts);
+}
+
+static void
+perf_table_set_free(perf_table_set_t *ts)
+{
+	void *cookie = NULL;
+	perf_table_isa_t *isa;
+
+	while ((isa = avl_destroy_nodes(&ts->by_isa, &cookie)) != NULL) {
+		void *cookie2;
+		perf_table_t *table;
+
+		cookie2 = NULL;
+		while ((avl_destroy_nodes(&isa->by_ias, &cookie2)) != NULL)
+			;
+		avl_destroy(&isa->by_ias);
+		cookie2 = NULL;
+		while ((avl_destroy_nodes(&isa->by_mach, &cookie2)) != NULL)
+			;
+		avl_destroy(&isa->by_mach);
+		while ((table = list_remove_head(&isa->tables)) != NULL)
+			perf_table_free(table);
+		list_destroy(&isa->tables);
+		free(isa);
+	}
+	avl_destroy(&ts->by_isa);
+	free(ts);
+}
+
+static double
+parse_table_alt(const char *str)
+{
+	unsigned l, mtr;
+
+	ASSERT(str != NULL);
+	l = strlen(str);
+	ASSERT(l != 0);
+
+	if (l >= 3 && str[0] == 'F' && str[1] == 'L')
+		return (FEET2MET(atoi(&str[2]) * 100));
+	if (strcmp(str, "0") == 0)
+		return (0);
+	mtr = atoi(str);
+	if (mtr != 0)
+		return (mtr);
+
+	return (NAN);
+}
+
+static bool_t
+perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
+    size_t *line_num)
+{
+	perf_table_isa_t *isa, srch_isa;
+	perf_table_t *table = safe_calloc(1, sizeof (*table));
+	char *line = NULL;
+	size_t line_cap = 0;
+	avl_index_t where;
+
+	ASSERT(fp != NULL);
+	ASSERT(ts != NULL);
+	ASSERT(line_num != NULL);
+
+	table->isa = 0;
+	table->ias = NAN;
+	table->mach = NAN;
+
+	for (;;) {
+		ssize_t line_len =
+		    parser_get_next_line(fp, &line, &line_cap, line_num);
+		size_t n_comps;
+		char **comps;
+		double alt;
+
+		if (line_len == 0)
+			break;
+		comps = strsplit(line, " ", B_TRUE, &n_comps);
+		if (strcmp(comps[0], "ISA") == 0 && n_comps == 2) {
+			table->isa = atof(comps[1]);
+		} else if (strcmp(comps[0], "IAS") == 0 && n_comps == 2) {
+			table->ias = atof(comps[1]);
+		} else if (strcmp(comps[0], "KIAS") == 0 && n_comps == 2) {
+			table->ias = KT2MPS(atof(comps[1]));
+		} else if (strcmp(comps[0], "MACH") == 0 && n_comps == 2) {
+			table->mach = atof(comps[1]);
+		} else if (strcmp(comps[0], "GWLBK") == 0 && n_comps >= 2) {
+			table->num_wts = n_comps - 1;
+			table->wts = safe_calloc(table->num_wts,
+			    sizeof (*table->wts));
+			for (size_t i = 1; i < n_comps; i++) {
+				table->wts[i - 1] =
+				    LBS2KG(1000 * atof(comps[i]));
+			}
+		} else if (!isnan(alt = parse_table_alt(comps[0]))) {
+			table->num_alts++;
+			table->alts = realloc(table->alts, table->num_alts *
+			    sizeof (*table->alts));
+			table->alts[table->num_alts - 1] = alt;
+			table->rows = realloc(table->rows, table->num_alts *
+			    sizeof (*table->rows));
+			table->rows[table->num_alts - 1] = safe_calloc(
+			    table->num_wts, sizeof (perf_table_cell_t));
+		} else if (strcmp(comps[0], "FPM") == 0) {
+			for (size_t i = 1; i < n_comps; i++) {
+				perf_table_cell_t *cell =
+				    &table->rows[table->num_alts - 1][i - 1];
+				cell->vs = FPM2MPS(atof(comps[i]));
+			}
+		} else if (strcmp(comps[0], "TIMM") == 0) {
+			for (size_t i = 0; i < table->num_wts; i++) {
+				perf_table_cell_t *cell =
+				    &table->rows[table->num_alts - 1][i];
+				if (i + 1 < n_comps) {
+					cell->fused_t = atof(comps[i + 1]) * 60;
+				} else {
+					perf_table_cell_t *cell2 = &table->rows[
+					    table->num_alts - 1][n_comps - 2];
+					cell->fused_t = cell2->fused_t;
+				}
+				cell->ff = cell->fused / cell->fused_t;
+			}
+		} else if (strcmp(comps[0], "FULB") == 0) {
+			for (size_t i = 0; i < table->num_wts; i++) {
+				perf_table_cell_t *cell =
+				    &table->rows[table->num_alts - 1][i];
+				if (i + 1 < n_comps) {
+					cell->fused =
+					    LBS2KG(atof(comps[i + 1]));
+				} else {
+					perf_table_cell_t *cell2 = &table->rows[
+					    table->num_alts - 1][n_comps - 2];
+					cell->fused = cell2->fused;
+				}
+				if (cell->fused_t != 0)
+					cell->ff = cell->fused / cell->fused_t;
+			}
+		} else if (strcmp(comps[0], "FFLB/ENG") == 0) {
+			for (size_t i = 0; i < table->num_wts; i++) {
+				perf_table_cell_t *cell =
+				    &table->rows[table->num_alts - 1][i];
+				if (i + 1 < n_comps) {
+					cell->ff = (LBS2KG(atof(comps[i + 1])) /
+					    SECS_PER_HR) * num_eng;
+				} else {
+					perf_table_cell_t *cell2 = &table->rows[
+					    table->num_alts - 1][n_comps - 2];
+					cell->ff = cell2->ff;
+				}
+			}
+		} else if (strcmp(comps[0], "ENDTABLE") == 0) {
+			free_strlist(comps, n_comps);
+			break;
+		} else {
+			free_strlist(comps, n_comps);
+			goto errout;
+		}
+		free_strlist(comps, n_comps);
+	}
+
+	if ((isnan(table->ias) && isnan(table->mach)) || table->num_wts == 0 ||
+	    table->num_alts == 0)
+		goto errout;
+
+	srch_isa.isa = table->isa;
+	isa = avl_find(&ts->by_isa, &srch_isa, &where);
+	if (isa == NULL) {
+		isa = safe_calloc(1, sizeof (*isa));
+		isa->isa = table->isa;
+		avl_create(&isa->by_ias, perf_tables_ias_compar,
+		    sizeof (perf_table_t), offsetof(perf_table_t, ias_node));
+		avl_create(&isa->by_mach, perf_tables_mach_compar,
+		    sizeof (perf_table_t), offsetof(perf_table_t, mach_node));
+		list_create(&isa->tables, sizeof (perf_table_t),
+		    offsetof(perf_table_t, isa_node));
+		avl_insert(&ts->by_isa, isa, where);
+	}
+	if (!isnan(table->ias)) {
+		if (avl_find(&isa->by_ias, table, &where) != NULL) {
+			logMsg("Duplicate table for ISA %.1f/IAS %.1f",
+			    table->isa, MPS2KT(table->ias));
+			goto errout;
+		}
+		avl_insert(&isa->by_ias, table, where);
+	}
+	if (!isnan(table->mach)) {
+		if (avl_find(&isa->by_mach, table, &where) != NULL) {
+			logMsg("Duplicate table for ISA %.1f/Mach %.3f",
+			    table->isa, MPS2KT(table->mach));
+			goto errout;
+		}
+		avl_insert(&isa->by_mach, table, where);
+	}
+
+	return (B_TRUE);
+errout:
+	perf_table_free(table);
+	return (B_FALSE);
+}
+
+static void
+perf_table_free(perf_table_t *table)
+{
+	free(table->wts);
+	free(table->alts);
+	for (unsigned i = 0; i < table->num_alts; i++)
+		free(table->rows[i]);
+	free(table->rows);
+
+	free(table);
+}
+
+static bool_t
+parse_curve_lin(FILE *fp, vect2_t **curvep, size_t numpoints, size_t *line_num)
+{
+	vect2_t	*curve;
+	char	*line = NULL;
+	size_t	line_cap = 0;
+	ssize_t	line_len = 0;
+
+	ASSERT(curvep != NULL);
+	ASSERT3P(*curvep, ==, NULL);
+	curve = safe_calloc(numpoints + 1, sizeof (*curve));
 
 	for (size_t i = 0; i < numpoints; i++) {
 		char *comps[2];
@@ -88,10 +391,12 @@ parse_curves(FILE *fp, bezier_t **curvep, size_t numpoints, size_t *line_num)
 			goto errout;
 		if (explode_line(line, ',', comps, 2) != 2)
 			goto errout;
-		curve->pts[i] = VECT2(atof(comps[0]), atof(comps[1]));
-		if (i > 0 && curve->pts[i - 1].x >= curve->pts[i].x)
+		curve[i] = VECT2(atof(comps[0]), atof(comps[1]));
+		if (i > 0 && curve[i - 1].x >= curve[i].x)
 			goto errout;
 	}
+	/* curve terminator */
+	curve[numpoints] = NULL_VECT2;
 
 	*curvep = curve;
 	free(line);
@@ -99,8 +404,249 @@ parse_curves(FILE *fp, bezier_t **curvep, size_t numpoints, size_t *line_num)
 	return (B_TRUE);
 errout:
 	free(line);
-	bezier_free(curve);
+	free(curve);
 	return (B_FALSE);
+}
+
+static void
+perf_tables_find_spd(perf_table_isa_t *isa, double spd, bool_t is_mach,
+    perf_table_t **t_min_p, perf_table_t **t_max_p)
+{
+	avl_index_t where;
+	perf_table_t srch;
+	perf_table_t *t_min, *t_max;
+	avl_tree_t *tree;
+
+	ASSERT(isa != NULL);
+	ASSERT(t_min_p != NULL);
+	ASSERT(t_max_p != NULL);
+
+	if (is_mach) {
+		srch.mach = spd;
+		tree = &isa->by_mach;
+	} else {
+		srch.ias = spd;
+		tree = &isa->by_ias;
+	}
+	ASSERT(avl_numnodes(tree) != 0);
+	t_min = avl_find(tree, &srch, &where);
+
+	if (t_min != NULL) {
+		t_max = t_min;
+	} else {
+		t_min = avl_nearest(tree, where, AVL_BEFORE);
+		t_max = avl_nearest(tree, where, AVL_AFTER);
+		ASSERT(t_min != NULL || t_max != NULL);
+		if (t_min == NULL) {
+			if (AVL_NEXT(tree, t_max) != NULL) {
+				t_min = t_max;
+				t_max = AVL_NEXT(tree, t_max);
+			} else {
+				t_min = t_max;
+			}
+		}
+		if (t_max == NULL) {
+			if (AVL_PREV(tree, t_min) != NULL) {
+				t_max = t_min;
+				t_min = AVL_PREV(tree, t_min);
+			} else {
+				t_max = t_min;
+			}
+		}
+		ASSERT(t_min != NULL);
+		ASSERT(t_max != NULL);
+	}
+
+	*t_min_p = t_min;
+	*t_max_p = t_max;
+}
+
+static bool_t
+perf_tables_find(perf_table_set_t *ts,
+    double isadev, double spd, bool_t is_mach,
+    perf_table_t **isa0_min, perf_table_t **isa0_max,
+    perf_table_t **isa1_min, perf_table_t **isa1_max)
+{
+	avl_index_t where;
+	perf_table_isa_t srch = { .isa = isadev };
+	perf_table_isa_t *isa0, *isa1;
+
+	ASSERT(ts != NULL);
+	ASSERT(isa0_min != NULL);
+	ASSERT(isa0_max != NULL);
+	ASSERT(isa1_min != NULL);
+	ASSERT(isa1_max != NULL);
+
+	if (avl_numnodes(&ts->by_isa) == 0)
+		return (B_FALSE);
+
+	isa0 = avl_find(&ts->by_isa, &srch, &where);
+	if (isa0 != NULL) {
+		/* Exact hit */
+		isa1 = isa0;
+	} else {
+		/*
+		 * Try to find nearest two data points and interpolate, or
+		 * even extrapolate from the nearest two data points.
+		 */
+		isa0 = avl_nearest(&ts->by_isa, where, AVL_BEFORE);
+		isa1 = avl_nearest(&ts->by_isa, where, AVL_AFTER);
+		ASSERT(isa0 != NULL || isa1 != NULL);
+		/*
+		 * We are at the edge of the data range. If we have more than
+		 * one adjacent table to either side, we can try extrapolating.
+		 */
+		if (isa0 == NULL) {
+			if (AVL_NEXT(&ts->by_isa, isa1) != NULL) {
+				isa0 = isa1;
+				isa1 = AVL_NEXT(&ts->by_isa, isa1);
+			} else {
+				isa0 = isa1;
+			}
+		}
+		if (isa1 == NULL) {
+			if (AVL_PREV(&ts->by_isa, isa0) != NULL) {
+				isa1 = isa0;
+				isa0 = AVL_PREV(&ts->by_isa, isa0);
+			} else {
+				isa1 = isa0;
+			}
+		}
+		ASSERT(isa0 != NULL);
+		ASSERT(isa1 != NULL);
+	}
+
+	perf_tables_find_spd(isa0, spd, is_mach, isa0_min, isa0_max);
+	perf_tables_find_spd(isa1, spd, is_mach, isa1_min, isa1_max);
+
+	return (B_FALSE);
+}
+
+static double
+perf_table_lookup_row(perf_table_t *table, perf_table_cell_t *row,
+    double mass, size_t field_offset)
+{
+	unsigned col1, col2;
+	double v1, v2, v;
+
+	ASSERT(table != NULL);
+	ASSERT(table->num_wts != 0);
+	ASSERT(row != NULL);
+	ASSERT3U(field_offset, <, sizeof (perf_table_cell_t));
+
+	/* clamp the mass to our tabulated range */
+	mass = clamp(mass, table->wts[0], table->wts[table->num_wts - 1] - 1);
+
+	for (unsigned i = 0; i + 1 < table->num_wts; i++) {
+		if (mass >= table->wts[i] && mass <= table->wts[i + 1]) {
+			col1 = i;
+			col2 = i + 1;
+			break;
+		}
+	}
+
+	v1 = *(double *)((void *)(&row[col1]) + field_offset);
+	v2 = *(double *)((void *)(&row[col2]) + field_offset);
+
+	if (col1 != col2)
+		v = fx_lin(mass, table->wts[col1], v1, table->wts[col2], v2);
+	else
+		v = v1;
+
+	return (v);
+}
+
+static double
+perf_table_lookup(perf_table_t *table, double mass, double alt,
+    size_t field_offset)
+{
+	unsigned row1 = UINT32_MAX, row2 = UINT32_MAX;
+	double row1_val, row2_val, value;
+
+	ASSERT(table != NULL);
+	ASSERT3U(table->num_alts, >, 1);
+	ASSERT3U(field_offset, <, sizeof (perf_table_cell_t));
+
+	/*
+	 * If the requested altitude lies outside of our tabulated range,
+	 * extrapolate to it from the nearest pair of rows.
+	 */
+	if (alt > table->alts[0]) {
+		row1 = 0;
+		row2 = 1;
+	} else if (alt < table->alts[table->num_alts - 1]) {
+		row1 = table->num_alts - 2;
+		row2 = table->num_alts - 1;
+	} else {
+		for (unsigned i = 0; i + 1 < table->num_alts; i++) {
+			if (alt <= table->alts[i] &&
+			    alt >= table->alts[i + 1]) {
+				row1 = i;
+				row2 = i + 1;
+				break;
+			}
+		}
+	}
+	ASSERT3U(row1 + 1, ==, row2);
+	ASSERT3U(row2, <, table->num_alts);
+
+	row1_val = perf_table_lookup_row(table, table->rows[row1], mass,
+	    field_offset);
+	row2_val = perf_table_lookup_row(table, table->rows[row2], mass,
+	    field_offset);
+	value = fx_lin(alt, table->alts[row1], row1_val, table->alts[row2],
+	    row2_val);
+
+	return (value);
+}
+
+static double
+crz_table_lookup(perf_table_set_t *ts, double isadev, double mass,
+    double spd, bool_t is_mach, double alt)
+{
+	perf_table_t *isa0_min = NULL, *isa0_max = NULL;
+	perf_table_t *isa1_min = NULL, *isa1_max = NULL;
+	double isa0_min_ff, isa0_max_ff, isa1_min_ff, isa1_max_ff;
+	double isa0_ff, isa1_ff, ff;
+
+	ASSERT(ts != NULL);
+
+	perf_tables_find(ts, isadev, spd, is_mach, &isa0_min, &isa0_max,
+	    &isa1_min, &isa1_max);
+
+	if (isa0_min != isa0_max) {
+		double x0 = (is_mach ? isa0_min->mach : isa0_min->ias);
+		double x1 = (is_mach ? isa0_max->mach : isa0_max->ias);
+		isa0_min_ff = perf_table_lookup(isa0_min, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+		isa0_max_ff = perf_table_lookup(isa0_max, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+		isa0_ff = fx_lin(spd, x0, isa0_min_ff, x1, isa0_max_ff);
+	} else {
+		isa0_ff = perf_table_lookup(isa0_min, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+	}
+	if (isa1_min != isa1_max) {
+		double x0 = (is_mach ? isa1_min->mach : isa1_min->ias);
+		double x1 = (is_mach ? isa1_max->mach : isa1_max->ias);
+		isa1_min_ff = perf_table_lookup(isa1_min, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+		isa1_max_ff = perf_table_lookup(isa1_max, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+		isa1_ff = fx_lin(spd, x0, isa1_min_ff, x1, isa1_max_ff);
+	} else {
+		isa1_ff = perf_table_lookup(isa1_min, mass, alt,
+		    offsetof(perf_table_cell_t, ff));
+	}
+
+	if (isa0_ff != isa1_ff) {
+		ff = fx_lin(isadev, isa0_min->isa, isa0_ff,
+		    isa1_min->isa, isa1_ff);
+	} else {
+		ff = isa0_ff;
+	}
+
+	return (ff);
 }
 
 #define	PARSE_SCALAR(name, var) \
@@ -122,7 +668,8 @@ errout:
 
 /*
  * Checks that comps[0] contains `name' and if it does, parses comps[1] number
- * of bezier curve points into `var'.
+ * of curve points into `var'. The curve parsed is assumed to be composed of
+ * a sequential series of linear segments.
  */
 #define	PARSE_CURVE(name, var) \
 	if (strcmp(comps[0], name) == 0) { \
@@ -132,7 +679,20 @@ errout:
 			    filename, (unsigned long)line_num); \
 			goto errout; \
 		} \
-		if (!parse_curves(fp, &(var), atoi(comps[1]), &line_num)) { \
+		if (!parse_curve_lin(fp, &(var), atoi(comps[1]), &line_num)) { \
+			logMsg("Error parsing acft perf file %s:%lu: " \
+			    "malformed or missing lines.", filename, \
+			    (unsigned long)line_num); \
+			goto errout; \
+		} \
+	}
+
+#define	PARSE_TABLE(name, table_set) \
+	if (strcmp(comps[0], (name)) == 0) { \
+		if ((table_set) == NULL) \
+			(table_set) = perf_table_set_alloc(); \
+		if (!perf_table_parse(fp, (table_set), acft->num_eng, \
+		    &line_num)) { \
 			logMsg("Error parsing acft perf file %s:%lu: " \
 			    "malformed or missing lines.", filename, \
 			    (unsigned long)line_num); \
@@ -219,6 +779,7 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("NUMENG", acft->num_eng)
 		else PARSE_SCALAR("MAXTHR", acft->eng_max_thr)
 		else PARSE_SCALAR("MINTHR", acft->eng_min_thr)
+		else PARSE_SCALAR("SFC", acft->eng_sfc)
 		else PARSE_SCALAR("REFZFW", acft->ref.zfw)
 		else PARSE_SCALAR("REFFUEL", acft->ref.fuel)
 		else PARSE_SCALAR("REFCRZLVL", acft->ref.crz_lvl)
@@ -240,8 +801,7 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("CLFLAPMAX", acft->cl_flap_max_aoa)
 		else PARSE_CURVE("THRDENS", acft->thr_dens_curve)
 		else PARSE_CURVE("THRMACH", acft->thr_mach_curve)
-		else PARSE_CURVE("SFCTHR", acft->sfc_thr_curve)
-		else PARSE_CURVE("SFCDENS", acft->sfc_dens_curve)
+		else PARSE_CURVE("SFCTHRO", acft->sfc_thro_curve)
 		else PARSE_CURVE("SFCISA", acft->sfc_isa_curve)
 		else PARSE_CURVE("CL", acft->cl_curve)
 		else PARSE_CURVE("CLFLAP", acft->cl_flap_curve)
@@ -249,6 +809,8 @@ acft_perf_parse(const char *filename)
 		else PARSE_CURVE("CDFLAP", acft->cd_flap_curve)
 		else PARSE_CURVE("HALFBANK", acft->half_bank_curve)
 		else PARSE_CURVE("FULLBANK", acft->full_bank_curve)
+		else PARSE_TABLE("CLBTABLE", acft->clb_tables)
+		else PARSE_TABLE("CRZTABLE", acft->crz_tables)
 		else {
 			logMsg("Error parsing acft perf file %s:%lu: unknown "
 			    "line", filename, (unsigned long)line_num);
@@ -276,10 +838,10 @@ acft_perf_parse(const char *filename)
 	    acft->eng_type == NULL ||
 	    acft->eng_max_thr <= 0 ||
 	    acft->eng_min_thr <= 0 ||
+	    acft->eng_sfc <= 0 ||
 	    acft->num_eng <= 0 ||
 	    acft->thr_mach_curve == NULL ||
-	    acft->sfc_thr_curve == NULL ||
-	    acft->sfc_dens_curve == NULL ||
+	    acft->sfc_thro_curve == NULL ||
 	    acft->sfc_isa_curve == NULL ||
 	    acft->cl_curve == NULL ||
 	    acft->cl_flap_curve == NULL ||
@@ -315,28 +877,20 @@ acft_perf_destroy(acft_perf_t *acft)
 		free(acft->acft_type);
 	if (acft->eng_type)
 		free(acft->eng_type);
-	if (acft->thr_dens_curve)
-		bezier_free(acft->thr_dens_curve);
-	if (acft->thr_mach_curve)
-		bezier_free(acft->thr_mach_curve);
-	if (acft->sfc_thr_curve)
-		bezier_free(acft->sfc_thr_curve);
-	if (acft->sfc_dens_curve)
-		bezier_free(acft->sfc_dens_curve);
-	if (acft->sfc_isa_curve)
-		bezier_free(acft->sfc_isa_curve);
-	if (acft->cl_curve)
-		bezier_free(acft->cl_curve);
-	if (acft->cl_flap_curve)
-		bezier_free(acft->cl_flap_curve);
-	if (acft->cd_curve)
-		bezier_free(acft->cd_curve);
-	if (acft->cd_flap_curve)
-		bezier_free(acft->cd_flap_curve);
-	if (acft->half_bank_curve != NULL)
-		bezier_free(acft->half_bank_curve);
-	if (acft->full_bank_curve != NULL)
-		bezier_free(acft->full_bank_curve);
+	free(acft->thr_dens_curve);
+	free(acft->thr_mach_curve);
+	free(acft->sfc_thro_curve);
+	free(acft->sfc_isa_curve);
+	free(acft->cl_curve);
+	free(acft->cl_flap_curve);
+	free(acft->cd_curve);
+	free(acft->cd_flap_curve);
+	free(acft->half_bank_curve);
+	free(acft->full_bank_curve);
+	if (acft->clb_tables != NULL)
+		perf_table_set_free(acft->clb_tables);
+	if (acft->crz_tables != NULL)
+		perf_table_set_free(acft->crz_tables);
 	free(acft);
 }
 
@@ -367,10 +921,12 @@ get_num_eng(const flt_perf_t *flt, const acft_perf_t *acft)
 /*
  * Estimates maximum available engine thrust in a given flight situation.
  * This takes into account atmospheric conditions as well as any currently
- * effective engine derates.
+ * effective engine derates. Number of engines running is configured via
+ * flt_perf->num_eng.
  *
  * @param flt Flight performance configuration.
  * @param acft Aircraft performance tables.
+ * @param throttle Relative linear throttle position (0.0 to 1.0).
  * @param alt Altitude in feet.
  * @param ktas True air speed in knots.
  * @param qnh Barometric altimeter setting in hPa.
@@ -380,22 +936,33 @@ get_num_eng(const flt_perf_t *flt, const acft_perf_t *acft)
  * @return Maximum available engine thrust in Newtons.
  */
 double
-eng_get_max_thr(const flt_perf_t *flt, const acft_perf_t *acft, double alt,
-    double ktas, double qnh, double isadev, double tp_alt)
+eng_get_thrust(const flt_perf_t *flt, const acft_perf_t *acft, double throttle,
+    double alt, double ktas, double qnh, double isadev, double tp_alt)
 {
 	double Ps, D, dmod, mmod, mach, sat;
-	unsigned num_eng = get_num_eng(flt, acft);
+	unsigned num_eng;
+	double min_thr, max_thr;
+
+	ASSERT(flt != NULL);
+	ASSERT(acft != NULL);
+	ASSERT3F(throttle, >=, 0);
+	ASSERT3F(throttle, <=, 1);
+
+	num_eng = get_num_eng(flt, acft);
 
 	Ps = alt2press(alt, qnh);
 	sat = isadev2sat(alt2fl(alt < tp_alt ? alt : tp_alt, qnh), isadev);
 	D = air_density(Ps, isadev);
 	dmod = D / ISA_SL_DENS;
 	if (acft->thr_dens_curve != NULL)
-		dmod *= quad_bezier_func(dmod, acft->thr_dens_curve);
+		dmod *= fx_lin_multi(dmod, acft->thr_dens_curve, B_TRUE);
 	mach = ktas2mach(ktas, sat);
-	mmod = quad_bezier_func(mach, acft->thr_mach_curve);
+	mmod = fx_lin_multi(mach, acft->thr_mach_curve, B_TRUE);
 
-	return (num_eng * acft->eng_max_thr * dmod * mmod * flt->thr_derate);
+	max_thr = num_eng * acft->eng_max_thr * dmod * mmod * flt->thr_derate;
+	min_thr = num_eng * acft->eng_min_thr * dmod * mmod * flt->thr_derate;
+
+	return (wavg(min_thr, max_thr, throttle));
 }
 
 double
@@ -441,7 +1008,7 @@ eng_max_thr_avg(const flt_perf_t *flt, const acft_perf_t *acft, double alt1,
 	    isadev2sat(alt2_fl < tp_fl ? alt2_fl : tp_fl, isadev));
 
 	mach = ktas2mach(ktas, avg_temp);
-	mmod = quad_bezier_func(mach, acft->thr_mach_curve);
+	mmod = fx_lin_multi(mach, acft->thr_mach_curve, B_TRUE);
 	/* Ps is the average static air pressure between alt1 and alt2. */
 	Ps = alt2press(avg_alt, qnh);
 	/*
@@ -451,7 +1018,7 @@ eng_max_thr_avg(const flt_perf_t *flt, const acft_perf_t *acft, double alt1,
 	D = air_density(Ps, isadev);
 	dmod = D / ISA_SL_DENS;
 	if (acft->thr_dens_curve != NULL)
-		dmod *= quad_bezier_func(dmod, acft->thr_dens_curve);
+		dmod *= fx_lin_multi(dmod, acft->thr_dens_curve, B_TRUE);
 	/*
 	 * Derive engine performance.
 	 */
@@ -467,17 +1034,17 @@ eng_max_thr_avg(const flt_perf_t *flt, const acft_perf_t *acft, double alt1,
  * DEFAULT_AOA.
  *
  * @param Cl Required coefficient of lift.
- * @param curve Bezier curve mapping AoA to Cl.
+ * @param curve Curve mapping AoA to Cl.
  *
  * @return The angle of attack (in degrees) at which the Cl is produced.
  */
 static double
-cl_curve_get_aoa(double Cl, const bezier_t *curve)
+cl_curve_get_aoa(double Cl, const vect2_t *curve)
 {
 	double aoa = 5, *candidates;
 	size_t n;
 
-	candidates = quad_bezier_func_inv(Cl, curve, &n);
+	candidates = fx_lin_multi_inv(Cl, curve, &n);
 	if (n == 0 || n == SIZE_MAX) {
 		/* No AoA will provide enough lift, guess at some value */
 		return (10);
@@ -488,7 +1055,7 @@ cl_curve_get_aoa(double Cl, const bezier_t *curve)
 		if (aoa > candidates[i])
 			aoa = candidates[i];
 	}
-	free(candidates);
+	lacf_free(candidates);
 
 	return (aoa);
 }
@@ -570,11 +1137,11 @@ static inline double
 get_drag(double Pd, double aoa, double flap_ratio, const acft_perf_t *acft)
 {
 	if (flap_ratio == 0)
-		return (quad_bezier_func(aoa, acft->cd_curve) *
-		    Pd * acft->wing_area);
+		return (fx_lin_multi(aoa, acft->cd_curve, B_TRUE) * Pd *
+		    acft->wing_area);
 	else
-		return (wavg(quad_bezier_func(aoa, acft->cd_curve),
-		    quad_bezier_func(aoa, acft->cd_flap_curve),
+		return (wavg(fx_lin_multi(aoa, acft->cd_curve, B_TRUE),
+		    fx_lin_multi(aoa, acft->cd_flap_curve, B_TRUE),
 		    flap_ratio) * Pd * acft->wing_area);
 }
 
@@ -640,9 +1207,9 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 	double tas_now = KT2MPS(ktas_now);
 	double tas_targ = KT2MPS(kcas2ktas(kcas_targ, Ps, oat));
 	double Pd = dyn_press(ktas_now, Ps, oat);
-	double D = air_density(Ps + Pd, oat);
-	double thr = accel ? eng_get_max_thr(flt, acft, alt, ktas_now, qnh,
-	    isadev, tp_alt) : eng_get_min_thr(flt, acft);
+	double throttle = accel ? 1.0 : 0.0;
+	double thr = eng_get_thrust(flt, acft, throttle, alt, ktas_now, qnh,
+	    isadev, tp_alt);
 	double burn = *burnp;
 	double t = *timep;
 	double altm = FEET2MET(alt);
@@ -673,13 +1240,65 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 	}
 
 	if (t > 0) {
-		burn += acft_get_sfc(flt, acft, thr, D, isadev) *
-		    (t / SECS_PER_HR);
+		burn += acft_get_sfc(flt, acft, thr, alt, ktas_now, qnh,
+		    isadev, tp_alt) * (t / SECS_PER_HR);
 	}
 
 	*burnp = burn;
 	(*distp) += MET2NM(tas_now * t + 0.5 * delta_v * POW2(t) +
 	    wind_mps * t);
+
+	return (B_TRUE);
+}
+
+static bool_t
+crz_step(double isadev, double tp_alt, double qnh, double alt, double spd,
+    bool_t is_mach, double wind_mps, double mass, const acft_perf_t *acft,
+    const flt_perf_t *flt, double d_t, double *distp, double *burnp)
+{
+	double burn, kcas, ktas_now, tas_now;
+	double fl = alt2fl(alt, qnh);
+	double Ps = alt2press(alt, qnh);
+	double oat = isadev2sat(fl, isadev);
+
+	ASSERT(acft != NULL);
+	ASSERT(flt != NULL);
+	ASSERT(distp != NULL);
+	ASSERT(burnp != NULL);
+	burn = *burnp;
+
+
+	if (is_mach) {
+		ktas_now = mach2ktas(spd, oat);
+		kcas = ktas2kcas(ktas_now, Ps, oat);
+	} else {
+		kcas = spd;
+		ktas_now = kcas2ktas(kcas, Ps, oat);
+	}
+	tas_now = KT2MPS(ktas_now);
+
+	if (acft->crz_tables != NULL) {
+		double ff = crz_table_lookup(acft->crz_tables, isadev, mass,
+		    spd, is_mach, FEET2MET(alt));
+		burn += ff * d_t;
+	} else {
+		double aoa, drag, thr, sfc, Pd;
+
+		Pd = dyn_press(ktas_now, Ps, oat);
+		aoa = get_aoa(Pd, mass, 0, acft);
+		if (isnan(aoa))
+			return (B_FALSE);
+		drag = get_drag(Pd, aoa, 0, acft);
+		thr = drag;
+		sfc = acft_get_sfc(flt, acft, thr, alt, ktas_now, qnh, isadev,
+		    tp_alt);
+		printf("Ps: %.0f  Pd: %.0f  kcas: %.0f  aoa: %.3f  drag: %.2f  "
+		    "sfc: %.1f  gw: %.1f\n", Ps, Pd, kcas, aoa, drag / 1000,
+		    KG2LBS(sfc) / get_num_eng(flt, acft), KG2LBS(mass) / 1000);
+		burn += sfc * (d_t / SECS_PER_HR);
+	}
+	*burnp = burn;
+	(*distp) += MET2NM((tas_now + wind_mps) * d_t);
 
 	return (B_TRUE);
 }
@@ -715,7 +1334,7 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
     double flap_ratio, const acft_perf_t *acft, const flt_perf_t *flt,
     double *distp, double *timep, double *burnp)
 {
-	double aoa, drag, E_now, E_lim, E_targ, D2;
+	double aoa, drag, E_now, E_lim, E_targ;
 	double alt = *altp;
 	double fl = alt2fl(alt, qnh);
 	double Ps = alt2press(alt, qnh);
@@ -723,9 +1342,9 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	double ktas_now = kcas2ktas(*kcasp, Ps, oat);
 	double tas_now = KT2MPS(ktas_now);
 	double Pd = dyn_press(ktas_now, Ps, oat);
-	double D = air_density(Ps + Pd, oat);
-	double thr = (clb ? eng_get_max_thr(flt, acft, alt, ktas_now, qnh,
-	    isadev, tp_alt) : eng_get_min_thr(flt, acft));
+	double throttle = clb ? 1.0 : 0.0;
+	double thr = eng_get_thrust(flt, acft, throttle, alt, ktas_now, qnh,
+	    isadev, tp_alt);
 	double burn = *burnp;
 	double t = *timep;
 	double altm = FEET2MET(alt);
@@ -753,12 +1372,11 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	Ps = alt2press(*altp, qnh);
 	fl = alt2fl(*altp, qnh);
 	oat = isadev2sat(fl, isadev);
-	D2 = air_density(Ps + dyn_press(ktas_now, Ps, oat), oat);
 	*kcasp = ktas2kcas(ktas_now, Ps, oat);
 
 	/* use average air density to use in burn estimation */
-	burn += acft_get_sfc(flt, acft, thr, AVG(D, D2), isadev) *
-	    (t / SECS_PER_HR);
+	burn += acft_get_sfc(flt, acft, thr, alt, ktas_now, qnh, isadev,
+	    tp_alt) * (t / SECS_PER_HR);
 
 	*burnp = burn;
 	(*distp) += MET2NM(sqrt(POW2(tas_now * t) +
@@ -861,6 +1479,7 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 	double alt = alt1, kcas = kcas1, burn = 0, dist = 0;
 	double step = select_step(type);
 	double flap_ratio_act;
+	int iter_counter = 0;
 
 	ASSERT3F(alt1, <=, alt2);
 	ASSERT3F(fuel, >=, 0);
@@ -873,6 +1492,8 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		    kcas_lim_mach, oat, kcas_lim;
 		double Ps;
 		vect2_t wind;
+
+		ASSERT3S(iter_counter, <, MAX_ITER_STEPS);
 
 		oat = isadev2sat(alt2fl(alt, qnh), isadev);
 		Ps = alt2press(alt, qnh);
@@ -914,9 +1535,9 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 
 		clb_t = step - accel_t;
 		if (clb_t > 0 && alt2 - alt > ALT_THRESH &&
-		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, &alt, &kcas,
-		    alt2, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
-		    acft, flt, &dist, &clb_t, &burn)) {
+		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, &alt,
+		    &kcas, alt2, wind_mps, flt->zfw + fuel - burn,
+		    flap_ratio_act, acft, flt, &dist, &clb_t, &burn)) {
 			return (NAN);
 		}
 
@@ -931,6 +1552,8 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		    alt, ((alt - old_alt) / total_t) * 60, NM2MET(dist),
 		    ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat), oat));
 #endif	/* STEP_DEBUG */
+
+		iter_counter++;
 	}
 	if (burnp != NULL)
 		*burnp = burn;
@@ -952,6 +1575,7 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 	double wind_mps = KT2MPS(vect2_dotprod(wind, dir));
 	double step = select_step(type);
 	double flap_ratio_act;
+	int iter_counter = 0;
 
 	ASSERT(*alt <= alt_tgt);
 	ASSERT(*kcas <= kcas_tgt);
@@ -965,6 +1589,8 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		double t_rmng = MIN(rmng / tas_mps, step);
 		double accel_t, clb_t, oat, Ps, ktas_lim_mach, kcas_lim_mach,
 		    kcas_lim;
+
+		ASSERT3S(iter_counter, <, MAX_ITER_STEPS);
 
 		oat = isadev2sat(alt2fl(*alt, qnh), isadev);
 		Ps = alt2press(*alt, qnh);
@@ -1019,6 +1645,7 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		    NM2MET(dist), ktas2mach(kcas2ktas(*kcas, alt2press(*alt,
 		    qnh), oat), oat));
 #endif	/* STEP_DEBUG */
+		iter_counter++;
 	}
 	if (burnp != NULL)
 		*burnp = burn;
@@ -1026,23 +1653,109 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 	return (dist);
 }
 
-/* TODO:
 double
-dist2deceldes(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
-    double qnh, double tp_alt, double fuel, vect2_t dir, double flap_ratio,
-    double *alt, double *kcas, vect2_t wind, double alt_tgt, double kcas_tgt,
-    double mach_lim, double dist_tgt, accelclb_t type, double *burnp)
+decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
+    double isadev, double qnh, double tp_alt, double fuel,
+    double alt, double kcas1, double kcas2, double dist_tgt,
+    double *kcas_out, double *burn_out)
 {
+	double dist = 0, burn = 0;
+	double step = SECS_PER_STEP_DECEL;
+	double kcas = kcas1;
+#ifdef	STEP_DEBUG
+	double oat = isadev2sat(alt2fl(alt, qnh), isadev);
+#endif
+
+	while (dist < dist_tgt && kcas + KCAS_THRESH > kcas2) {
+		double t = step;
+#ifdef	STEP_DEBUG
+		double old_kcas = kcas;
+		double mach;
+#endif	/* STEP_DEBUG */
+		if (!spd_chg_step(B_FALSE, isadev, tp_alt, qnh, B_FALSE,
+		    alt, &kcas, kcas2, 0, flt->zfw + fuel - burn,
+		    0, acft, flt, &dist, &t, &burn))
+			break;
+#ifdef	STEP_DEBUG
+		mach = ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat),
+		    oat);
+		printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  s:%6.0lf  M:%5.03lf\n",
+		    kcas, (kcas - old_kcas) / t, alt, NM2MET(dist), mach);
+#endif	/* STEP_DEBUG */
+	}
+
+	if (kcas_out != NULL)
+		*kcas_out = kcas;
+	if (burn_out != NULL)
+		*burn_out = burn;
+
+	return (dist);
 }
-*/
+
+/*
+ * Estimates fuel burn in level, non-accelerated flight (cruise).
+ * Flaps are assumed up in this configuration.
+ *
+ * @param isadev Average ISA deviation in degree C.
+ * @param qnh Average QNH in Pa.
+ * @param alt Cruise altitude in feet.
+ * @param spd Airspeed, either as calibrated airspeed in knots, or Mach number.
+ * @param is_mach B_TRUE if spd is mach, B_FALSE if spd is kcas.
+ * @param hdg Cruise heading in degrees.
+ * @param wind1 Cruise wind component at start of leg (direction of
+ *	vector is direction of wind, magnitude is wind velocity in knots).
+ * @param wind2 Cruise wind component at end of leg.
+ * @param fuel Fuel status at start of leg in kilograms.
+ * @param dist_nm Cruise flight leg length in nautical miles.
+ * @param acft Aircraft performance data structure.
+ * @param flt Flight performance data structure.
+ *
+ * @return Amount of fuel burned in kilograms.
+ */
+double
+perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
+    double spd, bool_t is_mach, double hdg, vect2_t wind1, vect2_t wind2,
+    double fuel, double dist_nm, const acft_perf_t *acft, const flt_perf_t *flt)
+{
+	vect2_t fltdir;
+	double burn = 0;
+
+	ASSERT(is_valid_alt(alt_ft));
+	ASSERT3F(spd, >, 0);
+	ASSERT3F(spd, <, 1000);
+	ASSERT(is_valid_hdg(hdg));
+	ASSERT(!IS_NULL_VECT(wind1));
+	ASSERT(!IS_NULL_VECT(wind2));
+	ASSERT3F(dist_nm, >=, 0);
+	ASSERT3F(dist_nm, <, 1e6);
+	ASSERT(acft != NULL);
+	ASSERT(flt != NULL);
+
+	fltdir = hdg2dir(hdg);
+
+	for (double dist_done = 0; dist_done < dist_nm;) {
+		double rat = dist_done / dist_nm;
+		double mass = flt->zfw + MAX(fuel - burn, 0);
+		vect2_t wind = VECT2(wavg(wind1.x, wind2.y, rat),
+		    wavg(wind1.y, wind2.y, rat));
+		double wind_mps = KT2MPS(vect2_dotprod(fltdir, wind));
+		
+		if (!crz_step(isadev, tp_alt, qnh, alt_ft, spd, is_mach,
+		    wind_mps, mass, acft, flt, SECS_PER_STEP_CRZ,
+		    &dist_done, &burn))
+			return (NAN);
+	}
+
+	return (burn);
+}
 
 double
 perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft)
 {
 	double mass = flt->zfw + flt->fuel;
 	double lift = MASS2GFORCE(mass);
-	double Cl = wavg(quad_bezier_func(acft->cl_max_aoa, acft->cl_curve),
-	    quad_bezier_func(acft->cl_flap_max_aoa, acft->cl_flap_curve),
+	double Cl = wavg(fx_lin_multi(acft->cl_max_aoa, acft->cl_curve, B_TRUE),
+	    fx_lin_multi(acft->cl_flap_max_aoa, acft->cl_flap_curve, B_TRUE),
 	    flt->to_flap);
 	double Pd = lift / (Cl * acft->wing_area);
 	double tas = sqrt((2 * Pd) / ISA_SL_DENS);
@@ -1054,21 +1767,32 @@ perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft)
  * a given instant.
  *
  * @param acft Aircraft performance specification structure.
- * @param thr Thrust setting on the engine in Newtons.
- * @param dens Air density in kg/m^3.
- * @param isadev ISA temperature deviation in degrees C.
+ * @param thr Total thrust requirement.
  *
  * @return The aircraft's engine's specific fuel consumption at the specified
  *	conditions in kg/hr.
  */
 double
 acft_get_sfc(const flt_perf_t *flt, const acft_perf_t *acft, double thr,
-    double dens, double isadev)
+    double alt, double ktas, double qnh, double isadev, double tp_alt)
 {
-	return (get_num_eng(flt, acft) *
-	    quad_bezier_func(thr, acft->sfc_thr_curve) *
-	    quad_bezier_func(dens, acft->sfc_dens_curve) *
-	    quad_bezier_func(isadev, acft->sfc_isa_curve));
+	/* "_AE" means "all-engines" */
+	double max_thr_AE, min_thr_AE, throttle;
+	double ff_hr;
+
+	ASSERT(flt != NULL);
+	ASSERT(acft != NULL);
+
+	ff_hr = acft->eng_sfc * thr * SECS_PER_HR;
+	max_thr_AE = eng_get_thrust(flt, acft, 1.0, alt, ktas, qnh, isadev,
+	    tp_alt);
+	min_thr_AE = eng_get_thrust(flt, acft, 0.0, alt, ktas, qnh, isadev,
+	    tp_alt);
+	throttle = iter_fract(thr, min_thr_AE, max_thr_AE, B_TRUE);
+
+	return (ff_hr *
+	    fx_lin_multi(throttle, acft->sfc_thro_curve, B_TRUE) *
+	    fx_lin_multi(isadev, acft->sfc_isa_curve, B_TRUE));
 }
 
 double
@@ -1091,10 +1815,10 @@ perf_get_turn_rate(double bank_ratio, double gs_kts, const flt_perf_t *flt,
 		ASSERT3F(bank_ratio, <=, 1.0);
 	}
 
-	half_bank_rate = quad_bezier_func(gs_kts, acft->half_bank_curve);
+	half_bank_rate = fx_lin_multi(gs_kts, acft->half_bank_curve, B_TRUE);
 	if (bank_ratio <= 0.5)
 		return (2 * bank_ratio * half_bank_rate);
-	full_bank_rate = quad_bezier_func(gs_kts, acft->full_bank_curve);
+	full_bank_rate = fx_lin_multi(gs_kts, acft->full_bank_curve, B_TRUE);
 
 	return (wavg(half_bank_rate, full_bank_rate,
 	    clamp(2 * (bank_ratio - 0.5), 0, 1)));

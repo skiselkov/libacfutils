@@ -458,19 +458,20 @@ airac_time2cycle(time_t t)
 
 /*
  * Grabs the next non-empty, non-comment line from a file, having stripped
- * away all leading and trailing whitespace.
+ * away all leading and trailing whitespace. Any tab characters are also
+ * replaced with spaces.
  *
  * @param fp File from which to retrieve the line.
  * @param linep Line buffer which will hold the new line. If the buffer pointer
- *<---->is set to NULL, it will be allocated. If it is not long enough, it
- *<---->will be expanded.
+ *	is set to NULL, it will be allocated. If it is not long enough, it
+ *	will be expanded.
  * @param linecap The capacity of *linep. If set to zero a new buffer is
- *<---->allocated.
+ *	allocated.
  * @param linenum The current line number. Will be advanced by 1 for each
- *<---->new line read.
+ *	new line read.
  *
  * @return The number of characters in the line (after stripping whitespace)
- *<---->without the terminating NUL.
+ *	without the terminating NUL.
  */
 ssize_t
 parser_get_next_line(FILE *fp, char **linep, size_t *linecap, size_t *linenum)
@@ -483,7 +484,13 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, size_t *linenum)
 		strip_space(*linep);
 		if (**linep != 0 && **linep == '#')
 			continue;
-		return (strlen(*linep));
+		len = strlen(*linep);
+		/* substitute spaces for tabs */
+		for (ssize_t i = 0; i < len; i++) {
+			if ((*linep)[i] == '\t')
+				(*linep)[i] = ' ';
+		}
+		return (len);
 	}
 }
 
