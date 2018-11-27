@@ -64,9 +64,12 @@
  * Cruise phase doesn't need high accuracy.
  */
 #define	SECS_PER_STEP_CRZ	10
-#define	ALT_THRESH	1
-#define	KCAS_THRESH	0.1
-#define	MIN_ACCEL	0.0075	/* In m/s^2, equals approx 0.05 KT/s */
+#define	ALT_THRESH		1
+#define	KCAS_THRESH		0.1
+#define	KCAS_TABLE_THRESH	1
+#define	MIN_ACCEL		0.0075	/* In m/s^2, equals approx 0.05 KT/s */
+
+#define	MIN_CLB_VS	FPM2MPS(100)
 
 #define	MAX_ITER_STEPS	100000
 
@@ -209,6 +212,63 @@ parse_table_alt(const char *str)
 	return (NAN);
 }
 
+static double
+perf_table_extrapolate(perf_table_t *table, unsigned col,
+    unsigned last_data_col, size_t offset)
+{
+	double v1, v2, m1, m2, m;
+	perf_table_cell_t *cell1, *cell2;
+
+	ASSERT(table != NULL);
+	ASSERT3U(col, <, table->num_wts);
+	ASSERT3U(last_data_col, <, col);
+	ASSERT3U(offset, <, sizeof (perf_table_cell_t));
+
+	if (last_data_col == 0) {
+		/*
+		 * Single data element in table, can't extrapolate.
+		 * So just copy the value.
+		 */
+		cell1 = &table->rows[table->num_alts - 1][last_data_col];
+		return (*(double *)((void *)(cell1) + offset));
+	}
+
+	cell1 = &table->rows[table->num_alts - 1][last_data_col - 1];
+	cell2 = &table->rows[table->num_alts - 1][last_data_col];
+	v1 = *(double *)((void *)(cell1) + offset);
+	m1 = table->wts[last_data_col - 1];
+	v2 = *(double *)((void *)(cell2) + offset);
+	m2 = table->wts[last_data_col];
+	m = table->wts[col];
+
+	return (fx_lin(m, m1, v1, m2, v2));
+}
+
+static void
+perf_table_cells_populate(char ** comps, size_t n_comps, perf_table_t *table,
+    size_t offset, double conv_factor)
+{
+	ASSERT(comps != NULL);
+	ASSERT3U(n_comps, >, 1);
+	ASSERT(table != NULL);
+	ASSERT3U(offset, <, sizeof (perf_table_cell_t));
+
+	comps++;
+	n_comps--;
+
+	for (size_t i = 0; i < table->num_wts; i++) {
+		perf_table_cell_t *cell = &table->rows[table->num_alts - 1][i];
+		double *p = ((void *)(cell)) + offset;
+
+		if (i < n_comps) {
+			*p = atof(comps[i]) * conv_factor;
+		} else {
+			*p = perf_table_extrapolate(table, i, n_comps - 1,
+			    offset);
+		}
+	}
+}
+
 static bool_t
 perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
     size_t *line_num)
@@ -263,52 +323,19 @@ perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
 			table->rows[table->num_alts - 1] = safe_calloc(
 			    table->num_wts, sizeof (perf_table_cell_t));
 		} else if (strcmp(comps[0], "FPM") == 0) {
-			for (size_t i = 1; i < n_comps; i++) {
-				perf_table_cell_t *cell =
-				    &table->rows[table->num_alts - 1][i - 1];
-				cell->vs = FPM2MPS(atof(comps[i]));
-			}
+			perf_table_cells_populate(comps, n_comps, table,
+			    offsetof(perf_table_cell_t, vs),
+			    FPM2MPS(1));
 		} else if (strcmp(comps[0], "TIMM") == 0) {
-			for (size_t i = 0; i < table->num_wts; i++) {
-				perf_table_cell_t *cell =
-				    &table->rows[table->num_alts - 1][i];
-				if (i + 1 < n_comps) {
-					cell->fused_t = atof(comps[i + 1]) * 60;
-				} else {
-					perf_table_cell_t *cell2 = &table->rows[
-					    table->num_alts - 1][n_comps - 2];
-					cell->fused_t = cell2->fused_t;
-				}
-				cell->ff = cell->fused / cell->fused_t;
-			}
+			perf_table_cells_populate(comps, n_comps, table,
+			    offsetof(perf_table_cell_t, fused_t), 60);
 		} else if (strcmp(comps[0], "FULB") == 0) {
-			for (size_t i = 0; i < table->num_wts; i++) {
-				perf_table_cell_t *cell =
-				    &table->rows[table->num_alts - 1][i];
-				if (i + 1 < n_comps) {
-					cell->fused =
-					    LBS2KG(atof(comps[i + 1]));
-				} else {
-					perf_table_cell_t *cell2 = &table->rows[
-					    table->num_alts - 1][n_comps - 2];
-					cell->fused = cell2->fused;
-				}
-				if (cell->fused_t != 0)
-					cell->ff = cell->fused / cell->fused_t;
-			}
+			perf_table_cells_populate(comps, n_comps, table,
+			    offsetof(perf_table_cell_t, fused), LBS2KG(1));
 		} else if (strcmp(comps[0], "FFLB/ENG") == 0) {
-			for (size_t i = 0; i < table->num_wts; i++) {
-				perf_table_cell_t *cell =
-				    &table->rows[table->num_alts - 1][i];
-				if (i + 1 < n_comps) {
-					cell->ff = (LBS2KG(atof(comps[i + 1])) /
-					    SECS_PER_HR) * num_eng;
-				} else {
-					perf_table_cell_t *cell2 = &table->rows[
-					    table->num_alts - 1][n_comps - 2];
-					cell->ff = cell2->ff;
-				}
-			}
+			perf_table_cells_populate(comps, n_comps, table,
+			    offsetof(perf_table_cell_t, ff),
+			    (LBS2KG(1) / SECS_PER_HR) * num_eng);
 		} else if (strcmp(comps[0], "ENDTABLE") == 0) {
 			free_strlist(comps, n_comps);
 			break;
@@ -322,6 +349,37 @@ perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
 	if ((isnan(table->ias) && isnan(table->mach)) || table->num_wts == 0 ||
 	    table->num_alts == 0)
 		goto errout;
+
+	/*
+	 * For climb/descent tables, we need to calculate the immediate
+	 * fuel flow. The table contains aggregate climb time & fuel use
+	 * figures. So to compute local fuel flow, we first subtract the
+	 * fuel use and time-to-reach from one altitude lower. This then
+	 * gives the fuel use & time delta to go from the lower altitude
+	 * bracket to the altitude being examined. It isn't super-duper
+	 * accurate, but should be reasonably close to immediate FF.
+	 */
+	for (unsigned i_alt = 0; i_alt < table->num_alts; i_alt++) {
+		for (unsigned i_wt = 0; i_wt < table->num_wts; i_wt++) {
+			perf_table_cell_t *cell = &table->rows[i_alt][i_wt];
+
+			if (cell->fused_t == 0)
+				continue;
+			if (i_alt == 0) {
+				cell->ff = cell->fused / cell->fused_t;
+			} else {
+				perf_table_cell_t *subcell =
+				    &table->rows[i_alt - 1][i_wt];
+				double fused, fused_t;
+
+				ASSERT3F(subcell->fused, >, 0);
+				ASSERT3F(subcell->fused_t, >, 0);
+				fused = cell->fused - subcell->fused;
+				fused_t = cell->fused_t - subcell->fused_t;
+				cell->ff = fused / fused_t;
+			}
+		}
+	}
 
 	srch_isa.isa = table->isa;
 	isa = avl_find(&ts->by_isa, &srch_isa, &where);
@@ -601,15 +659,16 @@ perf_table_lookup(perf_table_t *table, double mass, double alt,
 }
 
 static double
-crz_table_lookup(perf_table_set_t *ts, double isadev, double mass,
-    double spd, bool_t is_mach, double alt)
+table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
+    double spd, bool_t is_mach, double alt, size_t offset)
 {
 	perf_table_t *isa0_min = NULL, *isa0_max = NULL;
 	perf_table_t *isa1_min = NULL, *isa1_max = NULL;
-	double isa0_min_ff, isa0_max_ff, isa1_min_ff, isa1_max_ff;
-	double isa0_ff, isa1_ff, ff;
+	double isa0_min_param, isa0_max_param, isa1_min_param, isa1_max_param;
+	double isa0_param, isa1_param, param;
 
 	ASSERT(ts != NULL);
+	ASSERT3U(offset, <, sizeof (perf_table_cell_t));
 
 	perf_tables_find(ts, isadev, spd, is_mach, &isa0_min, &isa0_max,
 	    &isa1_min, &isa1_max);
@@ -617,36 +676,32 @@ crz_table_lookup(perf_table_set_t *ts, double isadev, double mass,
 	if (isa0_min != isa0_max) {
 		double x0 = (is_mach ? isa0_min->mach : isa0_min->ias);
 		double x1 = (is_mach ? isa0_max->mach : isa0_max->ias);
-		isa0_min_ff = perf_table_lookup(isa0_min, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
-		isa0_max_ff = perf_table_lookup(isa0_max, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
-		isa0_ff = fx_lin(spd, x0, isa0_min_ff, x1, isa0_max_ff);
+		isa0_min_param = perf_table_lookup(isa0_min, mass, alt, offset);
+		isa0_max_param = perf_table_lookup(isa0_max, mass, alt, offset);
+		isa0_param = fx_lin(spd, x0, isa0_min_param,
+		    x1, isa0_max_param);
 	} else {
-		isa0_ff = perf_table_lookup(isa0_min, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
+		isa0_param = perf_table_lookup(isa0_min, mass, alt, offset);
 	}
 	if (isa1_min != isa1_max) {
 		double x0 = (is_mach ? isa1_min->mach : isa1_min->ias);
 		double x1 = (is_mach ? isa1_max->mach : isa1_max->ias);
-		isa1_min_ff = perf_table_lookup(isa1_min, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
-		isa1_max_ff = perf_table_lookup(isa1_max, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
-		isa1_ff = fx_lin(spd, x0, isa1_min_ff, x1, isa1_max_ff);
+		isa1_min_param = perf_table_lookup(isa1_min, mass, alt, offset);
+		isa1_max_param = perf_table_lookup(isa1_max, mass, alt, offset);
+		isa1_param = fx_lin(spd, x0, isa1_min_param,
+		    x1, isa1_max_param);
 	} else {
-		isa1_ff = perf_table_lookup(isa1_min, mass, alt,
-		    offsetof(perf_table_cell_t, ff));
+		isa1_param = perf_table_lookup(isa1_min, mass, alt, offset);
 	}
 
-	if (isa0_ff != isa1_ff) {
-		ff = fx_lin(isadev, isa0_min->isa, isa0_ff,
-		    isa1_min->isa, isa1_ff);
+	if (isa0_param != isa1_param) {
+		param = fx_lin(isadev, isa0_min->isa, isa0_param,
+		    isa1_min->isa, isa1_param);
 	} else {
-		ff = isa0_ff;
+		param = isa0_param;
 	}
 
-	return (ff);
+	return (param);
 }
 
 #define	PARSE_SCALAR(name, var) \
@@ -1252,6 +1307,45 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 }
 
 static bool_t
+clb_table_step(const acft_perf_t *acft, double isadev, double qnh, double alt,
+    double spd, bool_t is_mach, double mass, double wind_mps, double d_t,
+    double *nalt, double *nburn, double *ndist)
+{
+	double ff, vs;
+	double kcas, ktas_now, tas_now;
+	double fl = alt2fl(alt, qnh);
+	double Ps = alt2press(alt, qnh);
+	double oat = isadev2sat(fl, isadev);
+
+	ASSERT(acft != NULL);
+	ASSERT(acft->clb_tables != NULL);
+	ASSERT(nalt != NULL);
+	ASSERT(nburn != NULL);
+
+	ff = table_lookup_common(acft->clb_tables, isadev, mass, spd, is_mach,
+	    alt, offsetof(perf_table_cell_t, ff));
+	vs = table_lookup_common(acft->clb_tables, isadev, mass, spd, is_mach,
+	    alt, offsetof(perf_table_cell_t, vs));
+	if (vs < MIN_CLB_VS)
+		return (B_FALSE);
+
+	if (is_mach) {
+		ktas_now = mach2ktas(spd, oat);
+		kcas = ktas2kcas(ktas_now, Ps, oat);
+	} else {
+		kcas = MPS2KT(spd);
+		ktas_now = kcas2ktas(kcas, Ps, oat);
+	}
+	tas_now = KT2MPS(ktas_now);
+
+	*nalt = alt + vs * d_t;
+	*nburn = ff * d_t;
+	*ndist = (tas_now + wind_mps) * d_t;
+
+	return (B_TRUE);
+}
+
+static bool_t
 crz_step(double isadev, double tp_alt, double qnh, double alt, double spd,
     bool_t is_mach, double wind_mps, double mass, const acft_perf_t *acft,
     const flt_perf_t *flt, double d_t, double *distp, double *burnp)
@@ -1267,7 +1361,6 @@ crz_step(double isadev, double tp_alt, double qnh, double alt, double spd,
 	ASSERT(burnp != NULL);
 	burn = *burnp;
 
-
 	if (is_mach) {
 		ktas_now = mach2ktas(spd, oat);
 		kcas = ktas2kcas(ktas_now, Ps, oat);
@@ -1278,9 +1371,15 @@ crz_step(double isadev, double tp_alt, double qnh, double alt, double spd,
 	tas_now = KT2MPS(ktas_now);
 
 	if (acft->crz_tables != NULL) {
-		double ff = crz_table_lookup(acft->crz_tables, isadev, mass,
-		    spd, is_mach, FEET2MET(alt));
+		double ff = table_lookup_common(acft->crz_tables, isadev, mass,
+		    spd, is_mach, FEET2MET(alt),
+		    offsetof(perf_table_cell_t, ff));
 		burn += ff * d_t;
+#ifdef	STEP_DEBUG
+		printf("alt: %.0f ft  mass: %.0f lb   ff: %.0f lbs/hr/eng\n",
+		    alt, KG2LBS(mass),
+		    KG2LBS(ff) * SECS_PER_HR / get_num_eng(flt, acft));
+#endif	/* STEP_DEBUG */
 	} else {
 		double aoa, drag, thr, sfc, Pd;
 
@@ -1432,6 +1531,15 @@ select_step(accelclb_t type)
 		return (SECS_PER_STEP);
 }
 
+static bool_t
+should_use_clb_tables(const acft_perf_t *acft, accelclb_t type,
+    double kcas, double kcas_lim)
+{
+	return (acft->clb_tables != NULL &&
+	    (type == ACCEL_AND_CLB || type == ACCEL_THEN_CLB ||
+	    kcas_lim - kcas < KCAS_TABLE_THRESH));
+}
+
 /*
  * Calculates the linear distance covered by an aircraft in wings-level
  * flight attempting to climb and accelerate. This is used in climb distance
@@ -1520,25 +1628,57 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 #ifdef	STEP_DEBUG
 		double old_alt = alt;
 		double old_kcas = kcas;
+		bool_t table = B_FALSE;
 #endif	/* STEP_DEBUG */
 
 		accel_t = accel_time_split(type, kcas, flt->clb_ias_init,
 		    alt, accel_alt, step, flap_ratio, flt->to_flap,
 		    &flap_ratio_act);
 
-		if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
-		    type == ACCEL_TAKEOFF && alt == alt1, alt, &kcas, kcas_lim,
-		    wind_mps, flt->zfw + fuel - burn, flap_ratio_act, acft,
-		    flt, &dist, &accel_t, &burn)) {
-			return (NAN);
-		}
+		/*
+		 * We can try to use climb performance tables for a more
+		 * accurate estimate, provided that all of the following
+		 * conditions are satisfied:
+		 * 1) climb tables are available
+		 * 2) no more acceleration is required (in normal climb)
+		 * 3) our speed is within the airspeed target (acceleration
+		 *    phase complete)
+		 */
+		if (should_use_clb_tables(acft, type, kcas, kcas_lim)) {
+			bool_t is_mach = (kcas2 > kcas_lim_mach);
+			double spd = (is_mach ? kcas_lim_mach : KT2MPS(kcas2));
+			double nalt, nburn, ndist;
 
-		clb_t = step - accel_t;
-		if (clb_t > 0 && alt2 - alt > ALT_THRESH &&
-		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, &alt,
-		    &kcas, alt2, wind_mps, flt->zfw + fuel - burn,
-		    flap_ratio_act, acft, flt, &dist, &clb_t, &burn)) {
-			return (NAN);
+			if (!clb_table_step(acft, isadev, qnh, FEET2MET(alt),
+			    spd, is_mach, flt->zfw + fuel - burn, wind_mps,
+			    step, &nalt, &nburn, &ndist)) {
+				return (NAN);
+			}
+			alt = MET2FEET(nalt);
+			burn += nburn;
+			dist += MET2NM(ndist);
+			clb_t = step;
+			if (is_mach)
+				kcas = kcas_lim_mach;
+#ifdef	STEP_DEBUG
+			table = B_TRUE;
+#endif
+		} else {
+			if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt,
+			    qnh, type == ACCEL_TAKEOFF && alt == alt1, alt,
+			    &kcas, kcas_lim, wind_mps, flt->zfw + fuel - burn,
+			    flap_ratio_act, acft, flt, &dist, &accel_t,
+			    &burn)) {
+				return (NAN);
+			}
+
+			clb_t = step - accel_t;
+			if (clb_t > 0 && alt2 - alt > ALT_THRESH &&
+			    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, &alt,
+			    &kcas, alt2, wind_mps, flt->zfw + fuel - burn,
+			    flap_ratio_act, acft, flt, &dist, &clb_t, &burn)) {
+				return (NAN);
+			}
 		}
 
 #ifdef	STEP_DEBUG
@@ -1548,9 +1688,11 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		oat = isadev2sat(alt2fl(alt, qnh), isadev);
 
 		printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
-		    "s:%6.0lf  M:%5.03lf\n", kcas, (kcas - old_kcas) / total_t,
-		    alt, ((alt - old_alt) / total_t) * 60, NM2MET(dist),
-		    ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat), oat));
+		    "s:%6.0lf  M:%5.03lf  tab:%d\n", kcas,
+		    (kcas - old_kcas) / total_t, alt,
+		    ((alt - old_alt) / total_t) * 60, NM2MET(dist),
+		    ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat), oat),
+		    table);
 #endif	/* STEP_DEBUG */
 
 		iter_counter++;
@@ -1605,6 +1747,12 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		if (alt_tgt - (*alt) < ALT_THRESH && kcas_lim < kcas_tgt)
 			kcas_tgt = kcas_lim;
 
+#ifdef	STEP_DEBUG
+		double old_alt = *alt;
+		double old_kcas = *kcas;
+		bool_t table = B_FALSE;
+#endif	/* STEP_DEBUG */
+
 		/*
 		 * ACCEL_THEN_CLB and ACCEL_TAKEOFF first accelerate to kcas2
 		 * and then climb. ACCEL_AND_CLB does a 50/50 time split.
@@ -1613,24 +1761,41 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		    *alt, accel_alt, t_rmng, flap_ratio, flt->to_flap,
 		    &flap_ratio_act);
 
+		if (should_use_clb_tables(acft, type, *kcas, kcas_lim)) {
+			bool_t is_mach = (kcas_tgt >= kcas_lim_mach);
+			double spd = (is_mach ? mach_lim :
+			    KT2MPS(kcas_tgt));
+			double nalt, nburn, ndist;
+
+			if (!clb_table_step(acft, isadev, qnh, FEET2MET(*alt),
+			    spd, is_mach, flt->zfw + fuel - burn, wind_mps,
+			    step, &nalt, &nburn, &ndist))
+				return (NAN);
+			*alt = MET2FEET(nalt);
+			burn += nburn;
+			dist += MET2NM(ndist);
+			clb_t = step;
+			if (is_mach)
+				*kcas = kcas_lim_mach;
 #ifdef	STEP_DEBUG
-		double old_alt = *alt;
-		double old_kcas = *kcas;
-#endif	/* STEP_DEBUG */
+			table = B_TRUE;
+#endif
+		} else {
+			if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt,
+			    qnh, type == ACCEL_TAKEOFF && (*alt) == alt1, *alt,
+			    kcas, kcas_lim, wind_mps, flt->zfw + fuel - burn,
+			    flap_ratio_act, acft, flt, &dist, &accel_t,
+				&burn)) {
+				return (NAN);
+			}
 
-		if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt, qnh,
-		    type == ACCEL_TAKEOFF && (*alt) == alt1, *alt, kcas,
-		    kcas_lim, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
-		    acft, flt, &dist, &accel_t, &burn)) {
-			return (NAN);
-		}
-
-		clb_t = t_rmng - accel_t;
-		if (clb_t > 0 && alt_tgt - (*alt) > ALT_THRESH &&
-		    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, alt, kcas,
-		    alt_tgt, wind_mps, flt->zfw + fuel - burn, flap_ratio_act,
-		    acft, flt, &dist, &clb_t, &burn)) {
-			return (NAN);
+			clb_t = t_rmng - accel_t;
+			if (clb_t > 0 && alt_tgt - (*alt) > ALT_THRESH &&
+			    !alt_chg_step(B_TRUE, isadev, tp_alt, qnh, alt,
+			    kcas, alt_tgt, wind_mps, flt->zfw + fuel - burn,
+			    flap_ratio_act, acft, flt, &dist, &clb_t, &burn)) {
+				return (NAN);
+			}
 		}
 
 #ifdef	STEP_DEBUG
@@ -1640,10 +1805,11 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		oat = isadev2sat(alt2fl(*alt, qnh), isadev);
 
 		printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
-		    "s:%6.0lf  M:%5.03lf\n", *kcas, ((*kcas) - old_kcas) /
-		    total_t, *alt, (((*alt) - old_alt) / total_t) * 60,
+		    "s:%6.0lf  M:%5.03lf  tab:%d\n", *kcas,
+		    ((*kcas) - old_kcas) / total_t, *alt,
+		    (((*alt) - old_alt) / total_t) * 60,
 		    NM2MET(dist), ktas2mach(kcas2ktas(*kcas, alt2press(*alt,
-		    qnh), oat), oat));
+		    qnh), oat), oat), table);
 #endif	/* STEP_DEBUG */
 		iter_counter++;
 	}
@@ -1739,7 +1905,7 @@ perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
 		vect2_t wind = VECT2(wavg(wind1.x, wind2.y, rat),
 		    wavg(wind1.y, wind2.y, rat));
 		double wind_mps = KT2MPS(vect2_dotprod(fltdir, wind));
-		
+
 		if (!crz_step(isadev, tp_alt, qnh, alt_ft, spd, is_mach,
 		    wind_mps, mass, acft, flt, SECS_PER_STEP_CRZ,
 		    &dist_done, &burn))
