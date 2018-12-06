@@ -474,7 +474,7 @@ airac_time2cycle(time_t t)
  *	without the terminating NUL.
  */
 ssize_t
-parser_get_next_line(FILE *fp, char **linep, size_t *linecap, size_t *linenum)
+parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 {
 	for (;;) {
 		ssize_t len = getline(linep, linecap, fp);

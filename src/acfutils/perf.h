@@ -179,6 +179,7 @@ typedef struct {
 
 	perf_table_set_t	*clb_tables;
 	perf_table_set_t	*crz_tables;
+	perf_table_set_t	*des_tables;
 } acft_perf_t;
 
 /* Type of acceleration-climb */
@@ -219,6 +220,11 @@ double perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
     double spd, bool_t is_mach, double hdg, vect2_t wind1, vect2_t wind2,
     double fuel, double dist_nm, const acft_perf_t *acft,
     const flt_perf_t *flt);
+double perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
+    double isadev, double qnh, double fuel, double hdgt, double dist_m,
+    double mach_lim,
+    double alt1, double kcas1, vect2_t wind1,
+    double alt2, double kcas2, vect2_t wind2);
 
 double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
 
@@ -249,6 +255,11 @@ API_EXPORT double ktas2kcas(double ktas, double pressure, double oat);
 API_EXPORT double kcas2ktas(double kcas, double pressure, double oat);
 #define	impact_press2kcas	ACFSYM(impact_press2kcas)
 API_EXPORT double impact_press2kcas(double impact_pressure);
+
+#define	kcas2mach		ACFSYM(kcas2mach)
+API_EXPORT double kcas2mach(double kcas, double alt_ft, double qnh, double oat);
+#define	mach2kcas		ACFSYM(mach2kcas)
+API_EXPORT double mach2kcas(double mach, double alt_ft, double qnh, double oat);
 
 #define	mach2keas	ACFSYM(mach2keas)
 API_EXPORT double mach2keas(double mach, double press);

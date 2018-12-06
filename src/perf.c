@@ -108,7 +108,7 @@ typedef struct {
 } perf_table_isa_t;
 
 static bool_t perf_table_parse(FILE *fp, perf_table_set_t *set,
-    unsigned num_eng, size_t *line_num);
+    unsigned num_eng, unsigned *line_num);
 static void perf_table_free(perf_table_t *table);
 
 static int
@@ -271,7 +271,7 @@ perf_table_cells_populate(char ** comps, size_t n_comps, perf_table_t *table,
 
 static bool_t
 perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
-    size_t *line_num)
+    unsigned *line_num)
 {
 	perf_table_isa_t *isa, srch_isa;
 	perf_table_t *table = safe_calloc(1, sizeof (*table));
@@ -430,7 +430,8 @@ perf_table_free(perf_table_t *table)
 }
 
 static bool_t
-parse_curve_lin(FILE *fp, vect2_t **curvep, size_t numpoints, size_t *line_num)
+parse_curve_lin(FILE *fp, vect2_t **curvep, size_t numpoints,
+    unsigned *line_num)
 {
 	vect2_t	*curve;
 	char	*line = NULL;
@@ -584,7 +585,7 @@ static double
 perf_table_lookup_row(perf_table_t *table, perf_table_cell_t *row,
     double mass, size_t field_offset)
 {
-	unsigned col1, col2;
+	unsigned col1 = 0, col2 = 1;
 	double v1, v2, v;
 
 	ASSERT(table != NULL);
@@ -707,16 +708,15 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 #define	PARSE_SCALAR(name, var) \
 	if (strcmp(comps[0], name) == 0) { \
 		if (ncomps != 2 || (var) != 0.0) { \
-			logMsg("Error parsing acft perf file %s:%lu: " \
+			logMsg("Error parsing acft perf file %s:%d: " \
 			    "malformed or duplicate " name " line.", \
-			    filename, (unsigned long)line_num); \
+			    filename, line_num); \
 			goto errout; \
 		} \
 		(var) = atof(comps[1]); \
 		if ((var) <= 0.0) { \
-			logMsg("Error parsing acft perf file %s:%lu: " \
-			    "invalid value for " name, filename, \
-			    (unsigned long)line_num); \
+			logMsg("Error parsing acft perf file %s:%d: " \
+			    "invalid value for " name, filename, line_num); \
 			goto errout; \
 		} \
 	}
@@ -729,15 +729,15 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 #define	PARSE_CURVE(name, var) \
 	if (strcmp(comps[0], name) == 0) { \
 		if (ncomps != 2 || atoi(comps[1]) < 2 || (var) != NULL) { \
-			logMsg("Error parsing acft perf file %s:%lu: " \
+			logMsg("Error parsing acft perf file %s:%d: " \
 			    "malformed or duplicate " name " line.", \
-			    filename, (unsigned long)line_num); \
+			    filename, line_num); \
 			goto errout; \
 		} \
 		if (!parse_curve_lin(fp, &(var), atoi(comps[1]), &line_num)) { \
-			logMsg("Error parsing acft perf file %s:%lu: " \
+			logMsg("Error parsing acft perf file %s:%d: " \
 			    "malformed or missing lines.", filename, \
-			    (unsigned long)line_num); \
+			    line_num); \
 			goto errout; \
 		} \
 	}
@@ -748,9 +748,9 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 			(table_set) = perf_table_set_alloc(); \
 		if (!perf_table_parse(fp, (table_set), acft->num_eng, \
 		    &line_num)) { \
-			logMsg("Error parsing acft perf file %s:%lu: " \
+			logMsg("Error parsing acft perf file %s:%d: " \
 			    "malformed or missing lines.", filename, \
-			    (unsigned long)line_num); \
+			    line_num); \
 			goto errout; \
 		} \
 	}
@@ -761,7 +761,8 @@ acft_perf_parse(const char *filename)
 	acft_perf_t	*acft = safe_calloc(sizeof (*acft), 1);
 	FILE		*fp = fopen(filename, "r");
 	char		*line = NULL;
-	size_t		line_cap = 0, line_num = 0;
+	size_t		line_cap = 0;
+	unsigned	line_num = 0;
 	ssize_t		line_len = 0;
 	char		*comps[MAX_LINE_COMPS];
 	bool_t		version_check_completed = B_FALSE;
@@ -776,9 +777,9 @@ acft_perf_parse(const char *filename)
 			continue;
 		ncomps = explode_line(line, ',', comps, MAX_LINE_COMPS);
 		if (ncomps < 0) {
-			logMsg("Error parsing acft perf file %s:%lu: "
+			logMsg("Error parsing acft perf file %s:%d: "
 			    "malformed line, too many line components.",
-			    filename, (unsigned long)line_num);
+			    filename, line_num);
 			goto errout;
 		}
 		ASSERT(ncomps > 0);
@@ -786,47 +787,46 @@ acft_perf_parse(const char *filename)
 			int vers;
 
 			if (version_check_completed) {
-				logMsg("Error parsing acft perf file %s:%lu: "
+				logMsg("Error parsing acft perf file %s:%d: "
 				    "duplicate VERSION line.", filename,
-				    (unsigned long)line_num);
+				    line_num);
 				goto errout;
 			}
 			if (ncomps != 2) {
-				logMsg("Error parsing acft perf file %s:%lu: "
+				logMsg("Error parsing acft perf file %s:%d: "
 				    "malformed VERSION line.", filename,
-				    (unsigned long)line_num);
+				    line_num);
 				goto errout;
 			}
 			vers = atoi(comps[1]);
 			if (vers < ACFT_PERF_MIN_VERSION ||
 			    vers > ACFT_PERF_MAX_VERSION) {
-				logMsg("Error parsing acft perf file %s:%lu: "
+				logMsg("Error parsing acft perf file %s:%d: "
 				    "unsupported file version %d.", filename,
-				    (unsigned long)line_num, vers);
+				    line_num, vers);
 				goto errout;
 			}
 			version_check_completed = B_TRUE;
 			continue;
 		}
 		if (!version_check_completed) {
-			logMsg("Error parsing acft perf file %s:%lu: first "
-			    "line was not VERSION.", filename,
-			    (unsigned long)line_num);
+			logMsg("Error parsing acft perf file %s:%d: first "
+			    "line was not VERSION.", filename, line_num);
 			goto errout;
 		}
 		if (strcmp(comps[0], "ACFTTYPE") == 0) {
 			if (ncomps != 2 || acft->acft_type != NULL) {
-				logMsg("Error parsing acft perf file %s:%lu: "
+				logMsg("Error parsing acft perf file %s:%d: "
 				    "malformed or duplicate ACFTTYPE line.",
-				    filename, (unsigned long)line_num);
+				    filename, line_num);
 				goto errout;
 			}
 			acft->acft_type = strdup(comps[1]);
 		} else if (strcmp(comps[0], "ENGTYPE") == 0) {
 			if (ncomps != 2 || acft->eng_type != NULL) {
-				logMsg("Error parsing acft perf file %s:%lu: "
+				logMsg("Error parsing acft perf file %s:%d: "
 				    "malformed or duplicate ENGTYPE line.",
-				    filename, (unsigned long)line_num);
+				    filename, line_num);
 				goto errout;
 			}
 			acft->eng_type = strdup(comps[1]);
@@ -866,9 +866,10 @@ acft_perf_parse(const char *filename)
 		else PARSE_CURVE("FULLBANK", acft->full_bank_curve)
 		else PARSE_TABLE("CLBTABLE", acft->clb_tables)
 		else PARSE_TABLE("CRZTABLE", acft->crz_tables)
+		else PARSE_TABLE("DESTABLE", acft->des_tables)
 		else {
-			logMsg("Error parsing acft perf file %s:%lu: unknown "
-			    "line", filename, (unsigned long)line_num);
+			logMsg("Error parsing acft perf file %s:%d: unknown "
+			    "line", filename, line_num);
 			goto errout;
 		}
 	}
@@ -946,6 +947,8 @@ acft_perf_destroy(acft_perf_t *acft)
 		perf_table_set_free(acft->clb_tables);
 	if (acft->crz_tables != NULL)
 		perf_table_set_free(acft->crz_tables);
+	if (acft->des_tables != NULL)
+		perf_table_set_free(acft->des_tables);
 	free(acft);
 }
 
@@ -1491,6 +1494,21 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	return (B_TRUE);
 }
 
+static double
+des_burn_step(double isadev, double alt, double vs_act_mps,
+    double tgt_spd, bool_t is_mach, double mass,
+    const acft_perf_t *acft, double d_t)
+{
+	double ff_des = table_lookup_common(acft->des_tables, isadev, mass,
+	    tgt_spd, is_mach, alt, offsetof(perf_table_cell_t, ff));
+	double ff_crz = table_lookup_common(acft->crz_tables, isadev, mass,
+	    tgt_spd, is_mach, alt, offsetof(perf_table_cell_t, ff));
+	double vs_des_mps = table_lookup_common(acft->des_tables, isadev,
+	    mass, tgt_spd, is_mach, alt, offsetof(perf_table_cell_t, ff));
+
+	return (fx_lin(vs_act_mps, 0, ff_crz, vs_des_mps, ff_des) * d_t);
+}
+
 /*
  * ACCEL_THEN_CLB first accelerates to kcas2 and then climbs.
  * ACCEL_TAKEOFF first accelerates to flt->clb_ias_init, then climbs until
@@ -1924,6 +1942,62 @@ perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
 }
 
 double
+perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
+    double isadev, double qnh, double fuel, double hdgt,
+    double dist_m, double mach_lim,
+    double alt1, double kcas1, vect2_t wind1,
+    double alt2, double kcas2, vect2_t wind2)
+{
+	vect2_t fltdir;
+	double burn = 0;
+
+	ASSERT(flt != NULL);
+	ASSERT(acft != NULL);
+	ASSERT(is_valid_hdg(hdgt));
+	ASSERT3F(dist_m, >=, 0);
+	ASSERT3F(mach_lim, >=, 0);
+
+	fltdir = hdg2dir(hdgt);
+
+	for (double dist_done = 0; dist_done < dist_m;) {
+		double rat = dist_done / dist_m;
+		double alt = wavg(alt1, alt2, rat);
+		double kcas = wavg(kcas1, kcas2, rat);
+		double mass = flt->zfw + MAX(fuel - burn, 0);
+		vect2_t wind = VECT2(wavg(wind1.x, wind2.y, rat),
+		    wavg(wind1.y, wind2.y, rat));
+		double wind_mps = KT2MPS(vect2_dotprod(fltdir, wind));
+		double fl = alt2fl(FEET2MET(alt), qnh);
+		double p = alt2press(fl, qnh);
+		double oat = isadev2sat(fl, isadev);
+		double kcas_lim_mach = mach2kcas(mach_lim, FEET2MET(alt),
+		    qnh, oat);
+		bool_t is_mach;
+		double tgt_spd, tas_mps, gs_mps, vs_mps;
+
+		if (alt <= FEET2MET(flt->spd_lim_alt))
+			kcas = MIN(kcas, flt->spd_lim);
+		is_mach = (kcas > kcas_lim_mach);
+		tgt_spd = (is_mach ? mach_lim : kcas);
+		if (is_mach) {
+			tgt_spd = mach_lim;
+			tas_mps = KT2MPS(kcas2ktas(kcas_lim_mach, p, oat));
+		} else {
+			tgt_spd = kcas;
+			tas_mps = KT2MPS(kcas2ktas(kcas, p, oat));
+		}
+		gs_mps = tas_mps + wind_mps;
+		vs_mps = (alt2 - alt1) / (dist_m / gs_mps);
+
+		burn += des_burn_step(isadev, alt, vs_mps, tgt_spd, is_mach,
+		    mass, acft, SECS_PER_STEP);
+		dist_done += gs_mps * SECS_PER_STEP;
+	}
+
+	return (burn);
+}
+
+double
 perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft)
 {
 	double mass = flt->zfw + flt->fuel;
@@ -2054,6 +2128,21 @@ impact_press2kcas(double impact_pressure)
 {
 	return (MPS2KT(ISA_SPEED_SOUND * sqrt(5 *
 	    (pow(impact_pressure / ISA_SL_PRESS + 1, 0.2857142857) - 1))));
+}
+
+double
+kcas2mach(double kcas, double alt_ft, double qnh, double oat)
+{
+	double p = alt2press(alt2fl(alt_ft, qnh), qnh);
+	double ktas = kcas2ktas(kcas, p, oat);
+	return (ktas2mach(ktas, oat));
+}
+
+double mach2kcas(double mach, double alt_ft, double qnh, double oat)
+{
+	double ktas = mach2ktas(mach, oat);
+	double p = alt2press(alt2fl(alt_ft, qnh), qnh);
+	return (ktas2kcas(ktas, p, oat));
 }
 
 /*

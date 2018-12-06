@@ -49,6 +49,17 @@ safe_calloc(size_t nmemb, size_t size)
 	return (p);
 }
 
+static inline void *
+safe_realloc(void *oldptr, size_t size)
+{
+	void *p = realloc(oldptr, size);
+	if (size > 0) {
+		VERIFY_MSG(p != NULL, "Cannot allocate %lu bytes: "
+		    "out of memory", (long unsigned)size);
+	}
+	return (p);
+}
+
 #ifdef	__cplusplus
 }
 #endif

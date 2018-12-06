@@ -160,7 +160,7 @@ API_EXPORT int airac_time2cycle(time_t t);
 /* CSV file & string processing helpers */
 #define	parser_get_next_line		ACFSYM(parser_get_next_line)
 API_EXPORT ssize_t parser_get_next_line(FILE *fp, char **linep,
-    size_t *linecap, size_t *linenum);
+    size_t *linecap, unsigned *linenum);
 #define	parser_get_next_quoted_str	ACFSYM(parser_get_next_quoted_str)
 API_EXPORT char *parser_get_next_quoted_str(FILE *fp);
 #define	explode_line			ACFSYM(explode_line)
