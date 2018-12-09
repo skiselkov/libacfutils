@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2015 Saso Kiselkov. All rights reserved.
+ * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -94,86 +94,92 @@ static const char *const icao_country_codes[] = {
 	NULL
 };
 
+static const char *months[12] = {
+    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+};
+
 static struct {
-	int year;
-	const char *cycles[14];
+	int		cycle;
+	const char	*start;
 } airac_eff_dates[] = {
-    { 15,
-	{ "08-JAN", "05-FEB", "05-MAR", "02-APR", "30-APR", "28-MAY",
-	"25-JUN", "23-JUL", "20-AUG", "17-SEP", "15-OCT", "12-NOV",
-	"10-DEC", "10-DEC" }
-    },
-    { 16,
-	{ "07-JAN",  "04-FEB", "03-MAR", "31-MAR", "28-APR", "26-MAY",
-	"23-JUN", "21-JUL", "18-AUG", "15-SEP", "13-OCT", "10-NOV",
-	"08-DEC", "08-DEC" }
-    },
-    { 17,
-	{ "05-JAN", "02-FEB", "02-MAR", "30-MAR", "27-APR", "25-MAY",
-	"22-JUN", "20-JUL", "17-AUG", "14-SEP", "12-OCT", "09-NOV",
-	"07-DEC", "07-DEC" }
-    },
-    { 18,
-	{ "04-JAN", "01-FEB", "01-MAR", "29-MAR", "26-APR", "24-MAY",
-	"21-JUN", "19-JUL", "16-AUG", "13-SEP", "11-OCT", "08-NOV",
-	"06-DEC", "06-DEC" }
-    },
-    { 19,
-	{ "03-JAN", "31-JAN", "28-FEB", "28-MAR", "25-APR", "23-MAY",
-	"20-JUN", "18-JUL", "15-AUG", "12-SEP", "10-OCT", "07-NOV",
-	"05-DEC", "05-DEC" }
-    },
-    { 20,
-	{ "02-JAN", "30-JAN", "27-FEB", "26-MAR", "23-APR", "21-MAY",
-	"18-JUN", "16-JUL", "13-AUG", "10-SEP", "08-OCT", "05-NOV",
-	"03-DEC", "31-DEC" }
-    },
-    { 21,
-	{ "28-JAN", "25-FEB", "25-MAR", "22-APR", "20-MAY", "17-JUN",
-	"15-JUL", "12-AUG", "09-SEP", "07-OCT", "04-NOV", "02-DEC",
-	"30-DEC", NULL }
-    },
-    { 22,
-	{ "27-JAN", "24-FEB", "24-MAR", "21-APR", "19-MAY", "16-JUN",
-	"14-JUL", "11-AUG", "08-SEP", "06-OCT", "03-NOV", "01-DEC",
-	"29-DEC", NULL }
-    },
-    { 23,
-	{ "26-JAN", "23-FEB", "23-MAR", "20-APR", "18-MAY", "15-JUN",
-	"13-JUL", "10-AUG", "07-SEP", "05-OCT", "02-NOV", "30-NOV",
-	"28-DEC", NULL }
-    },
-    { 24,
-	{ "25-JAN", "22-FEB", "21-MAR", "18-APR", "16-MAY", "13-JUN",
-	"11-JUL", "08-AUG", "05-SEP", "03-OCT", "31-OCT", "28-NOV",
-	"26-DEC", NULL }
-    },
-    { 25,
-	{ "23-JAN", "20-FEB", "20-MAR", "17-APR", "15-MAY", "12-JUN",
-	"10-JUL", "07-AUG", "04-SEP", "02-OCT", "30-OCT", "27-NOV",
-	"25-DEC", NULL }
-    },
-    { 26,
-	{ "22-JAN", "19-FEB", "19-MAR", "16-APR", "14-MAY", "11-JUN",
-	"09-JUL", "06-AUG", "03-SEP", "01-OCT", "29-OCT", "26-NOV",
-	"24-DEC", NULL }
-    },
-    { 27,
-	{ "21-JAN", "18-FEB", "18-MAR", "15-APR", "13-MAY", "10-JUN",
-	"08-JUL", "05-AUG", "02-SEP", "30-SEP", "28-OCT", "25-NOV",
-	"23-DEC", NULL }
-    },
-    { 28,
-	{ "20-JAN", "17-FEB", "16-MAR", "13-APR", "11-MAY", "08-JUN",
-	"06-JUL", "03-AUG", "31-AUG", "28-SEP", "26-OCT", "23-NOV",
-	"21-DEC", NULL }
-    },
-    { 29,
-	{ "18-JAN", "15-FEB", "15-MAR", "12-APR", "10-MAY", "07-JUN",
-	"05-JUL", "02-AUG", "30-AUG", "27-SEP", "25-OCT", "22-NOV",
-	"20-DEC", NULL }
-    },
-    { -1, { NULL } }
+    /* year 2015 */
+    {1501, "08-JAN"}, {1502, "05-FEB"}, {1503, "05-MAR"}, {1504, "02-APR"},
+    {1505, "30-APR"}, {1506, "28-MAY"}, {1507, "25-JUN"}, {1508, "23-JUL"},
+    {1509, "20-AUG"}, {1510, "17-SEP"}, {1511, "15-OCT"}, {1512, "12-NOV"},
+    {1513, "10-DEC"},
+    /* year 2016 */
+    {1601, "07-JAN"}, {1602, "04-FEB"}, {1603, "03-MAR"}, {1604, "31-MAR"},
+    {1605, "28-APR"}, {1606, "26-MAY"}, {1607, "23-JUN"}, {1608, "21-JUL"},
+    {1609, "18-AUG"}, {1610, "15-SEP"}, {1611, "13-OCT"}, {1612, "10-NOV"},
+    {1613, "08-DEC"},
+    /* year 2017 */
+    {1701, "05-JAN"}, {1702, "02-FEB"}, {1703, "02-MAR"}, {1704, "30-MAR"},
+    {1705, "27-APR"}, {1706, "25-MAY"}, {1707, "22-JUN"}, {1708, "20-JUL"},
+    {1709, "17-AUG"}, {1710, "14-SEP"}, {1711, "12-OCT"}, {1712, "09-NOV"},
+    {1713, "07-DEC"},
+    /* year 2018 */
+    {1801, "04-JAN"}, {1802, "01-FEB"}, {1803, "01-MAR"}, {1804, "29-MAR"},
+    {1805, "26-APR"}, {1806, "24-MAY"}, {1807, "21-JUN"}, {1808, "19-JUL"},
+    {1809, "16-AUG"}, {1810, "13-SEP"}, {1811, "11-OCT"}, {1812, "08-NOV"},
+    {1813, "06-DEC"},
+    /* year 2019 */
+    {1901, "03-JAN"}, {1902, "31-JAN"}, {1903, "28-FEB"}, {1304, "28-MAR"},
+    {1905, "25-APR"}, {1906, "23-MAY"}, {1907, "20-JUN"}, {1908, "18-JUL"},
+    {1909, "15-AUG"}, {1910, "12-SEP"}, {1911, "10-OCT"}, {1912, "07-NOV"},
+    {1913, "05-DEC"},
+    /* year 2020 */
+    {2001, "02-JAN"}, {2002, "30-JAN"}, {2003, "27-FEB"}, {2004, "26-MAR"},
+    {2005, "23-APR"}, {2006, "21-MAY"}, {2007, "18-JUN"}, {2008, "16-JUL"},
+    {2009, "13-AUG"}, {2010, "10-SEP"}, {2011, "08-OCT"}, {2012, "05-NOV"},
+    {2013, "03-DEC"}, {2014, "31-DEC"},
+    /* year 2021 */
+    {2101, "28-JAN"}, {2102, "25-FEB"}, {2103, "25-MAR"}, {2104, "22-APR"},
+    {2105, "20-MAY"}, {2106, "17-JUN"}, {2107, "15-JUL"}, {2108, "12-AUG"},
+    {2109, "09-SEP"}, {2110, "07-OCT"}, {2111, "04-NOV"}, {2112, "02-DEC"},
+    {2113, "30-DEC"},
+    /* year 2022 */
+    {2201, "27-JAN"}, {2202, "24-FEB"}, {2203, "24-MAR"}, {2204, "21-APR"},
+    {2205, "19-MAY"}, {2206, "16-JUN"}, {2207, "14-JUL"}, {2208, "11-AUG"},
+    {2209, "08-SEP"}, {2210, "06-OCT"}, {2211, "03-NOV"}, {2212, "01-DEC"},
+    {2213, "29-DEC"},
+    /* year 2023 */
+    {2301, "26-JAN"}, {2302, "23-FEB"}, {2303, "23-MAR"}, {2304, "20-APR"},
+    {2305, "18-MAY"}, {2306, "15-JUN"}, {2307, "13-JUL"}, {2308, "10-AUG"},
+    {2309, "07-SEP"}, {2310, "05-OCT"}, {2311, "02-NOV"}, {2312, "30-NOV"},
+    {2313, "28-DEC"},
+    /* year 2024 */
+    {2401, "25-JAN"}, {2402, "22-FEB"}, {2403, "21-MAR"}, {2404, "18-APR"},
+    {2405, "16-MAY"}, {2406, "13-JUN"}, {2407, "11-JUL"}, {2408, "08-AUG"},
+    {2409, "05-SEP"}, {2410, "03-OCT"}, {2411, "31-OCT"}, {2412, "28-NOV"},
+    {2413, "26-DEC"},
+    /* year 2025 */
+    {2501, "23-JAN"}, {2502, "20-FEB"}, {2503, "20-MAR"}, {2504, "17-APR"},
+    {2505, "15-MAY"}, {2506, "12-JUN"}, {2507, "10-JUL"}, {2508, "07-AUG"},
+    {2509, "04-SEP"}, {2510, "02-OCT"}, {2511, "30-OCT"}, {2512, "27-NOV"},
+    {2513, "25-DEC"},
+    /* year 2026 */
+    {2601, "22-JAN"}, {2602, "19-FEB"}, {2603, "19-MAR"}, {2604, "16-APR"},
+    {2605, "14-MAY"}, {2606, "11-JUN"}, {2607, "09-JUL"}, {2608, "06-AUG"},
+    {2609, "03-SEP"}, {2610, "01-OCT"}, {2611, "29-OCT"}, {2612, "26-NOV"},
+    {2613, "24-DEC"},
+    /* year 2027 */
+    {2701, "21-JAN"}, {2702, "18-FEB"}, {2703, "18-MAR"}, {2704, "15-APR"},
+    {2705, "13-MAY"}, {2706, "10-JUN"}, {2707, "08-JUL"}, {2708, "05-AUG"},
+    {2709, "02-SEP"}, {2710, "30-SEP"}, {2711, "28-OCT"}, {2712, "25-NOV"},
+    {2713, "23-DEC"},
+    /* year 2028 */
+    {2801, "20-JAN"}, {2802, "17-FEB"}, {2803, "16-MAR"}, {2804, "13-APR"},
+    {2805, "11-MAY"}, {2806, "08-JUN"}, {2807, "06-JUL"}, {2808, "03-AUG"},
+    {2809, "31-AUG"}, {2810, "28-SEP"}, {2811, "26-OCT"}, {2812, "23-NOV"},
+    {2813, "21-DEC"},
+    /* year 2029 */
+    {2901, "18-JAN"}, {2902, "15-FEB"}, {2903, "15-MAR"}, {2904, "12-APR"},
+    {2905, "10-MAY"}, {2906, "07-JUN"}, {2907, "05-JUL"}, {2908, "02-AUG"},
+    {2909, "30-AUG"}, {2910, "27-SEP"}, {2911, "25-OCT"}, {2912, "22-NOV"},
+    {2912, "20-DEC"},
+    /* end of list */
+    { .cycle = -1 }
 };
 
 /*
@@ -372,51 +378,9 @@ copy_rwy_ID(const char *src, char dst[4])
 	}
 }
 
-const char *
-airac_cycle2eff_date(int cycle)
-{
-	int year = cycle / 100;
-	int mo = cycle % 100;
-
-	if (mo < 1 || mo > 14)
-		return (NULL);
-
-	for (int i = 0; airac_eff_dates[i].year != -1; i++) {
-		if (airac_eff_dates[i].year == year)
-			return (airac_eff_dates[i].cycles[mo - 1]);
-	}
-
-	return (NULL);
-}
-
-const char *
-airac_cycle2exp_date(int cycle)
-{
-	int year = cycle / 100;
-	int mo = cycle % 100;
-
-	if (year <= 20) {
-		if (mo == 14)
-			cycle = (year + 1) * 100 + 1;
-		else
-			cycle = (year * 100) + (mo + 1);
-	} else {
-		if (mo == 13)
-			cycle = (year + 1) * 100 + 1;
-		else
-			cycle = (year * 100) + (mo + 1);
-	}
-	return (airac_cycle2eff_date(cycle));
-}
-
 static int
 month2nr(const char *month)
 {
-	const char *months[12] = {
-	    "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-	    "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
-	};
-
 	for (int i = 0; i < 12; i++) {
 		if (strcmp(month, months[i]) == 0)
 			return (i);
@@ -424,33 +388,74 @@ month2nr(const char *month)
 	VERIFY_MSG(0, "Invalid month specified: \"%s\"", month);
 }
 
+static const char *
+nr2month(unsigned tm_mon)
+{
+	VERIFY3S(tm_mon, <, 12);
+	return (months[tm_mon]);
+}
+
+const char *
+airac_cycle2eff_date(int cycle)
+{
+	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
+		if (airac_eff_dates[i].cycle == cycle)
+			return (airac_eff_dates[i].start);
+	}
+	return (NULL);
+}
+
+static time_t
+cycle2start(int i)
+{
+	struct tm cyc_tm = { 0 };
+	char day[4], month[4];
+	int year = (airac_eff_dates[i].cycle / 100) + 100;
+	const char *start = airac_eff_dates[i].start;
+
+	snprintf(day, sizeof (day), "%c%c", start[0], start[1]);
+	snprintf(month, sizeof (month), "%c%c%c", start[3], start[4], start[5]);
+
+	cyc_tm.tm_year = year;
+	cyc_tm.tm_mday = atoi(day);
+	cyc_tm.tm_mon = month2nr(month);
+	cyc_tm.tm_wday = -1;
+	cyc_tm.tm_yday = -1;
+	cyc_tm.tm_isdst = -1;
+
+	return (mktime(&cyc_tm));
+}
+
+bool_t
+airac_cycle2exp_date(int cycle, char buf[16])
+{
+	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
+		if (airac_eff_dates[i].cycle == cycle &&
+		    airac_eff_dates[i + 1].cycle != -1) {
+			/*
+			 * Grab the effective date of the next cycle and
+			 * subtract one day second. The end time will be
+			 * the previous day at 23:59:59.
+			 */
+			time_t cycle_end_t = cycle2start(i + 1) - 1;
+			const struct tm *end_tm = gmtime(&cycle_end_t);
+
+			VERIFY(end_tm != NULL);
+			snprintf(buf, 16, "%02d-%s", end_tm->tm_mday,
+			    nr2month(end_tm->tm_mon));
+
+			return (B_TRUE);
+		}
+	}
+	return (B_FALSE);
+}
+
 int
 airac_time2cycle(time_t t)
 {
-	struct tm *t_tm = gmtime(&t);
-	int cycle_nr = 1414;
-
-	for (int i = 0; airac_eff_dates[i].year > 0; i++) {
-		if (t_tm->tm_year + 1900 != airac_eff_dates[i].year + 2000)
-			continue;
-		for (int j = 0; j < 14; j++) {
-			struct tm cyc_tm = { .tm_sec = 0 };
-			time_t cyc_t;
-			const char *cycle = airac_eff_dates[i].cycles[j];
-			char day[3] = { cycle[0], cycle[1], '\0' };
-			char month[4] = { cycle[3], cycle[4], cycle[5], '\0' };
-
-			cyc_tm.tm_year = airac_eff_dates[i].year + 100;
-			cyc_tm.tm_mday = atoi(day);
-			cyc_tm.tm_mon = month2nr(month);
-			cyc_tm.tm_wday = -1;
-			cyc_tm.tm_yday = -1;
-			cyc_tm.tm_isdst = -1;
-			cyc_t = mktime(&cyc_tm);
-			if (t < cyc_t)
-				return (cycle_nr);
-			cycle_nr = airac_eff_dates[i].year * 100 + j + 1;
-		}
+	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
+		if (cycle2start(i) > t && i > 0)
+			return (airac_eff_dates[i - 1].cycle);
 	}
 
 	return (-1);
@@ -482,7 +487,7 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 			return (-1);
 		(*linenum)++;
 		strip_space(*linep);
-		if (**linep != 0 && **linep == '#')
+		if (**linep == 0 || **linep == '#')
 			continue;
 		len = strlen(*linep);
 		/* substitute spaces for tabs */
