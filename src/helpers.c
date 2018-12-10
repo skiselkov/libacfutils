@@ -408,7 +408,7 @@ airac_cycle2eff_date(int cycle)
 static time_t
 cycle2start(int i)
 {
-	struct tm cyc_tm = { 0 };
+	struct tm cyc_tm = { .tm_year = 0 };
 	char day[4], month[4];
 	int year = (airac_eff_dates[i].cycle / 100) + 100;
 	const char *start = airac_eff_dates[i].start;
