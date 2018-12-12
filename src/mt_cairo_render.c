@@ -32,6 +32,8 @@
 
 #include <GL/glew.h>
 
+#include <XPLMGraphics.h>
+
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
 #include <acfutils/geom.h>
@@ -635,6 +637,8 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	}
 
 	mutex_exit(&mtcr->lock);
+
+	XPLMSetGraphicsState(1, 1, 1, 1, 1, 1, 1);
 
 	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
 
