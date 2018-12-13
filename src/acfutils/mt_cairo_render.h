@@ -72,6 +72,8 @@ API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
     const GLfloat *pvm);
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
+API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
+API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
 
 /*
  * Must ONLY be called from the rendering callback.

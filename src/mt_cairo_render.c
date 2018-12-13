@@ -704,6 +704,20 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	return (tex);
 }
 
+API_EXPORT unsigned
+mt_cairo_render_get_width(mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (mtcr->w);
+}
+
+API_EXPORT unsigned
+mt_cairo_render_get_height(mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (mtcr->h);
+}
+
 API_EXPORT void
 mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
     mtcr_rect_t *rects, size_t num)
