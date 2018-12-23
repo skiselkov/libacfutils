@@ -17,8 +17,8 @@
 
 source ../build_dep.common
 
-CAIRO="cairo-1.14.10.tar.xz"
-PIXMAN="pixman-0.34.0.tar.xz"
+CAIRO="cairo-1.16.0.tar.xz"
+PIXMAN="pixman-0.36.0.tar.xz"
 
 PIXMAN_PRODUCT="pixman/.libs/libpixman-1.a"
 PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
@@ -43,7 +43,7 @@ $(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/pixman-{PLATFORM}/lib/pkgconfig" \
 
-CAIRO_PATCHES="cairo-win-ulongf.patch"
+CAIRO_PATCHES="cairo-win-ulongf.patch cairo-win-fopen.patch"
 if [[ "$do_dll" = 1 ]]; then
 	CAIRO_PATCHES="$CAIRO_PATCHES cairo-win-dllexport.patch"
 fi
