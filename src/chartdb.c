@@ -1459,7 +1459,7 @@ static char *
 download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
     const char *node_name)
 {
-	dl_info_t info;
+	chart_dl_info_t info;
 	char url[256];
 	char error_reason[128];
 	xmlDoc *doc = NULL;

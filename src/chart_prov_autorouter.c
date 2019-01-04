@@ -81,7 +81,7 @@ webdav_foreach_dirlist(chartdb_t *cdb, CURL *curl, const char *path,
     const char *cachefile,
     bool_t (*cb)(chartdb_t *cdb, CURL *curl, const char *href))
 {
-	dl_info_t dl = { .cdb = NULL };
+	chart_dl_info_t dl = { .cdb = NULL };
 	chart_prov_info_login_t *login = cdb->prov_info;
 	xmlDoc *doc = NULL;
 	xmlXPathContext *xpath_ctx = NULL;

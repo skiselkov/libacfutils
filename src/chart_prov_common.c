@@ -36,7 +36,7 @@
 static size_t
 dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-	dl_info_t *dl_info = userdata;
+	chart_dl_info_t *dl_info = userdata;
 	size_t bytes = size * nmemb;
 
 	ASSERT(dl_info != NULL);
@@ -78,7 +78,7 @@ append_if_mod_since_hdr(struct curl_slist *hdrs, const char *path)
 }
 
 static bool_t
-write_dl(dl_info_t *dl_info, const char *filepath, const char *url,
+write_dl(chart_dl_info_t *dl_info, const char *filepath, const char *url,
     const char *error_prefix)
 {
 	char *dname = lacf_dirname(filepath);
@@ -106,11 +106,11 @@ bool_t
 chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
     const char *filepath, const char *method,
     const chart_prov_info_login_t *login, int timeout,
-    const char *error_prefix, dl_info_t *raw_output)
+    const char *error_prefix, chart_dl_info_t *raw_output)
 {
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
-	dl_info_t dl_info = { .cdb = NULL };
+	chart_dl_info_t dl_info = { .cdb = NULL };
 	CURLcode res;
 	long code = 0;
 	bool_t result = B_TRUE;
@@ -121,17 +121,14 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 	if (*curl_p != NULL) {
 		curl = *curl_p;
 	} else {
+		const char *cainfo = (login != NULL ? login->cainfo : NULL);
+
 		curl = curl_easy_init();
 		VERIFY(curl != NULL);
 
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT,
 		    timeout < 0 ? DL_TIMEOUT : timeout);
-		curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
-		curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
-		curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
-		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+		chart_setup_curl(curl, cainfo);
 		if (login != NULL && login->username != NULL) {
 			curl_easy_setopt(curl, CURLOPT_USERNAME,
 			    login->username);
@@ -140,8 +137,6 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 			curl_easy_setopt(curl, CURLOPT_PASSWORD,
 			    login->password);
 		}
-		if (login != NULL && login->cainfo != NULL)
-			curl_easy_setopt(curl, CURLOPT_CAINFO, login->cainfo);
 		*curl_p = curl;
 	}
 
@@ -204,13 +199,26 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 bool_t
 chart_download(chartdb_t *cdb, const char *url, const char *filepath,
     const chart_prov_info_login_t *login, const char *error_prefix,
-    dl_info_t *raw_output)
+    chart_dl_info_t *raw_output)
 {
 	CURL *curl = NULL;
 	bool_t result = chart_download_multi(&curl, cdb, url, filepath, NULL,
 	    login, -1, error_prefix, raw_output);
 	curl_easy_cleanup(curl);
 	return (result);
+}
+
+void
+chart_setup_curl(CURL *curl, const char *cainfo)
+{
+	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
+	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
+	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	if (cainfo != NULL)
+		curl_easy_setopt(curl, CURLOPT_CAINFO, cainfo);
 }
 
 void

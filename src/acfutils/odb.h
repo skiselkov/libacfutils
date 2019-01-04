@@ -54,7 +54,7 @@ typedef struct odb_s odb_t;
 typedef void (*add_obst_cb_t)(obst_type_t type, geo_pos3_t pos,
     float agl, obst_light_t light, unsigned quant, void *userinfo);
 
-odb_t *odb_init(const char *xpdir);
+odb_t *odb_init(const char *xpdir, const char *cainfo);
 void odb_fini(odb_t *odb);
 
 void odb_set_unload_delay(odb_t *odb, unsigned seconds);

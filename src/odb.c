@@ -33,12 +33,14 @@
 #include <acfutils/safe_alloc.h>
 #include <acfutils/thread.h>
 
+#include "chart_prov_common.h"
+
 #define	DEFAULT_UNLOAD_DELAY	60		/* seconds */
 #define	UPDATE_TIMEOUT 		30		/* seconds */
 
 #define	REALLOC_STEP		(8 << 20)	/* 1 MiB */
 
-#define	FAA_DOF_URL	"http://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
+#define	FAA_DOF_URL	"https://aeronav.faa.gov/Obst_Data/DAILY_DOF_CSV.ZIP"
 
 enum {
 	ODB_REGION_US,		/* USA */
@@ -71,6 +73,7 @@ typedef struct {
 
 struct odb_s {
 	char 		*cache_dir;
+	char		*cainfo;
 	unsigned	unload_delay;
 
 	mutex_t		tiles_lock;
@@ -283,12 +286,14 @@ free_tile(odb_tile_t *tile)
 }
 
 odb_t *
-odb_init(const char *xpdir)
+odb_init(const char *xpdir, const char *cainfo)
 {
 	odb_t *odb = safe_calloc(1, sizeof (*odb));
 
 	odb->cache_dir = mkpathname(xpdir, "Output", "caches",
 	    "obstacle.db", NULL);
+	if (cainfo != NULL)
+		odb->cainfo = strdup(cainfo);
 	odb->unload_delay = DEFAULT_UNLOAD_DELAY;
 
 	mutex_init(&odb->tiles_lock);
@@ -313,6 +318,7 @@ odb_fini(odb_t *odb)
 	avl_destroy(&odb->tiles);
 	mutex_destroy(&odb->tiles_lock);
 
+	free(odb->cainfo);
 	free(odb->cache_dir);
 	free(odb);
 }
@@ -469,14 +475,15 @@ odb_refresh_us(odb_t *odb)
 	CURLcode res;
 	dl_info_t dl_info = { .odb = odb };
 
+	thread_set_name("odb-refresh-us");
+
 	curl = curl_easy_init();
 	VERIFY(curl != NULL);
 
 	logMsg("Downloading new obstacle data from \"%s\" for region \"US\"",
 	    FAA_DOF_URL);
 	curl_easy_setopt(curl, CURLOPT_URL, FAA_DOF_URL);
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, UPDATE_TIMEOUT);
+	chart_setup_curl(curl, odb->cainfo);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dl_info);
 
