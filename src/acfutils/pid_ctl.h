@@ -27,6 +27,7 @@
 #define	_ACFUTILS_PID_CTL_H_
 
 #include <math.h>
+#include <stdio.h>
 #include <acfutils/sysmacros.h>
 
 #ifdef __cplusplus
@@ -50,10 +51,17 @@ typedef struct {
 
 	double	k_p;		/* proportional coefficient */
 	double	k_i;		/* integral coefficient */
-	double	r_i;		/* integral update rate */
+	double	lim_i;
 	double	k_d;		/* derivative coefficient */
 	double	r_d;		/* derivative update rate */
 } pid_ctl_t;
+
+static inline void pid_ctl_reset(pid_ctl_t *pid);
+static inline void pid_ctl_set_k_p(pid_ctl_t *pid, double k_p);
+static inline void pid_ctl_set_k_i(pid_ctl_t *pid, double k_i);
+static inline void pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i);
+static inline void pid_ctl_set_k_d(pid_ctl_t *pid, double k_d);
+static inline void pid_ctl_set_r_d(pid_ctl_t *pid, double r_d);
 
 /*
  * Initializes a PID controller.
@@ -63,26 +71,23 @@ typedef struct {
  *	proportional input contributes to the output)..
  * @param k_i Integral coefficient (multiplier of how much the integral
  *	input contributes to the output).
- * @param r_i Rate at which we update the integral to the current error
- *	value. This a FILTER_IN rate argument. Roughly what is expresses
- *	is how quickly the integral approaches the new error value per
- *	unit time. The higher the value, the slower the integral
- *	approaches the current error value.
+ * @param lim_i
  * @param k_d Derivative coefficient (multiplier of how much the derivative
  *	input contributes to the output).
- * @param r_d Same as r_i, but for the derivative update. The target
- *	derivative value is computed from a delta-time between updates.
+ * @param r_d Rate at which we update the derivative to the current rate
+ *	value. This a FILTER_IN rate argument. Roughly what is expresses
+ *	is how quickly the derivative approaches the new delta-error value
+ *	per unit time. The higher the value, the slower the derivative
+ *	approaches the current delta-error value.
  */
 static inline void
-pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double r_i, double k_d,
+pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
     double r_d)
 {
-	pid->e_prev = NAN;
-	pid->e_integ = NAN;
-	pid->e_deriv = NAN;
+	pid_ctl_reset(pid);
 	pid->k_p = k_p;
 	pid->k_i = k_i;
-	pid->r_i = r_i;
+	pid->lim_i = lim_i;
 	pid->k_d = k_d;
 	pid->r_d = r_d;
 }
@@ -101,7 +106,17 @@ static inline void
 pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
 {
 	double delta_e = (e - pid->e_prev) / d_t;
-	FILTER_IN_NAN(pid->e_integ, e, d_t, pid->r_i);
+	if (isnan(pid->e_integ))
+		pid->e_integ = 0;
+	pid->e_integ = clamp(pid->e_integ + e * d_t, -pid->lim_i, pid->lim_i);
+	/*
+	 * Clamp the integrated value to the current proportional value. This
+	 * prevents excessive over-correcting when the value returns to center.
+	 */
+	if (e < 0)
+		pid->e_integ = MAX(pid->e_integ, e);
+	else
+		pid->e_integ = MIN(pid->e_integ, e);
 	FILTER_IN_NAN(pid->e_deriv, delta_e, d_t, pid->r_d);
 	pid->e_prev = e;
 }
@@ -119,9 +134,67 @@ pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
 static inline double
 pid_ctl_get(const pid_ctl_t *pid)
 {
+	ASSERT(!isnan(pid->e_prev));
 	return (pid->k_p * pid->e_prev + pid->k_i * pid->e_integ +
 	    pid->k_d * pid->e_deriv);
 }
+
+static inline void
+pid_ctl_reset(pid_ctl_t *pid)
+{
+	pid->e_prev = NAN;
+	pid->e_integ = NAN;
+	pid->e_deriv = NAN;
+}
+
+static inline void
+pid_ctl_set_k_p(pid_ctl_t *pid, double k_p)
+{
+	pid->k_p = k_p;
+}
+
+static inline void
+pid_ctl_set_k_i(pid_ctl_t *pid, double k_i)
+{
+	pid->k_i = k_i;
+}
+
+static inline void
+pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i)
+{
+	pid->lim_i = lim_i;
+}
+
+static inline void
+pid_ctl_set_k_d(pid_ctl_t *pid, double k_d)
+{
+	pid->k_d = k_d;
+}
+
+static inline void
+pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
+{
+	pid->r_d = r_d;
+}
+
+static inline double
+pid_ctl_get_integ(pid_ctl_t *pid)
+{
+	return (pid->e_integ);
+}
+
+static inline double
+pid_ctl_get_deriv(pid_ctl_t *pid)
+{
+	return (pid->e_deriv);
+}
+
+#define	PID_CTL_DEBUG(pid_ptr) \
+	do { \
+		const pid_ctl_t *pid = (pid_ptr); \
+		printf(#pid_ptr ": e: %f  integ: %f  deriv: %f\n", \
+		    pid->e_prev, pid->e_integ, pid->e_deriv); \
+	} while (0)
 
 #ifdef __cplusplus
 }
