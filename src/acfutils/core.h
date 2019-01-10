@@ -40,8 +40,17 @@ extern "C" {
 #define	API_EXPORT_DATA	__declspec(dllexport)
 #else	/* !IBM && !defined(_MSC_VER) */
 #define	API_EXPORT
-#define	API_EXPORT_DATA
+#define	API_EXPORT_DATA	extern
 #endif	/* !IBM && !defined(_MSC_VER) */
+
+#if	__STDC_VERSION__ < 199901L && !defined(__GNUC__) && !defined(__clang__)
+# define	restrict
+# if		defined(_MSC_VER)
+#  define	inline	__inline
+# else
+#  define	inline
+# endif
+#endif
 
 API_EXPORT extern const char *libacfutils_version;
 

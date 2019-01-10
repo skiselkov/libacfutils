@@ -166,7 +166,7 @@ typedef struct {
  * The standard WGS84 ellipsoid.
  */
 #define	wgs84	ACFSYM(wgs84)
-API_EXPORT const ellip_t wgs84;
+API_EXPORT_DATA const ellip_t wgs84;
 
 /*
  * Small helpers.
