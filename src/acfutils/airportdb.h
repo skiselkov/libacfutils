@@ -22,6 +22,7 @@
 #include <acfutils/geom.h>
 #include <acfutils/list.h>
 #include <acfutils/helpers.h>
+#include <acfutils/thread.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -33,6 +34,8 @@ typedef struct airportdb {
 	char		*cachedir;
 	int		xp_airac_cycle;
 	double		load_limit;
+
+	mutex_t		lock;
 
 	avl_tree_t	apt_dat;
 	avl_tree_t	geo_table;
@@ -132,11 +135,12 @@ struct airport {
 	avl_node_t	tile_node;	/* tiles in the airport_geo_tree */
 };
 
-#define	airportdb_create		ACFSYM(airportdb_create)
 API_EXPORT void airportdb_create(airportdb_t *db, const char *xpdir,
     const char *cachedir);
-#define	airportdb_destroy		ACFSYM(airportdb_destroy)
 API_EXPORT void airportdb_destroy(airportdb_t *db);
+
+API_EXPORT void airportdb_lock(airportdb_t *db);
+API_EXPORT void airportdb_unlock(airportdb_t *db);
 
 #define	recreate_cache			ACFSYM(recreate_cache)
 API_EXPORT bool_t recreate_cache(airportdb_t *db);
@@ -163,6 +167,10 @@ API_EXPORT airport_t *airport_lookup(airportdb_t *db, const char *icao,
 
 #define	airport_lookup_global	ACFSYM(airport_lookup_global)
 API_EXPORT airport_t *airport_lookup_global(airportdb_t *db, const char *icao);
+
+#define	airport_find_runway	ACFSYM(airport_find_runway)
+API_EXPORT bool_t airport_find_runway(airport_t *arpt, const char *rwy_id,
+    runway_t **rwy_p, unsigned *end_p);
 
 #define	matching_airport_in_tile_with_TATL \
     ACFSYM(matching_airport_in_tile_with_TATL)

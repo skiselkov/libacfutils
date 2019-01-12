@@ -2412,6 +2412,8 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	db->load_limit = ARPT_LOAD_LIMIT;
 	db->ifr_only = B_TRUE;
 
+	mutex_init(&db->lock);
+
 	avl_create(&db->apt_dat, airport_compar, sizeof (airport_t),
 	    offsetof(airport_t, apt_dat_node));
 	avl_create(&db->geo_table, tile_compar, sizeof (tile_t),
@@ -2439,8 +2441,22 @@ airportdb_destroy(airportdb_t *db)
 	avl_destroy(&db->geo_table);
 	avl_destroy(&db->apt_dat);
 
+	mutex_destroy(&db->lock);
+
 	free(db->xpdir);
 	free(db->cachedir);
+}
+
+void
+airportdb_lock(airportdb_t *db)
+{
+	mutex_enter(&db->lock);
+}
+
+void
+airportdb_unlock(airportdb_t *db)
+{
+	mutex_exit(&db->lock);
 }
 
 airport_t *
@@ -2465,6 +2481,29 @@ airport_lookup_global(airportdb_t *db, const char *icao)
 	if (idx == NULL)
 		return (NULL);
 	return (airport_lookup(db, icao, idx->pos));
+}
+
+bool_t
+airport_find_runway(airport_t *arpt, const char *rwy_id, runway_t **rwy_p,
+    unsigned *end_p)
+{
+	ASSERT(arpt != NULL);
+	ASSERT(rwy_id != NULL);
+	ASSERT(rwy_p != NULL);
+	ASSERT(end_p != NULL);
+
+	for (runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
+	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
+		for (unsigned i = 0; i < 2; i++) {
+			if (strcmp(rwy->ends[i].id, rwy_id) == 0) {
+				*rwy_p = rwy;
+				*end_p = i;
+				return (B_TRUE);
+			}
+		}
+	}
+
+	return (B_FALSE);
 }
 
 airport_t *
