@@ -102,6 +102,12 @@ extern "C" {
 /* Calculates gravitational force for mass `m' in kg on Earth */
 #define	MASS2GFORCE(m)	((m) * EARTH_GRAVITY)
 
+/*
+ * Fuel conversion macros.
+ */
+#define	JETA_KG2GAL(kg)		((kg) / 3.08447722)
+#define	JETA_GAL2KG(gal)	((gal) * 3.08447722)
+
 typedef struct {
 	int	spd;
 	double	Cd;
