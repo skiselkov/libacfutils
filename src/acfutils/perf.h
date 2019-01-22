@@ -288,11 +288,24 @@ API_EXPORT double speed_sound(double oat);
 #define	air_density	ACFSYM(air_density)
 API_EXPORT double air_density(double pressure, double oat);
 
+#define	gas_density	ACFSYM(gas_density)
+API_EXPORT double gas_density(double pressure, double oat, double gas_const);
+
 #define	impact_press	ACFSYM(impact_press)
 API_EXPORT double impact_press(double mach, double pressure);
 
 #define	dyn_press	ACFSYM(dyn_press)
 API_EXPORT double dyn_press(double ktas, double press, double oat);
+
+#define	dyn_gas_press	ACFSYM(dyn_gas_press)
+API_EXPORT double dyn_gas_press(double ktas, double press, double oat,
+    double gas_const);
+
+#define	static_press	ACFSYM(static_press)
+API_EXPORT double static_press(double rho, double oat);
+
+#define	static_gas_press	ACFSYM(static_gas_press)
+API_EXPORT double static_gas_press(double rho, double oat, double gas_const);
 
 #define	adiabatic_heating	ACFSYM(adiabatic_heating)
 API_EXPORT double adiabatic_heating(double press_ratio, double start_temp);

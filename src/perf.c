@@ -2353,7 +2353,7 @@ speed_sound(double oat)
 }
 
 /*
- * Calculates air density.
+ * Calculates air density of dry air.
  *
  * @param pressure Static air pressure in Pa.
  * @param oat Static outside air temperature in degrees C.
@@ -2363,15 +2363,30 @@ speed_sound(double oat)
 double
 air_density(double pressure, double oat)
 {
+	return (gas_density(pressure, oat, R_spec));
+}
+
+/*
+ * Calculates density of an arbitrary gas.
+ *
+ * @param pressure Static air pressure in Pa.
+ * @param oat Static outside air temperature in degrees C.
+ * @param gas_const Specific gas constant of the gas in question (J/kg/K).
+ *
+ * @return Local gas density in kg.m^-3.
+ */
+double
+gas_density(double pressure, double oat, double gas_const)
+{
 	/*
-	 * Density of dry air is:
+	 * Density of a gas is:
 	 *
-	 * rho = p / (R_spec * T)
+	 * rho = p / (gas_const * T)
 	 *
-	 * Where p is local static air pressure, R_spec is the specific gas
-	 * constant for dry air and T is absolute temperature.
+	 * Where p is local static gas pressure, gas_const is the specific gas
+	 * constant for the gas in question and T is absolute temperature.
 	 */
-	return (pressure / (R_spec * C2KELVIN(oat)));
+	return (pressure / (gas_const * C2KELVIN(oat)));
 }
 
 /*
@@ -2397,7 +2412,7 @@ impact_press(double mach, double pressure)
 }
 
 /*
- * Calculates dynamic pressure.
+ * Calculates dynamic pressure in dry air.
  *
  * @param pressure True airspeed in knots.
  * @param press Static air pressure in Pa.
@@ -2408,7 +2423,53 @@ impact_press(double mach, double pressure)
 double
 dyn_press(double ktas, double press, double oat)
 {
-	return (0.5 * air_density(press, oat) * POW2(KT2MPS(ktas)));
+	return (dyn_gas_press(ktas, press, oat, R_spec));
+}
+
+/*
+ * Same as dyn_press, but takes an exclicit specific gas constant parameter
+ * to allow for calculating dynamic pressure in other gases.
+ */
+double
+dyn_gas_press(double ktas, double press, double oat, double gas_const)
+{
+	double p = (0.5 * gas_density(press, oat, gas_const) *
+	    POW2(KT2MPS(ktas)));
+	if (ktas < 0)
+		return (-p);
+	return (p);
+}
+
+/*
+ * Computes static dry air pressure from air density and temperature.
+ *
+ * @param rho Air density in kg/m^3.
+ * @param oat Static air temperature in Celsius.
+ *
+ * @return Static air pressure in Pascals.
+ */
+double
+static_press(double rho, double oat)
+{
+	return (static_gas_press(rho, oat, R_spec));
+}
+
+/*
+ * Same as static_press, but takes an explicit specific gas constant
+ * argument to allow computing static pressure in any gas.
+ */
+double
+static_gas_press(double rho, double oat, double gas_const)
+{
+	/*
+	 * Static pressure of a gas is:
+	 *
+	 * p = rho * gas_const * T
+	 *
+	 * Where rho is the local gas density, gas_const is the specific gas
+	 * constant for the gas in question and T is absolute temperature.
+	 */
+	return (rho * gas_const * C2KELVIN(oat));
 }
 
 /*
