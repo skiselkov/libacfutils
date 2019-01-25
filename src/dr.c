@@ -35,6 +35,10 @@
 	__check_type ## _MSG(dr->writable, "dataref \"%s\" is not writable " \
 	    "(%s:%d: %s)", dr->name, filename, line, varname)
 
+static bool_t dre_plug_lookup_done = B_FALSE;
+static XPLMPluginID dre_plug = XPLM_NO_PLUGIN_ID;	/* DataRefEditor */
+static XPLMPluginID drt_plug = XPLM_NO_PLUGIN_ID;	/* DataRefTool */
+
 bool_t
 dr_find(dr_t *dr, const char *fmt, ...)
 {
@@ -487,8 +491,6 @@ static void
 dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
     bool_t writable, bool_t wide_type, const char *fmt, va_list ap)
 {
-	XPLMPluginID dre_plug;
-
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 
 	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
@@ -506,10 +508,18 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->write_cb = NULL;
 	dr->wide_type = wide_type;
 
-	dre_plug = XPLMFindPluginBySignature(
-	    "xplanesdk.examples.DataRefEditor");
+	if (!dre_plug_lookup_done) {
+		dre_plug = XPLMFindPluginBySignature(
+		    "xplanesdk.examples.DataRefEditor");
+		drt_plug = XPLMFindPluginBySignature("com.leecbaker.datareftool");
+		dre_plug_lookup_done = B_TRUE;
+	}
 	if (dre_plug != XPLM_NO_PLUGIN_ID) {
 		XPLMSendMessageToPlugin(dre_plug, DRE_MSG_ADD_DATAREF,
+		    (void*)dr->name);
+	}
+	if (drt_plug != XPLM_NO_PLUGIN_ID) {
+		XPLMSendMessageToPlugin(drt_plug, DRE_MSG_ADD_DATAREF,
 		    (void*)dr->name);
 	}
 }
