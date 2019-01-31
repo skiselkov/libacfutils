@@ -45,6 +45,7 @@ static void
 worker(void *ui)
 {
 	worker_t *wk = ui;
+	uint64_t now = microclock();
 
 	thread_set_name(wk->name);
 
@@ -68,6 +69,7 @@ worker(void *ui)
 			cv_wait(&wk->cv, &wk->lock);
 			if (!wk->run)
 				break;
+			now = microclock();
 		}
 		/*
 		 * Avoid holding the worker lock in the user callback, as
@@ -89,8 +91,22 @@ worker(void *ui)
 		cv_broadcast(&wk->cv);
 
 		if (intval_us != 0 && !wk->dontstop) {
-			cv_timedwait(&wk->cv, &wk->lock,
-			    microclock() + intval_us);
+			uint64_t new_now;
+
+			cv_timedwait(&wk->cv, &wk->lock, now + intval_us);
+			/*
+			 * If the timeout expired, we have waited for the
+			 * full duration. So jump our idea of current time
+			 * forward in increments of the interval. This
+			 * maintains a fixed execution schedule, but allows
+			 * for skipped intervals in case the callback took
+			 * too long to execute.
+			 */
+			new_now = microclock();
+			if (new_now >= now + intval_us) {
+				uint64_t d_t = new_now - now;
+				now += (d_t / intval_us) * intval_us;
+			}
 		}
 		wk->dontstop = B_FALSE;
 	}
