@@ -109,6 +109,8 @@ typedef struct {
  *	See shader_info_t for details.
  * @field vert Fragment shader specification. Set to NULL if not used.
  *	See shader_info_t for details.
+ * @field comp Compute shader specification. Set to NULL if not used.
+ *	See shader_info_t for details.
  * @field attr_binds Vertex attribute array bindings. Set to NULL if not used.
  *	See shader_attr_bind_t for details.
  */
@@ -116,6 +118,7 @@ typedef struct {
 	const char			*progname;
 	const shader_info_t		*vert;
 	const shader_info_t		*frag;
+	const shader_info_t		*comp;
 	const shader_attr_bind_t	*attr_binds;
 } shader_prog_info_t;
 

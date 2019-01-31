@@ -42,7 +42,7 @@ static GLuint shader_from_file(GLenum shader_type, const char *filename,
 static GLuint shader_from_text(GLenum shader_type,
     const GLchar *shader_text, const char *filename);
 static GLuint shaders2prog(const char *progname, GLuint vert_shader,
-    GLuint frag_shader, const shader_attr_bind_t *attr_binds);
+    GLuint frag_shader, GLuint comp_shader, const shader_attr_bind_t *attr_binds);
 static GLuint shader_prog_from_file_v(const char *progname,
     const char *vert_file, const char *frag_file,
     const shader_attr_bind_t *binds);
@@ -100,6 +100,9 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 	case GL_FRAGMENT_SHADER:
 		alt_ext = "frag";
 		break;
+	case GL_COMPUTE_SHADER:
+		alt_ext = "comp";
+		break;
 	default:
 		VERIFY_MSG(0, "Unknown shader type %d", shader_type);
 	}
@@ -115,14 +118,22 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 		    NULL, NULL);
 		loaded = (shader != 0);
 	}
-	if (!loaded && GLEW_VERSION_4_2) {
-		strcpy(new_ext, "glsl420");
-		if (file_exists(alt_filename, &is_dir) && !is_dir) {
-			shader = shader_from_file(shader_type,
-			    alt_filename, NULL, NULL);
-			loaded = (shader != 0);
-		}
-	}
+#define	TEST_GLSL_VERSION(version, extension) \
+	do { \
+		if (!loaded && (version)) { \
+			strcpy(new_ext, (extension)); \
+			if (file_exists(alt_filename, &is_dir) && !is_dir) { \
+				shader = shader_from_file(shader_type, \
+				    alt_filename, NULL, NULL); \
+				loaded = (shader != 0); \
+			} \
+		} \
+	} while (0)
+	TEST_GLSL_VERSION(GLEW_VERSION_4_6, "glsl460");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_5, "glsl450");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_4, "glsl440");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_3, "glsl430");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_2, "glsl420");
 	if (!loaded) {
 		strcpy(new_ext, "glsl");
 		if (file_exists(alt_filename, &is_dir) && !is_dir) {
@@ -138,6 +149,41 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 	free(alt_filename);
 
 	return (shader);
+}
+
+static bool_t
+is_amd(void)
+{
+	return (strcmp("ATI Technologies Inc.",
+	    (char *)glGetString(GL_VENDOR)) == 0);
+}
+
+static bool_t
+have_shader_binary_format(GLint fmt)
+{
+	GLint num;
+	GLint *formats;
+	bool_t found = B_FALSE;
+
+	glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS, &num);
+	if (glGetError() != GL_NO_ERROR || num > 1024 * 1024)
+		return (B_FALSE);
+
+	formats = safe_calloc(num, sizeof (*formats));
+	glGetIntegerv(GL_SHADER_BINARY_FORMATS, formats);
+	if (glGetError() != GL_NO_ERROR) {
+		free(formats);
+		return (B_FALSE);
+	}
+	for (int i = 0; i < num; i++) {
+		if (formats[i] == fmt) {
+			found = B_TRUE;
+			break;
+		}
+	}
+	free(formats);
+
+	return (found);
 }
 
 /*
@@ -165,12 +211,11 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 		entry_pt = "main";
 
 	/*
-	 * AMD driver SPIR-V loader is b0rked AF (crashes in
-	 * glSpecializeShader).
+	 * AMD's SPIR-V loader is b0rked AF (crashes in glSpecializeShader).
 	 */
 	if (!GLEW_ARB_gl_spirv || !GLEW_ARB_spirv_extensions ||
-	    strcmp("ATI Technologies Inc.", (char *)glGetString(GL_VENDOR)) ==
-	    0) {
+	    !have_shader_binary_format(GL_SHADER_BINARY_FORMAT_SPIR_V) ||
+	    is_amd()) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename));
 	}
@@ -256,7 +301,8 @@ shader_from_file(GLenum shader_type, const char *filename,
 	GLuint shader;
 
 	ASSERT(shader_type == GL_VERTEX_SHADER ||
-	    shader_type == GL_FRAGMENT_SHADER);
+	    shader_type == GL_FRAGMENT_SHADER ||
+	    shader_type == GL_COMPUTE_SHADER);
 
 	ext = strrchr(filename, '.');
 	if (ext == NULL) {
@@ -422,19 +468,22 @@ shader_prog_from_file_v(const char *progname, const char *vert_file,
 		vert_shader = shader_from_file(GL_VERTEX_SHADER, vert_file,
 		    NULL, NULL);
 		if (vert_shader == 0)
-			return (0);
+			goto errout;
 	}
 	if (frag_file != NULL) {
 		frag_shader = shader_from_file(GL_FRAGMENT_SHADER, frag_file,
 		    NULL, NULL);
-		if (frag_shader == 0) {
-			if (vert_shader != 0)
-				glDeleteShader(vert_shader);
-			return (0);
-		}
+		if (frag_shader == 0)
+			goto errout;
 	}
 
-	return (shaders2prog(progname, vert_shader, frag_shader, binds));
+	return (shaders2prog(progname, vert_shader, frag_shader, 0, binds));
+errout:
+	if (vert_shader != 0)
+		glDeleteShader(vert_shader);
+	if (frag_shader != 0)
+		glDeleteShader(frag_shader);
+	return (0);
 }
 
 /*
@@ -502,7 +551,7 @@ shader_prog_from_text_v(const char *progname, const char *vert_text,
 		}
 	}
 
-	return (shaders2prog(progname, vert_shader, frag_shader, binds));
+	return (shaders2prog(progname, vert_shader, frag_shader, 0, binds));
 }
 
 /*
@@ -558,10 +607,12 @@ shader_from_file_or_text(GLenum shader_type, const char *dirpath,
 API_EXPORT GLuint
 shader_prog_from_info(const char *dirpath, const shader_prog_info_t *info)
 {
-	GLuint vert_shader = 0, frag_shader = 0;
+	GLuint vert_shader = 0, frag_shader = 0, comp_shader = 0;
 
 	/* Caller must have provided at least one! */
-	ASSERT(info->vert != NULL || info->frag != NULL);
+	ASSERT(info->vert != NULL || info->frag != NULL || info->comp != NULL);
+	/* Vertex & fragment shaders aren't allowed in compute shaders. */
+	ASSERT((info->vert == NULL && info->frag == NULL) || info->comp == NULL);
 
 	if (info->vert != NULL && !shader_from_file_or_text(GL_VERTEX_SHADER,
 	    dirpath, info, info->vert, &vert_shader))
@@ -569,14 +620,19 @@ shader_prog_from_info(const char *dirpath, const shader_prog_info_t *info)
 	if (info->frag != NULL && !shader_from_file_or_text(GL_FRAGMENT_SHADER,
 	    dirpath, info, info->frag, &frag_shader))
 		goto errout;
+	if (info->comp != NULL && !shader_from_file_or_text(GL_COMPUTE_SHADER,
+	    dirpath, info, info->comp, &comp_shader))
+		goto errout;
 
 	return (shaders2prog(info->progname, vert_shader, frag_shader,
-	    info->attr_binds));
+	    comp_shader, info->attr_binds));
 errout:
 	if (vert_shader != 0)
 		glDeleteShader(vert_shader);
 	if (frag_shader != 0)
 		glDeleteShader(frag_shader);
+	if (comp_shader != 0)
+		glDeleteShader(comp_shader);
 	return (0);
 }
 
@@ -591,16 +647,21 @@ errout:
  */
 static GLuint
 shaders2prog(const char *progname, GLuint vert_shader, GLuint frag_shader,
-    const shader_attr_bind_t *attr_binds)
+    GLuint comp_shader, const shader_attr_bind_t *attr_binds)
 {
 	GLuint prog = 0;
 	GLint linked;
+
+	ASSERT(progname != NULL);
+	ASSERT((vert_shader == 0 && frag_shader == 0) || comp_shader == 0);
 
 	prog = glCreateProgram();
 	if (vert_shader != 0)
 		glAttachShader(prog, vert_shader);
 	if (frag_shader != 0)
 		glAttachShader(prog, frag_shader);
+	if (comp_shader != 0)
+		glAttachShader(prog, comp_shader);
 
 	while (attr_binds != NULL && attr_binds->name != NULL) {
 		ASSERT(vert_shader != 0);
@@ -634,6 +695,10 @@ shaders2prog(const char *progname, GLuint vert_shader, GLuint frag_shader,
 	if (frag_shader != 0) {
 		glDetachShader(prog, frag_shader);
 		glDeleteShader(frag_shader);
+	}
+	if (comp_shader != 0) {
+		glDetachShader(prog, comp_shader);
+		glDeleteShader(comp_shader);
 	}
 
 	return (prog);
