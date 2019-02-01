@@ -130,7 +130,7 @@ glutils_make_quads_IBO(size_t num_vtx)
 
 API_EXPORT void
 glutils_init_2D_quads_impl(glutils_quads_t *quads, const char *filename,
-    int line, vect2_t *p, vect2_t *t, size_t num_pts)
+    int line, const vect2_t *p, const vect2_t *t, size_t num_pts)
 {
 	vect3_t p_3d[num_pts];
 
@@ -142,7 +142,7 @@ glutils_init_2D_quads_impl(glutils_quads_t *quads, const char *filename,
 
 API_EXPORT void
 glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
-    int line, vect3_t *p, vect2_t *t, size_t num_pts)
+    int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
 {
 	vtx_t vtx_data[2 * num_pts];
 	size_t i, n;
