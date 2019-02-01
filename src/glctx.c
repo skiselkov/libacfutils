@@ -29,40 +29,31 @@
 #include <GL/glew.h>
 
 #if	LIN
+#include <GL/glxew.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
-#endif	/* LIN */
+#elif	IBM
+#include <GL/wglew.h>
+#include <windows.h>
+#endif	/* IBM */
 
 #include <acfutils/assert.h>
 #include <acfutils/glctx.h>
 #include <acfutils/log.h>
 #include <acfutils/safe_alloc.h>
 
-#if	LIN
-
 struct glctx_s {
-	Display		*dpy;
-	GLXPbuffer	pbuf;
-	GLXContext	glc;
-};
-
-#else	/* !LIN */
-
-/* TODO: implement non-Linux multi-context */
-struct glctx_s {};
-
-#endif	/* !LIN */
-
 #if	LIN
-typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
-    GLXFBConfig, GLXContext, Bool, const int*);
-typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
-    GLXDrawable, GLXDrawable, GLXContext);
-static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
-static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
-#endif	/* LIN */
+	Display		*dpy;
+	GLXContext	glc;
+	GLXPbuffer	pbuf;
+#elif	IBM
+	HGLRC		hgl;
+#endif	/* IBM */
+	bool_t		created;
+};
 
 API_EXPORT glctx_t *
 glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
@@ -82,6 +73,17 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 	int fbcount = 0;
 	GLXFBConfig *fbc = NULL;
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
+	GLenum err;
+
+	err = glewInit();
+	if (err != GLEW_OK) {
+		/* Problem: glewInit failed, something is seriously wrong. */
+		logMsg("FATAL ERROR: cannot initialize libGLEW: %s",
+		    glewGetErrorString(err));
+		goto errout;
+	}
+
+	ctx->created = B_TRUE;
 
 	/* open display */
 	ctx->dpy = XOpenDisplay(0);
@@ -102,12 +104,8 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 	}
 
 	/* Get the required extensions */
-	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
-	    glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
-	glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc)
-	    glXGetProcAddressARB((const GLubyte *)"glXMakeContextCurrent");
 	if (glXCreateContextAttribsARB == NULL ||
-	    glXMakeContextCurrentARB == NULL){
+	    glXMakeContextCurrent == NULL) {
 		logMsg("Missing support for GLX_ARB_create_context");
 		goto errout;
 	}
@@ -153,29 +151,47 @@ errout:
 	UNUSED(height);
 	UNUSED(share_ctx);
 	return (NULL);
-#endif	/* LIN */
+#endif	/* !LIN */
+}
+
+API_EXPORT glctx_t *
+glctx_create_current(void)
+{
+	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
+
+#if	LIN
+	/* open display */
+	ctx->dpy = XOpenDisplay(0);
+	if (ctx->dpy == NULL){
+		logMsg("Failed to open display");
+		goto errout;
+	}
+	ctx->glc = glXGetCurrentContext();
+
+	return (ctx);
+#else	/* !LIN */
+	ctx->hgl = wglGetCurrentContext();
+	if (ctx->hgl == 0)
+		goto errout;
+	return (ctx);
+#endif	/* !LIN */
+errout:
+	glctx_destroy(ctx);
+	return (NULL);
 }
 
 API_EXPORT void
 glctx_destroy(glctx_t *ctx)
 {
 #if	LIN
-	if (ctx->glc != NULL)
-		glXDestroyContext(ctx->dpy, ctx->glc);
-	if (ctx->pbuf != 0)
-		glXDestroyPbuffer(ctx->dpy, ctx->pbuf);
+	if (ctx->created) {
+		if (ctx->glc != NULL)
+			glXDestroyContext(ctx->dpy, ctx->glc);
+		if (ctx->pbuf != 0)
+			glXDestroyPbuffer(ctx->dpy, ctx->pbuf);
+	}
 	if (ctx->dpy != NULL)
 		XCloseDisplay(ctx->dpy);
 #endif	/* LIN */
 	free(ctx);
-}
-
-void *
-glctx_get_current(void)
-{
-#if	LIN
-	return (glXGetCurrentContext());
-#else	/* !LIN */
-	return (NULL);
-#endif	/* !LIN */
 }

@@ -34,9 +34,9 @@ typedef struct glctx_s glctx_t;
 
 API_EXPORT glctx_t *glctx_create_invisible(unsigned width, unsigned height,
     void *share_ctx);
-API_EXPORT void glctx_destroy(glctx_t *ctx);
+API_EXPORT glctx_t *glctx_create_current(void);
 
-void *glctx_get_current(void);
+API_EXPORT void glctx_destroy(glctx_t *ctx);
 
 #ifdef	__cplusplus
 }
