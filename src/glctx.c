@@ -169,15 +169,17 @@ glctx_create_current(void)
 	ctx->glc = glXGetCurrentContext();
 
 	return (ctx);
-#else	/* !LIN */
+errout:
+	glctx_destroy(ctx);
+	return (NULL);
+#elif	IBM
 	ctx->hgl = wglGetCurrentContext();
 	if (ctx->hgl == 0)
 		goto errout;
 	return (ctx);
-#endif	/* !LIN */
-errout:
-	glctx_destroy(ctx);
+#else	/* !LIN && !IBM */
 	return (NULL);
+#endif	/* !LIN && !IBM */
 }
 
 API_EXPORT void
