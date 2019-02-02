@@ -32,7 +32,6 @@ function build_platform() {
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 		CFLAGS_ADDTL="-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9"
-		LDFLAGS_ADDTL="-DCMAKE_STATIC_LINKER_FLAGS=-mmacosx-version-min=10.9"
 		;;
 	esac
 
