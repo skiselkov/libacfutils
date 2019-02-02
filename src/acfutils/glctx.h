@@ -38,6 +38,10 @@ API_EXPORT glctx_t *glctx_create_current(void);
 
 API_EXPORT void glctx_destroy(glctx_t *ctx);
 
+#if	LIN
+API_EXPORT void *glctx_get_display(glctx_t *ctx);
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

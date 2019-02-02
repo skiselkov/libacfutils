@@ -37,12 +37,16 @@ extern "C" {
 #endif
 
 typedef struct {
+	GLuint	vao;
 	GLuint	vbo;
+	bool_t	setup;
 	size_t	num_vtx;
 } glutils_quads_t;
 
 typedef struct {
+	GLuint	vao;
 	GLuint	vbo;
+	bool_t	setup;
 	size_t	num_vtx;
 } glutils_lines_t;
 
@@ -68,7 +72,7 @@ API_EXPORT void glutils_init_3D_quads_impl(glutils_quads_t *quads,
     size_t num_pts);
 
 API_EXPORT void glutils_destroy_quads(glutils_quads_t *quads);
-API_EXPORT void glutils_draw_quads(const glutils_quads_t *quads, GLint prog);
+API_EXPORT void glutils_draw_quads(glutils_quads_t *quads, GLint prog);
 
 #define	glutils_init_3D_lines(__lines, __p, __num_pts) \
 	glutils_init_3D_lines_impl((__lines), log_basename(__FILE__), \
@@ -77,7 +81,7 @@ API_EXPORT void glutils_init_3D_lines_impl(glutils_lines_t *lines,
     const char *filename, int line, vect3_t *p, size_t num_pts);
 
 API_EXPORT void glutils_destroy_lines(glutils_lines_t *lines);
-API_EXPORT void glutils_draw_lines(const glutils_lines_t *lines, GLint prog);
+API_EXPORT void glutils_draw_lines(glutils_lines_t *lines, GLint prog);
 
 API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
 

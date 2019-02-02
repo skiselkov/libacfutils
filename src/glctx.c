@@ -26,16 +26,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <GL/glew.h>
-
 #if	LIN
-#include <GL/glxew.h>
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <GL/gl.h>
 #include <GL/glx.h>
 #elif	IBM
-#include <GL/wglew.h>
 #include <windows.h>
 #endif	/* IBM */
 
@@ -55,6 +51,15 @@ struct glctx_s {
 	bool_t		created;
 };
 
+#if    LIN
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
+    GLXFBConfig, GLXContext, Bool, const int*);
+typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
+    GLXDrawable, GLXDrawable, GLXContext);
+static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
+static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
+#endif /* LIN */
+
 API_EXPORT glctx_t *
 glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 {
@@ -73,15 +78,6 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 	int fbcount = 0;
 	GLXFBConfig *fbc = NULL;
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
-	GLenum err;
-
-	err = glewInit();
-	if (err != GLEW_OK) {
-		/* Problem: glewInit failed, something is seriously wrong. */
-		logMsg("FATAL ERROR: cannot initialize libGLEW: %s",
-		    glewGetErrorString(err));
-		goto errout;
-	}
 
 	ctx->created = B_TRUE;
 
@@ -104,8 +100,12 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 	}
 
 	/* Get the required extensions */
+	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
+	    glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
+	glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc)
+	    glXGetProcAddressARB((const GLubyte *)"glXMakeContextCurrent");
 	if (glXCreateContextAttribsARB == NULL ||
-	    glXMakeContextCurrent == NULL) {
+	    glXMakeContextCurrentARB == NULL) {
 		logMsg("Missing support for GLX_ARB_create_context");
 		goto errout;
 	}
@@ -195,3 +195,13 @@ glctx_destroy(glctx_t *ctx)
 #endif	/* LIN */
 	free(ctx);
 }
+
+#if	LIN
+void *
+glctx_get_display(glctx_t *ctx)
+{
+	ASSERT(ctx != NULL);
+	ASSERT(ctx->dpy != NULL);
+	return (ctx->dpy);
+}
+#endif	/* LIN */

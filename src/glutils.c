@@ -123,7 +123,6 @@ glutils_make_quads_IBO(size_t num_vtx)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, n * sizeof (*idx_data),
 	    idx_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	return (buf);
 }
@@ -146,9 +145,12 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 {
 	vtx_t vtx_data[2 * num_pts];
 	size_t i, n;
+	GLint old_vao;
 
 	ASSERT0(num_pts & 3);
 	ASSERT(p != NULL);
+
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 	memset(vtx_data, 0, sizeof (vtx_data));
 
@@ -198,19 +200,24 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 		}
 	}
 
+	glGenVertexArrays(1, &quads->vao);
+	glBindVertexArray(quads->vao);
+	VERIFY(quads->vao != 0);
+
 	glGenBuffers(1, &quads->vbo);
+	VERIFY(quads->vbo != 0);
 	quads->num_vtx = n;
 
-	VERIFY(quads->vbo != 0);
 	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
 	glBufferData(GL_ARRAY_BUFFER, quads->num_vtx * sizeof (vtx_t),
 	    vtx_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	if (glutils_texsz_inited()) {
 		TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
 		    filename, line, quads->num_vtx * sizeof (vtx_t));
 	}
+
+	glBindVertexArray(old_vao);
 }
 
 API_EXPORT void
@@ -221,41 +228,55 @@ glutils_destroy_quads(glutils_quads_t *quads)
 			TEXSZ_FREE_BYTES_INSTANCE(glutils_quads_vbo, quads,
 			    quads->num_vtx * sizeof (vtx_t));
 		}
+		glDeleteVertexArrays(1, &quads->vao);
 		glDeleteBuffers(1, &quads->vbo);
 		memset(quads, 0, sizeof (*quads));
 	}
 }
 
 static void
-glutils_draw_common(GLenum mode, GLuint vbo, size_t num_vtx, GLint prog)
+glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
+    size_t num_vtx, GLint prog)
 {
-	GLint pos_loc, tex0_loc;
+	GLint old_vao;
 
+	ASSERT(vao != 0);
+	ASSERT(vbo != 0);
 	ASSERT(prog != 0);
 
-	pos_loc = glGetAttribLocation(prog, "vtx_pos");
-	tex0_loc = glGetAttribLocation(prog, "vtx_tex0");
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+	glBindVertexArray(vao);
 
-	glEnableVertexAttribArray(pos_loc);
-	glEnableVertexAttribArray(tex0_loc);
+	if (!(*setup)) {
+		GLint pos_loc, tex0_loc;
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
-	glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		pos_loc = glGetAttribLocation(prog, "vtx_pos");
+		tex0_loc = glGetAttribLocation(prog, "vtx_tex0");
+
+		if (pos_loc != -1) {
+			glEnableVertexAttribArray(pos_loc);
+			glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
+			    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
+		}
+		if (tex0_loc != -1) {
+			glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
+			    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
+			glEnableVertexAttribArray(tex0_loc);
+		}
+		*setup = B_TRUE;
+	}
 
 	glDrawArrays(mode, 0, num_vtx);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDisableVertexAttribArray(pos_loc);
-	glDisableVertexAttribArray(tex0_loc);
+	glBindVertexArray(old_vao);
 }
 
 API_EXPORT void
-glutils_draw_quads(const glutils_quads_t *quads, GLint prog)
+glutils_draw_quads(glutils_quads_t *quads, GLint prog)
 {
-	glutils_draw_common(GL_TRIANGLES, quads->vbo, quads->num_vtx, prog);
+	glutils_draw_common(GL_TRIANGLES, quads->vao, quads->vbo,
+	    &quads->setup, quads->num_vtx, prog);
 }
 
 
@@ -264,8 +285,11 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
     int line, vect3_t *p, size_t num_pts)
 {
 	vtx_t vtx_data[num_pts];
+	GLint old_vao;
 
 	ASSERT(p != NULL);
+
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 	memset(vtx_data, 0, sizeof (vtx_data));
 	for (size_t i = 0; i < num_pts; i++) {
@@ -274,25 +298,31 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		vtx_data[i].pos[2] = p[i].z;
 	}
 
+	glGenVertexArrays(1, &lines->vao);
+	glBindVertexArray(lines->vao);
+	VERIFY(lines->vao != 0);
+
 	glGenBuffers(1, &lines->vbo);
+	VERIFY(lines->vbo != 0);
 	lines->num_vtx = num_pts;
 
-	VERIFY(lines->vbo != 0);
 	glBindBuffer(GL_ARRAY_BUFFER, lines->vbo);
 	glBufferData(GL_ARRAY_BUFFER, lines->num_vtx * sizeof (vtx_t),
 	    vtx_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	if (glutils_texsz_inited()) {
 		TEXSZ_ALLOC_BYTES_INSTANCE(glutils_lines_vbo, lines,
 		    filename, line, lines->num_vtx * sizeof (vtx_t));
 	}
+
+	glBindVertexArray(old_vao);
 }
 
 API_EXPORT void
-glutils_draw_lines(const glutils_lines_t *lines, GLint prog)
+glutils_draw_lines(glutils_lines_t *lines, GLint prog)
 {
-	glutils_draw_common(GL_LINE_STRIP, lines->vbo, lines->num_vtx, prog);
+	glutils_draw_common(GL_LINE_STRIP, lines->vao, lines->vbo,
+	    &lines->setup, lines->num_vtx, prog);
 }
 
 
