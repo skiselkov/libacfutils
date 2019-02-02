@@ -100,6 +100,7 @@ struct mt_cairo_render_s {
 		vect2_t		pos;
 		vect2_t		size;
 	} last_draw;
+	GLuint			vao;
 	GLuint			vtx_buf;
 	GLuint			idx_buf;
 	GLuint			shader;
@@ -224,6 +225,32 @@ mt_cairo_render_glob_init(void)
 	glob_inited = B_TRUE;
 }
 
+static void
+setup_vao(mt_cairo_render_t *mtcr)
+{
+	GLint old_vao;
+
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+	glGenVertexArrays(1, &mtcr->vao);
+	glBindVertexArray(mtcr->vao);
+
+	glGenBuffers(1, &mtcr->vtx_buf);
+	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
+
+	glEnableVertexAttribArray(VTX_ATTRIB_POS);
+	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
+
+	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
+	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
+	    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+
+	mtcr->idx_buf = glutils_make_quads_IBO(4);
+
+	glBindVertexArray(old_vao);
+}
+
 /*
  * Creates a new mt_cairo_render_t surface.
  * @param w Width of the rendered surface (in pixels).
@@ -285,14 +312,14 @@ mt_cairo_render_init_impl(const char *filename, int line,
 		cairo_paint(mtcr->rs[i].cr);
 		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_OVER);
 	}
-	glGenBuffers(1, &mtcr->vtx_buf);
-	mtcr->idx_buf = glutils_make_quads_IBO(4);
 
 	mtcr->last_draw.pos = NULL_VECT2;
 	mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
 	    vert_shader, frag_shader, "vtx_pos", VTX_ATTRIB_POS,
 	    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
 	VERIFY(mtcr->shader != 0);
+
+	setup_vao(mtcr);
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -311,6 +338,8 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		thread_join(&mtcr->thr);
 	}
 
+	if (mtcr->vao != 0)
+		glDeleteVertexArrays(1, &mtcr->vao);
 	if (mtcr->vtx_buf != 0)
 		glDeleteBuffers(1, &mtcr->vtx_buf);
 	if (mtcr->idx_buf != 0)
@@ -617,6 +646,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
     const GLfloat *pvm)
 {
+	GLint old_vao;
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 
@@ -636,33 +666,21 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 	mutex_exit(&mtcr->lock);
 
-	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
+	glBindVertexArray(mtcr->vao);
 	glUseProgram(mtcr->shader);
+
+	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
 
 	glUniformMatrix4fv(glGetUniformLocation(mtcr->shader, "pvm"),
 	    1, GL_FALSE, (const GLfloat *)pvm);
 	glUniform1i(glGetUniformLocation(mtcr->shader, "texture"), 0);
 
-	glEnableVertexAttribArray(VTX_ATTRIB_POS);
-	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
-
-	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
-	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	glDisableVertexAttribArray(VTX_ATTRIB_POS);
-	glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
 	glUseProgram(0);
+	glBindVertexArray(old_vao);
 }
 
 /*
