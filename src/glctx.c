@@ -177,6 +177,9 @@ errout:
 	if (ctx->hgl == 0)
 		goto errout;
 	return (ctx);
+errout:
+	glctx_destroy(ctx);
+	return (NULL);
 #else	/* !LIN && !IBM */
 	return (NULL);
 #endif	/* !LIN && !IBM */
