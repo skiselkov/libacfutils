@@ -48,11 +48,15 @@ typedef struct {
  * last entry as a list terminator, not as an actual specialization constants
  * that you want to pass to the loader. To enforce this, the loader checks
  * that the last entry in the list has both idx and val set to zero.
+ * `is_float' is a hint used when constructing defines for a GLSL fallback
+ * program. If set to true, then `val' is interpreted as an IEEE-754-encoded
+ * floating point value.
  */
 typedef struct {
 	bool_t		is_last;
 	GLuint		idx;
 	GLuint		val;
+	bool_t		is_float;
 } shader_spec_const_t;
 
 /*

@@ -40,7 +40,8 @@
 static GLuint shader_from_file(GLenum shader_type, const char *filename,
     const char *entry_pt, const shader_spec_const_t *spec_const);
 static GLuint shader_from_text(GLenum shader_type,
-    const GLchar *shader_text, const char *filename);
+    const GLchar *shader_text, const char *filename,
+    const shader_spec_const_t *spec_const);
 static GLuint shaders2prog(const char *progname, GLuint vert_shader,
     GLuint frag_shader, GLuint comp_shader, const shader_attr_bind_t *attr_binds);
 static GLuint shader_prog_from_file_v(const char *progname,
@@ -86,7 +87,8 @@ attr_binds_from_args(va_list ap)
  * If found, the shader is compiled and returned. Otherwise returns 0.
  */
 static GLuint
-shader_from_spirv_fallback(GLenum shader_type, const char *filename)
+shader_from_spirv_fallback(GLenum shader_type, const char *filename,
+    const shader_spec_const_t *spec_const)
 {
 	char *alt_filename, *alt_ext, *new_ext;
 	bool_t is_dir;
@@ -115,7 +117,7 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 	strcpy(new_ext, alt_ext);
 	if (!loaded && file_exists(alt_filename, &is_dir) && !is_dir) {
 		shader = shader_from_file(shader_type, alt_filename,
-		    NULL, NULL);
+		    NULL, spec_const);
 		loaded = (shader != 0);
 	}
 #define	TEST_GLSL_VERSION(version, extension) \
@@ -124,7 +126,7 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 			strcpy(new_ext, (extension)); \
 			if (file_exists(alt_filename, &is_dir) && !is_dir) { \
 				shader = shader_from_file(shader_type, \
-				    alt_filename, NULL, NULL); \
+				    alt_filename, NULL, spec_const); \
 				loaded = (shader != 0); \
 			} \
 		} \
@@ -138,7 +140,7 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename)
 		strcpy(new_ext, "glsl");
 		if (file_exists(alt_filename, &is_dir) && !is_dir) {
 			shader = shader_from_file(shader_type,
-			    alt_filename, NULL, NULL);
+			    alt_filename, NULL, spec_const);
 			loaded = (shader != 0);
 		} else {
 			logMsg("Error loading shader %s: SPIR-V shaders "
@@ -217,7 +219,8 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 	    !have_shader_binary_format(GL_SHADER_BINARY_FORMAT_SPIR_V) ||
 	    is_amd()) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
-		return (shader_from_spirv_fallback(shader_type, filename));
+		return (shader_from_spirv_fallback(shader_type, filename,
+		    spec_const));
 	}
 
 	for (n_spec = 0; spec_const != NULL && !spec_const[n_spec].is_last;
@@ -321,7 +324,8 @@ shader_from_file(GLenum shader_type, const char *filename,
 		logMsg("Cannot load shader %s: %s", filename, strerror(errno));
 		return (0);
 	}
-	shader = shader_from_text(shader_type, shader_text, filename);
+	shader = shader_from_text(shader_type, shader_text, filename,
+	    spec_const);
 	lacf_free(shader_text);
 
 	return (shader);
@@ -329,12 +333,13 @@ shader_from_file(GLenum shader_type, const char *filename,
 
 static void
 construct_defines(const GLchar *shader_text, GLchar **defines,
-    GLchar **shader_proc)
+    GLchar **shader_proc, const shader_spec_const_t *spec_const)
 {
 	/* just a default guess */
 	int version = 120;
 	GLchar *mod_text = strdup(shader_text);
 	GLchar *ver_start = strstr(mod_text, "#version");
+	size_t len;
 
 	/*
 	 * Grab the version number from the '#version' directive and slap it
@@ -351,10 +356,24 @@ construct_defines(const GLchar *shader_text, GLchar **defines,
 	    "#define IBM=%d\n"
 	    "#define APL=%d\n"
 	    "#define LIN=%d\n"
-	    "%s"
-	    "#line 0\n",
+	    "%s",
 	    version, IBM, APL, LIN,
 	    version == 420 ? EXTRA_2D_DEFINES : "");
+	len = strlen(*defines);
+	for (const shader_spec_const_t *sc = spec_const;
+	    sc != NULL && !sc->is_last; sc++) {
+		if (sc->is_float) {
+			float *value = (float *)&sc->val;
+			append_format(defines, &len,
+			    "#define SPIRV_CROSS_CONSTANT_ID_%d %f\n",
+			    sc->idx, *value);
+		} else {
+			append_format(defines, &len,
+			    "#define SPIRV_CROSS_CONSTANT_ID_%d %d\n",
+			    sc->idx, sc->val);
+		}
+	}
+	append_format(defines, &len, "#line 0\n");
 }
 
 /*
@@ -365,7 +384,7 @@ construct_defines(const GLchar *shader_text, GLchar **defines,
  */
 static GLuint
 shader_from_text(GLenum shader_type, const GLchar *shader_text,
-    const char *filename)
+    const char *filename, const shader_spec_const_t *spec_const)
 {
 	GLint shader = 0;
 	GLint compile_result;
@@ -384,7 +403,7 @@ shader_from_text(GLenum shader_type, const GLchar *shader_text,
 		goto errout;
 	}
 
-	construct_defines(shader_text, &defines, &shader_proc);
+	construct_defines(shader_text, &defines, &shader_proc, spec_const);
 	text[0] = defines;
 	text[1] = shader_proc;
 	glShaderSource(shader, 2, text, NULL);
@@ -537,13 +556,13 @@ shader_prog_from_text_v(const char *progname, const char *vert_text,
 
 	if (vert_text != NULL) {
 		vert_shader = shader_from_text(GL_VERTEX_SHADER, vert_text,
-		    NULL);
+		    NULL, NULL);
 		if (vert_shader == 0)
 			return (0);
 	}
 	if (frag_text != NULL) {
 		frag_shader = shader_from_text(GL_FRAGMENT_SHADER, frag_text,
-		    NULL);
+		    NULL, NULL);
 		if (frag_shader == 0) {
 			if (vert_shader != 0)
 				glDeleteShader(vert_shader);
@@ -581,7 +600,7 @@ shader_from_file_or_text(GLenum shader_type, const char *dirpath,
 			return (B_FALSE);
 	} else if (shader_info->glsl != NULL) {
 		*shader = shader_from_text(shader_type, shader_info->glsl,
-		    prog_info->progname);
+		    prog_info->progname, NULL);
 		if ((*shader) == 0)
 			return (B_FALSE);
 	}
