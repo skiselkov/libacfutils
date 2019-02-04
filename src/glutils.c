@@ -152,6 +152,7 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 	ASSERT0(num_pts & 3);
 	ASSERT(p != NULL);
 
+	memset(quads, 0, sizeof (*quads));
 	memset(vtx_data, 0, sizeof (vtx_data));
 
 	for (i = 0, n = 0; i < num_pts; i += 4, n += 6) {
@@ -272,9 +273,9 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 			    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
 		}
 		if (tex0_loc != -1) {
+			glEnableVertexAttribArray(tex0_loc);
 			glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
 			    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
-			glEnableVertexAttribArray(tex0_loc);
 		}
 		*setup = B_TRUE;
 	}
@@ -309,6 +310,7 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 
 	ASSERT(p != NULL);
 
+	memset(lines, 0, sizeof (*lines));
 	memset(vtx_data, 0, sizeof (vtx_data));
 	for (size_t i = 0; i < num_pts; i++) {
 		vtx_data[i].pos[0] = p[i].x;
