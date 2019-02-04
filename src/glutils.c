@@ -26,6 +26,8 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <GL/glew.h>
+
 #include <acfutils/avl.h>
 #include <acfutils/assert.h>
 #include <acfutils/glutils.h>
@@ -145,12 +147,10 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 {
 	vtx_t vtx_data[2 * num_pts];
 	size_t i, n;
-	GLint old_vao;
+	GLint old_vao = 0;
 
 	ASSERT0(num_pts & 3);
 	ASSERT(p != NULL);
-
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 	memset(vtx_data, 0, sizeof (vtx_data));
 
@@ -200,9 +200,15 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 		}
 	}
 
-	glGenVertexArrays(1, &quads->vao);
-	glBindVertexArray(quads->vao);
-	VERIFY(quads->vao != 0);
+	if (GLEW_VERSION_3_0) {
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+		glGenVertexArrays(1, &quads->vao);
+		glBindVertexArray(quads->vao);
+		VERIFY(quads->vao != 0);
+	} else {
+		quads->vao = 0;
+	}
 
 	glGenBuffers(1, &quads->vbo);
 	VERIFY(quads->vbo != 0);
@@ -217,37 +223,42 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 		    filename, line, quads->num_vtx * sizeof (vtx_t));
 	}
 
-	glBindVertexArray(old_vao);
+	if (GLEW_VERSION_3_0)
+		glBindVertexArray(old_vao);
 }
 
 API_EXPORT void
 glutils_destroy_quads(glutils_quads_t *quads)
 {
+	if (quads->vao != 0)
+		glDeleteVertexArrays(1, &quads->vao);
 	if (quads->vbo != 0) {
 		if (glutils_texsz_inited()) {
 			TEXSZ_FREE_BYTES_INSTANCE(glutils_quads_vbo, quads,
 			    quads->num_vtx * sizeof (vtx_t));
 		}
-		glDeleteVertexArrays(1, &quads->vao);
 		glDeleteBuffers(1, &quads->vbo);
-		memset(quads, 0, sizeof (*quads));
 	}
+	memset(quads, 0, sizeof (*quads));
 }
 
 static void
 glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
     size_t num_vtx, GLint prog)
 {
-	GLint old_vao;
+	GLint pos_loc = -1, tex0_loc = -1;
+	GLint old_vao = 0;
 
-	ASSERT(vao != 0);
 	ASSERT(vbo != 0);
 	ASSERT(prog != 0);
 
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
-	glBindVertexArray(vao);
+	if (vao != 0) {
+		/* Vertex arrays supported */
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+		glBindVertexArray(vao);
+	}
 
-	if (!(*setup)) {
+	if (vao == 0 || !(*setup)) {
 		GLint pos_loc, tex0_loc;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -269,7 +280,16 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 	}
 
 	glDrawArrays(mode, 0, num_vtx);
-	glBindVertexArray(old_vao);
+
+	if (vao != 0) {
+		glBindVertexArray(old_vao);
+	} else {
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if (pos_loc != -1)
+			glDisableVertexAttribArray(pos_loc);
+		if (tex0_loc != -1)
+			glDisableVertexAttribArray(tex0_loc);
+	}
 }
 
 API_EXPORT void
@@ -285,11 +305,9 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
     int line, vect3_t *p, size_t num_pts)
 {
 	vtx_t vtx_data[num_pts];
-	GLint old_vao;
+	GLint old_vao = 0;
 
 	ASSERT(p != NULL);
-
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 	memset(vtx_data, 0, sizeof (vtx_data));
 	for (size_t i = 0; i < num_pts; i++) {
@@ -298,9 +316,15 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		vtx_data[i].pos[2] = p[i].z;
 	}
 
-	glGenVertexArrays(1, &lines->vao);
-	glBindVertexArray(lines->vao);
-	VERIFY(lines->vao != 0);
+	if (GLEW_VERSION_3_0) {
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+		glGenVertexArrays(1, &lines->vao);
+		glBindVertexArray(lines->vao);
+		VERIFY(lines->vao != 0);
+	} else {
+		lines->vao = 0;
+	}
 
 	glGenBuffers(1, &lines->vbo);
 	VERIFY(lines->vbo != 0);
@@ -315,7 +339,10 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		    filename, line, lines->num_vtx * sizeof (vtx_t));
 	}
 
-	glBindVertexArray(old_vao);
+	if (GLEW_VERSION_3_0)
+		glBindVertexArray(old_vao);
+	else
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 API_EXPORT void

@@ -228,27 +228,34 @@ mt_cairo_render_glob_init(void)
 static void
 setup_vao(mt_cairo_render_t *mtcr)
 {
-	GLint old_vao;
+	GLint old_vao = 0;
 
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+	if (GLEW_VERSION_3_0) {
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
-	glGenVertexArrays(1, &mtcr->vao);
-	glBindVertexArray(mtcr->vao);
+		glGenVertexArrays(1, &mtcr->vao);
+		glBindVertexArray(mtcr->vao);
+	}
 
 	glGenBuffers(1, &mtcr->vtx_buf);
-	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 
-	glEnableVertexAttribArray(VTX_ATTRIB_POS);
-	glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
+	if (GLEW_VERSION_3_0) {
+		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 
-	glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
-	glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
-	    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+		glEnableVertexAttribArray(VTX_ATTRIB_POS);
+		glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
+
+		glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
+		glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+	}
 
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	glBindVertexArray(old_vao);
+	if (GLEW_VERSION_3_0)
+		glBindVertexArray(old_vao);
 }
 
 /*
@@ -646,7 +653,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
     const GLfloat *pvm)
 {
-	GLint old_vao;
+	GLint old_vao = 0;
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 
@@ -666,9 +673,23 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 	mutex_exit(&mtcr->lock);
 
-	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+	if (mtcr->vao != 0) {
+		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
-	glBindVertexArray(mtcr->vao);
+		glBindVertexArray(mtcr->vao);
+	} else {
+		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
+
+		glEnableVertexAttribArray(VTX_ATTRIB_POS);
+		glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
+
+		glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
+		glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+	}
+
 	glUseProgram(mtcr->shader);
 
 	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
@@ -679,8 +700,15 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
+	if (mtcr->vao != 0) {
+		glBindVertexArray(old_vao);
+	} else {
+		glDisableVertexAttribArray(VTX_ATTRIB_POS);
+		glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
 	glUseProgram(0);
-	glBindVertexArray(old_vao);
 }
 
 /*
