@@ -252,10 +252,9 @@ setup_vao(mt_cairo_render_t *mtcr)
 	}
 
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 	if (GLEW_VERSION_3_0)
 		glBindVertexArray(old_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 /*
