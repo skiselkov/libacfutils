@@ -169,8 +169,8 @@ API_EXPORT ssize_t explode_line(char *line, char delim, char **comps,
 #define	strip_space			ACFSYM(strip_space)
 API_EXPORT void strip_space(char *line);
 #define	append_format			ACFSYM(append_format)
-API_EXPORT void append_format(char **str, size_t *sz, const char *format, ...)
-    PRINTF_ATTR(3);
+API_EXPORT void append_format(char **str, size_t *sz,
+    PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(3);
 
 /* string processing helpers */
 #define	strsplit			ACFSYM(strsplit)
@@ -222,6 +222,9 @@ API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 API_EXPORT void strtolower(char *str);
 #define	strtoupper			ACFSYM(strtoupper)
 API_EXPORT void strtoupper(char *str);
+
+static inline char *sprintf_alloc(PRINTF_FORMAT(const char *fmt), ...)
+    PRINTF_ATTR(1);
 
 static inline char *
 sprintf_alloc(const char *fmt, ...)
@@ -310,7 +313,8 @@ API_EXPORT int stat(const char *pathname, struct stat *buf);
 #endif	/* !defined(_MSC_VER) */
 
 #define	win_perror	ACFSYM(win_perror)
-API_EXPORT void win_perror(DWORD err, const char *fmt, ...) PRINTF_ATTR(2);
+API_EXPORT void win_perror(DWORD err, PRINTF_FORMAT(const char *fmt), ...)
+    PRINTF_ATTR(2);
 
 #define	sleep(x)	SleepEx((x) * 1000, FALSE)
 

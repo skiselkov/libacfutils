@@ -32,24 +32,26 @@ extern "C" {
 typedef int (*cmd_cb_t)(XPLMCommandRef ref, XPLMCommandPhase phase,
     void *refcon);
 
-API_EXPORT XPLMCommandRef cmd_find(const char *fmt, ...) PRINTF_ATTR(1);
-API_EXPORT XPLMCommandRef fcmd_find(const char *fmt, ...) PRINTF_ATTR(1);
+API_EXPORT XPLMCommandRef cmd_find(PRINTF_FORMAT(const char *fmt), ...)
+    PRINTF_ATTR(1);
+API_EXPORT XPLMCommandRef fcmd_find(PRINTF_FORMAT(const char *fmt), ...)
+    PRINTF_ATTR(1);
 API_EXPORT XPLMCommandRef cmd_find_v(const char *fmt, va_list ap);
 API_EXPORT XPLMCommandRef fcmd_find_v(const char *fmt, va_list ap);
 
-API_EXPORT XPLMCommandRef cmd_bind(const char *fmt, cmd_cb_t cb,
-    bool_t before, void *refcon, ...);
+API_EXPORT XPLMCommandRef cmd_bind(PRINTF_FORMAT(const char *fmt),
+    cmd_cb_t cb, bool_t before, void *refcon, ...) PRINTF_ATTR2(1, 5);
 API_EXPORT XPLMCommandRef cmd_bind_v(const char *fmt, cmd_cb_t cb,
     bool_t before, void *refcon, va_list ap);
-API_EXPORT XPLMCommandRef fcmd_bind(const char *fmt, cmd_cb_t cb,
-    bool_t before, void *refcon, ...);
+API_EXPORT XPLMCommandRef fcmd_bind(const char *fmt,
+    cmd_cb_t cb, bool_t before, void *refcon, ...) PRINTF_ATTR2(1, 5);
 
-API_EXPORT bool_t cmd_unbind(const char *fmt, cmd_cb_t cb, bool_t before,
-    void *refcon, ...);
+API_EXPORT bool_t cmd_unbind(PRINTF_FORMAT(const char *fmt), cmd_cb_t cb,
+    bool_t before, void *refcon, ...) PRINTF_ATTR2(1, 5);
 API_EXPORT bool_t cmd_unbind_v(const char *fmt, cmd_cb_t cb, bool_t before,
     void *refcon, va_list ap);
-API_EXPORT void fcmd_unbind(const char *fmt, cmd_cb_t cb, bool_t before,
-    void *refcon, ...);
+API_EXPORT void fcmd_unbind(PRINTF_FORMAT(const char *fmt), cmd_cb_t cb,
+    bool_t before, void *refcon, ...) PRINTF_ATTR2(1, 5);
 
 #ifdef	__cplusplus
 }

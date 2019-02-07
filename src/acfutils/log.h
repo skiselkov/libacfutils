@@ -51,8 +51,8 @@ API_EXPORT void log_init(logfunc_t func, const char *prefix);
 
 #define	logMsg(...) \
 	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
-API_EXPORT void log_impl(const char *filename, int line, const char *fmt, ...)
-    PRINTF_ATTR(3);
+API_EXPORT void log_impl(const char *filename, int line,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(3);
 API_EXPORT void log_impl_v(const char *filename, int line, const char *fmt,
     va_list ap);
 API_EXPORT void log_backtrace(int skip_frames);

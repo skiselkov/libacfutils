@@ -20,6 +20,7 @@
 #define	_DR_H_
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <XPLMDataAccess.h>
 
@@ -50,7 +51,8 @@ struct dr {
 	void		*cb_userinfo;
 };
 
-API_EXPORT bool_t dr_find(dr_t *dr, const char *fmt, ...) PRINTF_ATTR(2);
+API_EXPORT bool_t dr_find(dr_t *dr, PRINTF_FORMAT(const char *fmt), ...)
+    PRINTF_ATTR(2);
 #define	fdr_find(dr, ...) \
 	do { \
 		if (!dr_find(dr, __VA_ARGS__)) { \
@@ -112,17 +114,17 @@ API_EXPORT int dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str,
 API_EXPORT void dr_sets_impl(dr_t *dr, DR_DEBUG_VARS, char *str);
 
 API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(4);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 API_EXPORT void dr_create_f(dr_t *dr, float *value, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(4);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 API_EXPORT void dr_create_f64(dr_t *dr, double *value, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(4);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(5);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(5);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
-    const char *fmt, ...) PRINTF_ATTR(5);
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_delete(dr_t *dr);
 
 #ifdef	__cplusplus
