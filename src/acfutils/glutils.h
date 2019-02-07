@@ -26,11 +26,15 @@
 #ifndef	_ACF_UTILS_GLUTILS_H_
 #define	_ACF_UTILS_GLUTILS_H_
 
+#include <stdio.h>
+
 #include <GL/glew.h>
 
 #include <acfutils/assert.h>
 #include <acfutils/geom.h>
 #include <acfutils/log.h>
+#include <acfutils/safe_alloc.h>
+#include <acfutils/sysmacros.h>
 
 #ifdef	__cplusplus
 extern "C" {
@@ -213,6 +217,52 @@ API_EXPORT void glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo);
 		} \
 	} while (0)
 API_EXPORT bool_t glutils_texsz_inited(void);
+
+#ifndef	_LACF_RENDER_DEBUG
+#define	_LACF_RENDER_DEBUG	0
+#endif
+
+#if	_LACF_RENDER_DEBUG
+static inline void glutils_debug_push(GLuint id,
+    PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(2);
+
+static inline void
+glutils_debug_push(GLuint msgid, const char *format, ...)
+{
+	char buf_stack[128];
+	int len;
+	va_list ap;
+
+	va_start(ap, format);
+	len = vsnprintf(buf_stack, sizeof (buf_stack), format, ap);
+	va_end(ap);
+
+	if (len >= (int)sizeof (buf_stack)) {
+		char *buf_heap = safe_malloc(len + 1);
+
+		va_start(ap, format);
+		vsnprintf(buf_heap, len + 1, format, ap);
+		va_end(ap);
+
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, msgid, len,
+		    buf_heap);
+
+		free(buf_heap);
+	} else {
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, msgid, len,
+		    buf_stack);
+	}
+}
+
+static inline void
+glutils_debug_pop(void)
+{
+	glPopDebugGroup();
+}
+#else	/* !_LACF_RENDER_DEBUG */
+#define	glutils_debug_push(msgid, format, ...)
+#define	glutils_debug_pop()
+#endif	/* !_LACF_RENDER_DEBUG */
 
 #ifdef	__cplusplus
 }

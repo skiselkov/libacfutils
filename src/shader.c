@@ -51,6 +51,8 @@ static GLuint shader_prog_from_text_v(const char *progname,
     const char *vert_text, const char *frag_text,
     const shader_attr_bind_t *binds);
 
+static bool_t check_nvidia_nsight(void);
+
 static shader_attr_bind_t *
 attr_binds_from_args(va_list ap)
 {
@@ -214,10 +216,12 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 
 	/*
 	 * AMD's SPIR-V loader is b0rked AF (crashes in glSpecializeShader).
+	 * When running under Nvidia Nsight, avoid loading binary shaders.
+	 * That way, we can see the source in the source explorer.
 	 */
 	if (!GLEW_ARB_gl_spirv || !GLEW_ARB_spirv_extensions ||
 	    !have_shader_binary_format(GL_SHADER_BINARY_FORMAT_SPIR_V) ||
-	    is_amd()) {
+	    is_amd() || check_nvidia_nsight()) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename,
 		    spec_const));
@@ -608,6 +612,17 @@ shader_from_file_or_text(GLenum shader_type, const char *dirpath,
 	return (B_TRUE);
 }
 
+static bool_t
+check_nvidia_nsight(void)
+{
+	for (int i = 0; environ[i] != NULL; i++) {
+		if (strncmp(environ[i], "NSIGHT", 6) == 0 ||
+		    strncmp(environ[i], "NVIDIA_PROCESS", 14) == 0)
+			return (B_TRUE);
+	}
+	return (B_FALSE);
+}
+
 /*
  * Loads, specializes/compiles and links a shader program a shader_prog_info_t
  * structure. The info structure is a structure designed to allow loading a
@@ -627,6 +642,8 @@ API_EXPORT GLuint
 shader_prog_from_info(const char *dirpath, const shader_prog_info_t *info)
 {
 	GLuint vert_shader = 0, frag_shader = 0, comp_shader = 0;
+	bool_t debugger = check_nvidia_nsight();
+	GLuint prog;
 
 	/* Caller must have provided at least one! */
 	ASSERT(info->vert != NULL || info->frag != NULL || info->comp != NULL);
@@ -643,8 +660,17 @@ shader_prog_from_info(const char *dirpath, const shader_prog_info_t *info)
 	    dirpath, info, info->comp, &comp_shader))
 		goto errout;
 
-	return (shaders2prog(info->progname, vert_shader, frag_shader,
-	    comp_shader, info->attr_binds));
+	if (debugger) {
+		logMsg("loading %s  vert: %d  frag: %d  comp: %d",
+		    info->progname, vert_shader, frag_shader, comp_shader);
+	}
+
+	prog = shaders2prog(info->progname, vert_shader, frag_shader,
+	    comp_shader, info->attr_binds);
+	if (prog != 0)
+		logMsg("loaded %s  progID: %d", info->progname, prog);
+
+	return (prog);
 errout:
 	if (vert_shader != 0)
 		glDeleteShader(vert_shader);
