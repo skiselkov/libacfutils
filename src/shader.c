@@ -655,7 +655,7 @@ shader_prog_from_info(const char *dirpath, const shader_prog_info_t *info)
 
 	prog = shaders2prog(info->progname, vert_shader, frag_shader,
 	    comp_shader, info->attr_binds);
-	if (prog != 0)
+	if (debugger && prog != 0)
 		logMsg("loaded %s  progID: %d", info->progname, prog);
 
 	return (prog);
