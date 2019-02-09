@@ -239,6 +239,13 @@ API_EXPORT bool_t glutils_texsz_inited(void);
 
 API_EXPORT bool_t glutils_nsight_debugger_present(void);
 
+static inline void
+glutils_reset_errors(void)
+{
+	while (glGetError() != GL_NO_ERROR)
+		;
+}
+
 #if	_LACF_RENDER_DEBUG
 static inline void glutils_debug_push(GLuint id,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(2);
