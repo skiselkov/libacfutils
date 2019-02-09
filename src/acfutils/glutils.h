@@ -223,6 +223,23 @@ API_EXPORT bool_t glutils_texsz_inited(void);
 #endif
 
 #if	_LACF_RENDER_DEBUG
+#define	GLUTILS_ASSERT_NO_ERROR()	VERIFY3U(glGetError(), ==, GL_NO_ERROR)
+#define	GLUTILS_ASSERT(_x_)		VERIFY(_x_)
+#define	GLUTILS_ASSERT_MSG(_x_, ...)	VERIFY(_x_, __VA_ARGS__)
+#define	GLUTILS_ASSERT3S(_x_, _y_, _z_)	VERIFY3S(_x_, _y_, _z_)
+#define	GLUTILS_ASSERT3U(_x_, _y_, _z_)	VERIFY3U(_x_, _y_, _z_)
+#define	GLUTILS_ASSERT3P(_x_, _y_, _z_)	VERIFY3P(_x_, _y_, _z_)
+#else	/* !_LACF_RENDER_DEBUG */
+#define	GLUTILS_ASSERT(_x_)
+#define	GLUTILS_ASSERT_MSG(_x_, ...)
+#define	GLUTILS_ASSERT3S(_x_, _y_, _z_)
+#define	GLUTILS_ASSERT3U(_x_, _y_, _z_)
+#define	GLUTILS_ASSERT3P(_x_, _y_, _z_)
+#endif	/* !_LACF_RENDER_DEBUG */
+
+API_EXPORT bool_t glutils_nsight_debugger_present(void);
+
+#if	_LACF_RENDER_DEBUG
 static inline void glutils_debug_push(GLuint id,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(2);
 

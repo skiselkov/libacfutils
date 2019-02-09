@@ -616,3 +616,14 @@ glutils_texsz_inited(void)
 {
 	return (texsz.inited);
 }
+
+bool_t
+glutils_nsight_debugger_present(void)
+{
+	for (int i = 0; environ[i] != NULL; i++) {
+		if (strncmp(environ[i], "NSIGHT", 6) == 0 ||
+		    strncmp(environ[i], "NVIDIA_PROCESS", 14) == 0)
+			return (B_TRUE);
+	}
+	return (B_FALSE);
+}
