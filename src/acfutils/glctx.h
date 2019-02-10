@@ -32,15 +32,14 @@ extern "C" {
 
 typedef struct glctx_s glctx_t;
 
-API_EXPORT glctx_t *glctx_create_invisible(unsigned width, unsigned height,
-    void *share_ctx);
+API_EXPORT glctx_t *glctx_create_invisible(void *win_ptr, void *share_ctx,
+    int major_ver, int minor_ver, bool_t fwd_compat, bool_t debug);
+API_EXPORT void *glctx_get_window_system_handle(glctx_t *ctx);
+API_EXPORT void *glctx_get_xplane_win_ptr(void);
+
 API_EXPORT glctx_t *glctx_create_current(void);
 
 API_EXPORT void glctx_destroy(glctx_t *ctx);
-
-#if	LIN
-API_EXPORT void *glctx_get_display(glctx_t *ctx);
-#endif
 
 #ifdef	__cplusplus
 }

@@ -33,9 +33,11 @@
 #include <GL/glx.h>
 #elif	IBM
 #include <windows.h>
+#include <wingdi.h>
 #endif	/* IBM */
 
 #include <acfutils/assert.h>
+#include <acfutils/dr.h>
 #include <acfutils/glctx.h>
 #include <acfutils/log.h>
 #include <acfutils/safe_alloc.h>
@@ -46,34 +48,38 @@ struct glctx_s {
 	GLXContext	glc;
 	GLXPbuffer	pbuf;
 #elif	IBM
+	HWND		win;
+	HDC		dc;
 	HGLRC		hgl;
 #endif	/* IBM */
 	bool_t		created;
 };
 
-#if    LIN
-typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
-    GLXFBConfig, GLXContext, Bool, const int*);
-typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
-    GLXDrawable, GLXDrawable, GLXContext);
-static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
-static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
-#endif /* LIN */
-
-API_EXPORT glctx_t *
-glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
-{
 #if	LIN
+
+glctx_t *
+glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+    int minor_ver, bool_t fwd_compat, bool_t debug)
+{
+	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
+	    GLXFBConfig, GLXContext, Bool, const int*);
+	typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
+	    GLXDrawable, GLXDrawable, GLXContext);
+	static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
+	static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
 	static int visual_attribs[] = { None };
 	int context_attribs[] = {
-		GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
-		GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-		None
+	    GLX_CONTEXT_MAJOR_VERSION_ARB, major_ver,
+	    GLX_CONTEXT_MINOR_VERSION_ARB, minor_ver,
+	    GLX_CONTEXT_FLAGS_ARB,
+	        (fwd_compat ? GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB : 0) |
+	        (debug ? GLX_CONTEXT_DEBUG_BIT_ARB : 0),
+	    None
 	};
 	int pbuffer_attribs[] = {
-		GLX_PBUFFER_WIDTH, width,
-		GLX_PBUFFER_HEIGHT, height,
-		None
+	    GLX_PBUFFER_WIDTH, 16,
+	    GLX_PBUFFER_HEIGHT, 16,
+	    None
 	};
 	int fbcount = 0;
 	GLXFBConfig *fbc = NULL;
@@ -82,7 +88,7 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 	ctx->created = B_TRUE;
 
 	/* open display */
-	ctx->dpy = XOpenDisplay(0);
+	ctx->dpy = XOpenDisplay(win_ptr);
 	if (ctx->dpy == NULL){
 		logMsg("Failed to open display");
 		goto errout;
@@ -101,9 +107,9 @@ glctx_create_invisible(unsigned width, unsigned height, void *share_ctx)
 
 	/* Get the required extensions */
 	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
-	    glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
+	    glXGetProcAddressARB((GLubyte *)"glXCreateContextAttribsARB");
 	glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc)
-	    glXGetProcAddressARB((const GLubyte *)"glXMakeContextCurrent");
+	    glXGetProcAddressARB((GLubyte *)"glXMakeContextCurrent");
 	if (glXCreateContextAttribsARB == NULL ||
 	    glXMakeContextCurrentARB == NULL) {
 		logMsg("Missing support for GLX_ARB_create_context");
@@ -146,13 +152,118 @@ errout:
 	glctx_destroy(ctx);
 
 	return (NULL);
-#else	/* !LIN */
-	UNUSED(width);
-	UNUSED(height);
-	UNUSED(share_ctx);
-	return (NULL);
-#endif	/* !LIN */
 }
+
+void *
+glctx_get_xplane_win_ptr(void)
+{
+	return (getenv("DISPLAY"));
+}
+
+#elif	IBM
+
+#define	WGL_CONTEXT_MAJOR_VERSION_ARB		0x2091
+#define	WGL_CONTEXT_MINOR_VERSION_ARB		0x2092
+#define	WGL_CONTEXT_LAYER_PLANE_ARB		0x2093
+#define	WGL_CONTEXT_FLAGS_ARB			0x2094
+#define	WGL_CONTEXT_PROFILE_MASK_ARB		0x9126
+
+#define	WGL_CONTEXT_DEBUG_BIT_ARB		0x0001
+#define	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
+
+glctx_t *
+glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+    int minor_ver, bool_t fwd_compat, bool_t debug)
+{
+	typedef HGLRC (*wglCreateContextAttribsProc)(HDC, HGLRC, const int *);
+	typedef BOOL (*wglMakeCurrentProc)(HDC, HGLRC);
+	wglCreateContextAttribsProc wglCreateContextAttribsARB;
+	wglMakeCurrentProc wglMakeCurrent;
+	const int attrs[] = {
+	    WGL_CONTEXT_MAJOR_VERSION_ARB, major_ver,
+	    WGL_CONTEXT_MINOR_VERSION_ARB, minor_ver,
+	    WGL_CONTEXT_FLAGS_ARB,
+		(fwd_compat ? WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB : 0) |
+		(debug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0),
+	    0 /* list terminator */
+	};
+	HWND window;
+	glctx_t *ctx;
+
+	ASSERT(win_ptr != NULL);
+	window = win_ptr;
+
+	/* Get the required extensions */
+	wglCreateContextAttribsARB = (wglCreateContextAttribsProc)
+	    wglGetProcAddress("wglCreateContextAttribsARB");
+	wglMakeCurrent = (wglMakeCurrentProc)
+	    wglGetProcAddress("wglMakeCurrent");
+	if (wglCreateContextAttribsARB == NULL || wglMakeCurrent == NULL) {
+		logMsg("Missing support for WGL_ARB_create_context");
+		return (NULL);
+	}
+
+	ctx = safe_calloc(1, sizeof (*ctx));
+	ctx->created = B_TRUE;
+	ctx->dc = GetDC(window);
+	if (ctx->dc == NULL) {
+		logMsg("Failed to get window device context");
+		goto errout;
+	}
+	ctx->hgl = wglCreateContextAttribsARB(ctx->dc, share_ctx, attrs);
+	if (ctx->hgl == NULL) {
+		logMsg("Failed to create context");
+		goto errout;
+	}
+	if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
+		logMsg("Failed to make context current");
+		goto errout;
+	}
+
+	return (ctx);
+errout:
+	free(ctx);
+	return (NULL);
+}
+
+void *
+glctx_get_xplane_win_ptr(void)
+{
+	dr_t win_dr;
+	unsigned int win_i[2];
+	HWND xp_window;
+
+	fdr_find(&win_dr, "sim/operation/windows/system_window_64");
+	VERIFY3U(dr_getvi(&win_dr, (int *)win_i, 0, 2), ==, 2);
+
+	xp_window = (HWND)((uintptr_t)win_i[1] << 32 | (uintptr_t)win_i[0]);
+	VERIFY(xp_window != INVALID_HANDLE_VALUE);
+
+	return (xp_window);
+}
+
+#else	/* APL */
+
+glctx_t *
+glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+    int minor_ver, bool_t fwd_compat, bool_t debug)
+{
+	UNUSED(win_ptr);
+	UNUSED(share_ctx);
+	UNUSED(major_ver);
+	UNUSED(minor_ver);
+	UNUSED(fwd_compat);
+	UNUSED(debug);
+	return (NULL);
+}
+
+void *
+glctx_get_xplane_win_ptr(void)
+{
+	return (NULL);
+}
+
+#endif	/* APL */
 
 API_EXPORT glctx_t *
 glctx_create_current(void)
@@ -180,14 +291,31 @@ errout:
 errout:
 	glctx_destroy(ctx);
 	return (NULL);
-#else	/* !LIN && !IBM */
+#else	/* APL */
 	return (NULL);
-#endif	/* !LIN && !IBM */
+#endif	/* APL */
+}
+
+void *
+glctx_get_window_system_handle(glctx_t *ctx)
+{
+	ASSERT(ctx != NULL);
+#if	LIN
+	ASSERT(ctx->dpy != NULL);
+	return (ctx->dpy);
+#elif	IBM
+	ASSERT(ctx->win != NULL);
+	return (ctx->win);
+#else	/* APL */
+	return (NULL);
+#endif	/* APL */
 }
 
 API_EXPORT void
 glctx_destroy(glctx_t *ctx)
 {
+	if (ctx == NULL)
+		return;
 #if	LIN
 	if (ctx->created) {
 		if (ctx->glc != NULL)
@@ -197,16 +325,10 @@ glctx_destroy(glctx_t *ctx)
 	}
 	if (ctx->dpy != NULL)
 		XCloseDisplay(ctx->dpy);
-#endif	/* LIN */
+#elif	IBM
+	if (ctx->created) {
+		wglDeleteContext(ctx->hgl);
+	}
+#endif	/* IBM */
 	free(ctx);
 }
-
-#if	LIN
-void *
-glctx_get_display(glctx_t *ctx)
-{
-	ASSERT(ctx != NULL);
-	ASSERT(ctx->dpy != NULL);
-	return (ctx->dpy);
-}
-#endif	/* LIN */
