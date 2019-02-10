@@ -620,10 +620,14 @@ glutils_texsz_inited(void)
 bool_t
 glutils_nsight_debugger_present(void)
 {
+	/* NSight doesn't exist for MacOS */
+#if	!APL
+	return (B_FALSE);
 	for (int i = 0; environ[i] != NULL; i++) {
 		if (strncmp(environ[i], "NSIGHT", 6) == 0 ||
 		    strncmp(environ[i], "NVIDIA_PROCESS", 14) == 0)
 			return (B_TRUE);
 	}
+#endif	/* !APL */
 	return (B_FALSE);
 }
