@@ -29,7 +29,7 @@
 # Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
-PACKAGES="glfw3 cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
+PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
     libcurl openssl tesseract lept libpng16 libxml-2.0 libpcre2-8 zlib"
 STATIC_OPENAL=0
 
@@ -56,7 +56,6 @@ cd "$(dirname "$0")"
 # The order of arguments we pass to pkg-config is important. We must list
 # dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
 export PKG_CONFIG_PATH="\
-$(pwd)/glfw/glfw-$ARCH/install/lib/pkgconfig:\
 $(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/opus-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/libogg-$ARCH/install/lib/pkgconfig:\
