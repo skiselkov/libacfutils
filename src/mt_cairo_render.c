@@ -704,9 +704,9 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	} else {
 		glDisableVertexAttribArray(VTX_ATTRIB_POS);
 		glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glUseProgram(0);
 }
 

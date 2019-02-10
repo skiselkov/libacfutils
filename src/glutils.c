@@ -248,14 +248,12 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
     size_t num_vtx, GLint prog)
 {
 	GLint pos_loc = -1, tex0_loc = -1;
-	GLint old_vao = 0;
 
 	ASSERT(vbo != 0);
 	ASSERT(prog != 0);
 
 	if (vao != 0) {
 		/* Vertex arrays supported */
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 		glBindVertexArray(vao);
 	}
 
@@ -283,14 +281,15 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 	glDrawArrays(mode, 0, num_vtx);
 
 	if (vao != 0) {
-		glBindVertexArray(old_vao);
+		glBindVertexArray(0);
 	} else {
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		if (pos_loc != -1)
 			glDisableVertexAttribArray(pos_loc);
 		if (tex0_loc != -1)
 			glDisableVertexAttribArray(tex0_loc);
 	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 API_EXPORT void
