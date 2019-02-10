@@ -230,6 +230,7 @@ API_EXPORT bool_t glutils_texsz_inited(void);
 #define	GLUTILS_ASSERT3U(_x_, _y_, _z_)	VERIFY3U(_x_, _y_, _z_)
 #define	GLUTILS_ASSERT3P(_x_, _y_, _z_)	VERIFY3P(_x_, _y_, _z_)
 #else	/* !_LACF_RENDER_DEBUG */
+#define	GLUTILS_ASSERT_NO_ERROR()
 #define	GLUTILS_ASSERT(_x_)
 #define	GLUTILS_ASSERT_MSG(_x_, ...)
 #define	GLUTILS_ASSERT3S(_x_, _y_, _z_)
