@@ -345,7 +345,6 @@ glctx_make_current(glctx_t *ctx)
 {
 	ASSERT(ctx != NULL);
 #if	LIN
-	ASSERT(ctx->pbuf != NULL);
 	ASSERT(ctx->dpy != NULL);
 	ASSERT(ctx->glc != NULL);
 	if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf, ctx->glc)) {
