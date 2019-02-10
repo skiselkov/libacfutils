@@ -34,7 +34,11 @@
 #elif	IBM
 #include <windows.h>
 #include <wingdi.h>
-#endif	/* IBM */
+#else	/* APL */
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/CGLTypes.h>
+#include <OpenGL/CGLCurrent.h>
+#endif	/* APl */
 
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
@@ -51,7 +55,9 @@ struct glctx_s {
 	HWND		win;
 	HDC		dc;
 	HGLRC		hgl;
-#endif	/* IBM */
+#else	/* APL */
+	CGLContextObj	cgl;
+#endif	/* APL */
 	bool_t		created;
 };
 
@@ -132,18 +138,8 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	XSync(ctx->dpy, False);
 
 	/* Try to make it the current context */
-	if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf, ctx->glc)) {
-		/*
-		 * Some drivers doesn't like contexts without a default
-		 * framebuffer, so fallback on using the default window.
-		 */
-		if (!glXMakeContextCurrent(ctx->dpy,
-		    DefaultRootWindow(ctx->dpy), DefaultRootWindow(ctx->dpy),
-		    ctx->glc)) {
-			logMsg("Failed to make context current");
-			goto errout;
-		}
-	}
+	if (!glctx_make_current(ctx))
+		goto errout;
 
 	return (ctx);
 errout:
@@ -215,14 +211,12 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 		logMsg("Failed to create context");
 		goto errout;
 	}
-	if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
-		logMsg("Failed to make context current");
+	if (!glctx_make_current(ctx))
 		goto errout;
-	}
 
 	return (ctx);
 errout:
-	free(ctx);
+	glctx_destroy(ctx);
 	return (NULL);
 }
 
@@ -248,24 +242,54 @@ glctx_t *
 glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
 {
+	const CGLPixelFormatAttribute attrs[] = {
+	    kCGLPFAAccelerated,
+	    kCGLPFAOpenGLProfile,	/* core profile */
+	    (CGLPixelFormatAttribute)(major_ver < 4 ?
+		kCGLOGLPVersion_GL3_Core : kCGLOGLPVersion_GL4_Core),
+	    0	/* list terminator */
+	};
+	CGLPixelFormatObj pix;
+	CGLError error;
+	GLint num;
+	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
+
 	UNUSED(win_ptr);
-	UNUSED(share_ctx);
-	UNUSED(major_ver);
 	UNUSED(minor_ver);
 	UNUSED(fwd_compat);
 	UNUSED(debug);
+
+	ctx->created = B_TRUE;
+	error = CGLChoosePixelFormat(attrs, &pix, &num);
+	if (error != kCGLNoError) {
+		logMsg("CGLChoosePixelFormat failed with error %d", error);
+		goto errout;
+	}
+	error = CGLCreateContext(pix, share_ctx, &ctx->cgl);
+	if (error != kCGLNoError) {
+		logMsg("CGLCreateContext failed with error %d", error);
+		goto errout;
+	}
+	CGLDestroyPixelFormat(pix);
+	if (!glctx_make_current(ctx))
+		goto errout;
+
+	return (ctx);
+errout:
+	glctx_destroy(ctx);
 	return (NULL);
 }
 
 void *
 glctx_get_xplane_win_ptr(void)
 {
+	/* unnecessary on MacOS */
 	return (NULL);
 }
 
 #endif	/* APL */
 
-API_EXPORT glctx_t *
+glctx_t *
 glctx_create_current(void)
 {
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
@@ -285,15 +309,62 @@ errout:
 	return (NULL);
 #elif	IBM
 	ctx->hgl = wglGetCurrentContext();
-	if (ctx->hgl == 0)
-		goto errout;
+	if (ctx->hgl == 0) {
+		glctx_destroy(ctx);
+		return (NULL);
+	}
 	return (ctx);
 errout:
 	glctx_destroy(ctx);
 	return (NULL);
 #else	/* APL */
-	return (NULL);
+	ctx->cgl = CGLGetCurrentContext();
+	if (ctx->cgl == NULL) {
+		glctx_destroy(ctx);
+		return (NULL);
+	}
+	return (ctx);
 #endif	/* APL */
+}
+
+bool_t
+glctx_make_current(glctx_t *ctx)
+{
+	ASSERT(ctx != NULL);
+#if	LIN
+	ASSERT(ctx->pbuf != NULL);
+	ASSERT(ctx->dpy != NULL);
+	ASSERT(ctx->glc != NULL);
+	if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf, ctx->glc)) {
+		/*
+		 * Some drivers doesn't like contexts without a default
+		 * framebuffer, so fallback on using the default window.
+		 */
+		if (!glXMakeContextCurrent(ctx->dpy,
+		    DefaultRootWindow(ctx->dpy), DefaultRootWindow(ctx->dpy),
+		    ctx->glc)) {
+			logMsg("Failed to make context current");
+			return (B_FALSE);
+		}
+	}
+#elif	IBM
+	ASSERT(ctx->dc != NULL);
+	ASSERT(ctx->hgl != NULL);
+	if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
+		logMsg("Failed to make context current");
+		return (B_FALSE);
+	}
+#else	/* APL */
+	CGLError error;
+
+	ASSERT(ctx->cgl != NULL);
+	error = CGLSetCurrentContext(ctx->cgl);
+	if (error != kCGLNoError) {
+		logMsg("CGLSetCurrentContext failed with error %d", error);
+		return (B_FALSE);
+	}
+#endif	/* APL */
+	return (B_TRUE);
 }
 
 void *
@@ -329,6 +400,10 @@ glctx_destroy(glctx_t *ctx)
 	if (ctx->created) {
 		wglDeleteContext(ctx->hgl);
 	}
-#endif	/* IBM */
+#elif	APL
+	if (ctx->created) {
+		CGLDestroyContext(ctx->cgl);
+	}
+#endif	/* APL */
 	free(ctx);
 }

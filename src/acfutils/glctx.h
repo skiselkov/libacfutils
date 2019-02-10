@@ -38,6 +38,7 @@ API_EXPORT void *glctx_get_window_system_handle(glctx_t *ctx);
 API_EXPORT void *glctx_get_xplane_win_ptr(void);
 
 API_EXPORT glctx_t *glctx_create_current(void);
+API_EXPORT bool_t glctx_make_current(glctx_t *ctx);
 
 API_EXPORT void glctx_destroy(glctx_t *ctx);
 
