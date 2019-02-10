@@ -64,7 +64,7 @@ struct glctx_s {
 #if	LIN
 
 glctx_t *
-glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
 {
 	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
@@ -90,6 +90,8 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	int fbcount = 0;
 	GLXFBConfig *fbc = NULL;
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
+
+	ASSERT(share_ctx == NULL || share_ctx->glc != NULL);
 
 	ctx->created = B_TRUE;
 
@@ -123,8 +125,8 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	}
 
 	/* Create a context using glXCreateContextAttribsARB */
-	ctx->glc = glXCreateContextAttribsARB(ctx->dpy, fbc[0], share_ctx,
-	    True, context_attribs);
+	ctx->glc = glXCreateContextAttribsARB(ctx->dpy, fbc[0],
+	    share_ctx != NULL ? share_ctx->glc : NULL, True, context_attribs);
 	if (ctx->glc == NULL){
 		logMsg("Failed to create opengl context");
 		goto errout;
@@ -136,10 +138,6 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	XFree(fbc);
 	fbc = NULL;
 	XSync(ctx->dpy, False);
-
-	/* Try to make it the current context */
-	if (!glctx_make_current(ctx))
-		goto errout;
 
 	return (ctx);
 errout:
@@ -168,7 +166,7 @@ glctx_get_xplane_win_ptr(void)
 #define	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
 
 glctx_t *
-glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
 {
 	typedef HGLRC (*wglCreateContextAttribsProc)(HDC, HGLRC, const int *);
@@ -185,6 +183,8 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	};
 	HWND window;
 	glctx_t *ctx;
+
+	ASSERT(share_ctx == NULL || share_ctx->hgl != NULL);
 
 	ASSERT(win_ptr != NULL);
 	window = win_ptr;
@@ -206,13 +206,12 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 		logMsg("Failed to get window device context");
 		goto errout;
 	}
-	ctx->hgl = wglCreateContextAttribsARB(ctx->dc, share_ctx, attrs);
+	ctx->hgl = wglCreateContextAttribsARB(ctx->dc,
+	    share_ctx != NULL ? share_ctx->hgl : NULL, attrs);
 	if (ctx->hgl == NULL) {
 		logMsg("Failed to create context");
 		goto errout;
 	}
-	if (!glctx_make_current(ctx))
-		goto errout;
 
 	return (ctx);
 errout:
@@ -238,15 +237,25 @@ glctx_get_xplane_win_ptr(void)
 
 #else	/* APL */
 
+static CGLOpenGLProfile
+get_gl_profile(int major_ver)
+{
+	if (major_ver <= 2)
+		return (kCGLOGLPVersion_Legacy);
+	if (major_ver == 3)
+		return (kCGLOGLPVersion_GL3_Core);
+	return (kCGLOGLPVersion_GL4_Core);
+}
+
 glctx_t *
-glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
+glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
 {
+	CGLOpenGLProfile profile = get_gl_profile(major_ver);
 	const CGLPixelFormatAttribute attrs[] = {
+	    /* always request hardware acceleration */
 	    kCGLPFAAccelerated,
-	    kCGLPFAOpenGLProfile,	/* core profile */
-	    (CGLPixelFormatAttribute)(major_ver < 4 ?
-		kCGLOGLPVersion_GL3_Core : kCGLOGLPVersion_GL4_Core),
+	    kCGLPFAOpenGLProfile, (CGLPixelFormatAttribute)profile,
 	    0	/* list terminator */
 	};
 	CGLPixelFormatObj pix;
@@ -258,6 +267,7 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 	UNUSED(minor_ver);
 	UNUSED(fwd_compat);
 	UNUSED(debug);
+	ASSERT(share_ctx == NULL || share_ctx->cgl != NULL);
 
 	ctx->created = B_TRUE;
 	error = CGLChoosePixelFormat(attrs, &pix, &num);
@@ -265,14 +275,13 @@ glctx_create_invisible(void *win_ptr, void *share_ctx, int major_ver,
 		logMsg("CGLChoosePixelFormat failed with error %d", error);
 		goto errout;
 	}
-	error = CGLCreateContext(pix, share_ctx, &ctx->cgl);
+	error = CGLCreateContext(pix,
+	    share_ctx != NULL ? share_ctx->cgl : NULL, &ctx->cgl);
 	if (error != kCGLNoError) {
 		logMsg("CGLCreateContext failed with error %d", error);
 		goto errout;
 	}
 	CGLDestroyPixelFormat(pix);
-	if (!glctx_make_current(ctx))
-		goto errout;
 
 	return (ctx);
 errout:
@@ -290,7 +299,7 @@ glctx_get_xplane_win_ptr(void)
 #endif	/* APL */
 
 glctx_t *
-glctx_create_current(void)
+glctx_get_current(void)
 {
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
 
@@ -302,6 +311,10 @@ glctx_create_current(void)
 		goto errout;
 	}
 	ctx->glc = glXGetCurrentContext();
+	if (ctx->glc == NULL) {
+		glctx_destroy(ctx);
+		return (NULL);
+	}
 
 	return (ctx);
 errout:
