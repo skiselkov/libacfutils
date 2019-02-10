@@ -137,6 +137,8 @@ shader_from_spirv_fallback(GLenum shader_type, const char *filename,
 	TEST_GLSL_VERSION(GLEW_VERSION_4_4, "glsl440");
 	TEST_GLSL_VERSION(GLEW_VERSION_4_3, "glsl430");
 	TEST_GLSL_VERSION(GLEW_VERSION_4_2, "glsl420");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_1, "glsl410");
+	TEST_GLSL_VERSION(GLEW_VERSION_4_0, "glsl400");
 	if (!loaded) {
 		strcpy(new_ext, "glsl");
 		if (file_exists(alt_filename, &is_dir) && !is_dir) {
