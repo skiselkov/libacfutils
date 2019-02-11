@@ -46,6 +46,10 @@
 #include <acfutils/log.h>
 #include <acfutils/safe_alloc.h>
 
+#if	defined(__WGLEW_H__) || defined(__GLEW_H__)
+#error	"MUST NOT include GLEW headers from glctx.c"
+#endif
+
 struct glctx_s {
 #if	LIN
 	Display		*dpy;
@@ -170,9 +174,7 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
 {
 	typedef HGLRC (*wglCreateContextAttribsProc)(HDC, HGLRC, const int *);
-	typedef BOOL (*wglMakeCurrentProc)(HDC, HGLRC);
 	wglCreateContextAttribsProc wglCreateContextAttribsARB;
-	wglMakeCurrentProc wglMakeCurrent;
 	const int attrs[] = {
 	    WGL_CONTEXT_MAJOR_VERSION_ARB, major_ver,
 	    WGL_CONTEXT_MINOR_VERSION_ARB, minor_ver,
@@ -192,9 +194,7 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	/* Get the required extensions */
 	wglCreateContextAttribsARB = (wglCreateContextAttribsProc)
 	    wglGetProcAddress("wglCreateContextAttribsARB");
-	wglMakeCurrent = (wglMakeCurrentProc)
-	    wglGetProcAddress("wglMakeCurrent");
-	if (wglCreateContextAttribsARB == NULL || wglMakeCurrent == NULL) {
+	if (wglCreateContextAttribsARB == NULL) {
 		logMsg("Missing support for WGL_ARB_create_context");
 		return (NULL);
 	}
