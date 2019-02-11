@@ -63,18 +63,18 @@ typedef struct glctx_s glctx_t;
 
 /*
  * Creates an invisible OpenGL context of a specified version in a
- * platform-independent way.
+ * platform-independent way. Please note that this must be called on
+ * the main X-Plane thread. To create a background rendering thread,
+ * call glctx_create_invisible() on the main thread, then hand off the
+ * created glctx_t to the background thread, which will subsequently
+ * set it as its current context using glctx_make_current().
  *
  * @param win_ptr An opaque window pointer to a backing window that the
  *	OpenGL will be based on. The context will NOT be drawing to this
  *	window. The window handle is only used to fetch hardware context
  *	information such as the target GPU and supported capabilities.
- *	Unless you exactly what you are doing, you should pass the
- *	output of glctx_get_xplane_win_ptr() here. Please note that you
- *	must only call glctx_get_xplane_win_ptr() on the main X-Plane
- *	thread, whereas glctx_create_invisible should be called from the
- *	intended worker thread that the new context is going to be used
- *	from, so cache the result of glctx_get_xplane_win_ptr().
+ *	Unless you know exactly what you are doing, you should always
+ *	pass the return value of glctx_get_xplane_win_ptr() here.
  * @param share_ctx An optional OpenGL context that you want the new
  *	context to share resources with. Please note that this will also
  *	share the command pipeline between the contexts, which can
@@ -91,9 +91,6 @@ typedef struct glctx_s glctx_t;
  *	function returns NULL and prints an error reason to the log.
  *	The returned context will NOT yet have been made the current
  *	context. To make the context current, use glctx_make_current.
- *	Please note that You shouldn't be handing off glctx_t's between
- *	threads. Instead, create them in the thread that you intend to
- *	use them in.
  */
 API_EXPORT glctx_t *glctx_create_invisible(void *win_ptr, glctx_t *share_ctx,
     int major_ver, int minor_ver, bool_t fwd_compat, bool_t debug);
@@ -111,6 +108,11 @@ API_EXPORT glctx_t *glctx_create_invisible(void *win_ptr, glctx_t *share_ctx,
  *	3) On Mac, this function always returns NULL.
  */
 API_EXPORT void *glctx_get_xplane_win_ptr(void);
+
+/*
+ * Sets a glctx_t as the calling thread's current context. To remove any
+ * context as the current context, pass NULL for `ctx' in this function.
+ */
 API_EXPORT bool_t glctx_make_current(glctx_t *ctx);
 
 /*
