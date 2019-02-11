@@ -327,9 +327,6 @@ errout:
 		return (NULL);
 	}
 	return (ctx);
-errout:
-	glctx_destroy(ctx);
-	return (NULL);
 #else	/* APL */
 	ctx->cgl = CGLGetCurrentContext();
 	if (ctx->cgl == NULL) {
