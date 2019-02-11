@@ -340,37 +340,50 @@ errout:
 bool_t
 glctx_make_current(glctx_t *ctx)
 {
-	ASSERT(ctx != NULL);
 #if	LIN
-	ASSERT(ctx->dpy != NULL);
-	ASSERT(ctx->glc != NULL);
-	if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf, ctx->glc)) {
-		/*
-		 * Some drivers doesn't like contexts without a default
-		 * framebuffer, so fallback on using the default window.
-		 */
-		if (!glXMakeContextCurrent(ctx->dpy,
-		    DefaultRootWindow(ctx->dpy), DefaultRootWindow(ctx->dpy),
+	if (ctx != NULL) {
+		ASSERT(ctx->dpy != NULL);
+		ASSERT(ctx->glc != NULL);
+		if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf,
 		    ctx->glc)) {
+			/*
+			 * Some drivers doesn't like contexts without a default
+			 * framebuffer, so fallback on using the default window.
+			 */
+			if (!glXMakeContextCurrent(ctx->dpy,
+			    DefaultRootWindow(ctx->dpy),
+			    DefaultRootWindow(ctx->dpy), ctx->glc)) {
+				logMsg("Failed to make context current");
+				return (B_FALSE);
+			}
+		}
+	} else {
+		glXMakeContextCurrent(NULL, None, None, NULL);
+	}
+#elif	IBM
+	if (ctx != NULL) {
+		ASSERT(ctx->dc != NULL);
+		ASSERT(ctx->hgl != NULL);
+		if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
 			logMsg("Failed to make context current");
 			return (B_FALSE);
 		}
-	}
-#elif	IBM
-	ASSERT(ctx->dc != NULL);
-	ASSERT(ctx->hgl != NULL);
-	if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
-		logMsg("Failed to make context current");
-		return (B_FALSE);
+	} else {
+		wglMakeCurrent(NULL, NULL);
 	}
 #else	/* APL */
-	CGLError error;
+	if (ctx != NULL) {
+		CGLError error;
 
-	ASSERT(ctx->cgl != NULL);
-	error = CGLSetCurrentContext(ctx->cgl);
-	if (error != kCGLNoError) {
-		logMsg("CGLSetCurrentContext failed with error %d", error);
-		return (B_FALSE);
+		ASSERT(ctx->cgl != NULL);
+		error = CGLSetCurrentContext(ctx->cgl);
+		if (error != kCGLNoError) {
+			logMsg("CGLSetCurrentContext failed with error %d",
+			    error);
+			return (B_FALSE);
+		}
+	} else {
+		CGLSetCurrentContext(NULL);
 	}
 #endif	/* APL */
 	return (B_TRUE);
