@@ -44,7 +44,7 @@ extern "C" {
 #endif	/* !IBM && !defined(_MSC_VER) */
 
 #if	__STDC_VERSION__ < 199901L
-# if	defined(defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
+# if	defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #  define	restrict	__restrict
 # else
 #  define	restrict
