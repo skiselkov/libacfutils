@@ -145,8 +145,8 @@ extern "C" {
 static inline int
 cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 {
-	struct timespec ts = { .tv_sec = limit / 1000000,
-	    .tv_nsec = (limit % 1000000) * 1000 };
+	struct timespec ts = { .tv_sec = (time_t)(limit / 1000000),
+	    .tv_nsec = (long)((limit % 1000000) * 1000) };
 	return (pthread_cond_timedwait(cv, mtx, &ts));
 }
 #define	cv_init(cv)		pthread_cond_init((cv), NULL)
