@@ -38,7 +38,7 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/CGLTypes.h>
 #include <OpenGL/CGLCurrent.h>
-#endif	/* APl */
+#endif	/* APL */
 
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
@@ -334,6 +334,18 @@ errout:
 		return (NULL);
 	}
 	return (ctx);
+#endif	/* APL */
+}
+
+void *
+glctx_get_handle(const glctx_t *ctx)
+{
+#if	LIN
+	return (ctx->glc);
+#elif	IBM
+	return (ctx->hgl);
+#else	/* APL */
+	return (ctx->cgl);
 #endif	/* APL */
 }
 

@@ -137,6 +137,15 @@ API_EXPORT void *glctx_get_window_system_handle(glctx_t *ctx);
 API_EXPORT glctx_t *glctx_get_current(void);
 
 /*
+ * Gets the underlying OpenGL context handle from a glctx_t. This is
+ * highly platform-specific:
+ * 1) On Windows, this returns an HGLRC
+ * 2) On Linux, this returns a GLXContext
+ * 3) On Mac, this returns a CGLContextObj
+ */
+API_EXPORT void *glctx_get_handle(const glctx_t *ctx);
+
+/*
  * Destroys a previously constructed glctx_t structure. For contexts
  * created using glctx_get_current, this DOESN'T destroy the underlying
  * context. Contexts created using glctx_create_invisible, this DOES
