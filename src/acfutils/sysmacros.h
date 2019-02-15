@@ -181,11 +181,15 @@ highbit64(unsigned long long x)
 #error	"Compiler platform unsupported, please add highbit definition"
 #endif
 
-#if	!defined(MIN) && !defined(MAX) && !defined(AVG)
+#ifndef	MIN
 #define	MIN(x, y)	((x) < (y) ? (x) : (y))
+#endif
+#ifndef	MAX
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))
+#endif
+#ifndef	AVG
 #define	AVG(x, y)	(((x) + (y)) / 2)
-#endif	/* MIN or MAX */
+#endif
 /*
  * Provides a gradual method of integrating an old value until it approaches
  * a new target value. This is used in iterative processes by calling the
