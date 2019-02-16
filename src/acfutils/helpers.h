@@ -213,6 +213,22 @@ lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap)
 	strncpy(dest, src, cap - 1);
 }
 
+static inline const char *
+lacf_basename(const char *str)
+{
+	const char *sep = strrchr(str, DIRSEP);
+
+#if	IBM
+	const char *sep2 = strrchr(str, '/');
+	if (sep2 > sep)
+		sep = sep2;
+#endif	/* IBM */
+
+	if (sep == NULL)
+		return (str);
+	return (&sep[1]);
+}
+
 #if	IBM
 #define	getline				ACFSYM(getline)
 API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
