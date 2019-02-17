@@ -34,5 +34,6 @@ done
     ( cd shapelib && ./build_shapelib_deps ) && \
     ( cd ocr && ./build_ocr_deps ) && \
     ( cd pcre2 && ./build_pcre2_deps ) && \
+    ( cd glew && ./build_glew_deps ) && \
     ( cd lzma/qmake && if [ $(uname) = Darwin ]; then \
     ./build-mac else ./build-win-lin ; fi )
