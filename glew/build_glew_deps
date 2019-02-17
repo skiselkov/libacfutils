@@ -82,7 +82,7 @@ case `uname` in
 			    cp -r "auto" "$GLEW-mac-64" && \
 			    ( cd "$GLEW-mac-64" && \
 			    patch -p1 < ../opengl_4.6.patch && \
-			    gmake $MAKE_FLAGS extension && \
+			    gmake $MAKE_FLAGS extensions && \
 			    gmake $MAKE_FLAGS -j $NCPUS && \
 			    gmake $MAKE_FLAGS install.all )
 		fi
