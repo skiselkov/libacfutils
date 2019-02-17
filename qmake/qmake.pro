@@ -27,7 +27,6 @@ debug = $$[DEBUG]
 
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
-INCLUDEPATH += ../glew
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
@@ -47,16 +46,15 @@ DEFINES += XPLM200 XPLM210 XPLM300 XPLM301
 DEFINES += AL_ALEXT_PROTOTYPES
 
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
+DEFINES += GLEW_STATIC
 
 TARGET = acfutils
 dll = $$[DLL]
 
 contains(dll, 0) {
-	DEFINES += GLEW_STATIC
 	DEFINES += ACFUTILS_DLL=0
 }
 contains(dll, 1) {
-	DEFINES += GLEW_BUILD
 	DEFINES += ACFUTILS_DLL=1
 }
 contains(debug, 0) {
@@ -84,7 +82,7 @@ win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 		     --static-openal --libs")
 	}
 	contains(dll, 0) {
-		LIBS += $$system("../pkg-config-deps win-64  --static-openal \
+		LIBS += $$system("../pkg-config-deps win-64 --static-openal \
 		    --libs")
 	}
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64

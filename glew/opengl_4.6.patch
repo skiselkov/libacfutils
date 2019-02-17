@@ -1,0 +1,39 @@
+--- glew-1.13.0/auto/Makefile	2015-08-10 13:47:22.000000000 +0200
++++ glew-1.13.0-new/auto/Makefile	2019-02-17 09:04:13.284291777 +0100
+@@ -105,23 +105,10 @@
+ 	@echo "--------------------------------------------------------------------"
+ 	@echo "Downloading registry"
+ 	@echo "--------------------------------------------------------------------"
+-	$(GIT_CLONE) registry
++	mkdir -p registry/gl/specs
+ 	touch $@
+ 
+ $(EXT)/.dummy: $(REGISTRY)/.dummy
+-	@echo "--------------------------------------------------------------------"
+-	@echo "Creating descriptors"
+-	@echo "--------------------------------------------------------------------"
+-	rm -rf $(EXT)
+-	$(BIN)/update_ext.sh $(EXT) $(REGISTRY) $(BLACKLIST)
+-	$(BIN)/$(FILTER)     $(EXT)
+-ifeq ($(patsubst Darwin%,Darwin,$(SYSTEM)), Darwin)
+-	find $(CORE) -maxdepth 1 -type f | grep -v VERSION | grep -v "~" | \
+-	xargs -J % cp % $(EXT)
+-else
+-	find $(CORE) -maxdepth 1 -type f | grep -v VERSION | grep -v "~" | \
+-	xargs cp --target-directory=$(EXT)
+-endif
+ 	touch $@
+ 
+ $(I.DEST)/glew.h: $(EXT)/.dummy
+--- glew-1.13.0/auto/src/glew_init_gl.c	2015-08-10 13:47:22.000000000 +0200
++++ glew-1.13.0-linux-64/auto/src/glew_init_gl.c	2019-02-17 13:22:54.581485112 +0100
+@@ -44,7 +44,8 @@
+   }
+   else
+   {
+-    GLEW_VERSION_4_5   = ( major > 4 )                 || ( major == 4 && minor >= 5 ) ? GL_TRUE : GL_FALSE;
++    GLEW_VERSION_4_6   = ( major > 4 )                 || ( major == 4 && minor >= 6 ) ? GL_TRUE : GL_FALSE;
++    GLEW_VERSION_4_5   = GLEW_VERSION_4_6   == GL_TRUE || ( major == 4 && minor >= 5 ) ? GL_TRUE : GL_FALSE;
+     GLEW_VERSION_4_4   = GLEW_VERSION_4_5   == GL_TRUE || ( major == 4 && minor >= 4 ) ? GL_TRUE : GL_FALSE;
+     GLEW_VERSION_4_3   = GLEW_VERSION_4_4   == GL_TRUE || ( major == 4 && minor >= 3 ) ? GL_TRUE : GL_FALSE;
+     GLEW_VERSION_4_2   = GLEW_VERSION_4_3   == GL_TRUE || ( major == 4 && minor >= 2 ) ? GL_TRUE : GL_FALSE;

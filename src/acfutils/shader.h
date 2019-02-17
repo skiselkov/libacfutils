@@ -27,7 +27,8 @@
 #define	_ACF_UTILS_SHADER_H_
 
 #include <stdarg.h>
-#include <GL/glew.h>
+
+#include <acfutils/glew.h>
 
 #ifdef	__cplusplus
 extern "C" {

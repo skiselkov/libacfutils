@@ -16,6 +16,10 @@
  * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
-#include "acfutils/glew.h"
+#include "acfutils/glew_os.h"
 
-THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
+#if	LIN
+THREAD_LOCAL GLXEWContext lacf_glxew_per_thread_ctx;
+#elif	IBM
+THREAD_LOCAL WGLEWContext lacf_wglew_per_thread_ctx;
+#endif	/* IBM */

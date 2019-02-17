@@ -1,0 +1,94 @@
+#!/bin/bash
+
+# CDDL HEADER START
+#
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
+#
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
+#
+# CDDL HEADER END
+
+# Copyright 2019 Saso Kiselkov. All rights reserved.
+
+GLEW="glew-1.13.0"
+GLEW_ARCHIVE="glew-1.13.0.tar.xz"
+
+set -e
+
+case $(uname) in
+Linux)
+	NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
+	    | wc -l) + 1 ))
+	;;
+Darwin)
+	NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
+	;;
+esac
+
+if [[ "$do_clean" == "1" ]]; then
+	rm -rf "$GLEW-linux-64"
+	rm -rf "$GLEW-mac-64"
+	rm -rf "$GLEW-win-64"
+	exit
+fi
+
+case `uname` in
+	Linux)
+		MAKE_FLAGS="GLEW_PREFIX=$(pwd)/$GLEW-linux-64/install \
+		    GLEW_DEST=$(pwd)/$GLEW-linux-64/install"
+		if ! [ -f "$GLEW-linux-64/install/lib64/libGLEWmx.a" ]; then
+			# To get OpenGL 4.6 extension functionality in, we'll
+			# manually bring over the extensions specification
+			# from GLEW-2.1.0. We must also patch the auto/Makefile
+			# to avoid fetching the github-hosted registry, as that
+			# breaks the build. Instead, use only the local files
+			# to generate the library.
+			rm -rf "$GLEW-linux-64" && tar xJf "$GLEW_ARCHIVE" && \
+			    mv "$GLEW" "$GLEW-linux-64" && \
+			    cp -r "auto" "$GLEW-linux-64" && \
+			    ( cd "$GLEW-linux-64" && \
+			    patch -p1 < ../opengl_4.6.patch && \
+			    make $MAKE_FLAGS extensions && \
+			    make $MAKE_FLAGS -j $NCPUS && \
+			    make $MAKE_FLAGS install.all )
+		fi
+
+		MAKE_FLAGS="SYSTEM=linux-mingw64 HOST=x86_64-w64-mingw32 \
+		    GLEW_PREFIX=$(pwd)/$GLEW-win-64/install \
+		    GLEW_DEST=$(pwd)/$GLEW-win-64/install"
+		if ! [ -f "$GLEW-win-64/install/lib/libglew32mx.a" ]; then
+			rm -rf "$GLEW-win-64" && tar xJf "$GLEW_ARCHIVE" && \
+			    mv "$GLEW" "$GLEW-win-64" && \
+			    cp -r "auto" "$GLEW-win-64" && \
+			    ( cd "$GLEW-win-64" && \
+			    patch -p1 < ../opengl_4.6.patch && \
+			    make $MAKE_FLAGS extensions && \
+			    make $MAKE_FLAGS -j $NCPUS && \
+			    make $MAKE_FLAGS install.all )
+		fi
+		;;
+	Darwin)
+
+		MAKE_FLAGS="GLEW_PREFIX=$(pwd)/$GLEW-mac-64/install \
+		    GLEW_DEST=$(pwd)/$GLEW-mac-64/install"
+		if ! [ -f "$GLEW-mac-64/install/lib/libGLEWmx.a" ]; then
+			rm -rf "$GLEW-mac-64" && tar xJf "$GLEW_ARCHIVE" && \
+			    mv "$GLEW" "$GLEW-mac-64" && \
+			    cp -r "auto" "$GLEW-mac-64" && \
+			    ( cd "$GLEW-mac-64" && \
+			    patch -p1 < ../opengl_4.6.patch && \
+			    gmake $MAKE_FLAGS extension && \
+			    gmake $MAKE_FLAGS -j $NCPUS && \
+			    gmake $MAKE_FLAGS install.all )
+		fi
+		;;
+	*)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+esac

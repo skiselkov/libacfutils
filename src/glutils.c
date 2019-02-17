@@ -26,8 +26,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <GL/glew.h>
-
 #include <acfutils/avl.h>
 #include <acfutils/assert.h>
 #include <acfutils/glutils.h>

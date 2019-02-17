@@ -28,10 +28,9 @@
 
 #include <stdio.h>
 
-#include <GL/glew.h>
-
 #include <acfutils/assert.h>
 #include <acfutils/geom.h>
+#include <acfutils/glew.h>
 #include <acfutils/log.h>
 #include <acfutils/safe_alloc.h>
 #include <acfutils/sysmacros.h>

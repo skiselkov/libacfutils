@@ -26,14 +26,13 @@
 #ifndef	_ACF_UTILS_MT_CAIRO_RENDER_H_
 #define	_ACF_UTILS_MT_CAIRO_RENDER_H_
 
-#include <GL/glew.h>
-
 #include <cairo.h>
 #include <cairo-ft.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
 #include <acfutils/geom.h>
+#include <acfutils/glew.h>
 #include <acfutils/log.h>
 
 #ifdef	__cplusplus

@@ -111,6 +111,12 @@ extern "C" {
  *		mutex_exit(&my_lock);			-- release the lock
  */
 
+#if	defined(__GNUC__) || defined(__clang__)
+#define	THREAD_LOCAL	__thread
+#elif	defined(_MSC_VER)
+#define	THREAD_LOCAL	__declspec(thread)
+#endif
+
 #if	APL || LIN
 
 #define	thread_t		pthread_t

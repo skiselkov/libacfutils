@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2019 Saso Kiselkov. All rights reserved.
 
 # This file needs to be called from your makefile when using libacfutil.
 # It produces the necessary cflags and libs to include all the build-time
@@ -30,7 +30,7 @@
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
 PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
-    libcurl openssl tesseract lept libpng16 libxml-2.0 libpcre2-8 zlib"
+    libcurl openssl tesseract lept libpng16 libxml-2.0 libpcre2-8 zlib glewmx"
 STATIC_OPENAL=0
 
 ARCH="$1"
@@ -55,7 +55,7 @@ cd "$(dirname "$0")"
 
 # The order of arguments we pass to pkg-config is important. We must list
 # dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
-export PKG_CONFIG_PATH="\
+PKG_CONFIG_PATH="\
 $(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/opus-$ARCH/lib/pkgconfig:\
 $(pwd)/opus/libogg-$ARCH/install/lib/pkgconfig:\
@@ -73,6 +73,16 @@ $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\
 $(pwd)/openal-soft/openal-soft-1.18.2-$ARCH/build/install/lib/pkgconfig:\
 $(pwd)/pcre2/pcre2-$ARCH/lib/pkgconfig"
+
+if [[ "$ARCH" == "linux-64" ]]; then
+	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
+$(pwd)/glew/glew-1.13.0-$ARCH/install/lib64/pkgconfig"
+else
+	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
+$(pwd)/glew/glew-1.13.0-$ARCH/install/lib/pkgconfig"
+fi
+
+export PKG_CONFIG_PATH
 
 if [[ "$1" = "--cflags" ]]; then
 	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
