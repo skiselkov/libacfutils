@@ -42,7 +42,7 @@
 #include <GL/wglew.h>
 #endif	/* IBM */
 
-#include <acfutils/thread.h>
+#include <acfutils/tls.h>
 
 #ifdef	__cplusplus
 extern "C" {

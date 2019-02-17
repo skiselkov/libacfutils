@@ -23,36 +23,25 @@
  * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
-#ifndef	_ACF_UTILS_GLEW_H_
-#define	_ACF_UTILS_GLEW_H_
-
-/*
- * Includes & properly defines the context handler function for the
- * GLEW OS-independent bindings (WGL/GLX).
- * This is needed since libacfutils uses GLEW-MX (multi-context) to
- * support multi-threaded rendering, where each context can have
- * different context caps (primarily for MacOS OpenGL 2.1/4.1
- * multi-context support).
- */
-
-#include <GL/glew.h>
-
-#include <acfutils/tls.h>
+#ifndef	_ACF_UTILS_TLS_H_
+#define	_ACF_UTILS_TLS_H_
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-extern THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
+/* Universal thread-local-storage attribute qualifier */
 
-static inline GLEWContext *
-glewGetContext(void)
-{
-	return (&lacf_glew_per_thread_ctx);
-}
+#ifndef	THREAD_LOCAL
+#if	defined(__GNUC__) || defined(__clang__)
+#define	THREAD_LOCAL	__thread
+#elif	defined(_MSC_VER)
+#define	THREAD_LOCAL	__declspec(thread)
+#endif	/* defined(_MSC_VER) */
+#endif	/* THREAD_LOCAL */
 
 #ifdef	__cplusplus
 }
 #endif
 
-#endif	/* _ACF_UTILS_GLEW_H_ */
+#endif	/* _ACF_UTILS_TLS_H_ */
