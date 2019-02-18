@@ -1,0 +1,18 @@
+--- glew-1.13.0/Makefile	2015-08-10 13:47:22.000000000 +0200
++++ glew-1.13.0-mac-64/Makefile	2019-02-17 21:37:09.000000000 +0100
+@@ -77,13 +77,13 @@
+ OPT = $(POPT)
+ endif
+ INCLUDE = -Iinclude
+-CFLAGS = $(OPT) $(WARN) $(INCLUDE) $(CFLAGS.EXTRA)
++CFLAGS = $(OPT) $(WARN) $(INCLUDE) $(CFLAGS.EXTRA) $(CFLAGS.CMDLINE)
+ 
+ all debug: glew.lib glew.lib.mx glew.bin
+ 
+ # GLEW shared and static libraries
+ 
+-LIB.LDFLAGS        := $(LDFLAGS.EXTRA) $(LDFLAGS.GL)
++LIB.LDFLAGS        := $(LDFLAGS.EXTRA) $(LDFLAGS.GL) $(LDFLAGS.CMDLINE)
+ LIB.LIBS           := $(GL_LDFLAGS)
+ 
+ LIB.SRCS           := src/glew.c

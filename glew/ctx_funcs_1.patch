@@ -1,0 +1,11 @@
+--- glew-1.13.0-old/auto/src/glew_head.c	2019-02-17 22:35:26.000000000 +0100
++++ glew-1.13.0-new/auto/src/glew_head.c	2019-02-17 22:35:42.000000000 +0100
+@@ -13,7 +13,7 @@
+  */
+ #ifdef GLEW_MX
+ #  define glewGetContext() ctx
+-#  ifdef _WIN32
++#  if 1
+ #    define GLEW_CONTEXT_ARG_DEF_INIT GLEWContext* ctx
+ #    define GLEW_CONTEXT_ARG_VAR_INIT ctx
+ #    define wglewGetContext() ctx

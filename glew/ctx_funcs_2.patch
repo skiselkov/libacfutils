@@ -1,0 +1,41 @@
+--- glew-1.13.0-old/include/GL/glew.h	2019-02-17 22:24:40.000000000 +0100
++++ glew-1.13.0-new/include/GL/glew.h	2019-02-17 22:28:57.000000000 +0100
+@@ -16474,7 +16474,7 @@
+ 
+ /* ------------------------------------------------------------------------- */
+ 
+-#if defined(GLEW_MX) && defined(_WIN32)
++#if defined(GLEW_MX)
+ #define GLEW_FUN_EXPORT
+ #else
+ #define GLEW_FUN_EXPORT GLEWAPI
+@@ -16486,7 +16486,7 @@
+ #define GLEW_VAR_EXPORT GLEWAPI
+ #endif /* GLEW_MX */
+ 
+-#if defined(GLEW_MX) && defined(_WIN32)
++#if defined(GLEW_MX)
+ struct GLEWContextStruct
+ {
+ #endif /* GLEW_MX */
+@@ -19146,11 +19146,6 @@
+ 
+ GLEW_FUN_EXPORT PFNGLADDSWAPHINTRECTWINPROC __glewAddSwapHintRectWIN;
+ 
+-#if defined(GLEW_MX) && !defined(_WIN32)
+-struct GLEWContextStruct
+-{
+-#endif /* GLEW_MX */
+-
+ GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_1;
+ GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_2;
+ GLEW_VAR_EXPORT GLboolean __GLEW_VERSION_1_2_1;
+@@ -19786,7 +19781,7 @@
+ #ifdef _WIN32
+ #  define GLEW_GET_FUN(x) glewGetContext()->x
+ #else
+-#  define GLEW_GET_FUN(x) x
++#  define GLEW_GET_FUN(x) glewGetContext()->x
+ #endif
+ 
+ #else /* GLEW_MX */

@@ -1,0 +1,22 @@
+--- glew-1.13.0-old/auto/src/glew_init_tail.c	2019-02-18 10:32:15.000000000 +0100
++++ glew-1.13.0-new/auto/src/glew_init_tail.c	2019-02-18 10:33:32.000000000 +0100
+@@ -30,7 +30,7 @@
+ 
+ /* ------------------------------------------------------------------------ */
+ 
+-GLboolean glewExperimental = GL_FALSE;
++__thread GLboolean glewExperimental = GL_FALSE;
+ 
+ #if !defined(GLEW_MX)
+ 
+--- glew-1.13.0-old/auto/src/glew_tail.h	2019-02-18 10:32:24.000000000 +0100
++++ glew-1.13.0-new/auto/src/glew_tail.h	2019-02-18 10:33:44.000000000 +0100
+@@ -53,7 +53,7 @@
+ 
+ #endif /* GLEW_MX */
+ 
+-GLEWAPI GLboolean glewExperimental;
++GLEWAPI __thread GLboolean glewExperimental;
+ GLEWAPI GLboolean GLEWAPIENTRY glewGetExtension (const char *name);
+ GLEWAPI const GLubyte * GLEWAPIENTRY glewGetErrorString (GLenum error);
+ GLEWAPI const GLubyte * GLEWAPIENTRY glewGetString (GLenum name);
