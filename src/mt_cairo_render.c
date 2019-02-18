@@ -120,10 +120,30 @@ static const char *vert_shader =
 
 static const char *frag_shader =
     "#version 120\n"
-    "uniform sampler2D	texture;\n"
+    "uniform sampler2D	tex;\n"
     "varying vec2	tex_coord;\n"
     "void main() {\n"
-    "	gl_FragColor = texture2D(texture, tex_coord);\n"
+    "	gl_FragColor = texture2D(tex, tex_coord);\n"
+    "}\n";
+
+static const char *vert_shader410 =
+    "#version 410\n"
+    "uniform mat4			pvm;\n"
+    "layout(location = 0) in vec3	vtx_pos;\n"
+    "layout(location = 1) in vec2	vtx_tex0;\n"
+    "layout(location = 0) out vec2	tex_coord;\n"
+    "void main() {\n"
+    "	tex_coord = vtx_tex0;\n"
+    "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "}\n";
+
+static const char *frag_shader410 =
+    "#version 410\n"
+    "uniform sampler2D			tex;\n"
+    "layout(location = 0) in vec2	tex_coord;\n"
+    "layout(location = 0) out vec4	color_out;\n"
+    "void main() {\n"
+    "	color_out = texture(tex, tex_coord);\n"
     "}\n";
 
 /*
@@ -319,9 +339,14 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	}
 
 	mtcr->last_draw.pos = NULL_VECT2;
-	mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
-	    vert_shader, frag_shader, "vtx_pos", VTX_ATTRIB_POS,
-	    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
+	if (GLEW_VERSION_4_1) {
+		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
+		    vert_shader410, frag_shader410, NULL);
+	} else {
+		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
+		    vert_shader, frag_shader, "vtx_pos", VTX_ATTRIB_POS,
+		    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
+	}
 	VERIFY(mtcr->shader != 0);
 
 	setup_vao(mtcr);
@@ -694,7 +719,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 	glUniformMatrix4fv(glGetUniformLocation(mtcr->shader, "pvm"),
 	    1, GL_FALSE, (const GLfloat *)pvm);
-	glUniform1i(glGetUniformLocation(mtcr->shader, "texture"), 0);
+	glUniform1i(glGetUniformLocation(mtcr->shader, "tex"), 0);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
