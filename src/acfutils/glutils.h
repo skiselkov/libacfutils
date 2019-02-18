@@ -246,7 +246,10 @@ glutils_reset_errors(void)
 		;
 }
 
-#if	_LACF_RENDER_DEBUG
+/*
+ * MacOS doesn't support OpenGL 4.3.
+ */
+#if	_LACF_RENDER_DEBUG && !APL
 static inline void glutils_debug_push(GLuint id,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(2);
 
@@ -283,10 +286,10 @@ glutils_debug_pop(void)
 {
 	glPopDebugGroup();
 }
-#else	/* !_LACF_RENDER_DEBUG */
+#else	/* !_LACF_RENDER_DEBUG || APL */
 #define	glutils_debug_push(msgid, format, ...)
 #define	glutils_debug_pop()
-#endif	/* !_LACF_RENDER_DEBUG */
+#endif	/* !_LACF_RENDER_DEBUG || APL */
 
 #ifdef	__cplusplus
 }
