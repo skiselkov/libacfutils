@@ -1,6 +1,6 @@
 --- glew-1.13.0/Makefile	2015-08-10 13:47:22.000000000 +0200
-+++ glew-1.13.0-mac-64/Makefile	2019-02-17 21:37:09.000000000 +0100
-@@ -77,13 +77,13 @@
++++ glew-1.13.0-win-64/Makefile	2019-02-19 20:26:46.092586659 +0100
+@@ -77,14 +77,14 @@
  OPT = $(POPT)
  endif
  INCLUDE = -Iinclude
@@ -12,7 +12,9 @@
  # GLEW shared and static libraries
  
 -LIB.LDFLAGS        := $(LDFLAGS.EXTRA) $(LDFLAGS.GL)
+-LIB.LIBS           := $(GL_LDFLAGS)
 +LIB.LDFLAGS        := $(LDFLAGS.EXTRA) $(LDFLAGS.GL) $(LDFLAGS.CMDLINE)
- LIB.LIBS           := $(GL_LDFLAGS)
++LIB.LIBS           := $(GL_LDFLAGS) $(LIBS.CMDLINE)
  
  LIB.SRCS           := src/glew.c
+ LIB.SRCS.NAMES     := $(notdir $(LIB.SRCS))
