@@ -30,14 +30,17 @@
 extern "C" {
 #endif
 
-/* Universal thread-local-storage attribute qualifier */
-
+/*
+ * Universal thread-local-storage attribute qualifier.
+ */
 #ifndef	THREAD_LOCAL
 #if	defined(__GNUC__) || defined(__clang__)
 #define	THREAD_LOCAL	__thread
 #elif	defined(_MSC_VER)
 #define	THREAD_LOCAL	__declspec(thread)
-#endif	/* defined(_MSC_VER) */
+#else
+#error	"Thread-local storage is not supported on your platform"
+#endif
 #endif	/* THREAD_LOCAL */
 
 #ifdef	__cplusplus

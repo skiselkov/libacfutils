@@ -35,6 +35,8 @@
 #include <acfutils/safe_alloc.h>
 #include <acfutils/sysmacros.h>
 
+#include <cglm/cglm.h>
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -290,6 +292,31 @@ glutils_debug_pop(void)
 #define	glutils_debug_push(msgid, format, ...)
 #define	glutils_debug_pop()
 #endif	/* !_LACF_RENDER_DEBUG || APL */
+
+typedef struct glutils_nl_s glutils_nl_t;
+
+glutils_nl_t *glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts);
+glutils_nl_t *glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts);
+void glutils_nl_free(glutils_nl_t *nl);
+void glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog);
+
+static inline void
+glutils_enable_vtx_attr_ptr(GLint index, GLint size, GLenum type,
+    GLboolean normalized, size_t stride, size_t offset)
+{
+	if (index != -1) {
+		glEnableVertexAttribArray(index);
+		glVertexAttribPointer(index, size, type, normalized,
+		    stride, (void *)offset);
+	}
+}
+
+static inline void
+glutils_disable_vtx_attr_ptr(GLint index)
+{
+	if (index != -1)
+		glEnableVertexAttribArray(index);
+}
 
 #ifdef	__cplusplus
 }

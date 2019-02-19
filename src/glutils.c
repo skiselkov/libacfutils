@@ -263,16 +263,10 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 		pos_loc = glGetAttribLocation(prog, "vtx_pos");
 		tex0_loc = glGetAttribLocation(prog, "vtx_tex0");
 
-		if (pos_loc != -1) {
-			glEnableVertexAttribArray(pos_loc);
-			glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE,
-			    sizeof (vtx_t), (void *)(offsetof(vtx_t, pos)));
-		}
-		if (tex0_loc != -1) {
-			glEnableVertexAttribArray(tex0_loc);
-			glVertexAttribPointer(tex0_loc, 2, GL_FLOAT, GL_FALSE,
-			    sizeof (vtx_t), (void *)(offsetof(vtx_t, tex0)));
-		}
+		glutils_enable_vtx_attr_ptr(pos_loc, 3, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), offsetof(vtx_t, pos));
+		glutils_enable_vtx_attr_ptr(tex0_loc, 2, GL_FLOAT, GL_FALSE,
+		    sizeof (vtx_t), offsetof(vtx_t, tex0));
 		*setup = B_TRUE;
 	}
 
@@ -281,10 +275,8 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 	if (vao != 0) {
 		glBindVertexArray(0);
 	} else {
-		if (pos_loc != -1)
-			glDisableVertexAttribArray(pos_loc);
-		if (tex0_loc != -1)
-			glDisableVertexAttribArray(tex0_loc);
+		glutils_disable_vtx_attr_ptr(pos_loc);
+		glutils_disable_vtx_attr_ptr(tex0_loc);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -626,4 +618,201 @@ glutils_nsight_debugger_present(void)
 #endif	/* !APL */
 	/* NSight doesn't exist for MacOS */
 	return (B_FALSE);
+}
+
+struct glutils_nl_s {
+	size_t		num_pts;
+	GLuint		vao;
+	GLuint		vbo;
+	GLuint		ibo;
+
+	GLuint		last_prog;
+	struct {
+		/* program uniforms locations */
+		GLint	vp;
+		GLint	semi_width;
+		/* program attribute locations */
+		GLint	seg_here;
+		GLint	seg_start;
+		GLint	seg_end;
+	} loc;
+};
+
+typedef struct {
+	vec3	seg_here;
+	vec3	seg_start;
+	vec3	seg_end;
+} nl_vtx_data_t;
+
+glutils_nl_t *
+glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts)
+{
+	vec3 *pts_3d = safe_calloc(num_pts, sizeof (*pts_3d));
+	glutils_nl_t *nl;
+
+	ASSERT(pts != NULL);
+	ASSERT3U((num_pts & 1), ==, 0);
+
+	for (size_t i = 0; i < num_pts; i++) {
+		pts_3d[i][0] = pts[i][0];
+		pts_3d[i][1] = pts[i][1];
+		pts_3d[i][2] = 0.0;
+	}
+	nl = glutils_nl_alloc_3D(pts_3d, num_pts);
+	free(pts_3d);
+
+	return (nl);
+}
+
+glutils_nl_t *
+glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts)
+{
+	size_t data_bytes;
+	nl_vtx_data_t *data;
+	glutils_nl_t *nl = safe_calloc(1, sizeof (*nl));
+
+	ASSERT(pts != NULL);
+	ASSERT3U((num_pts & 1), ==, 0);
+
+	data_bytes = 2 * num_pts * sizeof (*data);
+	data = safe_malloc(data_bytes);
+
+	for (size_t i = 0; i < num_pts; i += 2) {
+		size_t off = i * 2;
+		memcpy(&data[off + 0].seg_here, pts[i], sizeof (vec3));
+		memcpy(&data[off + 1].seg_here, pts[i], sizeof (vec3));
+		memcpy(&data[off + 2].seg_here, pts[i + 1], sizeof (vec3));
+		memcpy(&data[off + 3].seg_here, pts[i + 1], sizeof (vec3));
+
+		for (size_t j = 0; j < 4; j++) {
+			memcpy(&data[off + j].seg_start, pts[i],
+			    sizeof (vec3));
+			memcpy(&data[off + j].seg_end, pts[i + 1],
+			    sizeof (vec3));
+		}
+	}
+
+	nl->num_pts = num_pts;
+	if (GLEW_VERSION_3_0) {
+		glGenVertexArrays(1, &nl->vao);
+		VERIFY(nl->vao != 0);
+		glBindVertexArray(nl->vao);
+	}
+	glGenBuffers(1, &nl->vbo);
+	VERIFY(nl->vbo != 0);
+	glBindBuffer(GL_ARRAY_BUFFER, nl->vbo);
+	glBufferData(GL_ARRAY_BUFFER, data_bytes, data, GL_STATIC_DRAW);
+
+	nl->ibo = glutils_make_quads_IBO(num_pts * 2);
+	/* glutils_make_quads_IBO binds the generated element buffer */
+
+	nl->loc.vp = -1;
+	nl->loc.semi_width = -1;
+	nl->loc.seg_here = -1;
+	nl->loc.seg_start = -1;
+	nl->loc.seg_end = -1;
+
+	if (GLEW_VERSION_3_0)
+		glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	free(data);
+
+	return (nl);
+}
+
+void
+glutils_nl_free(glutils_nl_t *nl)
+{
+	if (nl == NULL)
+		return;
+	if (nl->vao != 0)
+		glDeleteVertexArrays(1, &nl->vao);
+	if (nl->vbo != 0)
+		glDeleteBuffers(1, &nl->vbo);
+	if (nl->ibo != 0)
+		glDeleteBuffers(1, &nl->ibo);
+	free(nl);
+}
+
+static void
+nl_setup_vertex_attribs(glutils_nl_t *nl, GLuint prog)
+{
+	if (nl->vao != 0 && nl->last_prog == prog)
+		return;
+
+	if (nl->vao != 0) {
+		/*
+		 * Disable our previously-used attribute pointers.
+		 */
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_here);
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_start);
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_end);
+	}
+
+	/* Uniforms */
+	nl->loc.vp = glGetUniformLocation(prog, "_nl_vp");
+	nl->loc.semi_width = glGetUniformLocation(prog, "_nl_semi_width");
+
+	/* Attributes */
+	nl->loc.seg_here = glGetAttribLocation(prog, "_nl_seg_here");
+	nl->loc.seg_start = glGetAttribLocation(prog, "_nl_seg_start");
+	nl->loc.seg_end = glGetAttribLocation(prog, "_nl_seg_end");
+
+	glBindBuffer(GL_ARRAY_BUFFER, nl->vbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, nl->ibo);
+	glutils_enable_vtx_attr_ptr(nl->loc.seg_here, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (nl_vtx_data_t), offsetof(nl_vtx_data_t, seg_here));
+	glutils_enable_vtx_attr_ptr(nl->loc.seg_start, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (nl_vtx_data_t), offsetof(nl_vtx_data_t, seg_start));
+	glutils_enable_vtx_attr_ptr(nl->loc.seg_end, 3, GL_FLOAT, GL_FALSE,
+	    sizeof (nl_vtx_data_t), offsetof(nl_vtx_data_t, seg_end));
+
+	nl->last_prog = prog;
+}
+
+void
+glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
+{
+	int vp[4];
+
+	ASSERT(nl != NULL);
+	ASSERT3F(width, >=, 0);
+	ASSERT(prog != 0);
+
+	glGetIntegerv(GL_VIEWPORT, vp);
+
+	if (nl->vao != 0) {
+		glBindVertexArray(nl->vao);
+	} else {
+		glBindBuffer(GL_ARRAY_BUFFER, nl->vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, nl->ibo);
+	}
+
+	nl_setup_vertex_attribs(nl, prog);
+
+	if (nl->loc.vp != -1)
+		glUniform2f(nl->loc.vp, vp[2], vp[3]);
+	if (nl->loc.semi_width != -1)
+		glUniform1f(nl->loc.semi_width, width / 2);
+
+	/*
+	 * We need to disable backface culling, because sometimes we end up
+	 * drawing vertices in the opposite winding sense when the line is
+	 * going right-to-left on the screen.
+	 */
+	glDisable(GL_CULL_FACE);
+	glDrawElements(GL_TRIANGLES, nl->num_pts * 3, GL_UNSIGNED_INT, NULL);
+	glEnable(GL_CULL_FACE);
+
+	if (nl->vao != 0) {
+		glBindVertexArray(0);
+	} else {
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_here);
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_start);
+		glutils_disable_vtx_attr_ptr(nl->loc.seg_end);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

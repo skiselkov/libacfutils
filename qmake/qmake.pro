@@ -36,7 +36,7 @@ QMAKE_CFLAGS += -Wunused-result
 # DEBUG - used by our ASSERT macro
 # _FILE_OFFSET_BITS=64 to get 64-bit ftell and fseek on 32-bit platforms.
 # _USE_MATH_DEFINES - sometimes helps getting M_PI defined from system headers
-DEFINES += _GNU_SOURCE DEBUG _FILE_OFFSET_BITS=64 _USE_MATH_DEFINES
+DEFINES += _GNU_SOURCE DEBUG _FILE_OFFSET_BITS=64
 DEFINES += GL_GLEXT_PROTOTYPES
 
 # Latest X-Plane APIs. No legacy support needed.
