@@ -776,6 +776,9 @@ void
 glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
 {
 	int vp[4];
+#if	APL
+	GLenum winding;
+#endif
 
 	ASSERT(nl != NULL);
 	ASSERT3F(width, >=, 0);
@@ -802,9 +805,19 @@ glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
 	 * drawing vertices in the opposite winding sense when the line is
 	 * going right-to-left on the screen.
 	 */
+#if	APL
+	/*
+	 * Mac OpenGL resets its winding rules after glEnable(GL_CULL_FACE),
+	 * so save & restore those too.
+	 */
+	glGetIntegerv(GL_FRONT_FACE, (GLint *)&winding);
+#endif	/* APL */
 	glDisable(GL_CULL_FACE);
 	glDrawElements(GL_TRIANGLES, nl->num_pts * 3, GL_UNSIGNED_INT, NULL);
 	glEnable(GL_CULL_FACE);
+#if	APL
+	glFrontFace(winding);
+#endif
 
 	if (nl->vao != 0) {
 		glBindVertexArray(0);
