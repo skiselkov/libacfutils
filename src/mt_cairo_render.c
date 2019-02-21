@@ -33,6 +33,7 @@
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
 #include <acfutils/geom.h>
+#include <acfutils/glctx.h>
 #include <acfutils/glew.h>
 #include <acfutils/mt_cairo_render.h>
 #include <acfutils/safe_alloc.h>
@@ -103,8 +104,11 @@ struct mt_cairo_render_s {
 	GLuint			vtx_buf;
 	GLuint			idx_buf;
 	GLuint			shader;
+	GLint			shader_loc_pvm;
+	GLint			shader_loc_tex;
 
-	bool_t			debug;
+	bool_t			ctx_checking;
+	glctx_t			*create_ctx;
 };
 
 static const char *vert_shader =
@@ -260,14 +264,10 @@ setup_vao(mt_cairo_render_t *mtcr)
 
 	if (GLEW_VERSION_3_0) {
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
-
-		glEnableVertexAttribArray(VTX_ATTRIB_POS);
-		glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
-		    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
-
-		glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
-		glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
-		    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_POS, 3, GL_FLOAT,
+		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, pos));
+		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_TEX0, 2, GL_FLOAT,
+		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
 
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
@@ -342,10 +342,8 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	if (GLEW_VERSION_4_1) {
 		char *vert_shader_text = sprintf_alloc(vert_shader410,
 		    VTX_ATTRIB_POS, VTX_ATTRIB_TEX0);
-
 		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
 		    vert_shader_text, frag_shader410, NULL);
-
 		free(vert_shader_text);
 	} else {
 		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
@@ -353,8 +351,11 @@ mt_cairo_render_init_impl(const char *filename, int line,
 		    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
 	}
 	VERIFY(mtcr->shader != 0);
+	mtcr->shader_loc_pvm = glGetUniformLocation(mtcr->shader, "pvm");
+	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
 
 	setup_vao(mtcr);
+	mtcr->create_ctx = glctx_get_current();
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -408,6 +409,9 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 	mutex_destroy(&mtcr->lock);
 	cv_destroy(&mtcr->cv);
 	cv_destroy(&mtcr->render_done_cv);
+
+	if (mtcr->create_ctx != NULL)
+		glctx_destroy(mtcr->create_ctx);
 
 	free(mtcr);
 }
@@ -682,26 +686,28 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     const GLfloat *pvm)
 {
 	GLint old_vao = 0;
+	bool_t use_vao;
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 
 	if (mtcr->cur_rs == -1) {
-	        mutex_exit(&mtcr->lock);
+		mutex_exit(&mtcr->lock);
 		return;
 	}
 	ASSERT3S(mtcr->cur_rs, >=, 0);
 	ASSERT3S(mtcr->cur_rs, <, 2);
 
 	mutex_enter(&mtcr->lock);
-
 	if (!bind_cur_tex(mtcr)) {
 		mutex_exit(&mtcr->lock);
 		return;
 	}
-
 	mutex_exit(&mtcr->lock);
 
-	if (mtcr->vao != 0) {
+	use_vao = (mtcr->vao != 0 &&
+	    (!mtcr->ctx_checking || glctx_is_current(mtcr->create_ctx)));
+
+	if (use_vao) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		glBindVertexArray(mtcr->vao);
@@ -709,26 +715,23 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
 
-		glEnableVertexAttribArray(VTX_ATTRIB_POS);
-		glEnableVertexAttribArray(VTX_ATTRIB_TEX0);
-
-		glVertexAttribPointer(VTX_ATTRIB_POS, 3, GL_FLOAT, GL_FALSE,
-		    sizeof (vtx_t), (void *)offsetof(vtx_t, pos));
-		glVertexAttribPointer(VTX_ATTRIB_TEX0, 2, GL_FLOAT, GL_FALSE,
-		    sizeof (vtx_t), (void *)offsetof(vtx_t, tex0));
+		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_POS, 3, GL_FLOAT,
+		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, pos));
+		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_TEX0, 2, GL_FLOAT,
+		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
 
 	glUseProgram(mtcr->shader);
 
 	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
 
-	glUniformMatrix4fv(glGetUniformLocation(mtcr->shader, "pvm"),
+	glUniformMatrix4fv(mtcr->shader_loc_pvm,
 	    1, GL_FALSE, (const GLfloat *)pvm);
-	glUniform1i(glGetUniformLocation(mtcr->shader, "tex"), 0);
+	glUniform1i(mtcr->shader_loc_tex, 0);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
 
-	if (mtcr->vao != 0) {
+	if (use_vao) {
 		glBindVertexArray(old_vao);
 	} else {
 		glDisableVertexAttribArray(VTX_ATTRIB_POS);
@@ -866,4 +869,11 @@ try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
 	free(fontpath);
 
 	return (B_TRUE);
+}
+
+void
+mt_cairo_render_set_ctx_checking_enabled(mt_cairo_render_t *mtcr,
+    bool_t flag)
+{
+	mtcr->ctx_checking = flag;
 }

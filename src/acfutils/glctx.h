@@ -137,6 +137,11 @@ API_EXPORT void *glctx_get_window_system_handle(glctx_t *ctx);
 API_EXPORT glctx_t *glctx_get_current(void);
 
 /*
+ * Returns B_TRUE if `ctx' is the current rendering context, B_FALSE otheriwse.
+ */
+API_EXPORT bool_t glctx_is_current(glctx_t *ctx);
+
+/*
  * Gets the underlying OpenGL context handle from a glctx_t. This is
  * highly platform-specific:
  * 1) On Windows, this returns an HGLRC

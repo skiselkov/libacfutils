@@ -337,6 +337,19 @@ errout:
 #endif	/* APL */
 }
 
+API_EXPORT bool_t
+glctx_is_current(glctx_t *ctx)
+{
+	ASSERT(ctx != NULL);
+#if	LIN
+	return (ctx->glc == glXGetCurrentContext());
+#elif	IBM
+	return (ctx->hgl == wglGetCurrentContext());
+#else	/* APL */
+	return (ctx->cgl == CGLGetCurrentContext());
+#endif	/* APL */
+}
+
 void *
 glctx_get_handle(const glctx_t *ctx)
 {

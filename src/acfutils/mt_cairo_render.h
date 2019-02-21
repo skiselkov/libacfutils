@@ -73,6 +73,8 @@ API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
+API_EXPORT void mt_cairo_render_set_ctx_checking_enabled(
+    mt_cairo_render_t *mtcr, bool_t flag);
 
 /*
  * Must ONLY be called from the rendering callback.
