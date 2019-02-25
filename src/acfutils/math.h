@@ -59,10 +59,10 @@ wavg_impl(double x, double y, double w, const char *file, int line)
 #define wavg(x, y, w)	wavg_impl((x), (y), (w), __FILE__, __LINE__)
 
 /*
- * Given two values min_val and max_val (such that min_val < max_val),
- * returns how far between min_val and max_val a third value 'x' lies.
- * If `clamp_output' is true, 'x' is clamped such that it always lies
- * between min_val and max_val. In essence, this function computes:
+ * Given two values min_val and max_val, returns how far between min_val
+ * and max_val a third value 'x' lies. If `clamp_output' is true, 'x' is
+ * clamped such that it always lies between min_val and max_val. In essence,
+ * this function computes:
  *
  *      ^
  *      |
@@ -80,7 +80,6 @@ wavg_impl(double x, double y, double w, const char *file, int line)
 static inline double
 iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
 {
-	ASSERT3F(max_val, >, min_val);
 	x = (x - min_val) / (max_val - min_val);
 	if (clamp_output)
 		x = clamp(x, 0, 1);
