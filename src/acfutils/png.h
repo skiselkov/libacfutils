@@ -36,6 +36,8 @@ API_EXPORT uint8_t *png_load_from_file_rgba(const char *filename,
     int *width, int *height);
 API_EXPORT uint8_t *png_load_from_file_grey(const char *filename,
     int *width, int *height);
+API_EXPORT uint8_t *png_load_from_file_grey16(const char *filename,
+    int *width, int *height);
 API_EXPORT uint8_t *png_load_from_buffer(const void *buf, size_t len,
     int *width, int *height);
 API_EXPORT bool_t png_write_to_file_grey8(const char *filename,

@@ -46,7 +46,7 @@ typedef struct {
  */
 uint8_t *
 png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
-    int req_color_type)
+    int req_color_type, int req_bit_depth)
 {
 	FILE *volatile fp = NULL;
 	size_t rowbytes;
@@ -106,8 +106,9 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 		    filename, req_color_type, png_get_color_type(pngp, infop));
 		goto out;
 	}
-	if (png_get_bit_depth(pngp, infop) != 8) {
-		logMsg("Bad icon file %s: need 8-bit depth", filename);
+	if (png_get_bit_depth(pngp, infop) != req_bit_depth) {
+		logMsg("Bad image file %s: need %d-bit depth", filename,
+		    req_bit_depth);
 		goto out;
 	}
 	rowbytes = png_get_rowbytes(pngp, infop);
@@ -151,14 +152,21 @@ uint8_t *
 png_load_from_file_rgba(const char *filename, int *width, int *height)
 {
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    PNG_COLOR_TYPE_RGBA));
+	    PNG_COLOR_TYPE_RGBA, 8));
 }
 
 uint8_t *
 png_load_from_file_grey(const char *filename, int *width, int *height)
 {
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    PNG_COLOR_TYPE_GRAY));
+	    PNG_COLOR_TYPE_GRAY, 8));
+}
+
+uint8_t *
+png_load_from_file_grey16(const char *filename, int *width, int *height)
+{
+	return (png_load_impl(NULL, (void *)filename, width, height,
+	    PNG_COLOR_TYPE_GRAY, 16));
 }
 
 static void
@@ -176,7 +184,7 @@ png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
 {
 	bufread_t br = { .bufp = buf, .len = len, .cur = 0 };
 	return (png_load_impl(bufread, &br, width, height,
-	    PNG_COLOR_TYPE_RGBA));
+	    PNG_COLOR_TYPE_RGBA, 8));
 }
 
 static bool_t
@@ -216,7 +224,7 @@ png_write_to_file_common(const char *filename, int width, int height,
 
 	png_init_io(png_ptr, fp);
 
-	/* Write header (8 bit color depth) */
+	/* Write header (8/16 bit color depth) */
 	png_set_IHDR(png_ptr, info_ptr, width, height, bit_depth, color_type,
 	    PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_BASE,
 	    PNG_FILTER_TYPE_BASE);
