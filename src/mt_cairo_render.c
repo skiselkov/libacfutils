@@ -30,6 +30,8 @@
  * display the rendered result.
  */
 
+#include <XPLMGraphics.h>
+
 #include <acfutils/assert.h>
 #include <acfutils/dr.h>
 #include <acfutils/geom.h>
@@ -711,7 +713,9 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		glBindVertexArray(mtcr->vao);
+		glEnable(GL_BLEND);
 	} else {
+		XPLMSetGraphicsState(1, 1, 1, 1, 1, 1, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
 
