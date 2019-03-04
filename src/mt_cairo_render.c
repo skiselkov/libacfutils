@@ -168,6 +168,7 @@ static const struct {
 #include FT_ERRORS_H
 
 static bool_t glob_inited = B_FALSE;
+static thread_id_t mtcr_main_thread;
 
 static struct {
 	dr_t	viewport;
@@ -243,6 +244,7 @@ mt_cairo_render_glob_init(void)
 		return;
 	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 	    1, 1));
+	mtcr_main_thread = curthread;
 	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
 	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
 	fdr_find(&drs.mv_matrix, "sim/graphics/view/modelview_matrix");
@@ -254,8 +256,9 @@ static void
 setup_vao(mt_cairo_render_t *mtcr)
 {
 	GLint old_vao = 0;
+	bool_t on_main_thread = (curthread == mtcr_main_thread);
 
-	if (GLEW_VERSION_3_0) {
+	if (GLEW_VERSION_3_0 && !on_main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		glGenVertexArrays(1, &mtcr->vao);
@@ -264,7 +267,7 @@ setup_vao(mt_cairo_render_t *mtcr)
 
 	glGenBuffers(1, &mtcr->vtx_buf);
 
-	if (GLEW_VERSION_3_0) {
+	if (GLEW_VERSION_3_0 && !on_main_thread) {
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_POS, 3, GL_FLOAT,
 		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, pos));
@@ -273,7 +276,7 @@ setup_vao(mt_cairo_render_t *mtcr)
 	}
 
 	mtcr->idx_buf = glutils_make_quads_IBO(4);
-	if (GLEW_VERSION_3_0)
+	if (GLEW_VERSION_3_0 && !on_main_thread)
 		glBindVertexArray(old_vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
