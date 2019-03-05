@@ -16,6 +16,21 @@
  * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
+#include <stdlib.h>
+
 #include "acfutils/glew.h"
 
 THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
+
+#if	APL || LIN
+
+pthread_key_t lacf_glew_ctx_key;
+pthread_once_t lacf_glew_ctx_once = PTHREAD_ONCE_INIT;
+
+void
+lacf_glew_ctx_make_key(void)
+{
+	(void) pthread_key_create(&lacf_glew_ctx_key, free);
+}
+
+#endif	/* APL || LIN */

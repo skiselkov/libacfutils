@@ -26,6 +26,10 @@
 #ifndef	_ACF_UTILS_GLEW_H_
 #define	_ACF_UTILS_GLEW_H_
 
+#if	APL || LIN
+#include <pthread.h>
+#endif
+
 /*
  * Includes & properly defines the context handler function for the
  * GLEW OS-independent bindings (WGL/GLX).
@@ -37,11 +41,14 @@
 
 #include <GL/glew.h>
 
+#include <acfutils/safe_alloc.h>
 #include <acfutils/tls.h>
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+#if	LACF_GLEW_USE_NATIVE_TLS
 
 extern THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
 
@@ -50,6 +57,34 @@ glewGetContext(void)
 {
 	return (&lacf_glew_per_thread_ctx);
 }
+
+#else	/* !LACF_GLEW_USE_NATIVE_TLS */
+
+#if	LIN || APL
+
+extern pthread_key_t lacf_glew_ctx_key;
+extern pthread_once_t lacf_glew_ctx_once;
+
+void lacf_glew_ctx_make_key(void);
+
+static inline GLEWContext *
+glewGetContext(void)
+{
+	GLEWContext *ctx;
+
+	(void) pthread_once(&lacf_glew_ctx_once, lacf_glew_ctx_make_key);
+	ctx = pthread_getspecific(lacf_glew_ctx_key);
+	if (ctx == NULL) {
+		ctx = safe_malloc(sizeof (*ctx));
+		(void) pthread_setspecific(lacf_glew_ctx_key, ctx);
+	}
+
+	return (ctx);
+}
+
+#endif	/* APL || LIN */
+
+#endif	/* !LACF_GLEW_USE_NATIVE_TLS */
 
 #ifdef	__cplusplus
 }
