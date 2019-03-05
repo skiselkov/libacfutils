@@ -48,6 +48,10 @@
 extern "C" {
 #endif
 
+#ifndef	LACF_GLEW_USE_NATIVE_TLS
+#define	LACF_GLEW_USE_NATIVE_TLS	1
+#endif
+
 #if	LACF_GLEW_USE_NATIVE_TLS
 
 extern THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
