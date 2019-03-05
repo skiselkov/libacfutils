@@ -87,7 +87,9 @@ export PKG_CONFIG_PATH
 if [[ "$1" = "--cflags" ]]; then
 	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
 	PCRE2_EXTRA="-DPCRE2_CODE_UNIT_WIDTH=8"
-	GLEW_EXTRA="-DLACF_GLEW_USE_NATIVE_TLS=0"
+	if [[ "$ARCH" = "mac-64" ]]; then
+		GLEW_EXTRA="-DLACF_GLEW_USE_NATIVE_TLS=0"
+	fi
 elif [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
 		# This must be appended AFTER --whole-archive, otherwise
