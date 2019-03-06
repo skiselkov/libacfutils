@@ -130,6 +130,9 @@ typedef struct {
 #define	NULL_GEO_POS3		((geo_pos3_t){NAN, NAN, NAN})
 #define	NULL_GEO_POS2		((geo_pos2_t){NAN, NAN})
 #define	IS_NULL_VECT(a)		(isnan((a).x))
+#define	IS_FINITE_VECT2(a)	(isfinite((a).x) && isfinite((a).y))
+#define	IS_FINITE_VECT3(a)	\
+	(isfinite((a).x) && isfinite((a).y) && isfinite((a).z))
 #define	IS_NULL_GEO_POS(a)	(isnan((a).lat))
 #define	IS_ZERO_VECT2(a)	((a).x == 0.0 && (a).y == 0.0)
 #define	IS_ZERO_VECT3(a)	((a).x == 0.0 && (a).y == 0.0 && (a).z == 0.0)
