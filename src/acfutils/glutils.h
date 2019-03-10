@@ -58,6 +58,8 @@ typedef struct {
 typedef void (*glutils_texsz_enum_cb_t)(const char *token, int64_t bytes,
     void *userinfo);
 
+API_EXPORT void glutils_sys_init(void);
+
 API_EXPORT void glutils_disable_all_client_state(void);
 
 API_EXPORT GLuint glutils_make_quads_IBO(size_t num_vtx);
