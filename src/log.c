@@ -32,9 +32,39 @@
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>
+#include <acfutils/thread.h>
 
 #define	DATE_FMT	"%Y-%m-%d %H:%M:%S"
 #define	PREFIX_FMT	"%s %s[%s:%d]: ", timedate, log_prefix, filename, line
+
+#define	MAX_STACK_FRAMES	128
+#define	MAX_MODULES		1024
+#define	BACKTRACE_STR		"Backtrace is:\n"
+#if	defined(__GNUC__) || defined(__clang__)
+#define	BACKTRACE_STRLEN	__builtin_strlen(BACKTRACE_STR)
+#else	/* !__GNUC__ && !__clang__ */
+#define	BACKTRACE_STRLEN	strlen(BACKTRACE_STR)
+#endif	/* !__GNUC__ && !__clang__ */
+
+#if	IBM
+/*
+ * Since while dumping stack we are most likely in a fairly compromised
+ * state, we statically pre-allocate these buffers to try and avoid having
+ * to call into the VM subsystem.
+ */
+#define	MAX_SYM_NAME_LEN	1024
+#define	MAX_BACKTRACE_LEN	(64 * 1024)
+static char backtrace_buf[MAX_BACKTRACE_LEN] = { 0 };
+static char symbol_buf[sizeof (SYMBOL_INFO) +
+    MAX_SYM_NAME_LEN * sizeof (TCHAR)];
+static char line_buf[sizeof (IMAGEHLP_LINE64)];
+/* DbgHelp is not thread-safe, so avoid concurrency */
+static mutex_t backtrace_lock;
+
+static HMODULE modules[MAX_MODULES];
+static MODULEINFO mi[MAX_MODULES];
+static DWORD num_modules;
+#endif	/* IBM */
 
 static logfunc_t log_func = NULL;
 static const char *log_prefix = NULL;
@@ -47,8 +77,18 @@ log_init(logfunc_t func, const char *prefix)
 		abort();
 	log_func = func;
 	log_prefix = prefix;
+#if	IBM
+	mutex_init(&backtrace_lock);
+#endif
 }
 
+void
+log_fini(void)
+{
+#if	IBM
+	mutex_destroy(&backtrace_lock);
+#endif
+}
 
 void
 log_impl(const char *filename, int line, const char *fmt, ...)
@@ -90,29 +130,6 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
 
 	free(buf);
 }
-
-#define	MAX_STACK_FRAMES	128
-#define	MAX_MODULES		1024
-#define	BACKTRACE_STR		"Backtrace is:\n"
-#if	defined(__GNUC__) || defined(__clang__)
-#define	BACKTRACE_STRLEN	__builtin_strlen(BACKTRACE_STR)
-#else	/* !__GNUC__ && !__clang__ */
-#define	BACKTRACE_STRLEN	strlen(BACKTRACE_STR)
-#endif	/* !__GNUC__ && !__clang__ */
-
-#if	IBM
-/*
- * Since while dumping stack we are most likely in a fairly compromised
- * state, we statically pre-allocate these buffers to try and avoid having
- * to call into the VM subsystem.
- */
-#define	MAX_SYM_NAME_LEN	1024
-#define	MAX_BACKTRACE_LEN	(64 * 1024)
-static char backtrace_buf[MAX_BACKTRACE_LEN] = { 0 };
-static char symbol_buf[sizeof (SYMBOL_INFO) +
-    MAX_SYM_NAME_LEN * sizeof (TCHAR)];
-static char line_buf[sizeof (IMAGEHLP_LINE64)];
-#endif	/* IBM */
 
 #if	IBM
 
@@ -169,6 +186,33 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 	fclose(fp);
 }
 
+static HMODULE
+find_module(LPVOID pc, DWORD64 *module_base)
+{
+	for (DWORD i = 0; i < num_modules; i++) {
+		LPVOID start = mi[i].lpBaseOfDll;
+		LPVOID end = start + mi[i].SizeOfImage;
+		if (start <= pc && end > pc) {
+			*module_base = (DWORD64)start;
+			return (modules[i]);
+		}
+	}
+	*module_base = 0;
+	return (NULL);
+}
+
+static void
+gather_module_info(void)
+{
+	HANDLE process = GetCurrentProcess();
+
+	EnumProcessModules(process, modules, sizeof (HMODULE) * MAX_MODULES,
+	    &num_modules);
+	num_modules = MIN(num_modules, MAX_MODULES);
+	for (DWORD i = 0; i < num_modules; i++)
+		GetModuleInformation(process, modules[i], &mi[i], sizeof (*mi));
+}
+
 void
 log_backtrace(int skip_frames)
 {
@@ -178,24 +222,18 @@ log_backtrace(int skip_frames)
 	HANDLE process;
 	DWORD displacement;
 	IMAGEHLP_LINE64 *line;
-	static HMODULE modules[MAX_MODULES];
-	static MODULEINFO mi[MAX_MODULES];
-	DWORD num_modules;
-	static TCHAR filenameT[MAX_PATH];
 	static char filename[MAX_PATH];
 
+	frames = RtlCaptureStackBackTrace(skip_frames + 1, MAX_STACK_FRAMES,
+	    stack, NULL);
+
 	process = GetCurrentProcess();
+	mutex_enter(&backtrace_lock);
+
 	SymInitialize(process, NULL, TRUE);
-	EnumProcessModules(process, modules, sizeof (HMODULE) * MAX_MODULES,
-	    &num_modules);
-	num_modules = MIN(num_modules, MAX_MODULES);
+	SymSetOptions(SYMOPT_LOAD_LINES);
 
-	for (DWORD i = 0; i < num_modules; i++) {
-		GetModuleInformation(process, modules[i], &mi[i],
-		    sizeof (*mi));
-	}
-
-	frames = CaptureStackBackTrace(0, MAX_STACK_FRAMES, stack, NULL);
+	gather_module_info();
 
 	memset(symbol_buf, 0, sizeof (symbol_buf));
 	memset(line_buf, 0, sizeof (line_buf));
@@ -210,17 +248,8 @@ log_backtrace(int skip_frames)
 	backtrace_buf[0] = '\0';
 	lacf_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
-	for (unsigned i = 1 + skip_frames; i < frames; i++) {
-		int frame_nr = i - 1 - skip_frames;
-		/*
-		 * This is needed because some dunce at Microsoft thought
-		 * it'd be a swell idea to design the SymFromAddr function to
-		 * always take a DWORD64 rather than a native pointer size.
-		 */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpointer-to-int-cast"
-		DWORD64 address = (DWORD64)(stack[i]);
-#pragma GCC diagnostic pop
+	for (unsigned frame_nr = 0; frame_nr < frames; frame_nr++) {
+		DWORD64 address = (DWORD64)(uintptr_t)stack[frame_nr];
 		int fill = strlen(backtrace_buf);
 
 		memset(symbol_buf, 0, sizeof (symbol_buf));
@@ -228,33 +257,27 @@ log_backtrace(int skip_frames)
 		 * Try to grab the symbol name from the stored %rip data.
 		 */
 		if (!SymFromAddr(process, address, 0, symbol)) {
-			for (DWORD j = 0; j < num_modules; j++) {
-				LPVOID start = mi[j].lpBaseOfDll;
-				LPVOID end = start + mi[j].SizeOfImage;
-				if (start <= stack[i] && end > stack[i]) {
-					char symname[128];
-					GetModuleFileName(modules[j],
-					    filenameT, sizeof (filenameT) /
-					    sizeof (TCHAR));
-					WideCharToMultiByte(CP_UTF8, 0,
-					    filenameT, -1, filename,
-					    sizeof (filename), NULL, NULL);
-					find_symbol(filename,
-					    (void *)(stack[i] - start),
-					    symname, sizeof (symname));
-					fill += snprintf(&backtrace_buf[fill],
-					    sizeof (backtrace_buf) - fill,
-					    "%d %p %s+%x (%s)\n", frame_nr,
-					    stack[i], filename,
-					    (unsigned)(stack[i] - start),
-					    symname);
-					goto module_found;
-				}
+			DWORD64 start;
+			HMODULE module = find_module((void *)address, &start);
+
+			if (module != NULL) {
+				char symname[128];
+
+				GetModuleFileNameA(module, filename,
+				    sizeof (filename));
+				find_symbol(filename, stack[frame_nr] - start,
+				    symname, sizeof (symname));
+				fill += snprintf(&backtrace_buf[fill],
+				    sizeof (backtrace_buf) - fill,
+				    "%d %p %s+%p (%s)\n", frame_nr,
+				    stack[frame_nr], filename,
+				    stack[frame_nr] - start, symname);
+			} else {
+				fill += snprintf(&backtrace_buf[fill],
+				    sizeof (backtrace_buf) - fill,
+				    "%d %p <unknown module>\n", frame_nr,
+				    stack[frame_nr]);
 			}
-			fill += snprintf(&backtrace_buf[fill],
-			    sizeof (backtrace_buf) - fill,
-			    "%d %p <unknown module>\n", frame_nr, stack[i]);
-module_found:
 			continue;
 		}
 		/*
@@ -279,6 +302,93 @@ module_found:
 	log_func(backtrace_buf);
 	fputs(backtrace_buf, stderr);
 	fflush(stderr);
+	SymCleanup(process);
+
+	mutex_exit(&backtrace_lock);
+}
+
+void
+log_backtrace_sw64(PCONTEXT ctx)
+{
+	static char filename[MAX_PATH];
+	static DWORD64 pcs[MAX_STACK_FRAMES];
+	unsigned num_stack_frames;
+	HANDLE process, thread;
+	DWORD machine;
+	STACKFRAME64 sf;
+
+	process = GetCurrentProcess();
+	thread = GetCurrentThread();
+
+	mutex_enter(&backtrace_lock);
+
+	SymInitialize(process, NULL, TRUE);
+	SymSetOptions(SYMOPT_LOAD_LINES);
+
+	gather_module_info();
+
+	memset(&sf, 0, sizeof (sf));
+	sf.AddrPC.Mode = AddrModeFlat;
+	sf.AddrStack.Mode = AddrModeFlat;
+	sf.AddrFrame.Mode = AddrModeFlat;
+#if	defined(_M_IX86)
+	machine = IMAGE_FILE_MACHINE_I386;
+	sf.AddrPC.Offset = ctx->Eip;
+	sf.AddrStack.Offset = ctx->Esp;
+	sf.AddrFrame.Offset = ctx->Ebp;
+#elif	defined(_M_X64)
+	machine = IMAGE_FILE_MACHINE_AMD64;
+	sf.AddrPC.Offset = ctx->Rip;
+	sf.AddrStack.Offset = ctx->Rsp;
+	sf.AddrFrame.Offset = ctx->Rbp;
+#elif	defined(_M_IA64)
+	machine = IMAGE_FILE_MACHINE_IA64;
+	sf.AddrPC.Offset = ctx->StIIP;
+	sf.AddrFrame.Offset = ctx->IntSp;
+	sf.AddrBStore.Offset = ctx->RsBSP;
+	sf.AddrBStore.Mode = AddrModeFlat;
+	sf.AddrStack.Offset = ctx->IntSp;
+#else
+#error	"Unsupported architecture"
+#endif	/* _M_X64 */
+
+	for (num_stack_frames = 0; num_stack_frames < MAX_STACK_FRAMES;
+	    num_stack_frames++) {
+		if (!StackWalk64(machine, process, thread, &sf, ctx, NULL,
+		    SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
+			break;
+		}
+		pcs[num_stack_frames] = sf.AddrPC.Offset;
+	}
+
+	backtrace_buf[0] = '\0';
+	lacf_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
+
+	for (unsigned i = 0; i < num_stack_frames; i++) {
+		int fill = strlen(backtrace_buf);
+		DWORD64 pc = pcs[i];
+		char symname[128];
+		HMODULE module;
+		DWORD64 mbase;
+
+		module = find_module((LPVOID)pc, &mbase);
+		GetModuleFileNameA(module, filename, sizeof (filename));
+		find_symbol(filename, (void *)(pc - mbase),
+		    symname, sizeof (symname));
+		fill += snprintf(&backtrace_buf[fill],
+		    sizeof (backtrace_buf) - fill,
+		    "%d %p %s+%p (%s)\n", i, (void *)pc, filename,
+		    (void *)(pc - mbase), symname);
+	}
+
+	if (log_func == NULL)
+		abort();
+	log_func(backtrace_buf);
+	fputs(backtrace_buf, stderr);
+	fflush(stderr);
+	SymCleanup(process);
+
+	mutex_exit(&backtrace_lock);
 }
 
 #else	/* !IBM */

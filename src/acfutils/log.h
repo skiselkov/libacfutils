@@ -33,6 +33,7 @@ extern "C" {
  */
 typedef void (*logfunc_t)(const char *);
 API_EXPORT void log_init(logfunc_t func, const char *prefix);
+API_EXPORT void log_fini(void);
 
 #if	defined(__GNUC__) || defined(__clang__)
 #define	BUILTIN_STRRCHR	__builtin_strrchr
@@ -56,6 +57,9 @@ API_EXPORT void log_impl(const char *filename, int line,
 API_EXPORT void log_impl_v(const char *filename, int line, const char *fmt,
     va_list ap);
 API_EXPORT void log_backtrace(int skip_frames);
+#if	IBM
+API_EXPORT void log_backtrace_sw64(PCONTEXT ctx);
+#endif
 
 #ifdef __cplusplus
 }
