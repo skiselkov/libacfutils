@@ -44,6 +44,7 @@ extern "C" {
 typedef struct {
 	GLuint	vao;
 	GLuint	vbo;
+	GLuint	ibo;
 	bool_t	setup;
 	size_t	num_vtx;
 } glutils_quads_t;
@@ -61,6 +62,7 @@ typedef void (*glutils_texsz_enum_cb_t)(const char *token, int64_t bytes,
 API_EXPORT void glutils_sys_init(void);
 
 API_EXPORT void glutils_disable_all_client_state(void);
+API_EXPORT void glutils_disable_all_vtx_attrs(void);
 
 API_EXPORT GLuint glutils_make_quads_IBO(size_t num_vtx);
 
@@ -317,7 +319,7 @@ static inline void
 glutils_disable_vtx_attr_ptr(GLint index)
 {
 	if (index != -1)
-		glEnableVertexAttribArray(index);
+		glDisableVertexAttribArray(index);
 }
 
 #ifdef	__cplusplus

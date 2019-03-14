@@ -96,8 +96,26 @@ glutils_disable_all_client_state(void)
 	    0
 	};
 
+	if (GLEW_VERSION_3_1)
+		return;
+
 	for (int i = 0; disable_caps[i] != 0; i++)
 		glDisableClientState(disable_caps[i]);
+}
+
+/*
+ * Disables all (but at most 32) vertex attribute arrays. This should be
+ * used to make sure all OpenGL state is clean at the start of an X-Plane
+ * draw callback when using shared vertex array objects.
+ */
+API_EXPORT void
+glutils_disable_all_vtx_attrs(void)
+{
+	GLint n_attrs;
+
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &n_attrs);
+	for (int i = 0; i < MIN(n_attrs, 32); i++)
+		glDisableVertexAttribArray(i);
 }
 
 /*
@@ -151,8 +169,7 @@ API_EXPORT void
 glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
 {
-	vtx_t vtx_data[2 * num_pts];
-	size_t i, n;
+	vtx_t vtx_data[num_pts];
 	GLint old_vao = 0;
 
 	ASSERT0(num_pts & 3);
@@ -161,49 +178,13 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 	memset(quads, 0, sizeof (*quads));
 	memset(vtx_data, 0, sizeof (vtx_data));
 
-	for (i = 0, n = 0; i < num_pts; i += 4, n += 6) {
-		vtx_data[n + 0].pos[0] = p[i + 0].x;
-		vtx_data[n + 0].pos[1] = p[i + 0].y;
-		vtx_data[n + 0].pos[2] = p[i + 0].z;
-
-		vtx_data[n + 1].pos[0] = p[i + 1].x;
-		vtx_data[n + 1].pos[1] = p[i + 1].y;
-		vtx_data[n + 1].pos[2] = p[i + 1].z;
-
-		vtx_data[n + 2].pos[0] = p[i + 2].x;
-		vtx_data[n + 2].pos[1] = p[i + 2].y;
-		vtx_data[n + 2].pos[2] = p[i + 2].z;
-
-		vtx_data[n + 3].pos[0] = p[i + 0].x;
-		vtx_data[n + 3].pos[1] = p[i + 0].y;
-		vtx_data[n + 3].pos[2] = p[i + 0].z;
-
-		vtx_data[n + 4].pos[0] = p[i + 2].x;
-		vtx_data[n + 4].pos[1] = p[i + 2].y;
-		vtx_data[n + 4].pos[2] = p[i + 2].z;
-
-		vtx_data[n + 5].pos[0] = p[i + 3].x;
-		vtx_data[n + 5].pos[1] = p[i + 3].y;
-		vtx_data[n + 5].pos[2] = p[i + 3].z;
-
+	for (size_t i = 0; i < num_pts; i++) {
+		vtx_data[i].pos[0] = p[i].x;
+		vtx_data[i].pos[1] = p[i].y;
+		vtx_data[i].pos[2] = p[i].z;
 		if (t != NULL) {
-			vtx_data[n + 0].tex0[0] = t[i + 0].x;
-			vtx_data[n + 0].tex0[1] = t[i + 0].y;
-
-			vtx_data[n + 1].tex0[0] = t[i + 1].x;
-			vtx_data[n + 1].tex0[1] = t[i + 1].y;
-
-			vtx_data[n + 2].tex0[0] = t[i + 2].x;
-			vtx_data[n + 2].tex0[1] = t[i + 2].y;
-
-			vtx_data[n + 3].tex0[0] = t[i + 0].x;
-			vtx_data[n + 3].tex0[1] = t[i + 0].y;
-
-			vtx_data[n + 4].tex0[0] = t[i + 2].x;
-			vtx_data[n + 4].tex0[1] = t[i + 2].y;
-
-			vtx_data[n + 5].tex0[0] = t[i + 3].x;
-			vtx_data[n + 5].tex0[1] = t[i + 3].y;
+			vtx_data[i].tex0[0] = t[i].x;
+			vtx_data[i].tex0[1] = t[i].y;
 		}
 	}
 
@@ -219,16 +200,15 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 
 	glGenBuffers(1, &quads->vbo);
 	VERIFY(quads->vbo != 0);
-	quads->num_vtx = n;
+	quads->num_vtx = num_pts;
 
 	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
 	glBufferData(GL_ARRAY_BUFFER, quads->num_vtx * sizeof (vtx_t),
 	    vtx_data, GL_STATIC_DRAW);
+	quads->ibo = glutils_make_quads_IBO(num_pts);
 
-	if (glutils_texsz_inited()) {
-		TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
-		    filename, line, quads->num_vtx * sizeof (vtx_t));
-	}
+	IF_TEXSZ(TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
+	    filename, line, quads->num_vtx * sizeof (vtx_t)));
 
 	if (GLEW_VERSION_3_0 && curthread != main_thread)
 		glBindVertexArray(old_vao);
@@ -240,22 +220,23 @@ glutils_destroy_quads(glutils_quads_t *quads)
 	if (quads->vao != 0)
 		glDeleteVertexArrays(1, &quads->vao);
 	if (quads->vbo != 0) {
-		if (glutils_texsz_inited()) {
-			TEXSZ_FREE_BYTES_INSTANCE(glutils_quads_vbo, quads,
-			    quads->num_vtx * sizeof (vtx_t));
-		}
+		IF_TEXSZ(TEXSZ_FREE_BYTES_INSTANCE(glutils_quads_vbo, quads,
+		    quads->num_vtx * sizeof (vtx_t)));
 		glDeleteBuffers(1, &quads->vbo);
 	}
+	if (quads->ibo != 0)
+		glDeleteBuffers(1, &quads->ibo);
 	memset(quads, 0, sizeof (*quads));
 }
 
 static void
-glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
-    size_t num_vtx, GLint prog)
+glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, GLuint ibo,
+    bool_t *setup, size_t num_vtx, GLint prog)
 {
 	GLint pos_loc = -1, tex0_loc = -1;
 
 	ASSERT(vbo != 0);
+	ASSERT(ibo != 0);
 	ASSERT(prog != 0);
 
 	if (vao != 0) {
@@ -267,6 +248,7 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 		GLint pos_loc, tex0_loc;
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
 		pos_loc = glGetAttribLocation(prog, "vtx_pos");
 		tex0_loc = glGetAttribLocation(prog, "vtx_tex0");
@@ -278,7 +260,10 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 		*setup = B_TRUE;
 	}
 
-	glDrawArrays(mode, 0, num_vtx);
+	if (ibo != 0)
+		glDrawElements(mode, num_vtx, GL_UNSIGNED_INT, NULL);
+	else
+		glDrawArrays(mode, 0, num_vtx);
 
 	if (vao != 0) {
 		glBindVertexArray(0);
@@ -293,8 +278,13 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, bool_t *setup,
 API_EXPORT void
 glutils_draw_quads(glutils_quads_t *quads, GLint prog)
 {
-	glutils_draw_common(GL_TRIANGLES, quads->vao, quads->vbo,
-	    &quads->setup, quads->num_vtx, prog);
+	/*
+	 * num_vtx is the number of underlying vertex data array entries,
+	 * but glDrawElements needs the number of indices, which is always
+	 * exactly 1.5x as many.
+	 */
+	glutils_draw_common(GL_TRIANGLES, quads->vao, quads->vbo, quads->ibo,
+	    &quads->setup, quads->num_vtx + quads->num_vtx / 2, prog);
 }
 
 
@@ -347,10 +337,9 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 API_EXPORT void
 glutils_draw_lines(glutils_lines_t *lines, GLint prog)
 {
-	glutils_draw_common(GL_LINE_STRIP, lines->vao, lines->vbo,
+	glutils_draw_common(GL_LINE_STRIP, lines->vao, lines->vbo, 0,
 	    &lines->setup, lines->num_vtx, prog);
 }
-
 
 API_EXPORT void
 glutils_destroy_lines(glutils_lines_t *lines)
