@@ -236,7 +236,6 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, GLuint ibo,
 	GLint pos_loc = -1, tex0_loc = -1;
 
 	ASSERT(vbo != 0);
-	ASSERT(ibo != 0);
 	ASSERT(prog != 0);
 
 	if (vao != 0) {
