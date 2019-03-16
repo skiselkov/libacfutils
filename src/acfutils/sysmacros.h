@@ -65,10 +65,17 @@ extern "C" {
 #define	BSWAP32(x)	__builtin_bswap32((x))
 #define	BSWAP64(x)	__builtin_bswap64((x))
 #endif	/* BSWAP32 */
+
+#define	COND_LIKELY(x)		__builtin_expect(x, 1)
+#define	COND_UNLIKELY(x)	__builtin_expect(x, 0)
+
 #else	/* !__GNUC__ && !__clang__ */
 
 #define	PRINTF_ATTR(x)
 #define	PRINTF_ATTR2(x,y)
+
+#define	COND_LIKELY(x)		x
+#define	COND_UNLIKELY(x)	x
 
 #if	_MSC_VER >= 1400
 # include <sal.h>
