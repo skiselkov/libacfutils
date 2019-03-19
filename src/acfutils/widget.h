@@ -58,6 +58,12 @@ API_EXPORT void tooltip_set_destroy(tooltip_set_t *tts);
 API_EXPORT void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
     const char *text);
 
+#define	window_follow_VR	ACFSYM(window_follow_VR)
+API_EXPORT void window_follow_VR(XPLMWindowID win);
+
+#define	widget_follow_VR	ACFSYM(widget_follow_VR)
+API_EXPORT void widget_follow_VR(XPWidgetID win);
+
 #ifdef	__cplusplus
 }
 #endif

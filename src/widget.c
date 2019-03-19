@@ -26,6 +26,7 @@
 #include <XPStandardWidgets.h>
 
 #include <acfutils/assert.h>
+#include <acfutils/dr.h>
 #include <acfutils/helpers.h>
 #include <acfutils/list.h>
 #include <acfutils/safe_alloc.h>
@@ -167,16 +168,15 @@ center_window_coords(int *left, int *top, int *right, int *bottom)
 API_EXPORT void
 widget_win_center(XPWidgetID window)
 {
-	int left, top, right, bottom;
-	XPGetWidgetGeometry(window, &left, &top, &right, &bottom);
-	center_window_coords(&left, &top, &right, &bottom);
-	XPSetWidgetGeometry(window, left, top, right, bottom);
+	ASSERT(window != NULL);
+	classic_win_center(XPGetWidgetUnderlyingWindow(window));
 }
 
 API_EXPORT void
 classic_win_center(XPLMWindowID window)
 {
 	int left, top, right, bottom;
+	ASSERT(window != NULL);
 	XPLMGetWindowGeometry(window, &left, &top, &right, &bottom);
 	center_window_coords(&left, &top, &right, &bottom);
 	XPLMSetWindowGeometry(window, left, top, right, bottom);
@@ -345,4 +345,36 @@ tooltip_fini(void)
 	list_destroy(&tooltip_sets);
 
 	XPLMUnregisterFlightLoopCallback(tooltip_floop_cb, NULL);
+}
+
+static bool_t
+is_in_VR(void)
+{
+	static bool_t dr_looked_up = B_FALSE;
+	static dr_t VR_enabled;
+
+	if (!dr_looked_up) {
+		dr_looked_up = B_TRUE;
+		fdr_find(&VR_enabled, "sim/graphics/VR/enabled");
+	}
+
+	return (dr_geti(&VR_enabled) != 0);
+}
+
+void
+window_follow_VR(XPLMWindowID win)
+{
+	bool_t vr = is_in_VR();
+	XPLMWindowPositioningMode mode =
+	    (vr ? xplm_WindowVR : xplm_WindowPositionFree);
+
+	ASSERT(win != NULL);
+	XPLMSetWindowPositioningMode(win, mode, -1);
+}
+
+void
+widget_follow_VR(XPWidgetID win)
+{
+	ASSERT(win != NULL);
+	window_follow_VR(XPGetWidgetUnderlyingWindow(win));
 }
