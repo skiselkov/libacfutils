@@ -31,7 +31,7 @@ function install_platform() {
 rm -rf "$OUTPUT"
 
 mkdir -p "$OUTPUT/include"
-cp -r src/acfutils glew/GL cglm/cglm-0.4.1/include/cglm "$OUTPUT/include"
+cp -r src/acfutils cglm/cglm-0.4.1/include/cglm "$OUTPUT/include"
 cp README-redist.md "$OUTPUT/README.md"
 
 case $(uname) in
@@ -39,6 +39,7 @@ Linux)
 	HDRS_WIN64=(
 		cairo/cairo-win-64/include
 		freetype/freetype-win-64/include
+		glew/glew-1.13.0-win-64/install/include
 	)
 	LIBS_WIN64=(
 		qmake/win64/acfutils.dll
@@ -47,6 +48,7 @@ Linux)
 	HDRS_LIN64=(
 		cairo/cairo-linux-64/include
 		freetype/freetype-linux-64/include
+		glew/glew-1.13.0-linux-64/install/include
 	)
 	LIBS_LIN64=(
 		qmake/lin64/libacfutils.a
@@ -70,6 +72,7 @@ Darwin)
 	HDRS_MAC64=(
 		cairo/cairo-mac-64/include
 		freetype/freetype-mac-64/include
+		glew/glew-1.13.0-mac-64/install/include
 	)
 	LIBS_MAC64=(
 		qmake/mac64/libacfutils.a

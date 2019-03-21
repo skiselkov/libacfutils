@@ -201,8 +201,13 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 {
 	uint64_t now = microclock();
 	if (now < limit) {
+		/*
+		 * The only way to guarantee that when we return due to a
+		 * timeout the full microsecond-accurate quantum has elapsed
+		 * is to round-up to the nearest millisecond.
+		 */
 		if (SleepConditionVariableCS(cv, &mtx->cs,
-		    (limit - now) / 1000) != 0) {
+		    ceil((limit - now) / 1000.0)) != 0) {
 			return (0);
 		}
 		if (GetLastError() == ERROR_TIMEOUT)
