@@ -210,7 +210,14 @@ static inline void
 lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap)
 {
 	dest[cap - 1] = '\0';
+#ifdef	_MSC_VER
+#pragma	warning(push)
+#pragma	warning(disable: 4996)
+#endif	/* _MSC_VER */
 	strncpy(dest, src, cap - 1);
+#ifdef	_MSC_VER
+#pragma	warning(pop)
+#endif	/* _MSC_VER */
 }
 
 static inline const char *

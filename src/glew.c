@@ -33,4 +33,59 @@ lacf_glew_ctx_make_key(void)
 	(void) pthread_key_create(&lacf_glew_ctx_key, free);
 }
 
-#endif	/* APL || LIN */
+#else	/* !APL && !LIN */
+
+DWORD lacf_glew_ctx_key = 0;
+
+/*
+ * Windows doesn't have a thread-exit and DLL-unload facility, so
+ * we need to hook into the DllMain function. One is provided by
+ * lacf_msvc_compat.cpp, however if the module dev wants to define
+ * their own, they'll need to call lacf_glew_dllmain_hook manually.
+ */
+void
+lacf_glew_dllmain_hook(DWORD reason)
+{
+	switch (reason) {
+	case DLL_PROCESS_ATTACH:
+		lacf_glew_init();
+	break;
+	case DLL_THREAD_DETACH:
+		lacf_glew_thread_fini();
+		break;
+	case DLL_PROCESS_DETACH:
+		lacf_glew_fini();
+		break;
+	}
+}
+
+void
+lacf_glew_init(void)
+{
+	VERIFY3U(lacf_glew_ctx_key, ==, 0);
+	lacf_glew_ctx_key = TlsAlloc();
+	VERIFY(lacf_glew_ctx_key != TLS_OUT_OF_INDEXES);
+}
+
+void
+lacf_glew_thread_fini(void)
+{
+	GLEWContext *ctx;
+
+	VERIFY(lacf_glew_ctx_key != 0);
+	ctx = TlsGetValue(lacf_glew_ctx_key);
+	if (ctx != NULL) {
+		lacf_free(ctx);
+		TlsSetValue(lacf_glew_ctx_key, NULL);
+	}
+}
+
+void
+lacf_glew_fini(void)
+{
+	ASSERT(lacf_glew_ctx_key != 0);
+	TlsFree(lacf_glew_ctx_key);
+	lacf_glew_ctx_key = 0;
+}
+
+#endif	/* !APL && !LIN */

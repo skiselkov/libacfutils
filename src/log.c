@@ -287,12 +287,12 @@ log_backtrace(int skip_frames)
 		if (SymGetLineFromAddr64(process, address, &displacement,
 		    line)) {
 			snprintf(&backtrace_buf[fill], sizeof (backtrace_buf) -
-			    fill, "%d: %s (0x%x) [%s:%d]\n", frame_nr,
+			    fill, "%d: %s (0x%llx) [%s:%d]\n", frame_nr,
 			    symbol->Name, symbol->Address, line->FileName,
-			    line->LineNumber);
+			    (int)line->LineNumber);
 		} else {
 			snprintf(&backtrace_buf[fill], sizeof (backtrace_buf) -
-			    fill, "%d: %s - 0x%x\n", frame_nr, symbol->Name,
+			    fill, "%d: %s - 0x%llx\n", frame_nr, symbol->Name,
 			    symbol->Address);
 		}
 	}

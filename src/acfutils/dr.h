@@ -34,9 +34,9 @@ extern "C" {
 
 #define	DR_MAX_NAME_LEN	128
 
-typedef struct dr dr_t;
+typedef struct dr_s dr_t;
 
-struct dr {
+struct dr_s {
 	char		name[DR_MAX_NAME_LEN];
 	XPLMDataRef	dr;
 	XPLMDataTypeID	type;
