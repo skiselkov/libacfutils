@@ -38,10 +38,17 @@ functionality:
 * To get GLEW functionality, do (also don't forget to do `glewInit()` in
 your loading routine):
 ```
-#include <GL/glew.h>
+#include <acfutils/glew.h>
 ```
 
 ## Linker setup
 
-To link to the library, add `lib/acfutils.lib` to your linker input and
-include `acfutils.dll` with your product.
+* On Windows, add libacfutils-redist/win64/lib to your library search path.
+  The exact list of libraries is automatically picked up from the header
+  files. Also be sure to add libacfutils-redist/win64/src/lacf_msvc_compat.cpp
+  to your project. This is needed to pull in certain symbol defines and
+  basic scaffolding for GLEW integration.
+
+* On Mac and Linux, add libacfutils-redist/{mac,lin}64/lib to your
+  library search and link all static libraries in the respective directories.
+  On these platforms you don't need to add any source files to your project.
