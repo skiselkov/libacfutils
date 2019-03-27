@@ -13,19 +13,76 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2019 Saso Kiselkov. All rights reserved.
 
 OUTPUT=libacfutils-redist
+MINGWROOT="/usr/x86_64-w64-mingw32"
+
+ALL_LIBS=(
+	'cairo/cairo-%PLATFORM%/lib/libcairo.a'
+	'freetype/freetype-%PLATFORM%/lib/libfreetype.a'
+	'cairo/pixman-%PLATFORM%/lib/libpixman-1.a'
+	'libpng/libpng-%PLATFORM%/lib/libpng16.a'
+	'opus/opusfile-%PLATFORM%/lib/libopusfile.a'
+	'opus/opus-%PLATFORM%/lib/libopus.a'
+	'opus/opusfile-%PLATFORM%/lib/libopusurl.a'
+	'opus/libogg-%PLATFORM%/install/lib/libogg.a'
+
+	'shapelib/libproj-%PLATFORM%/lib/libproj.a'
+	'shapelib/libshape-%PLATFORM%/lib/libshp.a'
+
+	'curl/libcurl-%PLATFORM%/lib/libcurl.a'
+	'ssl/openssl-%PLATFORM%/lib/libssl.a'
+	'ssl/openssl-%PLATFORM%/lib/libcrypto.a'
+	'libxml2/libxml2-%PLATFORM%/lib/libxml2.a'
+	'pcre2/pcre2-%PLATFORM%/lib/libpcre2-8.a'
+
+	'zlib/zlib-%PLATFORM%/lib/libz.a'
+	'lzma/qmake/%PLATFORM%/liblzma.a'
+)
+
+function repack_lib() {
+	INLIB="$1"
+	OUTLIB="$2"
+	EXCLUDED="$3"
+
+	(
+		DIR="/tmp/build_redist.$$"
+		rm -rf "$DIR" && mkdir -p "$DIR"
+		cd "$DIR"
+		ar x "$INLIB"
+		rm $EXCLUDED
+		ar rcs "$OUTLIB" *
+		cd ..
+		rm -r "$DIR"
+	)
+}
 
 function install_platform() {
 	PLATFORM="$1"
 	HDRS="$2"
 	LIBS="$3"
+	SRCS="$4"
+
+	case "$PLATFORM" in
+	win64)	LONG_PLATFORM="win-64" ;;
+	lin64)	LONG_PLATFORM="linux-64" ;;
+	mac64)	LONG_PLATFORM="mac-64" ;;
+	esac
 
 	mkdir -p "$OUTPUT/$PLATFORM/include" "$OUTPUT/$PLATFORM/lib"
 
 	cp -r ${HDRS} "$OUTPUT/$PLATFORM"
 	cp -r ${LIBS} "$OUTPUT/$PLATFORM/lib"
+	for FILE in ${ALL_LIBS[*]}; do
+		PLATFORM_FILE="$(echo "$FILE" | \
+		    sed "s/%PLATFORM%/$LONG_PLATFORM/g")"
+		cp "$PLATFORM_FILE" "$OUTPUT/$PLATFORM/lib"
+	done
+	if [ -n "$SRCS" ]; then
+		mkdir -p "$OUTPUT/$PLATFORM/src"
+		cp -r ${SRCS} "$OUTPUT/$PLATFORM/src"
+	fi
 }
 
 rm -rf "$OUTPUT"
@@ -36,35 +93,39 @@ cp README-redist.md "$OUTPUT/README.md"
 
 case $(uname) in
 Linux)
+	SRCS_WIN64=(
+		'msvc_compat/lacf_msvc_compat.cpp'
+	)
 	HDRS_WIN64=(
-		cairo/cairo-win-64/include
-		freetype/freetype-win-64/include
-		glew/glew-1.13.0-win-64/install/include
+		'cairo/cairo-win-64/include'
+		'freetype/freetype-win-64/include'
+		glew/glew-*-win-64/install/include
 	)
 	LIBS_WIN64=(
-		qmake/win64/acfutils.dll
-		qmake/win64/acfutils.lib
+		'qmake/win64/libacfutils.a'
+		glew/glew-*-win-64/install/lib/libglew32mx.a
+		"/tmp/libmingwex.a"
+		"/tmp/libmingw32.a"
+		$(x86_64-w64-mingw32-gcc -print-libgcc-file-name)
+		$(x86_64-w64-mingw32-gcc -print-file-name=libgcc_eh.a)
 	)
 	HDRS_LIN64=(
-		cairo/cairo-linux-64/include
-		freetype/freetype-linux-64/include
-		glew/glew-1.13.0-linux-64/install/include
+		'cairo/cairo-linux-64/include'
+		'freetype/freetype-linux-64/include'
+		glew/glew-*-linux-64/install/include
 	)
 	LIBS_LIN64=(
-		qmake/lin64/libacfutils.a
-		cairo/cairo-linux-64/lib/libcairo.a
-		cairo/pixman-linux-64/lib/libpixman-1.a
-		freetype/freetype-linux-64/lib/libfreetype.a
-		libpng/libpng-linux-64/lib/libpng16.a
-		opus/opusfile-linux-64/lib/libopusfile.a
-		opus/opus-linux-64/lib/libopus.a
-		opus/opusfile-linux-64/lib/libopusurl.a
-		opus/libogg-linux-64/install/lib/libogg.a
-		zlib/zlib-linux-64/lib/libz.a
-		lzma/qmake/linux-64/liblzma.a
+		glew/glew-*-linux-64/install/lib64/libGLEWmx.a
+		'qmake/lin64/libacfutils.a'
 	)
 
-	install_platform "win64" "${HDRS_WIN64[*]}" "${LIBS_WIN64[*]}"
+	repack_lib "$MINGWROOT/lib/libmingwex.a" "/tmp/libmingwex.a" \
+	    lib64_libmingwex_a-mingw_getsp.o
+	repack_lib "$MINGWROOT/lib/libmingw32.a" "/tmp/libmingw32.a" \
+	     lib64_libmingw32_a-atonexit.o
+
+	install_platform "win64" "${HDRS_WIN64[*]}" "${LIBS_WIN64[*]}" \
+	    "${SRCS_WIN64[*]}"
 	install_platform "lin64" "${HDRS_LIN64[*]}" "${LIBS_LIN64[*]}"
 
 	;;
@@ -72,20 +133,11 @@ Darwin)
 	HDRS_MAC64=(
 		cairo/cairo-mac-64/include
 		freetype/freetype-mac-64/include
-		glew/glew-1.13.0-mac-64/install/include
+		glew/glew-*-mac-64/install/include
 	)
 	LIBS_MAC64=(
+		glew/glew-*-mac-64/install/lib/libGLEWmx.a
 		qmake/mac64/libacfutils.a
-		cairo/cairo-mac-64/lib/libcairo.a
-		cairo/pixman-mac-64/lib/libpixman-1.a
-		freetype/freetype-mac-64/lib/libfreetype.a
-		libpng/libpng-mac-64/lib/libpng16.a
-		opus/opusfile-mac-64/lib/libopusfile.a
-		opus/opusfile-mac-64/lib/libopusurl.a
-		opus/opus-mac-64/lib/libopus.a
-		opus/libogg-mac-64/install/lib/libogg.a
-		zlib/zlib-mac-64/lib/libz.a
-		lzma/qmake/mac-64/liblzma.a
 	)
 
 	install_platform "mac64" "${HDRS_MAC64[*]}" "${LIBS_MAC64[*]}"

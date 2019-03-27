@@ -20,11 +20,16 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_CORE_H_
 #define	_ACFUTILS_CORE_H_
+
+#include <stdlib.h>
+
+#include "libconfig.h"
+#include "mslibs.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -58,7 +63,7 @@ extern "C" {
 
 API_EXPORT extern const char *libacfutils_version;
 
-#define	lacf_free	ACFSYM(lacf_free)
+API_EXPORT void *lacf_malloc(size_t n);
 API_EXPORT void lacf_free(void *buf);
 
 #ifdef	__cplusplus

@@ -39,8 +39,14 @@ typedef unsigned int bool_t;
 #ifdef	_MSC_VER
 
 #include <basetsd.h>
+
+#ifndef	ssize_t
 #define	ssize_t	SSIZE_T
+#endif
+
+#ifndef	restrict
 #define	restrict
+#endif
 
 #endif	/* _MSC_VER */
 

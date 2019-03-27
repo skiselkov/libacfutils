@@ -39,8 +39,15 @@
  * multi-context support).
  */
 
+#ifndef	GLEW_MX
+#define	GLEW_MX
+#endif
+#ifndef	GLEW_STATIC
+#define	GLEW_STATIC
+#endif
 #include <GL/glew.h>
 
+#include <acfutils/core.h>
 #include <acfutils/safe_alloc.h>
 #include <acfutils/tls.h>
 
@@ -48,13 +55,27 @@
 extern "C" {
 #endif
 
+/*
+ * Only use native TLS support on Linux (where it works properly).
+ * On Windows, native TLS isn't reliably available to DLLs and on
+ * Mac, any kind of symbol-remapping DRM breaks the native TLS.
+ */
 #ifndef	LACF_GLEW_USE_NATIVE_TLS
+#if	LIN
 #define	LACF_GLEW_USE_NATIVE_TLS	1
-#endif
+#else	/* !LIN */
+#define	LACF_GLEW_USE_NATIVE_TLS	0
+#endif	/* !LIN */
+#endif	/* LACF_GLEW_USE_NATIVE_TLS */
 
 #if	LACF_GLEW_USE_NATIVE_TLS
 
 extern THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
+
+#define	lacf_glew_dllmain_hook(reason)
+#define	lacf_glew_init()
+#define	lacf_glew_thread_fini()
+#define	lacf_glew_fini()
 
 static inline GLEWContext *
 glewGetContext(void)
@@ -66,10 +87,20 @@ glewGetContext(void)
 
 #if	LIN || APL
 
+/*
+ * The pthread TLS implementation doesn't rely on any need for external
+ * cooperation from the caller, so we don't need any of the init/fini
+ * functions.
+ */
 extern pthread_key_t lacf_glew_ctx_key;
 extern pthread_once_t lacf_glew_ctx_once;
 
 void lacf_glew_ctx_make_key(void);
+
+#define	lacf_glew_dllmain_hook(reason)
+#define	lacf_glew_init()
+#define	lacf_glew_thread_fini()
+#define	lacf_glew_fini()
 
 static inline GLEWContext *
 glewGetContext(void)
@@ -86,7 +117,31 @@ glewGetContext(void)
 	return (ctx);
 }
 
-#endif	/* APL || LIN */
+#else	/* !APL && !LIN */
+
+extern DWORD lacf_glew_ctx_key;
+
+API_EXPORT void lacf_glew_dllmain_hook(DWORD reason);
+API_EXPORT void lacf_glew_init(void);
+API_EXPORT void lacf_glew_thread_fini(void);
+API_EXPORT void lacf_glew_fini(void);
+
+static inline GLEWContext *
+glewGetContext(void)
+{
+	GLEWContext *ctx;
+
+	ASSERT(lacf_glew_ctx_key != 0);
+	ctx = (GLEWContext *)TlsGetValue(lacf_glew_ctx_key);
+	if (ctx == NULL) {
+		ctx = (GLEWContext *)lacf_malloc(sizeof (*ctx));
+		VERIFY(TlsSetValue(lacf_glew_ctx_key, (void *)ctx));
+	}
+
+	return (ctx);
+}
+
+#endif	/* !APL && !LIN */
 
 #endif	/* !LACF_GLEW_USE_NATIVE_TLS */
 

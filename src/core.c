@@ -17,6 +17,7 @@
  */
 
 #include <acfutils/core.h>
+#include <acfutils/safe_alloc.h>
 
 #include <stdlib.h>
 
@@ -25,6 +26,12 @@
  * It's just a 7-character git revision number.
  */
 const char *libacfutils_version = LIBACFUTILS_VERSION;
+
+void *
+lacf_malloc(size_t n)
+{
+	return (safe_malloc(n));
+}
 
 /*
  * Whenever libacfutils returns an allocated object that you must free,

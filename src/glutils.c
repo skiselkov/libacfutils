@@ -605,7 +605,7 @@ glutils_texsz_inited(void)
 bool_t
 glutils_nsight_debugger_present(void)
 {
-#if	!APL
+#if	LIN
 	for (int i = 0; environ[i] != NULL; i++) {
 		if (strncmp(environ[i], "NSIGHT", 6) == 0 ||
 		    strncmp(environ[i], "NVIDIA_PROCESS", 14) == 0)
