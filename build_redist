@@ -136,7 +136,7 @@ Darwin)
 		glew/glew-*-mac-64/install/include
 	)
 	LIBS_MAC64=(
-		glew/glew-*-mac-64/install/lib64/libGLEWmx.a
+		glew/glew-*-mac-64/install/lib/libGLEWmx.a
 		qmake/mac64/libacfutils.a
 	)
 
