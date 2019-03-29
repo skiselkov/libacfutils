@@ -63,6 +63,7 @@ case `uname` in
 			    ( cd "$GLEW-linux-64" && \
 			    patch -p1 < ../opengl_4.6.patch && \
 			    patch -p1 < ../cmdline_flags.patch && \
+			    patch -p1 < ../ld.patch && \
 			    eval make $MAKE_FLAGS extensions && \
 			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
 			    eval make $MAKE_FLAGS install.mx && \
@@ -81,6 +82,7 @@ case `uname` in
 			    ( cd "$GLEW-win-64" && \
 			    patch -p1 < ../opengl_4.6.patch && \
 			    patch -p1 < ../cmdline_flags.patch && \
+			    patch -p1 < ../ld.patch && \
 			    eval make $MAKE_FLAGS extensions && \
 			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
 			    eval make $MAKE_FLAGS install.mx && \
