@@ -49,14 +49,7 @@ DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 DEFINES += GLEW_STATIC
 
 TARGET = acfutils
-#dll = $$[DLL]
 
-#contains(dll, 0) {
-	DEFINES += ACFUTILS_DLL=0
-#}
-#contains(dll, 1) {
-#	DEFINES += ACFUTILS_DLL=1
-#}
 contains(debug, 0) {
 	QMAKE_CFLAGS += -O2
 }
@@ -66,24 +59,13 @@ win32 {
 	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
-#	contains(dll, 1) {
-#		CONFIG += dll
-		LIBS += -Wl,--output-def,acfutils.def
-#	}
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --static-openal \
 	    --cflags")
 
-#	contains(dll, 1) {
-#		LIBS += $$system("../pkg-config-deps win-64 --whole-archive \
-#		     --static-openal --libs")
-#	}
-#	contains(dll, 0) {
-		LIBS += $$system("../pkg-config-deps win-64 --static-openal \
-		    --libs")
-#	}
+	LIBS += $$system("../pkg-config-deps win-64 --static-openal --libs")
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
 	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
