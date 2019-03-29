@@ -20,6 +20,11 @@ GLEW_ARCHIVE="glew-1.13.0.tar.xz"
 
 MAKE_FLAGS_COMMON="GLEW_NO_GLU=-DGLEW_NO_GLU"
 
+# Perl 5.26 removed '.' from the default '@INC' library include paths,
+# but our old GLEW's make.pl depends on that behavior. So we need to
+# re-enable it.
+export PERL_USE_UNSAFE_INC=1
+
 set -e
 
 case $(uname) in
