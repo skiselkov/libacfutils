@@ -35,5 +35,6 @@ done
     ( cd ocr && ./build_ocr_deps ) && \
     ( cd pcre2 && ./build_pcre2_deps ) && \
     ( cd glew && ./build_glew_deps ) && \
+    ( cd openal-soft && ./build_openal ) && \
     ( cd lzma/qmake && if [ $(uname) = Darwin ]; then \
     ./build-mac else ./build-win-lin ; fi )

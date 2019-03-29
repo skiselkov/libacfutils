@@ -43,26 +43,45 @@ function do_build() {
 
 case $(uname) in
 	Linux)
-		rm -fr "$DIR-win-64" && \
-		tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64" && \
-		sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
-		    "$DIR-win-64/XCompile.txt" && \
-		sed -i ' /dllexport/ d;' "$DIR-win-64/CMakeLists.txt" && \
-		do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
-		    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt \
-		    -DCMAKE_C_FLAGS=-fvisibility=hidden $CONFOPTS_COMMON"
+		PRODUCT="$DIR-win-64/build/install/lib/libOpenAL32.a"
+		if [[ "$do_clean" = "1" ]]; then
+			rm -rf "$DIR-win-64"
+		elif ! [ -f "$PRODUCT" ]; then
+			rm -fr "$DIR-win-64" && \
+			tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64" && \
+			sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
+			    "$DIR-win-64/XCompile.txt" && \
+			sed -i ' /dllexport/ d;' \
+			    "$DIR-win-64/CMakeLists.txt" && \
+			do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
+			    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt \
+			    -DCMAKE_C_FLAGS=-fvisibility=hidden \
+			    $CONFOPTS_COMMON"
+		fi
 
-		rm -fr "$DIR-linux-64" && \
-		tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
-		do_build "linux-64" "-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-		    $CONFOPTS_COMMON"
+		PRODUCT="$DIR-linux-64/build/install/lib/libopenal.a"
+		if [[ "$do_clean" = "1" ]]; then
+			rm -rf "$DIR-linux-64"
+		elif ! [ -f "$PRODUCT" ]; then
+			rm -fr "$DIR-linux-64" && \
+			tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
+			do_build "linux-64" \
+			    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+			    $CONFOPTS_COMMON"
+		fi
 		;;
 	Darwin)
-		rm -fr "$DIR-mac-64" && \
-		tar xjvf "$FILE" && mv "$DIR" "$DIR-mac-64" && \
-		do_build "mac-64" "-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
-		    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9 \
-		    $CONFOPTS_COMMON"
+		PRODUCT="$DIR-mac-64/build/install/lib/libopenal.a"
+		if [[ "$do_clean" = "1" ]]; then
+			rm -rf "$DIR-mac-64"
+		elif ! [ -f "$PRODUCT" ]; then
+			rm -fr "$DIR-mac-64" && \
+			tar xjvf "$FILE" && mv "$DIR" "$DIR-mac-64" && \
+			do_build "mac-64" \
+			    "-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
+			    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9 \
+			    $CONFOPTS_COMMON"
+		fi
 		;;
 	*)
 		echo "Unsupported build platform" >&2
