@@ -40,7 +40,8 @@ case `uname` in
 		    "$(pwd)/liblept-linux-64/lib" ) && \
 		CUSTPREPCMD="( cd ../tesseract-3.05.00 && ./autogen.sh )" \
 		    LIBLEPT_HEADERSDIR="$(pwd)/liblept-linux-64/include/leptonica" \
-		    LIBS="-lpng -lz" \
+		    LIBS="-L$(pwd)/../libpng/libpng-linux-64/lib -lpng \
+		    -L$(pwd)/../zlib/zlib-linux-64/lib -lz" \
 		    build_dep "linux-64" "$CONFOPTS_TESSERACT \
 		    --with-extra-libraries=$(pwd)/liblept-linux-64/lib" \
 		    "$TESSERACT" "tesseract" "lib/libtesseract.a" \
