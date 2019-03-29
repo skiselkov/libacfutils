@@ -1,9 +1,14 @@
---- cairo-1.14.10/util/cairo-script/cairo-script-operators.c	2017-06-16 00:13:55.000000000 +0200
-+++ cairo-1.14.10-new/util/cairo-script/cairo-script-operators.c	2018-01-19 00:21:28.769588573 +0100
-@@ -1,3 +1,6 @@
-+#ifdef	_WIN32
-+#define uLongf unsigned long
-+#endif
- /*
-  * Copyright © 2008 Chris Wilson <chris@chris-wilson.co.uk>
-  *
+--- cairo-1.16.0/util/cairo-script/cairo-script-operators.c	2018-08-17 01:10:53.000000000 +0000
++++ cairo-1.16.0-new/util/cairo-script/cairo-script-operators.c	2019-03-29 23:35:04.215789229 +0000
+@@ -55,9 +55,9 @@
+ #include <limits.h> /* INT_MAX */
+ #include <assert.h>
+ 
+-#if HAVE_ZLIB
++//#if HAVE_ZLIB
+ #include <zlib.h>
+-#endif
++//#endif
+ 
+ #if HAVE_LZO
+ #include <lzo/lzo2a.h>

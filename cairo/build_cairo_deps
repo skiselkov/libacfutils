@@ -25,7 +25,7 @@ PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
     --disable-static-testprogs"
 
 CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.34.0/pixman"
-CAIRO_PRODUCT="src/.libs/libcairo.a"
+CAIRO_PRODUCT="lib/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
     --enable-xcb=no --enable-xlib-xcb=no --enable-xcb-shm=no --enable-qt=no \
