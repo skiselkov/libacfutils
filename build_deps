@@ -13,7 +13,13 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2019 Saso Kiselkov. All rights reserved.
+
+# Prior to building the included dependencies, make sure the following
+# packages are installed (tested on Ubuntu 18.04):
+#	autoconf automake build-essential cmake git mingw-w64 libgl1-mesa-dev
+#	libglu1-mesa-dev libtool libx11-dev pkg-config qt5-default
+#	qt5-qmake unzip
 
 while getopts "cd" opt; do
 	case $opt in
