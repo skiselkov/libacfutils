@@ -20,7 +20,9 @@ source ../build_dep.common
 CGLM="cglm-0.4.1.tar.xz"
 CGLM_DIR="cglm-0.4.1"
 
-if ! [ -d "${CGLM_DIR}" ]; then
+if [[ "$do_clean" = "1" ]]; then
+	rm -rf "${CGLM_DIR}"
+elif ! [ -d "${CGLM_DIR}" ]; then
 	tar xJf "${CGLM}"
 	( cd "${CGLM_DIR}" && patch -p1 < ../cglm.patch )
 fi
