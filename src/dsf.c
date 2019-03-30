@@ -281,9 +281,9 @@ errout:
 	do { \
 		if (start + (x) > end) { \
 			snprintf(reason, DSF_REASON_SZ, "planar numeric atom " \
-			    "%c%c%c%c at %llx, plane %u contains too little " \
-			    "data", DSF_ATOM_ID_PRINTF(atom), atom->file_off, \
-			    plane); \
+			    "%c%c%c%c at %lx, plane %u contains too little " \
+			    "data", DSF_ATOM_ID_PRINTF(atom), \
+			    (unsigned long)atom->file_off, plane); \
 			goto errout; \
 		} \
 	} while (0)
@@ -463,8 +463,8 @@ parse_plane(dsf_atom_t *atom, unsigned plane, dsf_data_type_t data_type,
 	start++;
 	if (enc > 3) {
 		snprintf(reason, DSF_REASON_SZ, "invalid encoding type %u for "
-		    "planar numeric atom %c%c%c%c at %llx", enc,
-		    DSF_ATOM_ID_PRINTF(atom), atom->file_off);
+		    "planar numeric atom %c%c%c%c at %lx", enc,
+		    DSF_ATOM_ID_PRINTF(atom), (unsigned long)atom->file_off);
 		return (-1);
 	}
 
@@ -528,8 +528,8 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 
 	if (atom->payload_sz < 5) {
 		snprintf(reason, DSF_REASON_SZ, "invalid planar numeric atom "
-		    "%c%c%c%c at %llx: not enough payload",
-		    DSF_ATOM_ID_PRINTF(atom), atom->file_off);
+		    "%c%c%c%c at %lx: not enough payload",
+		    DSF_ATOM_ID_PRINTF(atom), (unsigned long)atom->file_off);
 		goto errout;
 	}
 
@@ -551,8 +551,8 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 
 	if (plane_p != end) {
 		snprintf(reason, DSF_REASON_SZ, "planar numeric atom %c%c%c%c "
-		    "at %llx contained trailing garbage",
-		    DSF_ATOM_ID_PRINTF(atom), atom->file_off);
+		    "at %lx contained trailing garbage",
+		    DSF_ATOM_ID_PRINTF(atom), (unsigned long)atom->file_off);
 		goto errout;
 	}
 
@@ -640,10 +640,9 @@ parse_atom(const uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ],
 	atom->payload_sz = read_u32(&buf[4]) - 8;
 	atom->payload = &buf[8];
 	if (atom->payload_sz + 8 > bufsz) {
-		snprintf(reason, DSF_REASON_SZ, "invalid atom at %llx, "
-		    "size (%llx) is too large",
-		    (unsigned long long)abs_off,
-		    (unsigned long long)atom->payload_sz);
+		snprintf(reason, DSF_REASON_SZ, "invalid atom at %lx, "
+		    "size (%lx) is too large",
+		    (unsigned long)abs_off, (unsigned long)atom->payload_sz);
 		goto errout;
 	}
 	atom->file_off = abs_off;
