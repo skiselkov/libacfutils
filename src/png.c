@@ -193,7 +193,7 @@ png_write_to_file_common(const char *filename, int width, int height,
 {
 	volatile bool_t result = B_FALSE;
 	png_structp png_ptr = NULL;
-	png_infop info_ptr = NULL;
+	volatile png_infop info_ptr = NULL;
 	FILE *fp = fopen(filename, "wb");
 
 	if (fp == NULL) {
