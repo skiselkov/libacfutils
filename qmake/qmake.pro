@@ -30,7 +30,7 @@ INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
-QMAKE_CFLAGS += -Wunused-result
+QMAKE_CFLAGS += -Wunused-result -Wno-misleading-indentation
 
 # _GNU_SOURCE needed on Linux for getline()
 # DEBUG - used by our ASSERT macro
