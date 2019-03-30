@@ -23,6 +23,7 @@ while getopts "cd" opt; do
 done
 
 ( cd zlib && ./build_zlib_deps ) && \
+    ( cd libclipboard && ./build_libclipboard_deps ) && \
     ( cd libpng && ./build_libpng_deps ) && \
     ( cd libjpeg && ./build_libjpeg_deps ) && \
     ( cd libxml2 && ./build_libxml2_deps ) && \
