@@ -116,3 +116,5 @@ glfw/glfw-win-64
 glew/glew-1.13.0-linux-64
 glew/glew-1.13.0-mac-64
 glew/glew-1.13.0-win-64
+
+libclipboard/libclipboard-linux-64

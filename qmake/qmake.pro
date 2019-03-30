@@ -79,7 +79,6 @@ linux-g++-64 {
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --static-openal \
 	    --cflags")
-	INCLUDEPATH += $$[LIBCLIPBOARD]/include
 }
 
 macx {

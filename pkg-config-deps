@@ -76,7 +76,9 @@ $(pwd)/pcre2/pcre2-$ARCH/lib/pkgconfig"
 
 if [[ "$ARCH" == "linux-64" ]]; then
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
-$(pwd)/glew/glew-1.13.0-$ARCH/install/lib64/pkgconfig"
+$(pwd)/glew/glew-1.13.0-$ARCH/install/lib64/pkgconfig:\
+$(pwd)/libclipboard/libclipboard-$ARCH/install/lib/pkgconfig"
+	PACKAGES="$PACKAGES libclipboard"
 else
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
 $(pwd)/glew/glew-1.13.0-$ARCH/install/lib/pkgconfig"
@@ -99,9 +101,6 @@ elif [[ "$1" = "--libs" ]]; then
 		if [[ "$STATIC_OPENAL" = 1 ]]; then
 			OPENAL_EXTRA="-lole32 -lwinmm"
 		fi
-	fi
-	if [[ "$ARCH" = "linux-64" ]]; then
-		CLIPBOARD="-L$(pwd)/../libclipboard/lib -lclipboard"
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
 
