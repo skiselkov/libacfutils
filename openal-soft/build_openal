@@ -20,6 +20,8 @@ DIR="${FILE/%.tar.bz2/}"
 
 [ -d "$DIR" ] && rm -rf "$DIR"
 
+set -e
+
 CONFOPTS_COMMON="-DALSOFT_EMBED_HRTF_DATA=ON"
 
 function do_build() {
@@ -34,11 +36,16 @@ function do_build() {
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 	esac
 
-	cd "$DIR-$ARCH/build"
-	cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
-	    $EXTRA_FLAGS ..
-	make -j "$NCPUS" && make install
-	cd -
+	(
+		cd "$DIR-$ARCH"
+		if [[ "$ARCH" = "linux-64" ]]; then
+			patch -p1 < ../sndio.patch
+		fi
+		cd "build"
+		cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
+		    $EXTRA_FLAGS ..
+		make -j "$NCPUS" && make install
+	)
 }
 
 case $(uname) in
