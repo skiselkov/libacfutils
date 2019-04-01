@@ -1,0 +1,17 @@
+--- openal-soft-1.18.2/CMakeLists.txt	2017-09-24 15:41:50.000000000 +0200
++++ openal-soft-1.18.2-linux-64/CMakeLists.txt	2019-04-01 14:29:39.890404122 +0200
+@@ -933,10 +933,10 @@
+ IF(SOUNDIO_FOUND)
+     OPTION(ALSOFT_BACKEND_SNDIO "Enable SndIO backend" ON)
+     IF(ALSOFT_BACKEND_SNDIO)
+-        SET(HAVE_SNDIO 1)
+-        SET(BACKENDS  "${BACKENDS} SndIO (linked),")
+-        SET(ALC_OBJS  ${ALC_OBJS} Alc/backends/sndio.c)
+-        SET(EXTRA_LIBS ${SOUNDIO_LIBRARIES} ${EXTRA_LIBS})
++#        SET(HAVE_SNDIO 1)
++#        SET(BACKENDS  "${BACKENDS} SndIO (linked),")
++#        SET(ALC_OBJS  ${ALC_OBJS} Alc/backends/sndio.c)
++#        SET(EXTRA_LIBS ${SOUNDIO_LIBRARIES} ${EXTRA_LIBS})
+     ENDIF()
+ ENDIF()
+ IF(ALSOFT_REQUIRE_SNDIO AND NOT HAVE_SNDIO)
