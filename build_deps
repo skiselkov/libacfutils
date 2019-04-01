@@ -44,5 +44,14 @@ done
     ( cd glew && ./build_glew_deps ) && \
     ( cd openal-soft && ./build_openal ) && \
     ( cd cglm && ./build_cglm ) && \
-    ( cd lzma/qmake && if [ $(uname) = Darwin ]; then \
-    ./build-mac else ./build-win-lin ; fi )
+    ( cd lzma/qmake && \
+	if [ $(uname) = Darwin ]; then \
+		if ! [ -f mac-64/liblzma.a ]; then
+			./build-mac
+		fi
+	else
+		if ! [ -f win-64/liblzma.a ] || ! [ -f linux-64/liblzma.a ];
+		    then
+			./build-win-lin
+		fi
+	fi )
