@@ -66,6 +66,7 @@ quadratic_solve(double a, double b, double c, double x[2])
 double
 fx_lin(double x, double x1, double y1, double x2, double y2)
 {
+	ASSERT3F(x1, !=, x2);
 	return (((x - x1) / (x2 - x1)) * (y2 - y1) + y1);
 }
 
