@@ -33,7 +33,10 @@ if ! [ -f "$LIBCLIPBOARD/install/lib/libclipboard.a" ]; then
 	tar xJf "$LIBCLIPBOARD_ARCHIVE"
 	mv "libclipboard-1.0" "$LIBCLIPBOARD"
 	cd "$LIBCLIPBOARD"
-	cmake -DCMAKE_INSTALL_PREFIX:PATH="$(pwd)/install" .
+	cmake -DCMAKE_C_FLAGS="-fPIC" \
+	    -DCMAKE_INSTALL_PREFIX:PATH="$(pwd)/install" .
 	make -j4
 	make install
+	sed -i 's|libdir=${exec_prefix}/|libdir=${exec_prefix}/lib|g' \
+	    "install/lib/pkgconfig/libclipboard.pc"
 fi
