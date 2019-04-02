@@ -30,7 +30,7 @@ INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
-QMAKE_CFLAGS += -Wunused-result -Wno-misleading-indentation
+QMAKE_CFLAGS += -Wunused-result
 
 # _GNU_SOURCE needed on Linux for getline()
 # DEBUG - used by our ASSERT macro
@@ -57,6 +57,7 @@ contains(debug, 0) {
 win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
 	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
+	QMAKE_CFLAGS += -Wno-misleading-indentation
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
 }
@@ -79,6 +80,7 @@ linux-g++-64 {
 	QMAKE_CFLAGS += -fno-stack-protector
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --static-openal \
 	    --cflags")
+	QMAKE_CFLAGS += -Wno-misleading-indentation
 }
 
 macx {
