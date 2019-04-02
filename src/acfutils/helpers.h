@@ -236,16 +236,17 @@ lacf_basename(const char *str)
 	return (&sep[1]);
 }
 
-#if	IBM
+#if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
 #define	getline				ACFSYM(getline)
 API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
-#endif	/* IBM */
+#endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
 
 #define	strtolower			ACFSYM(strtolower)
 API_EXPORT void strtolower(char *str);
 #define	strtoupper			ACFSYM(strtoupper)
 API_EXPORT void strtoupper(char *str);
 
+#define	sprintf_alloc			ACFSYM(sprintf_alloc)
 static inline char *sprintf_alloc(PRINTF_FORMAT(const char *fmt), ...)
     PRINTF_ATTR(1);
 
@@ -304,7 +305,7 @@ API_EXPORT bool_t remove_file(const char *filename, bool_t notfound_ok);
 
 API_EXPORT char *lacf_dirname(const char *filename);
 
-#if	IBM
+#if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
 
 /* A minimally compatible POSIX-style directory reading implementation */
 struct dirent {
@@ -335,11 +336,15 @@ struct stat {
 API_EXPORT int stat(const char *pathname, struct stat *buf);
 #endif	/* !defined(_MSC_VER) */
 
+#define	sleep(x)	SleepEx((x) * 1000, FALSE)
+
+#endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
+
+#if	IBM
+
 #define	win_perror	ACFSYM(win_perror)
 API_EXPORT void win_perror(DWORD err, PRINTF_FORMAT(const char *fmt), ...)
     PRINTF_ATTR(2);
-
-#define	sleep(x)	SleepEx((x) * 1000, FALSE)
 
 #endif	/* IBM */
 
