@@ -427,7 +427,7 @@ cycle2start(int i)
 }
 
 bool_t
-airac_cycle2exp_date(int cycle, char buf[16])
+airac_cycle2exp_date(int cycle, char buf[16], time_t *cycle_end_p)
 {
 	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
 		if (airac_eff_dates[i].cycle == cycle &&
@@ -443,6 +443,8 @@ airac_cycle2exp_date(int cycle, char buf[16])
 			VERIFY(end_tm != NULL);
 			snprintf(buf, 16, "%02d-%s", end_tm->tm_mday,
 			    nr2month(end_tm->tm_mon));
+			if (cycle_end_p != NULL)
+				*cycle_end_p = cycle_end_t;
 
 			return (B_TRUE);
 		}
