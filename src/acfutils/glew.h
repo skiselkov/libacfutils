@@ -108,9 +108,9 @@ glewGetContext(void)
 	GLEWContext *ctx;
 
 	(void) pthread_once(&lacf_glew_ctx_once, lacf_glew_ctx_make_key);
-	ctx = pthread_getspecific(lacf_glew_ctx_key);
+	ctx = (GLEWContext *)pthread_getspecific(lacf_glew_ctx_key);
 	if (ctx == NULL) {
-		ctx = safe_malloc(sizeof (*ctx));
+		ctx = (GLEWContext *)safe_malloc(sizeof (*ctx));
 		(void) pthread_setspecific(lacf_glew_ctx_key, ctx);
 	}
 
