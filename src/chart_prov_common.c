@@ -30,7 +30,7 @@
 #define	REALLOC_STEP	(8 << 20)	/* bytes */
 #define	MAX_DL_SIZE	(128 << 20)	/* bytes */
 #define	DL_TIMEOUT	300L		/* seconds */
-#define	LOW_SPD_LIM	50L		/* bytes/s */
+#define	LOW_SPD_LIM	4096L		/* bytes/s */
 #define	LOW_SPD_TIME	30L		/* seconds */
 
 static size_t
