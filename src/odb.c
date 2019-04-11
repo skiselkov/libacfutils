@@ -36,7 +36,10 @@
 #include "chart_prov_common.h"
 
 #define	DEFAULT_UNLOAD_DELAY	60		/* seconds */
-#define	UPDATE_TIMEOUT 		30		/* seconds */
+
+#define	DL_TIMEOUT		300L		/* seconds */
+#define	LOW_SPD_LIM		4096L		/* bytes/s */
+#define	LOW_SPD_TIME		30L		/* seconds */
 
 #define	REALLOC_STEP		(8 << 20)	/* 1 MiB */
 
@@ -486,6 +489,11 @@ odb_refresh_us(odb_t *odb)
 	chart_setup_curl(curl, odb->cainfo);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &dl_info);
+	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
+	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
+	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, DL_TIMEOUT);
 
 	res = curl_easy_perform(curl);
 
@@ -499,7 +507,8 @@ odb_refresh_us(odb_t *odb)
 			mutex_enter(&odb->tiles_lock);
 
 			odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
-			remove_directory(subpath);
+			if (file_exists(subpath, NULL))
+				remove_directory(subpath);
 			create_directory_recursive(odb->cache_dir);
 			odb_write_tiles(odb, "US");
 			odb_flush_tiles(odb);
