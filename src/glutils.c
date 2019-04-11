@@ -244,8 +244,6 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, GLuint ibo,
 	}
 
 	if (vao == 0 || !(*setup)) {
-		GLint pos_loc, tex0_loc;
-
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 
