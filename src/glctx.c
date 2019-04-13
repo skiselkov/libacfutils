@@ -445,7 +445,26 @@ glctx_destroy(glctx_t *ctx)
 		XCloseDisplay(ctx->dpy);
 #elif	IBM
 	if (ctx->created) {
+		glctx_t *cur_ctx;
+
+		/*
+		 * Due to a bug in ReShade, deleting a context instead installs
+		 * it as the "current" context, which means this immediately
+		 * invalidates the current context. To work around this bug,
+		 * we grab our current context before deleting the other one
+		 * and then we reinstall it back as the current context.
+		 */
+		cur_ctx = glctx_get_current();
 		wglDeleteContext(ctx->hgl);
+		if (cur_ctx != NULL) {
+			glctx_make_current(cur_ctx);
+			/*
+			 * This won't recurse again, because the output of
+			 * glctx_get_current doesn't return a context with
+			 * the `created' flag set.
+			 */
+			glctx_destroy(cur_ctx);
+		}
 	}
 #elif	APL
 	if (ctx->created) {
