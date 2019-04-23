@@ -32,11 +32,17 @@ extern "C" {
 static inline type \
 name(type x, type min_val, type max_val) \
 { \
-	assert_chk((min_val), <=, (max_val)); \
-	if (x < min_val) \
-		return (min_val); \
-	if (x > max_val) \
-		return (max_val); \
+	if (COND_LIKELY(min_val < max_val)) { \
+		if (x < min_val) \
+			return (min_val); \
+		if (x > max_val) \
+			return (max_val); \
+	} else { \
+		if (x > min_val) \
+			return (min_val); \
+		if (x < max_val) \
+			return (max_val); \
+	} \
 	return (x); \
 }
 
