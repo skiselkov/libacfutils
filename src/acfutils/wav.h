@@ -83,6 +83,8 @@ API_EXPORT wav_t *wav_load(const char *filename, const char *descr_name,
     alc_t *alc);
 API_EXPORT void wav_free(wav_t *wav);
 
+API_EXPORT void wav_set_offset(wav_t *wav, float offset_sec);
+API_EXPORT float wav_get_offset(wav_t *wav);
 API_EXPORT void wav_set_gain(wav_t *wav, float gain);
 API_EXPORT float wav_get_gain(wav_t *wav);
 API_EXPORT void wav_set_loop(wav_t *wav, bool_t loop);

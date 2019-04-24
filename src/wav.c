@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
 #include <stdio.h>
@@ -654,6 +654,20 @@ wav_free(wav_t *wav)
 	VERIFY(ctx_restore(wav->alc, &sav));
 
 	free(wav);
+}
+
+void
+wav_set_offset(wav_t *wav, float offset_sec)
+{
+	WAV_SET_PARAM(alSourcef, AL_SEC_OFFSET, offset_sec);
+}
+
+float
+wav_get_offset(wav_t *wav)
+{
+	float offset;
+	WAV_OP_PARAM(alGetSourcef, AL_SEC_OFFSET, 0, &offset);
+	return (offset);
 }
 
 /*
