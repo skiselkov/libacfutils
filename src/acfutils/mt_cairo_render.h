@@ -92,6 +92,9 @@ API_EXPORT const char *ft_err2str(FT_Error err);
 API_EXPORT bool_t try_load_font(const char *fontdir, const char *fontfile,
     FT_Library ft, FT_Face *font, cairo_font_face_t **cr_font);
 
+API_EXPORT void mt_cairo_render_rounded_rectangle(cairo_t *cr, double x,
+    double y, double w, double h, double radius);
+
 #ifdef	__cplusplus
 }
 #endif
