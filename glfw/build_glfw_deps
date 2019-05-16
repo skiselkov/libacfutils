@@ -17,7 +17,8 @@
 
 source ../build_dep.common
 
-GLFW="glfw-3.3.tar.xz"
+GLFW_VERSION="3.3"
+GLFW="glfw-${GLFW_VERSION}.tar.xz"
 
 function build_platform() {
 	PLATFORM="$1"
@@ -45,12 +46,12 @@ function build_platform() {
 	    cd "glfw-$PLATFORM" && \
 	    cmake $CFLAGS_ADDTL $LDFLAGS_ADDTL \
 		-DCMAKE_INSTALL_PREFIX=$(pwd)/install $CMAKE_ARGS \
-		"../glfw-3.2.1" && \
+		"../glfw-${GLFW_VERSION}" && \
 	    make -j$NJOBS && make install
 	) || return 1
 }
 
-if ! [ -d "glfw-3.3" ]; then
+if ! [ -d "glfw-${GLFW_VERSION}" ]; then
 	tar xJf "$GLFW"
 fi
 
@@ -59,7 +60,7 @@ case `uname` in
 		build_platform linux-64 "glfw-linux-64/install/lib/libglfw3.a" \
 		    || exit 1
 		build_platform win-64 "glfw-win-64/install/lib/libglfw3.a" \
-		    -DCMAKE_TOOLCHAIN_FILE="../glfw-3.2.1/CMake/x86_64-w64-mingw32.cmake" || \
+		    -DCMAKE_TOOLCHAIN_FILE="../glfw-${GLFW_VERSION}/CMake/x86_64-w64-mingw32.cmake" || \
 		    exit 1
 		;;
 	Darwin)
