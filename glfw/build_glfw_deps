@@ -17,7 +17,7 @@
 
 source ../build_dep.common
 
-GLFW="glfw-3.2.1.tar.xz"
+GLFW="glfw-3.3.tar.xz"
 
 function build_platform() {
 	PLATFORM="$1"
@@ -50,7 +50,7 @@ function build_platform() {
 	) || return 1
 }
 
-if ! [ -d "glfw-3.2.1" ]; then
+if ! [ -d "glfw-3.3" ]; then
 	tar xJf "$GLFW"
 fi
 
