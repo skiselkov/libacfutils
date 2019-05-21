@@ -19,6 +19,7 @@
 #ifndef	_ACF_UTILS_SAFE_ALLOC_H_
 #define	_ACF_UTILS_SAFE_ALLOC_H_
 
+#include <string.h>
 #include <stdlib.h>
 
 #include "assert.h"
@@ -58,6 +59,17 @@ safe_realloc(void *oldptr, size_t size)
 		    "out of memory", (long unsigned)size);
 	}
 	return (p);
+}
+
+static inline char *
+safe_strdup(const char *str2)
+{
+	char *str = strdup(str2);
+	if (str2 != NULL) {
+		VERIFY_MSG(str != NULL, "Cannot allocate %lu bytes: "
+		    "out of memory", (long unsigned)strlen(str2) + 1);
+	}
+	return (str);
 }
 
 #ifdef	__cplusplus
