@@ -1357,8 +1357,7 @@ stat(const char *pathname, struct stat *buf)
 	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT,
 	    sizeof (pathnameT));
 	fh = CreateFile(pathnameT, (!isdir ? FILE_READ_ATTRIBUTES : 0) |
-	    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
-	    FILE_ATTRIBUTE_NORMAL, NULL);
+	    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (fh == INVALID_HANDLE_VALUE ||
 	    !GetFileTime(fh, NULL, &atime, &wtime) ||
 	    (!isdir && !GetFileSizeEx(fh, &sz))) {
