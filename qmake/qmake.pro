@@ -104,11 +104,10 @@ HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h \
 	../ucpp/ucppi.h
 
 SOURCES += ../src/*.c ../junzip/junzip.c \
-	../ucpp/arith.c \
-	../ucpp/hash.c \
 	../ucpp/mem.c \
-	../ucpp/macro.c \
-	../ucpp/assert.c \
-	../ucpp/eval.c \
+	../ucpp/nhash.c \
+	../ucpp/cpp.c \
 	../ucpp/lexer.c \
-	../ucpp/nhash.c
+	../ucpp/assert.c \
+	../ucpp/macro.c \
+	../ucpp/eval.c

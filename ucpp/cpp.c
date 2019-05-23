@@ -989,6 +989,8 @@ static int handle_if(struct lexer_state *ls)
 	unsigned long z;
 	int ret = 0, ltww = 1;
 
+	memset(&tf, 0, sizeof (tf));
+
 	/* first, get the whole line */
 	tf.art = tf.nt = 0;
 	while (!next_token(ls) && ls->ctok->type != NEWLINE) {
@@ -1197,7 +1199,7 @@ error1:
 static int handle_include(struct lexer_state *ls, unsigned long flags, int nex)
 {
 	int c, string_fname = 0;
-	char *fname;
+	char *fname = NULL;
 	unsigned char *fname2;
 	size_t fname_ptr = 0;
 	long l = ls->line;
