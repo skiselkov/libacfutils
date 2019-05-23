@@ -164,6 +164,8 @@ API_EXPORT ssize_t parser_get_next_line(FILE *fp, char **linep,
     size_t *linecap, unsigned *linenum);
 #define	parser_get_next_quoted_str	ACFSYM(parser_get_next_quoted_str)
 API_EXPORT char *parser_get_next_quoted_str(FILE *fp);
+#define	parser_get_next_quoted_str2	ACFSYM(parser_get_next_quoted_str2)
+API_EXPORT char *parser_get_next_quoted_str2(FILE *fp, int *linep);
 #define	explode_line			ACFSYM(explode_line)
 API_EXPORT ssize_t explode_line(char *line, char delim, char **comps,
     size_t capacity);

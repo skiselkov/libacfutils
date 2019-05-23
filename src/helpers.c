@@ -504,6 +504,12 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 char *
 parser_get_next_quoted_str(FILE *fp)
 {
+	return (parser_get_next_quoted_str2(fp, NULL));
+}
+
+char *
+parser_get_next_quoted_str2(FILE *fp, int *linep)
+{
 	char c;
 	char *str = safe_calloc(1, 1);
 	size_t len = 0, cap = 0;
@@ -511,6 +517,8 @@ parser_get_next_quoted_str(FILE *fp)
 	for (;;) {
 		do {
 			c = fgetc(fp);
+			if (c == '\n' && linep != NULL)
+				(*linep)++;
 		} while (isspace(c));
 		if (c == EOF)
 			break;
@@ -534,9 +542,13 @@ parser_get_next_quoted_str(FILE *fp)
 					c = fgetc(fp);
 					if (c != '\n' && c != EOF)
 						ungetc(c, fp);
+					if (linep != NULL)
+						(*linep)++;
 					continue;
 				} else if (c == '\n') {
 					/* skip LF char */
+					if (linep != NULL)
+						(*linep)++;
 					continue;
 				} else if (c >= '0' && c <= '7') {
 					/* 1-3 letter octal codes */
