@@ -94,5 +94,21 @@ macx-clang {
 	    --cflags")
 }
 
-HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h
-SOURCES += ../src/*.c ../junzip/junzip.c
+HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h \
+	../ucpp/nhash.h \
+	../ucpp/tune.h \
+	../ucpp/arith.h \
+	../ucpp/hash.h \
+	../ucpp/mem.h \
+	../ucpp/config.h \
+	../ucpp/ucppi.h
+
+SOURCES += ../src/*.c ../junzip/junzip.c \
+	../ucpp/arith.c \
+	../ucpp/hash.c \
+	../ucpp/mem.c \
+	../ucpp/macro.c \
+	../ucpp/assert.c \
+	../ucpp/eval.c \
+	../ucpp/lexer.c \
+	../ucpp/nhash.c
