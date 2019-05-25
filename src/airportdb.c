@@ -1627,6 +1627,7 @@ airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 		if (success)
 			break;
 	}
+	free(line);
 	fclose(fp);
 out:
 	free(filename);
