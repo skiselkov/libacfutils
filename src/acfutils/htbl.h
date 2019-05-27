@@ -67,9 +67,9 @@ void htbl_destroy(htbl_t *htbl);
 void htbl_empty(htbl_t *htbl, void (*func)(void *, void *), void *arg);
 size_t htbl_count(const htbl_t *htbl);
 
-void htbl_set(htbl_t *htbl, void *key, void *value);
-void htbl_remove(htbl_t *htbl, void *key, int nil_ok);
-void htbl_remove_multi(htbl_t *htbl, void *key, void *list_item);
+void htbl_set(htbl_t *htbl, const void *key, void *value);
+void htbl_remove(htbl_t *htbl, const void *key, int nil_ok);
+void htbl_remove_multi(htbl_t *htbl, const void *key, void *list_item);
 
 void *htbl_lookup(const htbl_t *htbl, const void *key);
 #define	HTBL_VALUE_MULTI(x)	(((htbl_multi_value_t *)(x))->value)

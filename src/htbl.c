@@ -119,7 +119,7 @@ htbl_multi_value_add(htbl_t *htbl, htbl_bucket_item_t *item, void *value)
 }
 
 void
-htbl_set(htbl_t *htbl, void *key, void *value)
+htbl_set(htbl_t *htbl, const void *key, void *value)
 {
 	list_t *bucket = &htbl->buckets[H(key, htbl->key_sz) &
 	    (htbl->tbl_sz - 1)];
@@ -150,7 +150,7 @@ htbl_set(htbl_t *htbl, void *key, void *value)
 }
 
 void
-htbl_remove(htbl_t *htbl, void *key, int nil_ok)
+htbl_remove(htbl_t *htbl, const void *key, int nil_ok)
 {
 	list_t *bucket = &htbl->buckets[H(key, htbl->key_sz) &
 	    (htbl->tbl_sz - 1)];
@@ -174,7 +174,7 @@ htbl_remove(htbl_t *htbl, void *key, int nil_ok)
 	ASSERT(nil_ok != 0);
 }
 
-void htbl_remove_multi(htbl_t *htbl, void *key, void *list_item)
+void htbl_remove_multi(htbl_t *htbl, const void *key, void *list_item)
 {
 	htbl_multi_value_t *mv = list_item;
 	htbl_bucket_item_t *item = mv->item;
