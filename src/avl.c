@@ -212,7 +212,7 @@ avl_last(const avl_tree_t *tree)
  *	"void *"  of the found tree node
  */
 void *
-avl_nearest(avl_tree_t *tree, avl_index_t where, int direction)
+avl_nearest(const avl_tree_t *tree, avl_index_t where, int direction)
 {
 	int child = AVL_INDEX2CHILD(where);
 	avl_node_t *node = AVL_INDEX2NODE(where);

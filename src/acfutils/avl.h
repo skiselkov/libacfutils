@@ -228,7 +228,7 @@ API_EXPORT extern void *avl_last(const avl_tree_t *tree);
  *	else
  *		less = avl_nearest(tree, where, AVL_BEFORE);
  */
-API_EXPORT extern void *avl_nearest(avl_tree_t *tree, avl_index_t where,
+API_EXPORT extern void *avl_nearest(const avl_tree_t *tree, avl_index_t where,
     int direction);
 
 
