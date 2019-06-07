@@ -31,6 +31,11 @@
 #include <windows.h>
 #endif	/* !APL && !LIN */
 
+#if	LIN
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif	/* LIN */
+
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/time.h>
@@ -131,6 +136,12 @@ extern "C" {
 #define	mutex_enter(mtx)	pthread_mutex_lock((mtx))
 #define	mutex_exit(mtx)		pthread_mutex_unlock((mtx))
 
+#if	LIN
+#define	MUTEX_HELD(mtx)	((mtx)->__data.__owner == syscall(SYS_gettid))
+#else	/* APL */
+#define	MUTEX_HELD(mtx)	B_TRUE
+#endif	/* APL */
+
 #define	thread_create(thrp, proc, arg) \
 	(pthread_create(thrp, NULL, (void *(*)(void *))proc, \
 	    arg) == 0)
@@ -186,6 +197,7 @@ typedef struct {
 		ASSERT((x)->inited); \
 		LeaveCriticalSection(&(x)->cs); \
 	} while (0)
+#define	MUTEX_HELD(mtx)	1
 
 #define	thread_create(thrp, proc, arg) \
 	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
