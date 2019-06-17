@@ -2149,7 +2149,7 @@ double mach2kcas(double mach, double alt_ft, double qnh, double oat)
  * Converts calibrated airspeed to true airspeed.
  *
  * @param ktas Calibrated airspeed in knots.
- * @param pressure Static air pressure in hPa.
+ * @param pressure Static air pressure in Pa.
  * @param oat Static outside air temperature in degrees C.
  *
  * @return True airspeed in knots.
