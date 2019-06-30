@@ -2345,11 +2345,20 @@ isadev2sat(double fl, double isadev)
 double
 speed_sound(double oat)
 {
-	/*
-	 * This is an approximation that for common flight temperatures
-	 * (-65 to +65) is less than 0.1% off.
-	 */
-	return (20.05 * sqrt(C2KELVIN(oat)));
+	return (speed_sound_gas(C2KELVIN(oat), GAMMA, R_spec));
+}
+
+/*
+ * Returns the speed of sound in a specific gas. Unlike the speed_sound()
+ * function, this function takes absolute temperature in Kelvin. You must
+ * also pass the gas-specific constants (ratio of specific heats and gas
+ * constant). These depend upon the molecular composition of the gas. For
+ * dry air, these are defined in perf.h as GAMMA (1.4) and R_spec (287.058).
+ */
+double
+speed_sound_gas(double T, double gamma, double R)
+{
+	return (sqrt(gamma * R * T));
 }
 
 /*

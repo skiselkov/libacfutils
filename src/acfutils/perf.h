@@ -283,7 +283,9 @@ API_EXPORT double sat2isadev(double fl, double sat);
 API_EXPORT double isadev2sat(double fl, double isadev);
 
 #define	speed_sound	ACFSYM(speed_sound)
+#define	speed_sound_gas	ACFSYM(speed_sound_gas)
 API_EXPORT double speed_sound(double oat);
+API_EXPORT double speed_sound_gas(double T, double gamma, double R);
 
 #define	air_density	ACFSYM(air_density)
 API_EXPORT double air_density(double pressure, double oat);
