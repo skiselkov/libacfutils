@@ -49,7 +49,7 @@ lacf_glew_dllmain_hook(DWORD reason)
 	switch (reason) {
 	case DLL_PROCESS_ATTACH:
 		lacf_glew_init();
-	break;
+		break;
 	case DLL_THREAD_DETACH:
 		lacf_glew_thread_fini();
 		break;
