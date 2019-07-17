@@ -893,7 +893,7 @@ mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
 	cairo_line_to(cr, x + w - radius, y);
 	cairo_arc(cr, x + w - radius, y + radius, radius,
 	    DEG2RAD(270), DEG2RAD(360));
-	cairo_line_to(cr, x + w, y - radius);
+	cairo_line_to(cr, x + w, y + h - radius);
 	cairo_arc(cr, x + w - radius, y + h - radius, radius,
 	    DEG2RAD(0), DEG2RAD(90));
 	cairo_line_to(cr, x + radius, y + h);
