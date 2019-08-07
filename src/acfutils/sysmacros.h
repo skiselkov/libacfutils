@@ -60,6 +60,7 @@ extern "C" {
 #define	PRINTF_ATTR(x)		__attribute__((format(printf, x, x + 1)))
 #define	PRINTF_ATTR2(x,y)	__attribute__((format(printf, x, y)))
 #define	PRINTF_FORMAT(f)	f
+#define	SENTINEL_ATTR		__attribute__((sentinel))
 #ifndef	BSWAP32
 #define	BSWAP16(x)	__builtin_bswap16((x))
 #define	BSWAP32(x)	__builtin_bswap32((x))
@@ -73,6 +74,7 @@ extern "C" {
 
 #define	PRINTF_ATTR(x)
 #define	PRINTF_ATTR2(x,y)
+#define	SENTINEL_ATTR
 
 #define	COND_LIKELY(x)		x
 #define	COND_UNLIKELY(x)	x
