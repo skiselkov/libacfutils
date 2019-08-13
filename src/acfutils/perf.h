@@ -309,6 +309,10 @@ API_EXPORT double static_press(double rho, double oat);
 #define	static_gas_press	ACFSYM(static_gas_press)
 API_EXPORT double static_gas_press(double rho, double oat, double gas_const);
 
+#define	adiabatic_heating_gas	ACFSYM(adiabatic_heating_gas)
+API_EXPORT double adiabatic_heating_gas(double press_ratio, double start_temp,
+    double gamma);
+
 #define	adiabatic_heating	ACFSYM(adiabatic_heating)
 API_EXPORT double adiabatic_heating(double press_ratio, double start_temp);
 

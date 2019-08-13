@@ -2482,6 +2482,16 @@ static_gas_press(double rho, double oat, double gas_const)
 }
 
 /*
+ * Same as `adiabatic_heating_gas', but using the ratio of specific heats
+ * for dry air at approximately room temperature.
+ */
+double
+adiabatic_heating(double press_ratio, double start_temp)
+{
+	return (adiabatic_heating_gas(press_ratio, start_temp, GAMMA));
+}
+
+/*
  * Computes the adiabatic heating experienced by air when compressed in a
  * turbine engine's compressor. The P-T relation for adiabatic heating is:
  *
@@ -2498,12 +2508,13 @@ static_gas_press(double rho, double oat, double gas_const)
  *
  * @param press_ratio Pressure ratio of the compressor (dimensionless).
  * @param start_temp Starting gas temperature (in degrees Celsius).
+ * @param gamma The gas' ratio of specific heats.
  *
  * @return Compressed gas temperature (in degrees Celsius).
  */
 double
-adiabatic_heating(double press_ratio, double start_temp)
+adiabatic_heating_gas(double press_ratio, double start_temp, double gamma)
 {
-	return (KELVIN2C(pow(pow(C2KELVIN(start_temp), GAMMA) /
-	    pow(press_ratio, 1 - GAMMA), 1 / GAMMA)));
+	return (KELVIN2C(pow(pow(C2KELVIN(start_temp), gamma) /
+	    pow(press_ratio, 1 - gamma), 1 / gamma)));
 }
