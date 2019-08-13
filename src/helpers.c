@@ -485,11 +485,15 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 {
 	for (;;) {
 		ssize_t len = getline(linep, linecap, fp);
+		char *hash;
 		if (len == -1)
 			return (-1);
 		(*linenum)++;
+		hash = strchr(*linep, '#');
+		if (hash != NULL)
+		    *hash = '\0';
 		strip_space(*linep);
-		if (**linep == 0 || **linep == '#')
+		if (**linep == 0)
 			continue;
 		len = strlen(*linep);
 		/* substitute spaces for tabs */
