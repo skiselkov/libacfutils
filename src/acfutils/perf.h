@@ -316,6 +316,22 @@ API_EXPORT double adiabatic_heating_gas(double press_ratio, double start_temp,
 #define	adiabatic_heating	ACFSYM(adiabatic_heating)
 API_EXPORT double adiabatic_heating(double press_ratio, double start_temp);
 
+/*
+ * Returns the kinematic viscosity of dry air in m^2/s.
+ * @param temp_K Air temperature in Kelvin.
+ */
+#define	air_kin_visc	ACFSYM(air_kin_visc)
+API_EXPORT double air_kin_visc(double temp_K);
+
+/*
+ * Returns the Reynolds number of an airfoil.
+ * @param vel Air velocity in m/s.
+ * @param chord Chord length in meters.
+ * @param temp_K Air temperature in Kelvin.
+ */
+#define	air_reynolds	ACFSYM(air_reynolds)
+API_EXPORT double air_reynolds(double vel, double chord, double temp_K);
+
 #ifdef	__cplusplus
 }
 #endif
