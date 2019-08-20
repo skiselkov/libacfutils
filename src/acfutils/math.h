@@ -58,6 +58,12 @@ wavg_impl(double x, double y, double w, const char *file, int line)
 }
 #define wavg(x, y, w)	wavg_impl((x), (y), (w), __FILE__, __LINE__)
 
+static inline double
+wavg2(double x, double y, double w)
+{
+	return (x + (y - x) * w);
+}
+
 /*
  * Given two values min_val and max_val, returns how far between min_val
  * and max_val a third value 'x' lies. If `clamp_output' is true, 'x' is
