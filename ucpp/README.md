@@ -76,7 +76,7 @@ INSTALLATION
   INMACRO_FLAG
      In lexer mode, set the inmacro flag to 1 if the current token comes
      from a macro replacement, 0 otherwise. macro_count maintains an
-     increasing counter of such replacements. CONTEXT tokens count as
+     increasing counter of such replacements. ucpp_CONTEXT tokens count as
      one macro replacement each. #pragma, and _Pragma() that do not come
      from a macro replacement, also count as one macro replacement each.
      This setting is irrelevant in non-lexer mode.
@@ -324,7 +324,7 @@ CPLUSPLUS_COMMENTS
 	understand new style comments (//) (mandatory for C99)
 LINE_NUM
 	emit #line directives when entering a file, if not in lexer mode;
-	emit CONTEXT token in lexer mode for #line and new files
+	emit ucpp_CONTEXT token in lexer mode for #line and new files
 GCC_LINE_NUM
 	if LINE_NUM is set, emit gcc-like directives instead of #line
 HANDLE_ASSERTIONS
@@ -808,7 +808,7 @@ From 0.7 to 0.8:
 From 0.6 to 0.7:
 
 * officially changed the goal to full C99 compliance
-* added the CONTEXT token and let NEWLINE tokens go
+* added the ucpp_CONTEXT token and let NEWLINE tokens go
 * added report_context() for error reporting
 * enforced matching of #if/#endif (file-global nesting level = 0)
 * added support of C99 digraphs

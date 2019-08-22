@@ -157,7 +157,7 @@ static struct machine_state {
 	{ S_STRING,	{ VCH },	FRZ(S_TRUNC)		},
 	{ S_STRING,	{ '\n' },	FRZ(S_BEHEAD)		},
 	{ S_STRING,	{ '\\' },	PUT(S_STRING2)		},
-	{ S_STRING,	{ '"' },	PUT(STO(STRING))	},
+	{ S_STRING,	{ '"' },	PUT(STO(ucpp_STRING))	},
 
 	{ S_STRING2,	{ ANY },	PUT(S_STRING)		},
 	{ S_STRING2,	{ VCH },	FRZ(S_TRUNC)		},
@@ -192,7 +192,7 @@ static struct machine_state {
 	/* after a ' */
 	{ S_CHAR,	{ ANY },	PUT(S_CHAR)		},
 	{ S_CHAR,	{ VCH },	FRZ(S_TRUNC)		},
-	{ S_CHAR,	{ '\'' },	PUT(STO(CHAR))		},
+	{ S_CHAR,	{ '\'' },	PUT(STO(ucpp_CHAR))		},
 	{ S_CHAR,	{ '\\' },	PUT(S_CHAR2)		},
 
 	/* after a \ in a character constant

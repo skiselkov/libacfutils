@@ -582,7 +582,7 @@ static ppval eval_shrd(struct token_fifo *tf, int minprec, int do_eval)
 			error(eval_line, "a right parenthesis was expected");
 			throw(eval_exception);
 		}
-	} else if (ct->type == NUMBER || ct->type == CHAR) {
+	} else if (ct->type == NUMBER || ct->type == ucpp_CHAR) {
 		top = pp_strtoconst(ct->name);
 	} else if (OP_UN(ct->type)) {
 		top = eval_opun(ct->type, eval_shrd(tf,
@@ -657,7 +657,7 @@ invalid_token_err:
 	throw(eval_exception);
 }
 
-#define UNARY(x)	((x) != NUMBER && (x) != NAME && (x) != CHAR \
+#define UNARY(x)	((x) != NUMBER && (x) != NAME && (x) != ucpp_CHAR \
 			&& (x) != RPAR)
 
 /*

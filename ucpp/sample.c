@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	   argument as an include path */
 	for (i = 1; i < argc; i ++) add_incpath(argv[i]);
 
-	/* step 10 -- we are a lexer and we want CONTEXT tokens */
+	/* step 10 -- we are a lexer and we want ucpp_CONTEXT tokens */
 	enter_file(&ls, ls.flags);
 
 	/* read tokens until end-of-input is reached -- errors (non-zero
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 						operators_name[t]);
 				}
 			}
-		} else if (ls.ctok->type == CONTEXT) {
+		} else if (ls.ctok->type == ucpp_CONTEXT) {
 			printf("new context: file '%s', line %ld\n",
 				ls.ctok->name, ls.ctok->line);
 		} else if (ls.ctok->type == NEWLINE) {

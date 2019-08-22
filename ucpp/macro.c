@@ -1070,7 +1070,7 @@ int substitute_macro(struct lexer_state *ls, struct macro *m,
 			print_token(ls, &t, 0);
 			break;
 		case MAC_FILE:
-			t.type = STRING;
+			t.type = ucpp_STRING;
 			t.line = l;
 			cfn = current_long_filename ?
 				current_long_filename : current_filename;
@@ -1097,14 +1097,14 @@ int substitute_macro(struct lexer_state *ls, struct macro *m,
 			freemem(bbuf);
 			break;
 		case MAC_DATE:
-			t.type = STRING;
+			t.type = ucpp_STRING;
 			t.line = l;
 			t.name = compile_date;
 			print_space(ls);
 			print_token(ls, &t, 0);
 			break;
 		case MAC_TIME:
-			t.type = STRING;
+			t.type = ucpp_STRING;
 			t.line = l;
 			t.name = compile_time;
 			print_space(ls);
@@ -1191,7 +1191,7 @@ collect_args:
 	if (pragma_op) {
 		char *pn;
 
-		if (atl[0].nt != 1 || atl[0].t[0].type != STRING) {
+		if (atl[0].nt != 1 || atl[0].t[0].type != ucpp_STRING) {
 			error(ls->line, "invalid argument to _Pragma");
 			if (atl[0].nt) freemem(atl[0].t);
 			freemem(atl);
@@ -1567,7 +1567,7 @@ collect_args:
 #else
 			if (ttMWS(m->val.t[next].type)) m->val.art ++;
 #endif
-			t.type = STRING;
+			t.type = ucpp_STRING;
 #ifdef LOW_MEM
 			anum = m->cval.t[++ m->cval.rp];
 			if (anum >= 128U) anum = ((anum & 127U) << 8)

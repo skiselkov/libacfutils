@@ -564,7 +564,7 @@ static void print_line_info(struct lexer_state *ls, unsigned long flags)
  * As a command-line option, gcc-like directives (with only a '#',
  * without 'line') may be produced.
  *
- * enter_file() returns 1 if a (CONTEXT) token was produced, 0 otherwise.
+ * enter_file() returns 1 if a (ucpp_CONTEXT) token was produced, 0 otherwise.
  */
 int enter_file(struct lexer_state *ls, unsigned long flags)
 {
@@ -575,7 +575,7 @@ int enter_file(struct lexer_state *ls, unsigned long flags)
 	if ((flags & LEXER) && !(flags & TEXT_OUTPUT)) {
 		struct token t;
 
-		t.type = CONTEXT;
+		t.type = ucpp_CONTEXT;
 		t.line = ls->line;
 		t.name = fn;
 		print_token(ls, &t, 0);
@@ -1340,7 +1340,7 @@ include_macro2:
 	for (x = 0; (size_t)x < tf2.nt && ttWHI(tf2.t[x].type); x ++);
 	for (y = tf2.nt - 1; y >= 0 && ttWHI(tf2.t[y].type); y --);
 	if ((size_t)x >= tf2.nt) goto include_macro_err;
-	if (tf2.t[x].type == STRING) {
+	if (tf2.t[x].type == ucpp_STRING) {
 		if (y != x) goto include_macro_err;
 		if (tf2.t[x].name[0] == 'L') {
 			if (ls->flags & WARN_STANDARD)
@@ -1491,7 +1491,7 @@ static int handle_line(struct lexer_state *ls, unsigned long flags)
 		tf2.art ++);
 	ls->output_fifo = save_tf;
 	if (tf2.art == tf2.nt || (tf2.t[tf2.art].type != NUMBER
-		&& tf2.t[tf2.art].type != CHAR)) {
+		&& tf2.t[tf2.art].type != ucpp_CHAR)) {
 		error(l, "not a valid number for #line");
 		goto line_macro_err;
 	}
@@ -1512,7 +1512,7 @@ static int handle_line(struct lexer_state *ls, unsigned long flags)
 
 		for (i = tf2.art; i < tf2.nt && ttMWS(tf2.t[i].type); i ++);
 		if (i < tf2.nt) {
-			if (tf2.t[i].type != STRING) {
+			if (tf2.t[i].type != ucpp_STRING) {
 				error(l, "not a valid filename for #line");
 				goto line_macro_err;
 			}

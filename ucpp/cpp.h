@@ -51,9 +51,9 @@ enum {
 	NAME,		/* identifier */
 	BUNCH,		/* non-C characters */
 	PRAGMA,		/* a #pragma directive */
-	CONTEXT,	/* new file or #line */
-	STRING,		/* constant "xxx" */
-	CHAR,		/* constant 'xxx' */
+	ucpp_CONTEXT,	/* new file or #line */
+	ucpp_STRING,	/* constant "xxx" */
+	ucpp_CHAR,	/* constant 'xxx' */
 	SLASH,		/*	/	*/
 	ASSLASH,	/*	/=	*/
 	MINUS,		/*	-	*/
@@ -309,9 +309,9 @@ extern int *transient_characters;
  * to outerspace.
  */
 #ifdef SEMPER_FIDELIS
-#define STRING_TOKEN(x)    ((x) == NONE || ((x) >= COMMENT && (x) <= CHAR))
+#define STRING_TOKEN(x)    ((x) == NONE || ((x) >= COMMENT && (x) <= ucpp_CHAR))
 #else
-#define STRING_TOKEN(x)    ((x) >= NUMBER && (x) <= CHAR)
+#define STRING_TOKEN(x)    ((x) >= NUMBER && (x) <= ucpp_CHAR)
 #endif
 
 #endif
