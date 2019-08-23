@@ -2523,15 +2523,15 @@ double
 air_kin_visc(double temp_K)
 {
 	static vect2_t table[] = {
-	    VECT2(200, 0.753),
-	    VECT2(225, 0.935),
-	    VECT2(250, 1.132),
-	    VECT2(275, 1.343),
-	    VECT2(300, 1.568),
-	    VECT2(325, 1.807),
-	    VECT2(350, 2.056),
-	    VECT2(375, 2.317),
-	    VECT2(400, 2.591),
+	    VECT2(200, 0.753e-5),
+	    VECT2(225, 0.935e-5),
+	    VECT2(250, 1.132e-5),
+	    VECT2(275, 1.343e-5),
+	    VECT2(300, 1.568e-5),
+	    VECT2(325, 1.807e-5),
+	    VECT2(350, 2.056e-5),
+	    VECT2(375, 2.317e-5),
+	    VECT2(400, 2.591e-5),
 	    NULL_VECT2	/* list terminator */
 	};
 	ASSERT3F(temp_K, >, 0);
