@@ -332,6 +332,12 @@ API_EXPORT double air_kin_visc(double temp_K);
 #define	air_reynolds	ACFSYM(air_reynolds)
 API_EXPORT double air_reynolds(double vel, double chord, double temp_K);
 
+/*
+ * Returns the ratio of specific heats for dry air.
+ * @param T Absolute temperature of the air in Kelvin.
+ */
+double lacf_gamma_air(double T);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -2546,3 +2546,12 @@ air_reynolds(double vel, double chord, double temp_K)
 	ASSERT3F(temp_K, >, 0);
 	return ((vel * chord) / air_kin_visc(temp_K));
 }
+
+double
+lacf_gamma_air(double T)
+{
+	static const double a[] = {
+	    -7.6942651e-13, 1.3764661e-08, -7.8185709e-05, 1.436914
+	};
+	return (a[0] * POW3(T) + a[1] * POW2(T) + a[2] * T + a[3]);
+}
