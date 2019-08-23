@@ -44,7 +44,7 @@ struct dr_s {
 	bool_t		wide_type;
 	void		*value;
 	ssize_t		count;
-	void		(*read_cb)(dr_t *);
+	void		(*read_cb)(dr_t *, void *);
 	void		(*write_cb)(dr_t *, void *);
 	void		(*read_array_cb)(dr_t *, void *, int, int);
 	void		(*write_array_cb)(dr_t *, void *, int, int);

@@ -380,12 +380,14 @@ static int
 read_int_cb(void *refcon)
 {
 	dr_t *dr = refcon;
+	int value;
 	ASSERT(dr != NULL);
 	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	value = *(int *)dr->value;
 	if (dr->read_cb != NULL)
-		dr->read_cb(dr);
-	return (*(int *)dr->value);
+		dr->read_cb(dr, &value);
+	return (value);
 }
 
 static void
@@ -408,12 +410,17 @@ read_float_cb(void *refcon)
 	ASSERT(dr != NULL);
 	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
-	if (dr->read_cb != NULL)
-		dr->read_cb(dr);
-	if (dr->wide_type)
-		return (*(double *)dr->value);
-	else
-		return (*(float *)dr->value);
+	if (dr->wide_type) {
+		double value = *(double *)dr->value;
+		if (dr->read_cb != NULL)
+			dr->read_cb(dr, &value);
+		return (value);
+	} else {
+		float value = *(float *)dr->value;
+		if (dr->read_cb != NULL)
+			dr->read_cb(dr, &value);
+		return (value);
+	}
 }
 
 static void
