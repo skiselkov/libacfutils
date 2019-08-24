@@ -2555,3 +2555,17 @@ lacf_gamma_air(double T)
 	};
 	return (a[0] * POW3(T) + a[1] * POW2(T) + a[2] * T + a[3]);
 }
+
+double
+lacf_therm_cond_air(double T)
+{
+	/*
+	 * The thermal conductivity of air remains relatively constant
+	 * throughout its pressure range and deviates by less than 1%
+	 * down to about 1% of sea level pressure. Since we never really
+	 * encounter such pressures in aircraft (1% SL_p = ~84,000 ft),
+	 * we can just ignore the temperature component.
+	 */
+	ASSERT3F(T, >, 0);
+	return (fx_lin(T, 233.2, 0.0209, 498.15, 0.0398));
+}

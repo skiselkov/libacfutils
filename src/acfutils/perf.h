@@ -338,6 +338,12 @@ API_EXPORT double air_reynolds(double vel, double chord, double temp_K);
  */
 double lacf_gamma_air(double T);
 
+/*
+ * Returns the thermal conductivity of dry air (in W/(m.K)).
+ * @param T Absolute temperature of the air in Kelvin.
+ */
+double lacf_therm_cond_air(double T);
+
 #ifdef	__cplusplus
 }
 #endif
