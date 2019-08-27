@@ -200,7 +200,16 @@ worker(mt_cairo_render_t *mtcr)
 	snprintf(name, sizeof (name), "mtcr %dx%d", mtcr->w, mtcr->h);
 	thread_set_name(name);
 
+	/*
+	 * Render the first frame immediately to make sure we have
+	 * something to show ASAP.
+	 */
+	ASSERT(mtcr->render_cb != NULL);
+	mtcr->render_cb(mtcr->rs[0].cr, mtcr->w, mtcr->h, mtcr->userinfo);
+	mtcr->rs[0].chg = B_TRUE;
+
 	mutex_enter(&mtcr->lock);
+	mtcr->cur_rs = 0;
 
 	while (!mtcr->shutdown) {
 		render_surf_t *rs;
