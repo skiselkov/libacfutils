@@ -20,6 +20,8 @@
 #define	_ACF_UTILS_TIME_H_
 
 #include <stdint.h>
+#include <time.h>
+
 #include <acfutils/core.h>
 
 #ifdef	__cplusplus
@@ -28,8 +30,25 @@ extern "C" {
 
 #define	USEC2SEC(usec)	((usec) / 1000000.0)
 #define	SEC2USEC(sec)	((sec) * 1000000ll)
+#define	NSEC2SEC(usec)	((usec) / 1000000000.0)
+#define	SEC2NSEC(sec)	((sec) * 1000000000ll)
+
 #define	microclock	ACFSYM(microclock)
-API_EXPORT uint64_t microclock();
+API_EXPORT uint64_t microclock(void);
+
+/* Not portable */
+static inline uint64_t
+nanoclock(void)
+{
+#if	IBM
+	return (microclock() * 1000);
+#else	/* !IBM */
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		return (microclock() * 1000);
+	return (ts.tv_sec * 1000000000llu + ts.tv_nsec);
+#endif	/* !IBM */
+}
 
 #ifdef	__cplusplus
 }
