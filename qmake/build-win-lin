@@ -82,4 +82,6 @@ if [ $? != 0 ] ; then
   exit
 fi
 
-make distclean > /dev/null
+if [[ "$DOCLEAN" != 0 ]]; then
+	make distclean > /dev/null
+fi
