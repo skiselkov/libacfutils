@@ -39,6 +39,8 @@ static bool_t dre_plug_lookup_done = B_FALSE;
 static XPLMPluginID dre_plug = XPLM_NO_PLUGIN_ID;	/* DataRefEditor */
 static XPLMPluginID drt_plug = XPLM_NO_PLUGIN_ID;	/* DataRefTool */
 
+dr_t lacf_uninit_dataref = { .value = NULL };
+
 bool_t
 dr_find(dr_t *dr, const char *fmt, ...)
 {
@@ -498,6 +500,10 @@ static void
 dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
     bool_t writable, bool_t wide_type, const char *fmt, va_list ap)
 {
+	ASSERT(dr != NULL);
+	ASSERT(value != NULL);
+	ASSERT(fmt != NULL);
+
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 
 	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
@@ -612,7 +618,8 @@ dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
 void
 dr_delete(dr_t *dr)
 {
-	VERIFY_MSG(dr->value != NULL, "%s", dr->name);
-	XPLMUnregisterDataAccessor(dr->dr);
-	memset(dr, 0, sizeof (*dr));
+	if (dr->value != NULL) {
+		XPLMUnregisterDataAccessor(dr->dr);
+		memset(dr, 0, sizeof (*dr));
+	}
 }

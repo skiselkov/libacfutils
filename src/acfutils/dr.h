@@ -50,6 +50,7 @@ struct dr_s {
 	void		(*write_array_cb)(dr_t *, void *, int, int);
 	void		*cb_userinfo;
 };
+#define	DATAREF_UNINIT	lacf_uninit_dataref
 
 API_EXPORT bool_t dr_find(dr_t *dr, PRINTF_FORMAT(const char *fmt), ...)
     PRINTF_ATTR(2);
@@ -126,6 +127,8 @@ API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_delete(dr_t *dr);
+
+API_EXPORT extern dr_t lacf_uninit_dataref;
 
 #ifdef	__cplusplus
 }
