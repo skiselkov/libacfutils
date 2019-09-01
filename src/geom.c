@@ -545,7 +545,8 @@ ecef2geo(vect3_t pos, const ellip_t *ellip)
 	/*
 	 * 5.0 compute height above ellipsoid
 	 */
-	res.elev= (r - ellip->a * t) * cos(res.lat) + (pos.z - B) * sin(res.lat);
+	res.elev = (r - ellip->a * t) * cos(res.lat) +
+	    (pos.z - B) * sin(res.lat);
 
 	/*
 	 *   6.0 compute longitude east of Greenwich

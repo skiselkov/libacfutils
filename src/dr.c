@@ -524,7 +524,8 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	if (!dre_plug_lookup_done) {
 		dre_plug = XPLMFindPluginBySignature(
 		    "xplanesdk.examples.DataRefEditor");
-		drt_plug = XPLMFindPluginBySignature("com.leecbaker.datareftool");
+		drt_plug = XPLMFindPluginBySignature(
+		    "com.leecbaker.datareftool");
 		dre_plug_lookup_done = B_TRUE;
 	}
 	if (dre_plug != XPLM_NO_PLUGIN_ID) {
