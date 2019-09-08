@@ -44,6 +44,7 @@ struct dr_s {
 	bool_t		wide_type;
 	void		*value;
 	ssize_t		count;
+	size_t		stride;
 	void		(*read_cb)(dr_t *, void *);
 	void		(*write_cb)(dr_t *, void *);
 	void		(*read_array_cb)(dr_t *, void *, int, int);
@@ -126,6 +127,7 @@ API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+API_EXPORT void dr_array_set_stride(dr_t *dr, size_t stride);
 API_EXPORT void dr_delete(dr_t *dr);
 
 API_EXPORT extern dr_t lacf_uninit_dataref;

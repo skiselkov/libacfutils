@@ -458,8 +458,16 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 		return (dr->count); \
 	if (off < dr->count) { \
 		count = MIN(count, dr->count - off); \
-		memcpy(out_values, dr->value + (off * type_sz), \
-		    type_sz * count); \
+		if (dr->stride == 0) { \
+			memcpy(out_values, dr->value + (off * type_sz), \
+			    type_sz * count); \
+		} else { \
+			for (int i = 0; i < count; i++) { \
+				memcpy((void *)out_values + (i * type_sz), \
+				    dr->value + ((off + i) * dr->stride), \
+				    type_sz); \
+			} \
+		} \
 	} \
  \
 	return (count); \
@@ -481,20 +489,35 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 		dr->write_array_cb(dr, in_values, off, count); \
 	if (off < dr->count) { \
 		count = MIN(count, dr->count - off); \
-		memcpy(dr->value + (off * type_sz), in_values, \
-		    type_sz * count); \
+		if (dr->stride == 0) { \
+			memcpy(dr->value + (off * type_sz), in_values, \
+			    type_sz * count); \
+		} else { \
+			for (int i = 0; i < count; i++) { \
+				memcpy(dr->value + ((off + i) * dr->stride), \
+				    ((void *)in_values) + (i * type_sz), \
+				    type_sz); \
+			} \
+		} \
 	} \
 }
 
 DEF_READ_ARRAY_CB(int, IntArray, sizeof (int))
 DEF_WRITE_ARRAY_CB(int, IntArray, sizeof (int))
-DEF_READ_ARRAY_CB(float, FloatArray, sizeof (int))
-DEF_WRITE_ARRAY_CB(float, FloatArray, sizeof (int))
+DEF_READ_ARRAY_CB(float, FloatArray, sizeof (float))
+DEF_WRITE_ARRAY_CB(float, FloatArray, sizeof (float))
 DEF_READ_ARRAY_CB(void, Data, sizeof (uint8_t))
 DEF_WRITE_ARRAY_CB(void, Data, sizeof (uint8_t))
 
 #undef	DEF_READ_ARRAY_CB
 #undef	DEF_WRITE_ARRAY_CB
+
+void
+dr_array_set_stride(dr_t *dr, size_t stride)
+{
+	ASSERT(dr != NULL);
+	dr->stride = stride;
+}
 
 static void
 dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
