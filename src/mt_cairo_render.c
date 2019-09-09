@@ -76,6 +76,7 @@ struct mt_cairo_render_s {
 	char			*init_filename;
 	int			init_line;
 
+	GLenum			tex_filter;
 	unsigned		w, h;
 	double			fps;
 	mt_cairo_render_cb_t	render_cb;
@@ -327,6 +328,7 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	mtcr->fini_cb = fini_cb;
 	mtcr->userinfo = userinfo;
 	mtcr->fps = fps;
+	mtcr->tex_filter = GL_LINEAR;
 
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
@@ -445,6 +447,20 @@ mt_cairo_render_get_fps(mt_cairo_render_t *mtcr)
 	return (mtcr->fps);
 }
 
+void
+mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
+    unsigned gl_filter_enum)
+{
+	/*
+	 * Must be called before any drawing was done, otherwise
+	 * the filtering won't be applied.
+	 */
+	ASSERT(mtcr != NULL);
+	ASSERT0(mtcr->rs[0].tex);
+	ASSERT0(mtcr->rs[1].tex);
+	mtcr->tex_filter = gl_filter_enum;
+}
+
 /*
  * Fires the renderer off once to produce a new frame. This can be especially
  * useful for renderers with fps = 0, which are only invoked on request.
@@ -488,9 +504,9 @@ rs_tex_alloc(mt_cairo_render_t *mtcr, render_surf_t *rs)
 		glGenTextures(1, &rs->tex);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-		    GL_LINEAR);
+		    mtcr->tex_filter);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		    GL_LINEAR);
+		    mtcr->tex_filter);
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
 		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));

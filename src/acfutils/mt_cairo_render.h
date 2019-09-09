@@ -59,6 +59,8 @@ API_EXPORT mt_cairo_render_t *mt_cairo_render_init_impl(const char *filename,
 API_EXPORT void mt_cairo_render_fini(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps);
 API_EXPORT double mt_cairo_render_get_fps(mt_cairo_render_t *mtcr);
+API_EXPORT void mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
+    unsigned gl_filter_enum);
 API_EXPORT void mt_cairo_render_once(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_once_wait(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos,
