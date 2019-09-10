@@ -47,7 +47,7 @@ struct dr_s {
 	size_t		stride;
 	void		(*read_cb)(dr_t *, void *);
 	void		(*write_cb)(dr_t *, void *);
-	void		(*read_array_cb)(dr_t *, void *, int, int);
+	int		(*read_array_cb)(dr_t *, void *, int, int);
 	void		(*write_array_cb)(dr_t *, void *, int, int);
 	void		*cb_userinfo;
 };

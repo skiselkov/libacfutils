@@ -452,8 +452,11 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
  \
-	if (dr->read_array_cb != NULL) \
-		dr->read_array_cb(dr, out_values, off, count); \
+	if (dr->read_array_cb != NULL) { \
+		int ret = dr->read_array_cb(dr, out_values, off, count); \
+		if (ret >= 0) \
+			return (ret); \
+	} \
 	if (out_values == NULL) \
 		return (dr->count); \
 	if (off < dr->count) { \
