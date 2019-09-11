@@ -145,7 +145,7 @@ conf_read(FILE *fp, int *errline)
 	conf_t *conf;
 	char *line = NULL;
 	size_t linecap = 0;
-	int linenum = 0;
+	unsigned linenum = 0;
 
 	conf = conf_create_empty();
 
@@ -155,21 +155,8 @@ conf_read(FILE *fp, int *errline)
 		conf_key_t *ck;
 		avl_index_t where;
 
-		linenum++;
-		if (getline(&line, &linecap, fp) <= 0)
-			continue;
-		strip_space(line);
-		if (*line == 0)
-			continue;
-
-		while ((sep = strstr(line, "--")) != NULL ||
-		    (sep = strstr(line, "#")) != NULL) {
-			*sep = 0;
-			strip_space(line);
-		}
-		if (*line == 0)
-			continue;
-
+		if (parser_get_next_line(fp, &line, &linecap, &linenum) <= 0)
+			break;
 		sep = strstr(line, "=");
 		if (sep == NULL) {
 			conf_free(conf);
