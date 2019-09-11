@@ -23,13 +23,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if APL || LIN
+#if	APL || LIN
 #include <pthread.h>
 #include <stdint.h>
 #include <time.h>
 #else	/* !APL && !LIN */
 #include <windows.h>
 #endif	/* !APL && !LIN */
+
+#if	APL
+#include <libkern/OSAtomic.h>
+#endif
 
 #if	LIN
 #include <sys/syscall.h>
@@ -233,6 +237,29 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	cv_broadcast	WakeAllConditionVariable
 
 #endif	/* !APL && !LIN */
+
+#if	IBM
+#define	atomic32_t		volatile LONG
+#define	atomic_inc_32(x)	InterlockedIncrement((x))
+#define	atomic_dec_32(x)	InterlockedDecrement((x))
+#define	atomic64_t		volatile LONG64
+#define	atomic_inc_64(x)	InterlockedIncrement64((x))
+#define	atomic_dec_64(x)	InterlockedDecrement64((x))
+#elif	APL
+#define	atomic32_t		volatile int32_t
+#define	atomic_inc_32(x)	OSAtomicAdd32(1, (x))
+#define	atomic_dec_32(x)	OSAtomicAdd32(-1, (x))
+#define	atomic64_t		volatile int64_t
+#define	atomic_inc_64(x)	OSAtomicAdd64(1, (x))
+#define	atomic_dec_64(x)	OSAtomicAdd64(-1, (x))
+#else	/* LIN */
+#define	atomic32_t		volatile int32_t
+#define	atomic_inc_32(x)	__sync_add_and_fetch((x), 1)
+#define	atomic_dec_32(x)	__sync_add_and_fetch((x), -1)
+#define	atomic64_t		volatile int64_t
+#define	atomic_inc_64(x)	__sync_add_and_fetch((x), 1)
+#define	atomic_dec_64(x)	__sync_add_and_fetch((x), -1)
+#endif	/* LIN */
 
 API_EXPORT void lacf_mask_sigpipe(void);
 
