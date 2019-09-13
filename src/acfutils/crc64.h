@@ -38,6 +38,8 @@ API_EXPORT void crc64_srand(uint64_t seed);
 API_EXPORT uint64_t crc64_rand(void);
 #define	crc64_rand_fract	ACFSYM(crc64_rand_fract)
 API_EXPORT double crc64_rand_fract(void);
+#define	crc64_rand_normal	ACFSYM(crc64_rand_normal)
+API_EXPORT double crc64_rand_normal(double sigma);
 
 #ifdef	__cplusplus
 }

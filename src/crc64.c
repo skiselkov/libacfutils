@@ -15,6 +15,11 @@
 /*
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  */
+/*
+ * Copyright 2017 Saso Kiselkov. All rights reserved.
+ */
+
+#include <math.h>
 
 #include <acfutils/assert.h>
 #include <acfutils/crc64.h>
@@ -96,4 +101,17 @@ double
 crc64_rand_fract(void)
 {
 	return (crc64_rand() / (double)UINT64_MAX);
+}
+
+/*
+ * Returns a random number using a normal distribution with standard
+ * deviation equal to sigma.
+ */
+double
+crc64_rand_normal(double sigma)
+{
+	double x = crc64_rand_fract();
+	double y = crc64_rand_fract();
+	double z = sqrt(-2 * log(x)) * cos(2 * M_PI * y);
+	return (sigma * z);
 }
