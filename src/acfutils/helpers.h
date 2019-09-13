@@ -340,6 +340,7 @@ API_EXPORT int stat(const char *pathname, struct stat *buf);
 #endif	/* !defined(_MSC_VER) */
 
 #define	sleep(x)	SleepEx((x) * 1000, FALSE)
+#define	usleep(x)	SleepEx((x) / 1000, FALSE)
 
 #endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
 
