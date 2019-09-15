@@ -72,6 +72,19 @@ safe_strdup(const char *str2)
 	return (str);
 }
 
+static inline char *
+safe_append_realloc(char *buf, const char *str)
+{
+	char *newbuf;
+
+	ASSERT(str != NULL);
+	if (buf == NULL)
+		return (safe_strdup(str));
+	newbuf = safe_realloc(buf, strlen(buf) + strlen(str) + 1);
+	strcat(newbuf, str);
+	return (newbuf);
+}
+
 #ifdef	__cplusplus
 }
 #endif
