@@ -81,7 +81,7 @@ safe_append_realloc(char *buf, const char *str)
 	if (buf == NULL)
 		return (safe_strdup(str));
 	newbuf = safe_realloc(buf, strlen(buf) + strlen(str) + 1);
-	strcat(newbuf, str);
+	memcpy(&newbuf[strlen(newbuf)], str, strlen(str) + 1);
 	return (newbuf);
 }
 
