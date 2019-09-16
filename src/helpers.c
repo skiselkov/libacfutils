@@ -1297,17 +1297,19 @@ API_EXPORT char *
 lacf_dirname(const char *filename)
 {
 	int l = strlen(filename);
-	char *p;
+	char *p1, *p2;
 	char *str;
 
 	if (l == 0)
 		return (strdup(""));
 
-	p = strrchr(filename, DIRSEP);
-	if (p == NULL)
+	p1 = strrchr(filename, '/');
+	p2 = strrchr(filename, '\\');
+	p1 = MAX(p1, p2);
+	if (p1 == NULL)
 		return (strdup(""));
-	str = malloc((p - filename) + 1);
-	lacf_strlcpy(str, filename, (p - filename) + 1);
+	str = malloc((p1 - filename) + 1);
+	lacf_strlcpy(str, filename, (p1 - filename) + 1);
 
 	return (str);
 }
