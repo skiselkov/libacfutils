@@ -56,7 +56,7 @@ contains(debug, 0) {
 
 win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
-	DEFINES += APL=0 IBM=1 LIN=0 _WIN32_WINNT=0x0600
+	DEFINES += APL=0 IBM=1 LIN=0 MSDOS _WIN32_WINNT=0x0600
 	QMAKE_CFLAGS += -Wno-misleading-indentation
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
