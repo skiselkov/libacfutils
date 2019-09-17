@@ -153,10 +153,15 @@ extern "C" {
 
 /*
  * Compile-time assertion. The condition 'x' must be constant.
+ * TYPE_ASSERT is a compile-time assertion, but which checks that
+ * the type of `x' is `type'.
  */
 #if	__STDC_VERSION__ >= 201112L
 #define	CTASSERT(x) _Static_assert((x), #x)
+#define	TYPE_ASSERT(x, type) \
+	CTASSERT(_Generic((x), type: 1, default: 0) != 0)
 #else	/* __STDC_VERSION__ < 201112L */
+#define	TYPE_ASSERT(x, type)
 #if	defined(__GNUC__) || defined(__clang__)
 #define	CTASSERT(x)		_CTASSERT(x, __LINE__)
 #define	_CTASSERT(x, y)		__CTASSERT(x, y)
