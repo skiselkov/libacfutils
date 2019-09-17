@@ -154,6 +154,9 @@ extern "C" {
 /*
  * Compile-time assertion. The condition 'x' must be constant.
  */
+#if	__STDC_VERSION__ >= 201112L
+#define	CTASSERT(x) _Static_assert((x), #x)
+#else	/* __STDC_VERSION__ < 201112L */
 #if	defined(__GNUC__) || defined(__clang__)
 #define	CTASSERT(x)		_CTASSERT(x, __LINE__)
 #define	_CTASSERT(x, y)		__CTASSERT(x, y)
@@ -163,6 +166,7 @@ extern "C" {
 #else	/* !defined(__GNUC__) && !defined(__clang__) */
 #define	CTASSERT(x)
 #endif	/* !defined(__GNUC__) && !defined(__clang__) */
+#endif	/* __STDC_VERSION__ < 201112L */
 
 #if	defined(__GNUC__) || defined(__clang__)
 
