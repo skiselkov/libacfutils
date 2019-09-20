@@ -179,6 +179,12 @@ API_EXPORT void append_format(char **str, size_t *sz,
 #define	strsplit			ACFSYM(strsplit)
 API_EXPORT char **strsplit(const char *input, char *sep, bool_t skip_empty,
     size_t *num);
+#define	DESTROY_STRLIST(comps, len) \
+	do { \
+		free_strlist((comps), (len)); \
+		(comps) = NULL; \
+		(len) = 0; \
+	} while (0)
 #define	free_strlist			ACFSYM(free_strlist)
 API_EXPORT void free_strlist(char **comps, size_t len);
 #define	unescape_percent		ACFSYM(unescape_percent)
