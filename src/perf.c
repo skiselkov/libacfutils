@@ -40,7 +40,7 @@
 
 #define	SECS_PER_HR	3600		/* Number of seconds in an hour */
 
-#define	STEP_DEBUG
+/*#define	STEP_DEBUG */
 
 #define	ACFT_PERF_MIN_VERSION	1
 #define	ACFT_PERF_MAX_VERSION	1
