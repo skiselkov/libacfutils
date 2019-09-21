@@ -64,6 +64,13 @@ extern "C" {
 API_EXPORT extern const char *libacfutils_version;
 
 API_EXPORT void *lacf_malloc(size_t n);
+#define	LACF_DESTROY(ptr) \
+	do { \
+		if ((ptr) != NULL) { \
+			lacf_free((ptr)); \
+			(ptr) = NULL; \
+		} \
+	} while (0)
 API_EXPORT void lacf_free(void *buf);
 
 #ifdef	__cplusplus
