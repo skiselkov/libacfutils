@@ -2408,6 +2408,7 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	VERIFY(xpdir != NULL);
 	VERIFY(cachedir != NULL);
 
+	db->inited = B_TRUE;
 	db->xpdir = strdup(xpdir);
 	db->cachedir = strdup(cachedir);
 	db->load_limit = ARPT_LOAD_LIMIT;
@@ -2430,6 +2431,10 @@ airportdb_destroy(airportdb_t *db)
 	void *cookie;
 	arpt_index_t *idx;
 
+	ASSERT(db != NULL);
+	if (!db->inited)
+		return;
+
 	cookie = NULL;
 	while ((idx = avl_destroy_nodes(&db->arpt_index, &cookie)) != NULL)
 		free(idx);
@@ -2446,6 +2451,7 @@ airportdb_destroy(airportdb_t *db)
 
 	free(db->xpdir);
 	free(db->cachedir);
+	memset(db, 0, sizeof (*db));
 }
 
 void

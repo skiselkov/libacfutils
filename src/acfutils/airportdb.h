@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 typedef struct airportdb {
+	bool_t		inited;
 	bool_t		ifr_only;
 	char		*xpdir;
 	char		*cachedir;
