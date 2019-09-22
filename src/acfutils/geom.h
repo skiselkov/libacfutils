@@ -208,6 +208,9 @@ API_EXPORT vect2_t vect2_rot(vect2_t v, double angle);
 API_EXPORT vect3_t vect3_neg(vect3_t v);
 API_EXPORT vect2_t vect2_neg(vect2_t v);
 
+API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
+    double hdgt);
+
 /*
  * Spherical, geodesic and ECEF coordinate conversion.
  */

@@ -392,6 +392,17 @@ vect2_neg(vect2_t v)
 }
 
 /*
+ * Converts a vector from X-Plane local OpenGL coordinates to aircraft
+ * coordinates, given aircraft roll, pitch and true heading.
+ */
+vect3_t
+vect3_local2acf(vect3_t v, double roll, double pitch, double hdgt)
+{
+	return (vect3_rot(vect3_rot(vect3_rot(v, -hdgt, 1), pitch, 0),
+	    -roll, 2));
+}
+
+/*
  * Converts surface coordinates on an Earth-sized spheroid into 3-space
  * coordinate vector in ECEF space. Please note that this considers the
  * Earth to be a perfect sphere and hence cannot be used for very precise
