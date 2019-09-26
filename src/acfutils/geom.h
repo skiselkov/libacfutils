@@ -212,7 +212,7 @@ API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
     double hdgt);
 
 /*
- * Spherical, geodesic and ECEF coordinate conversion.
+ * Spherical, geodesic, ECEF and ECmI coordinate conversion.
  */
 API_EXPORT ellip_t ellip_init(double semi_major, double semi_minor,
     double flattening);
@@ -222,6 +222,24 @@ API_EXPORT vect3_t geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip);
 API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
 API_EXPORT geo_pos3_t ecef2sph(vect3_t v);
 API_EXPORT vect3_t sph2ecef(geo_pos3_t pos);
+/*
+ * ECmI stands for Earth-Centered-modified-Inertial. Unlike ECEF, it is
+ * an inertial frame that doesn't rotate together with the earth. However,
+ * unlike plain ECI coordinates, ECmI is aligned with the Earth equatorial
+ * plane, not the Earth's orbital plane around the Sun. This makes it a
+ * bit easier to use for inertial calculations for objects moving around
+ * on the Earth (like airplanes, duh). In ECmI, the X and Y axes are
+ * aligned with the 0 and 90 degree meridians respectively ONLY at the
+ * coordinate reference time (delta_t=0). Thus, to convert between
+ * geographic or ECEF coordinates and ECmI, we need to know the exact time
+ * as a delta from the reference time (which can be arbitrary).
+ */
+API_EXPORT vect3_t geo2ecmi(geo_pos3_t pos, double delta_t,
+    const ellip_t *ellip);
+API_EXPORT geo_pos3_t ecmi2geo(vect3_t pos, double delta_t,
+    const ellip_t *ellip);
+API_EXPORT vect3_t ecef2ecmi(vect3_t ecef, double delta_t);
+API_EXPORT vect3_t ecmi2ecef(vect3_t ecmi, double delta_t);
 
 /*
  * Interesections.

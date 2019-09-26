@@ -28,6 +28,8 @@
 #include <acfutils/perf.h>
 #include <acfutils/safe_alloc.h>
 
+#define	SIDEREAL_DAY		86164.0905	/* sec */
+
 /*
  * The WGS84 ellipsoid parameters.
  */
@@ -398,8 +400,8 @@ vect2_neg(vect2_t v)
 vect3_t
 vect3_local2acf(vect3_t v, double roll, double pitch, double hdgt)
 {
-	return (vect3_rot(vect3_rot(vect3_rot(v, -hdgt, 1), pitch, 0),
-	    -roll, 2));
+	return (vect3_rot(vect3_rot(vect3_rot(v, pitch, 0),
+	    -roll, 2), hdgt, 1));
 }
 
 /*
@@ -438,6 +440,56 @@ sph2ecef(geo_pos3_t pos)
 	result.z = R * sin(lat_rad);
 
 	return (result);
+}
+
+/*
+ * Converts geographic coordinates into ECmI coordinates.
+ * @param pos Input geographic coordinates.
+ * @param delta_t Delta-time (in seconds) from the ECmI reference time.
+ * @param ellip Earth ellipsoid to use. You'll probably want &wgs84 in here.
+ * @return ECmI coordinates corresponding to the specified geographic
+ *	coordinates at reference time + delta_t.
+ */
+vect3_t
+geo2ecmi(geo_pos3_t pos, double delta_t, const ellip_t *ellip)
+{
+	ASSERT(!IS_NULL_GEO_POS(pos));
+	ASSERT(!isnan(delta_t));
+	ASSERT(ellip != NULL);
+	return (ecef2ecmi(geo2ecef_mtr(pos, ellip), delta_t));
+}
+
+/*
+ * Converts ECmI coordinates into geographic coordinates.
+ * @param pos Input ECmI coordinates.
+ * @param delta_t Delta-time (in seconds) from the ECmI reference time.
+ * @param ellip Earth ellipsoid to use. You'll probably want &wgs84 in here.
+ * @return Geographic coordinates corresponding to the specified ECmI
+ *	coordinates at reference time + delta_t.
+ */
+geo_pos3_t
+ecmi2geo(vect3_t pos, double delta_t, const ellip_t *ellip)
+{
+	ASSERT(!IS_NULL_VECT(pos));
+	ASSERT(!isnan(delta_t));
+	ASSERT(ellip != NULL);
+	return (ecef2geo(ecmi2ecef(pos, delta_t), ellip));
+}
+
+vect3_t
+ecef2ecmi(vect3_t pos, double delta_t)
+{
+	ASSERT(!IS_NULL_VECT(pos));
+	ASSERT(!isnan(delta_t));
+	return (vect3_rot(pos, 360 * (-delta_t / SIDEREAL_DAY), 2));
+}
+
+vect3_t
+ecmi2ecef(vect3_t pos, double delta_t)
+{
+	ASSERT(!IS_NULL_VECT(pos));
+	ASSERT(!isnan(delta_t));
+	return (vect3_rot(pos, 360 * (delta_t / SIDEREAL_DAY), 2));
 }
 
 ellip_t

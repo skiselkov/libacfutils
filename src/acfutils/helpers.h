@@ -117,6 +117,16 @@ normalize_hdg(double hdg)
 	return (hdg);
 }
 
+static inline double
+normalize_lon(double lon)
+{
+	while (lon > 180.0)
+		lon -= 360.0;
+	while (lon < -180.0)
+		lon += 360.0;
+	return (clamp(lon, -180, 180));
+}
+
 static inline bool_t
 is_valid_arc_radius(double radius)
 {
