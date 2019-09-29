@@ -49,7 +49,7 @@ const ellip_t wgs84 = {
  * Multiplies `x' and `y' and places result in 'z'. `xrows', `ycols' and `sz'
  * have meanings as explained below:
  *                sz                     ycols               ycols
- *            |<------->|             |<------->|         |<------->|
+ *            |	|             |	|         |	|
  *            |         |             |         |         |         |
  *
  *       --- ++=       =++         .-++=       =++       ++=       =++ --
@@ -395,13 +395,50 @@ vect2_neg(vect2_t v)
 
 /*
  * Converts a vector from X-Plane local OpenGL coordinates to aircraft
- * coordinates, given aircraft roll, pitch and true heading.
+ * coordinates, given aircraft local roll, pitch and heading. This can
+ * also be used to convert from aircraft coordinates to the true
+ * reference frame, by using true_phi, true_theta and true_psi intead
+ * of their local equivalents.
  */
 vect3_t
 vect3_local2acf(vect3_t v, double roll, double pitch, double hdgt)
 {
 	return (vect3_rot(vect3_rot(vect3_rot(v, pitch, 0),
 	    -roll, 2), hdgt, 1));
+}
+
+/*
+ * The inverse of vect3_local2acf.
+ */
+vect3_t
+vect3_acf2local(vect3_t v, double roll, double pitch, double hdgt)
+{
+	return (vect3_rot(vect3_rot(vect3_rot(v, -hdgt, 1),
+	    roll, 2), -pitch, 0));
+}
+
+double
+rel_angle(double a1, double a2)
+{
+	ASSERT(isfinite(a1));
+	ASSERT(isfinite(a2));
+	a1 = fmod(a1, 360);
+	if (a1 < 0.0)
+		a1 += 360.0;
+	a2 = fmod(a2, 360);
+	if (a2 < 0.0)
+		a2 += 360.0;
+	if (a1 > a2) {
+		if (a1 > a2 + 180)
+			return (360 - a1 + a2);
+		else
+			return (-(a1 - a2));
+	} else {
+		if (a2 > a1 + 180)
+			return (-(360 - a2 + a1));
+		else
+			return (a2 - a1);
+	}
 }
 
 /*

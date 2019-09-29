@@ -144,6 +144,10 @@ typedef struct {
 #define	GEO3_TO_GEO2(v)		((geo_pos2_t){(v).lat, (v).lon})
 #define	GEO3_FT2M(g)		GEO_POS3(g.lat, g.lon, FEET2MET(g.elev))
 #define	GEO3_M2FT(g)		GEO_POS3(g.lat, g.lon, MET2FEET(g.elev))
+#define	GEO3_EQ(p1, p2)	\
+	((p1).lat == (p2).lat && (p1).lon == (p2).lon && \
+	(p1).elev == (p2).elev)
+#define	GEO2_EQ(p1, p2)		((p1).lat == (p2).lat && (p1).lon == (p2).lon)
 
 #define	EARTH_MSL		6371200		/* meters */
 #ifndef	ABS
@@ -179,6 +183,11 @@ API_EXPORT bool_t is_on_arc(double angle_x, double angle1, double angle2,
     bool_t cw);
 
 /*
+ * Angle util functions.
+ */
+API_EXPORT double rel_angle(double a1, double a2);
+
+/*
  * Vector math.
  */
 API_EXPORT double vect3_abs(vect3_t a);
@@ -209,6 +218,8 @@ API_EXPORT vect3_t vect3_neg(vect3_t v);
 API_EXPORT vect2_t vect2_neg(vect2_t v);
 
 API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
+    double hdgt);
+API_EXPORT vect3_t vect3_acf2local(vect3_t v, double roll, double pitch,
     double hdgt);
 
 /*
