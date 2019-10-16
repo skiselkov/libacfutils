@@ -175,63 +175,33 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	thread_id_t	DWORD
 typedef struct {
 	bool_t			inited;
-	DWORD			owner;
-	uint64_t		refcnt;
 	CRITICAL_SECTION	cs;
 } mutex_t;
 #define	condvar_t	CONDITION_VARIABLE
 #define	curthread	GetCurrentThreadId()
 
-static inline void
-mutex_init(mutex_t *mtx)
-{
-	mtx->inited = B_TRUE;
-	mtx->owner = 0;
-	mtx->refcnt = 0;
-	InitializeCriticalSection(&mtx->cs);
-}
-
-static inline void
-mutex_destroy(mutex_t *mtx)
-{
-	if (!mtx->inited)
-		return;
-	ASSERT_MSG(mtx->refcnt, "Attempted to destroy an unreleased lock "
-	    "which appears to be held by thread %lx", mtx->owner);
-	DeleteCriticalSection(&mtx->cs); \
-	mtx->inited = B_FALSE;
-	mtx->owner = 0;
-	mtx->refcnt = 0;
-}
-
-static inline void
-mutex_enter(mutex_t *mtx)
-{
-	ASSERT(mtx->inited);
-	EnterCriticalSection(&mtx->cs);
-	mtx->refcnt++;
-	if (mtx->refcnt == 1)
-		mtx->owner = GetCurrentThreadId();
-	else
-		ASSERT3U(mtx->owner, ==, GetCurrentThreadId());
-}
-
-static inline void
-mutex_exit(mutex_t *mtx)
-{
-	ASSERT(mtx->inited);
-	ASSERT_MSG(mtx->refcnt != 0, "Attempted to release lock NOT held "
-	    "by current thread %lx, or anybody else", GetCurrentThreadId());
-	ASSERT_MSG(GetCurrentThreadId() == mtx->owner, "Thread %lx attempted "
-	    "to release lock held by thread %lx", GetCurrentThreadId(),
-	    mtx->owner);
-	mtx->refcnt--;
-	if (mtx->refcnt == 0)
-		mtx->owner = 0;
-	LeaveCriticalSection(&mtx->cs);
-}
-
-#define	MUTEX_HELD(mtx)	(GetCurrentThreadId() == (mtx)->owner)
+#define	mutex_init(x) \
+	do { \
+		(x)->inited = B_TRUE; \
+		InitializeCriticalSection(&(x)->cs); \
+	} while (0)
+#define	mutex_destroy(x) \
+	do { \
+		ASSERT((x)->inited); \
+		DeleteCriticalSection(&(x)->cs); \
+		(x)->inited = B_FALSE; \
+	} while (0)
+#define	mutex_enter(x) \
+	do { \
+		ASSERT((x)->inited); \
+		EnterCriticalSection(&(x)->cs); \
+	} while (0)
+#define	mutex_exit(x) \
+	do { \
+		ASSERT((x)->inited); \
+		LeaveCriticalSection(&(x)->cs); \
+	} while (0)
+#define	MUTEX_HELD(mtx)	1
 
 #define	thread_create(thrp, proc, arg) \
 	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
