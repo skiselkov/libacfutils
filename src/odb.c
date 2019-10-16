@@ -91,7 +91,7 @@ struct odb_s {
 
 static void add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
     obst_light_t light, unsigned quant, void *userinfo);
-static odb_tile_t * load_tile(odb_t *odb, int lat, int lon,
+static odb_tile_t *load_tile(odb_t *odb, int lat, int lon,
     bool_t load_from_db);
 static void odb_flush_tiles(odb_t *odb);
 
@@ -115,6 +115,7 @@ tile_compar(const void *a, const void *b)
 static void
 latlon2path(int lat, int lon, char dname[32])
 {
+	ASSERT(dname != NULL);
 	snprintf(dname, 32, "%+03d%+04d%c%+03d%+04d",
 	    (int)floor(lat / 10.0) * 10, (int)floor(lon / 10.0) * 10,
 	    DIRSEP, lat, lon);
@@ -217,6 +218,8 @@ static bool_t
 odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
     void *userinfo)
 {
+	ASSERT(buf != NULL);
+
 	for (const char *line_start = buf, *line_end = buf;
 	    line_start < buf + len; line_start = line_end + 1) {
 		char **comps;
@@ -266,13 +269,16 @@ next:
 static bool_t
 odb_proc_us_dof(const char *path, add_obst_cb_t cb, void *userinfo)
 {
-	char *str = file2str(path, NULL);
+	char *str;
 	bool_t res;
+
+	ASSERT(path != NULL);
+	str = file2str(path, NULL);
 
 	if (str == NULL)
 		return (B_FALSE);
 	res = odb_proc_us_dof_impl(str, strlen(str), cb, userinfo);
-	free(str);
+	LACF_DESTROY(str);
 
 	return (res);
 }
@@ -282,9 +288,12 @@ free_tile(odb_tile_t *tile)
 {
 	obst_t *obst;
 
+	ASSERT(tile != NULL);
+
 	while ((obst = list_remove_head(&tile->obst)) != NULL)
 		free(obst);
 	list_destroy(&tile->obst);
+	memset(tile, 0, sizeof (*tile));
 	free(tile);
 }
 
@@ -292,6 +301,8 @@ odb_t *
 odb_init(const char *xpdir, const char *cainfo)
 {
 	odb_t *odb = safe_calloc(1, sizeof (*odb));
+
+	ASSERT(xpdir != NULL);
 
 	odb->cache_dir = mkpathname(xpdir, "Output", "caches",
 	    "obstacle.db", NULL);
@@ -311,24 +322,32 @@ odb_init(const char *xpdir, const char *cainfo)
 void
 odb_fini(odb_t *odb)
 {
+	if (odb == NULL)
+		return;
+
 	if (odb->refresh_run) {
 		odb->refresh_run = B_FALSE;
 		thread_join(&odb->refresh_thr);
 	}
 	mutex_destroy(&odb->refresh_lock);
 
+	mutex_enter(&odb->tiles_lock);
 	odb_flush_tiles(odb);
+	mutex_exit(&odb->tiles_lock);
+
 	avl_destroy(&odb->tiles);
 	mutex_destroy(&odb->tiles_lock);
 
 	free(odb->cainfo);
 	free(odb->cache_dir);
+	memset(odb, 0, sizeof (*odb));
 	free(odb);
 }
 
 void
 odb_set_unload_delay(odb_t *odb, unsigned seconds)
 {
+	ASSERT(odb != NULL);
 	odb->unload_delay = seconds;
 }
 
@@ -338,6 +357,8 @@ odb_get_cc_refresh_date_impl(odb_t* odb, const char *cc)
 	char *str;
 	time_t res = 0;
 
+	ASSERT(odb != NULL);
+	ASSERT(cc != NULL);
 	ASSERT_MSG(strlen(cc) == 2 && strchr(cc, DIRSEP) == NULL,
 	    "invalid country code \"%s\" passed", cc);
 
@@ -354,6 +375,9 @@ odb_get_cc_refresh_date_impl(odb_t* odb, const char *cc)
 time_t
 odb_get_cc_refresh_date(odb_t *odb, const char *cc)
 {
+	ASSERT(odb != NULL);
+	ASSERT(cc != NULL);
+
 	if (strcmp(cc, "US") == 0) {
 		if (odb->refresh_times[ODB_REGION_US] == 0) {
 			odb->refresh_times[ODB_REGION_US] =
@@ -368,10 +392,11 @@ odb_get_cc_refresh_date(odb_t *odb, const char *cc)
 static size_t
 dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-	dl_info_t *dl_info = userdata;
+	dl_info_t *dl_info;
 	size_t bytes = size * nmemb;
 
-	ASSERT(dl_info != NULL);
+	ASSERT(userdata != NULL);
+	dl_info = userdata;
 
 	/* Respond to an early termination request */
 	if (!dl_info->odb->refresh_run)
@@ -394,6 +419,10 @@ write_tile(odb_t *odb, odb_tile_t *tile, const char *cc)
 	char *path, *dirpath, *p;
 	FILE *fp = NULL;
 	bool_t res = B_FALSE;
+
+	ASSERT(odb != NULL);
+	ASSERT(tile != NULL);
+	ASSERT(cc != NULL);
 
 	latlon2path(tile->lat, tile->lon, subpath);
 	path = mkpathname(odb->cache_dir, cc, subpath, NULL);
@@ -435,6 +464,10 @@ errout:
 static void
 odb_write_tiles(odb_t *odb, const char *cc)
 {
+	ASSERT(odb != NULL);
+	ASSERT_MUTEX_HELD(&odb->tiles_lock);
+	ASSERT(cc != NULL);
+
 	for (odb_tile_t *tile = avl_first(&odb->tiles); tile != NULL;
 	    tile = AVL_NEXT(&odb->tiles, tile)) {
 		if (!write_tile(odb, tile, cc))
@@ -448,6 +481,9 @@ odb_flush_tiles(odb_t *odb)
 	void *cookie = NULL;
 	odb_tile_t *tile;
 
+	ASSERT(odb != NULL);
+	ASSERT_MUTEX_HELD(&odb->tiles_lock);
+
 	while ((tile = avl_destroy_nodes(&odb->tiles, &cookie)) != NULL)
 		free_tile(tile);
 }
@@ -455,10 +491,16 @@ odb_flush_tiles(odb_t *odb)
 static void
 write_odb_refresh_date(odb_t *odb, const char *cc)
 {
-	char *path = mkpathname(odb->cache_dir, cc, "refresh.txt", NULL);
-	FILE *fp = fopen(path, "wb");
+	char *path;
+	FILE *fp;
 	time_t now = time(NULL);
 
+	ASSERT(odb != NULL);
+	ASSERT(odb->cache_dir != NULL);
+	ASSERT(cc != NULL);
+
+	path = mkpathname(odb->cache_dir, cc, "refresh.txt", NULL);
+	fp = fopen(path, "wb");
 	if (fp == NULL) {
 		logMsg("Error writing obstacle database refresh file %s: %s",
 		    path, strerror(errno));
@@ -466,9 +508,8 @@ write_odb_refresh_date(odb_t *odb, const char *cc)
 	}
 	fprintf(fp, "%ld\n", (long)now);
 	fclose(fp);
-
 errout:
-	free(path);
+	LACF_DESTROY(path);
 }
 
 static void
@@ -479,6 +520,8 @@ odb_refresh_us(odb_t *odb)
 	dl_info_t dl_info = { .odb = odb };
 
 	thread_set_name("odb-refresh-us");
+
+	ASSERT(odb != NULL);
 
 	curl = curl_easy_init();
 	VERIFY(curl != NULL);
@@ -544,6 +587,9 @@ odb_refresh_cc(odb_t *odb, const char *cc)
 {
 	void (*refresh_op)(odb_t *odb) = NULL;
 
+	ASSERT(odb != NULL);
+	ASSERT(cc != NULL);
+
 	mutex_enter(&odb->refresh_lock);
 	if (!odb->refresh_run) {
 		if (strcmp(cc, "US") == 0)
@@ -563,8 +609,11 @@ static void
 add_tile_obst(obst_type_t type, geo_pos3_t pos, float agl,
     obst_light_t light, unsigned quant, void *userinfo)
 {
-	odb_tile_t *tile = userinfo;
+	odb_tile_t *tile;
 	obst_t *obst = safe_calloc(1, sizeof (*obst));
+
+	ASSERT(userinfo != NULL);
+	tile = userinfo;
 
 	obst->type = type;
 	obst->pos = pos;
@@ -579,9 +628,12 @@ static void
 add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
     obst_light_t light, unsigned quant, void *userinfo)
 {
-	odb_t *odb = userinfo;
-	odb_tile_t *tile = load_tile(odb, floor(pos.lat), floor(pos.lon),
-	    B_FALSE);
+	odb_t *odb;
+	odb_tile_t *tile;
+
+	ASSERT(userinfo != NULL);
+	odb = userinfo;
+	tile = load_tile(odb, floor(pos.lat), floor(pos.lon), B_FALSE);
 	add_tile_obst(type, pos, agl, light, quant, tile);
 }
 
@@ -590,6 +642,9 @@ odb_populate_tile_us(odb_t *odb, odb_tile_t *tile)
 {
 	char tilepath[32];
 	char *path;
+
+	ASSERT(odb != NULL);
+	ASSERT(tile != NULL);
 
 	latlon2path(tile->lat, tile->lon, tilepath);
 	path = mkpathname(odb->cache_dir, "US", tilepath, NULL);
@@ -600,6 +655,8 @@ odb_populate_tile_us(odb_t *odb, odb_tile_t *tile)
 static void
 odb_populate_tile(odb_t *odb, odb_tile_t *tile)
 {
+	ASSERT(odb != NULL);
+	ASSERT(tile != NULL);
 	odb_populate_tile_us(odb, tile);
 }
 
@@ -609,6 +666,9 @@ load_tile(odb_t *odb, int lat, int lon, bool_t load_from_db)
 	odb_tile_t *tile;
 	odb_tile_t srch = { .lat = lat, .lon = lon };
 	avl_index_t where;
+
+	ASSERT(odb != NULL);
+	ASSERT_MUTEX_HELD(&odb->tiles_lock);
 
 	tile = avl_find(&odb->tiles, &srch, &where);
 	if (tile == NULL) {
@@ -634,6 +694,7 @@ odb_get_obstacles(odb_t *odb, int lat, int lon, add_obst_cb_t cb,
 {
 	odb_tile_t *tile;
 
+	ASSERT(odb != NULL);
 	ASSERT(cb != NULL);
 
 	mutex_enter(&odb->tiles_lock);
