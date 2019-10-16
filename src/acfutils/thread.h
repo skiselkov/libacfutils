@@ -141,9 +141,13 @@ extern "C" {
 #define	mutex_exit(mtx)		pthread_mutex_unlock((mtx))
 
 #if	LIN
-#define	MUTEX_HELD(mtx)	((mtx)->__data.__owner == syscall(SYS_gettid))
+#define	VERIFY_MUTEX_HELD(mtx)	\
+	VERIFY((mtx)->__data.__owner == syscall(SYS_gettid))
+#define	VERIFY_MUTEX_NOT_HELD(mtx) \
+	VERIFY((mtx)->__data.__owner != syscall(SYS_gettid))
 #else	/* APL */
-#define	MUTEX_HELD(mtx)	B_TRUE
+#define	VERIFY_MUTEX_HELD(mtx)		(void)1
+#define	VERIFY_MUTEX_NOT_HELD(mtx)	(void)1
 #endif	/* APL */
 
 #define	thread_create(thrp, proc, arg) \
@@ -201,7 +205,8 @@ typedef struct {
 		ASSERT((x)->inited); \
 		LeaveCriticalSection(&(x)->cs); \
 	} while (0)
-#define	MUTEX_HELD(mtx)	1
+#define	VERIFY_MUTEX_HELD(mtx)		(void)1
+#define	VERIFY_MUTEX_NOT_HELD(mtx)	(void)1
 
 #define	thread_create(thrp, proc, arg) \
 	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
@@ -347,6 +352,14 @@ rwmutex_held_write(rwmutex_t *rw)
 {
 	return (rw->writer == curthread);
 }
+
+#ifdef	DEBUG
+#define	ASSERT_MUTEX_HELD(mtx)		VERIFY_MUTEX_HELD(mtx)
+#define	ASSERT_MUTEX_NOT_HELD(mtx)	VERIFY_MUTEX_NOT_HELD(mtx)
+#else	/* !DEBUG */
+#define	ASSERT_MUTEX_HELD(mtx)
+#define	ASSERT_MUTEX_NOT_HELD(mtx)
+#endif	/* !DEBUG */
 
 #ifdef __cplusplus
 }
