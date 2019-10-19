@@ -344,6 +344,16 @@ double lacf_gamma_air(double T);
  */
 double lacf_therm_cond_air(double T);
 
+/*
+ * Returns very accurate Earth gravitational acceleration at a specific
+ * point around the Earth. For simplicity, this assumes that the gravitational
+ * field is uniform along longitude.
+ * @param lat Latitude in degrees.
+ * @param alt Altitude in meters.
+ * @return Gravitational acceleration at the chosen point, in m/s^2.
+ */
+double earth_gravity_accurate(double lat, double alt);
+
 #ifdef	__cplusplus
 }
 #endif

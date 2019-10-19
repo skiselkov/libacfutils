@@ -2569,3 +2569,30 @@ lacf_therm_cond_air(double T)
 	ASSERT3F(T, >, 0);
 	return (fx_lin(T, 233.2, 0.0209, 498.15, 0.0398));
 }
+
+double
+earth_gravity_accurate(double lat, double alt)
+{
+	/*
+	 * Based on https://www.engineeringtoolbox.com/docs/documents/1554/
+	 * acceleration-gravity-latitude-meter-second-second.png
+	 */
+	const vect2_t lat_curve[] = {
+	    VECT2(0, 9.781),
+	    VECT2(10, 9.782),
+	    VECT2(20, 9.787),
+	    VECT2(30, 9.793),
+	    VECT2(60, 9.819),
+	    VECT2(70, 9.826),
+	    VECT2(80, 9.831),
+	    VECT2(90, 9.833),
+	    NULL_VECT2  /* list terminator */
+	};
+	const double delta_per_m = -0.00000305;
+
+	ASSERT3F(lat, >=, -90);
+	ASSERT3F(lat, <=, 90);
+	ASSERT(isfinite(alt));
+
+	return (fx_lin_multi(ABS(lat), lat_curve, B_FALSE) + alt * delta_per_m);
+}
