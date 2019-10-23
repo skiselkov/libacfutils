@@ -102,7 +102,7 @@ API_EXPORT void dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df,
 	dr_getvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
 API_EXPORT int dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
     unsigned off, unsigned num);
-#define	dr_setv32(__dr, __i, __off, __num) \
+#define	dr_setvf32(__dr, __i, __off, __num) \
 	dr_setvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
 API_EXPORT void dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
     unsigned off, unsigned num);
