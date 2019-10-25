@@ -131,6 +131,18 @@ vect2_abs(vect2_t a)
 	return (sqrt(POW2(a.x) + POW2(a.y)));
 }
 
+vect3_t
+vect3_mul(vect3_t a, vect3_t b)
+{
+	return (VECT3(a.x * b.x, a.y * b.y, a.z * b.z));
+}
+
+vect2_t
+vect2_mul(vect2_t a, vect2_t b)
+{
+	return (VECT2(a.x * b.x, a.y * b.y));
+}
+
 /*
  * Same as vect3_dist, but for 2-space vectors.
  */

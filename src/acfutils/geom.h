@@ -203,6 +203,8 @@ API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b);
 API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b);
 API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b);
 API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_mul(vect3_t a, vect3_t b);
+API_EXPORT vect2_t vect2_mul(vect2_t a, vect2_t b);
 API_EXPORT vect3_t vect3_scmul(vect3_t a, double b);
 API_EXPORT vect2_t vect2_scmul(vect2_t a, double b);
 API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b);
