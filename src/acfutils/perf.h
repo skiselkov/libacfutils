@@ -98,6 +98,7 @@ extern "C" {
 #define	GAMMA		1.4		/* Specific heat ratio of dry air */
 #define	R_univ		8.31447		/* Universal gas constant */
 #define	R_spec		287.058		/* Specific gas constant of dry air */
+#define	BOLTZMANN_CONST	5.67E-8		/* Stefan-Boltzmann constant */
 
 /* Calculates gravitational force for mass `m' in kg on Earth */
 #define	MASS2GFORCE(m)	((m) * EARTH_GRAVITY)
