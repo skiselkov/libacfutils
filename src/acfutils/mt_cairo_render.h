@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2019 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_MT_CAIRO_RENDER_H_
@@ -77,6 +77,9 @@ API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_set_ctx_checking_enabled(
     mt_cairo_render_t *mtcr, bool_t flag);
+
+API_EXPORT void mt_cairo_render_set_debug(mt_cairo_render_t *mtcr, bool_t flag);
+API_EXPORT bool_t mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr);
 
 /*
  * Must ONLY be called from the rendering callback.
