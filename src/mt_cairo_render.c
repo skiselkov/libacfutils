@@ -59,7 +59,7 @@
 #define	MTCR_DEBUG(...) \
 	do { \
 		if (mtcr->debug) \
-			printf(__VA_ARGS__); \
+			logMsg(__VA_ARGS__); \
 	} while (0)
 
 TEXSZ_MK_TOKEN(mt_cairo_render_tex);
@@ -202,8 +202,10 @@ static void
 worker(mt_cairo_render_t *mtcr)
 {
 	char name[32];
+	char shortname[7];
 
-	snprintf(name, sizeof (name), "mtcr %dx%d", mtcr->w, mtcr->h);
+	strlcpy(shortname, mtcr->init_filename, sizeof (shortname));
+	snprintf(name, sizeof (name), "mtcr:%s:%d", shortname, mtcr->init_line);
 	thread_set_name(name);
 
 	/*
@@ -508,6 +510,7 @@ static void
 rs_tex_alloc(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	if (rs->tex == 0) {
+		MTCR_DEBUG("rs %d alloc tex", rs == &mtcr->rs[0] ? 0 : 1);
 		glGenTextures(1, &rs->tex);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
@@ -521,12 +524,14 @@ rs_tex_alloc(mt_cairo_render_t *mtcr, render_surf_t *rs)
 	if (mtcr->pbo == 0) {
 		size_t sz = mtcr->w * mtcr->h * 4;
 
+		MTCR_DEBUG("rs %d alloc pbo", rs == &mtcr->rs[0] ? 0 : 1);
 		glGenBuffers(1, &mtcr->pbo);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, 0, GL_STREAM_DRAW);
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
 		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 }
 
@@ -534,6 +539,8 @@ static void
 upload_surface(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	void *ptr;
+
+	MTCR_DEBUG("rs %d upload tex %d", rs == &mtcr->rs[0] ? 0 : 1, rs->tex);
 
 	cairo_surface_flush(rs->surf);
 
@@ -546,13 +553,15 @@ upload_surface(mt_cairo_render_t *mtcr, render_surf_t *rs)
 		memcpy(ptr, cairo_image_surface_get_data(rs->surf), sz);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
+		ASSERT(rs->tex != 0);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
 		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	} else {
-		logMsg("Error updating mt_cairo_render surface %p: "
-		    "glMapBuffer returned NULL", mtcr);
+		logMsg("Error updating mt_cairo_render surface %p(%s:%d): "
+		    "glMapBuffer returned NULL", mtcr, mtcr->init_filename,
+		    mtcr->init_line);
 		bind_tex_sync(mtcr, rs);
 	}
 	rs->chg = B_FALSE;
@@ -564,12 +573,9 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 
 	glActiveTexture(GL_TEXTURE0);
-
 	rs_tex_alloc(mtcr, rs);
-
 	if (rs->chg)
 		upload_surface(mtcr, rs);
-
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 
 	return (B_TRUE);
