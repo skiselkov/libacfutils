@@ -112,6 +112,7 @@ struct mt_cairo_render_s {
 	GLuint			vtx_buf;
 	GLuint			idx_buf;
 	GLuint			shader;
+	bool_t			shader_is_custom;
 	GLint			shader_loc_pvm;
 	GLint			shader_loc_tex;
 
@@ -362,20 +363,7 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	}
 
 	mtcr->last_draw.pos = NULL_VECT2;
-	if (GLEW_VERSION_4_1) {
-		char *vert_shader_text = sprintf_alloc(vert_shader410,
-		    VTX_ATTRIB_POS, VTX_ATTRIB_TEX0);
-		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
-		    vert_shader_text, frag_shader410, NULL);
-		free(vert_shader_text);
-	} else {
-		mtcr->shader = shader_prog_from_text("mt_cairo_render_shader",
-		    vert_shader, frag_shader, "vtx_pos", VTX_ATTRIB_POS,
-		    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
-	}
-	VERIFY(mtcr->shader != 0);
-	mtcr->shader_loc_pvm = glGetUniformLocation(mtcr->shader, "pvm");
-	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
+	mt_cairo_render_set_shader(mtcr, 0);
 
 	setup_vao(mtcr);
 	mtcr->create_ctx = glctx_get_current();
@@ -424,7 +412,7 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
 		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
-	if (mtcr->shader != 0)
+	if (mtcr->shader != 0 && !mtcr->shader_is_custom)
 		glDeleteProgram(mtcr->shader);
 
 	free(mtcr->init_filename);
@@ -468,6 +456,38 @@ mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
 	ASSERT0(mtcr->rs[0].tex);
 	ASSERT0(mtcr->rs[1].tex);
 	mtcr->tex_filter = gl_filter_enum;
+}
+
+void
+mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
+{
+	ASSERT(mtcr != NULL);
+
+	if (prog != 0) {
+		if (!mtcr->shader_is_custom && mtcr->shader != 0)
+			glDeleteProgram(mtcr->shader);
+		mtcr->shader = prog;
+		mtcr->shader_is_custom = B_TRUE;
+	} else if (mtcr->shader_is_custom || mtcr->shader == 0) {
+		/* Reinstall our standard shader */
+		mtcr->shader_is_custom = B_FALSE;
+		if (GLEW_VERSION_4_1) {
+			char *vert_shader_text = sprintf_alloc(vert_shader410,
+			    VTX_ATTRIB_POS, VTX_ATTRIB_TEX0);
+			mtcr->shader = shader_prog_from_text(
+			    "mt_cairo_render_shader",
+			    vert_shader_text, frag_shader410, NULL);
+			free(vert_shader_text);
+		} else {
+			mtcr->shader = shader_prog_from_text(
+			    "mt_cairo_render_shader", vert_shader, frag_shader,
+			    "vtx_pos", VTX_ATTRIB_POS,
+			    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
+		}
+	}
+	VERIFY(mtcr->shader != 0);
+	mtcr->shader_loc_pvm = glGetUniformLocation(mtcr->shader, "pvm");
+	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
 }
 
 /*
@@ -725,6 +745,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
 
+	ASSERT(mtcr->shader != 0);
 	glUseProgram(mtcr->shader);
 
 	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
