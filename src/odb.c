@@ -68,6 +68,7 @@ typedef struct {
 } obst_t;
 
 typedef struct {
+	odb_t		*odb;
 	int		lat, lon;
 	time_t		access_t;
 	list_t		obst;
@@ -219,6 +220,7 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
     void *userinfo)
 {
 	ASSERT(buf != NULL);
+	ASSERT(cb != NULL);
 
 	for (const char *line_start = buf, *line_end = buf;
 	    line_start < buf + len; line_start = line_end + 1) {
@@ -547,9 +549,15 @@ odb_refresh_us(odb_t *odb)
 		if (buf != NULL) {
 			char *subpath = mkpathname(odb->cache_dir, "US", NULL);
 
+			/*
+			 * The downloaded DOF is HUUUGE, so DON'T lock here.
+			 * add_obst_to_odb will lock the database when it's
+			 * ready to add a single obstacle instead.
+			 */
+			odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
+
 			mutex_enter(&odb->tiles_lock);
 
-			odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
 			if (file_exists(subpath, NULL))
 				remove_directory(subpath);
 			create_directory_recursive(odb->cache_dir);
@@ -614,6 +622,8 @@ add_tile_obst(obst_type_t type, geo_pos3_t pos, float agl,
 
 	ASSERT(userinfo != NULL);
 	tile = userinfo;
+	ASSERT(tile->odb != NULL);
+	ASSERT_MUTEX_HELD(&tile->odb->tiles_lock);
 
 	obst->type = type;
 	obst->pos = pos;
@@ -633,8 +643,11 @@ add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
 
 	ASSERT(userinfo != NULL);
 	odb = userinfo;
+
+	mutex_enter(&odb->tiles_lock);
 	tile = load_tile(odb, floor(pos.lat), floor(pos.lon), B_FALSE);
 	add_tile_obst(type, pos, agl, light, quant, tile);
+	mutex_exit(&odb->tiles_lock);
 }
 
 static void
@@ -673,6 +686,7 @@ load_tile(odb_t *odb, int lat, int lon, bool_t load_from_db)
 	tile = avl_find(&odb->tiles, &srch, &where);
 	if (tile == NULL) {
 		tile = safe_calloc(1, sizeof (*tile));
+		tile->odb = odb;
 		tile->lat = lat;
 		tile->lon = lon;
 		list_create(&tile->obst, sizeof (obst_t),
