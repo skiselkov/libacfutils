@@ -207,6 +207,9 @@ API_EXPORT char *mkpathname_v(const char *comp, va_list ap);
 #define	fix_pathsep			ACFSYM(fix_pathsep)
 API_EXPORT void fix_pathsep(char *str);
 
+#define	path_last_comp_subst		ACFSYM(path_last_comp_subst)
+API_EXPORT char *path_last_comp_subst(const char *path, const char *replace);
+
 #define	file2str			ACFSYM(file2str)
 API_EXPORT char *file2str(const char *comp, ...);
 #define	file2str_ext			ACFSYM(file2str_ext)

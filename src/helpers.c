@@ -908,6 +908,36 @@ fix_pathsep(char *str)
 	}
 }
 
+/*
+ * Strips the last path component from `path' and replaces with with `replace'.
+ * Example:
+ *	path = "/foo/bar"
+ *	replace = "baz"
+ *	result = "/foo/baz"
+ * The returned value must be freed using lacf_free.
+ */
+char *
+path_last_comp_subst(const char *path, const char *replace)
+{
+	const char *last_sep;
+	char *tmp, *result;
+
+	ASSERT(path != NULL);
+	ASSERT(replace != NULL);
+
+	last_sep = MAX(strrchr(path, '/'), strrchr(path, '\\'));
+	if (last_sep == NULL) {
+		/* No path separator? Just return a copy of the replacement. */
+		return (strdup(replace));
+	}
+	tmp = safe_malloc(last_sep - path + 1);
+	lacf_strlcpy(tmp, path, last_sep - path + 1);
+	result = mkpathname(tmp, replace, NULL);
+	free(tmp);
+
+	return (result);
+}
+
 char *
 file2str(const char *comp, ...)
 {
