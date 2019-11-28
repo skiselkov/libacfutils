@@ -713,6 +713,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	bool_t use_vao;
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
+	bool cull_front = false;
 
 	if (mtcr->cur_rs == -1)
 		return;
@@ -744,6 +745,10 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_TEX0, 2, GL_FLOAT,
 		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
+	if ((size.x < 0 && size.y >= 0) || (size.x >= 0 && size.y < 0)) {
+		glCullFace(GL_FRONT);
+		cull_front = true;
+	}
 
 	ASSERT(mtcr->shader != 0);
 	glUseProgram(mtcr->shader);
@@ -765,6 +770,9 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glUseProgram(0);
+
+	if (cull_front)
+		glCullFace(GL_BACK);
 }
 
 /*
