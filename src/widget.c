@@ -56,7 +56,7 @@ typedef struct {
 } monitor_t;
 
 struct tooltip_set {
-	XPWidgetID	window;
+	XPLMWindowID	window;
 	list_t		tooltips;
 	list_node_t	node;
 };
@@ -185,6 +185,12 @@ classic_win_center(XPLMWindowID window)
 tooltip_set_t *
 tooltip_set_new(XPWidgetID window)
 {
+	return (tooltip_set_new_native(XPGetWidgetUnderlyingWindow(window)));
+}
+
+tooltip_set_t *
+tooltip_set_new_native(XPLMWindowID window)
+{
 	tooltip_set_t *tts = safe_malloc(sizeof (*tts));
 	tts->window = window;
 	list_create(&tts->tooltips, sizeof (tooltip_t),
@@ -302,9 +308,9 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	    tts = list_next(&tooltip_sets, tts)) {
 		int wleft, wtop, wright, wbottom;
 
-		XPGetWidgetGeometry(tts->window, &wleft, &wtop, &wright,
+		XPLMGetWindowGeometry(tts->window, &wleft, &wtop, &wright,
 		    &wbottom);
-		if (!XPIsWidgetVisible(tts->window) ||
+		if (!XPLMGetWindowIsVisible(tts->window) ||
 		    mouse_x < wleft || mouse_x > wright ||
 		    mouse_y < wbottom || mouse_y > wtop)
 			continue;

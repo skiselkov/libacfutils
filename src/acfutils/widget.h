@@ -26,6 +26,7 @@
 #ifndef	_ACFUTILS_WIDGET_H_
 #define	_ACFUTILS_WIDGET_H_
 
+#include <XPLMDisplay.h>
 #include <XPWidgets.h>
 
 #include <acfutils/types.h>
@@ -53,6 +54,7 @@ API_EXPORT void tooltip_init(void);
 API_EXPORT void tooltip_fini(void);
 
 API_EXPORT tooltip_set_t *tooltip_set_new(XPWidgetID window);
+API_EXPORT tooltip_set_t *tooltip_set_new_native(XPLMWindowID window);
 API_EXPORT void tooltip_set_destroy(tooltip_set_t *tts);
 
 API_EXPORT void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
