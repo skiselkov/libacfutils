@@ -35,7 +35,7 @@
 
 enum {
 	TOOLTIP_LINE_HEIGHT =	13,
-	TOOLTIP_WINDOW_OFFSET =	5,
+	TOOLTIP_WINDOW_OFFSET =	15,
 	TOOLTIP_WINDOW_MARGIN = 10
 };
 
@@ -63,6 +63,7 @@ struct tooltip_set {
 
 static list_t tooltip_sets;
 static tooltip_t *cur_tt = NULL;
+static XPWidgetID cur_tt_subwin[2] = { NULL, NULL };
 static XPWidgetID cur_tt_win = NULL;
 static int last_mouse_x, last_mouse_y;
 static uint64_t mouse_moved_time;
@@ -202,9 +203,13 @@ tooltip_set_new_native(XPLMWindowID window)
 static void
 destroy_cur_tt(void)
 {
+	ASSERT(cur_tt_subwin[0] != NULL);
 	ASSERT(cur_tt_win != NULL);
 	ASSERT(cur_tt != NULL);
+	XPDestroyWidget(cur_tt_subwin[0], 1);
+	XPDestroyWidget(cur_tt_subwin[1], 1);
 	XPDestroyWidget(cur_tt_win, 1);
+	memset(cur_tt_subwin, 0, sizeof (cur_tt_subwin));
 	cur_tt_win = NULL;
 	cur_tt = NULL;
 }
@@ -247,6 +252,7 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	char **lines = strsplit(tt->text, "\n", B_FALSE, &n_lines);
 
 	ASSERT(cur_tt == NULL);
+	ASSERT(cur_tt_subwin[0] == NULL);
 	ASSERT(cur_tt_win == NULL);
 
 	for (size_t i = 0; i < n_lines; i++) {
@@ -256,8 +262,22 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	}
 
 	cur_tt = tt;
+
+	/*
+	 * This is just a pair of backing windows to make the main
+	 * window appear to have a darker background.
+	 */
+	for (int i = 0; i < 2; i++) {
+		cur_tt_subwin[i] = create_widget_rel(mouse_x +
+		    TOOLTIP_WINDOW_OFFSET, mouse_y - TOOLTIP_WINDOW_OFFSET,
+		    B_TRUE, width, height, 0, "", 1, NULL,
+		    xpWidgetClass_MainWindow);
+		XPSetWidgetProperty(cur_tt_subwin[i], xpProperty_MainWindowType,
+		    xpMainWindowStyle_Translucent);
+	}
+
 	cur_tt_win = create_widget_rel(mouse_x + TOOLTIP_WINDOW_OFFSET,
-	    mouse_y - height - TOOLTIP_WINDOW_OFFSET, B_TRUE, width, height,
+	    mouse_y - TOOLTIP_WINDOW_OFFSET, B_TRUE, width, height,
 	    0, "", 1, NULL, xpWidgetClass_MainWindow);
 	XPSetWidgetProperty(cur_tt_win, xpProperty_MainWindowType,
 	    xpMainWindowStyle_Translucent);
@@ -274,6 +294,8 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	}
 
 	free_strlist(lines, n_lines);
+	for (int i = 0; i < 2; i++)
+		XPShowWidget(cur_tt_subwin[i]);
 	XPShowWidget(cur_tt_win);
 }
 
