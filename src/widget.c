@@ -90,6 +90,12 @@ create_widget_rel2(int x, int y, bool_t y_from_bottom, int width, int height,
 		    &wbottom);
 	} else {
 		XPLMGetScreenSize(&wright, &wtop);
+		if (!y_from_bottom && y + height > wtop)
+			y = wtop - height;
+		else if (y_from_bottom && y - height < 0)
+			y = height;
+		if (x + width > wright)
+			x = wright - width;
 	}
 
 	x += wleft;
