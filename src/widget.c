@@ -16,6 +16,7 @@
  * Copyright 2017 Saso Kiselkov. All rights reserved.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -36,7 +37,8 @@
 enum {
 	TOOLTIP_LINE_HEIGHT =	13,
 	TOOLTIP_WINDOW_OFFSET =	15,
-	TOOLTIP_WINDOW_MARGIN = 10
+	TOOLTIP_WINDOW_MARGIN = 10,
+	TOOLTIP_WINDOW_WIDTH = 450
 };
 
 #define	TOOLTIP_INTVAL		0.1
@@ -61,9 +63,11 @@ struct tooltip_set {
 	list_node_t	node;
 };
 
+#define	NUM_TOOLTIP_SUBWINDOWS	3
+
 static list_t tooltip_sets;
 static tooltip_t *cur_tt = NULL;
-static XPWidgetID cur_tt_subwin[2] = { NULL, NULL };
+static XPWidgetID cur_tt_subwin[NUM_TOOLTIP_SUBWINDOWS] = { NULL };
 static XPWidgetID cur_tt_win = NULL;
 static int last_mouse_x, last_mouse_y;
 static uint64_t mouse_moved_time;
@@ -212,8 +216,8 @@ destroy_cur_tt(void)
 	ASSERT(cur_tt_subwin[0] != NULL);
 	ASSERT(cur_tt_win != NULL);
 	ASSERT(cur_tt != NULL);
-	XPDestroyWidget(cur_tt_subwin[0], 1);
-	XPDestroyWidget(cur_tt_subwin[1], 1);
+	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++)
+		XPDestroyWidget(cur_tt_subwin[i], 1);
 	XPDestroyWidget(cur_tt_win, 1);
 	memset(cur_tt_subwin, 0, sizeof (cur_tt_subwin));
 	cur_tt_win = NULL;
@@ -249,18 +253,67 @@ tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h, const char *text)
 	list_insert_tail(&tts->tooltips, tt);
 }
 
+static inline const char *
+find_whitespace(const char *p, const char *end)
+{
+	while (!isspace(*p) && p < end)
+		p++;
+	return (p);
+}
+
+static char **
+auto_wrap_text(const char *text, double max_width, size_t *n_lines)
+{
+	char **lines = NULL;
+	const char *start, *end;
+	size_t n = 0;
+
+	ASSERT(text != NULL);
+	ASSERT(n_lines != NULL);
+
+	start = text;
+	end = text + strlen(text);
+
+	for (const char *p = text, *sp_prev = text; p < end;) {
+		const char *const sp_here = find_whitespace(p, end);
+		double width = XPLMMeasureString(xplmFont_Proportional,
+		    start, sp_here - start);
+
+		if (width > max_width || *sp_prev == '\n') {
+			lines = safe_realloc(lines, (n + 1) * sizeof (*lines));
+			lines[n] = safe_malloc(sp_prev - start + 1);
+			lacf_strlcpy(lines[n], start, sp_prev - start + 1);
+			n++;
+			start = sp_prev + 1;
+		}
+		p = sp_here + 1;
+		sp_prev = sp_here;
+	}
+	/* Append any remaining stuff as a new line */
+	if (start < end) {
+		lines = safe_realloc(lines, (n + 1) * sizeof (*lines));
+		lines[n] = safe_malloc(end - start + 1);
+		lacf_strlcpy(lines[n], start, end - start + 1);
+		n++;
+	}
+	*n_lines = n;
+	return (lines);
+}
+
 static void
 set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 {
 	int width = 2 * TOOLTIP_WINDOW_MARGIN;
 	int height = 2 * TOOLTIP_WINDOW_MARGIN;
 	size_t n_lines;
-	char **lines = strsplit(tt->text, "\n", B_FALSE, &n_lines);
+	char **lines;
 
+	ASSERT(tt != NULL);
 	ASSERT(cur_tt == NULL);
 	ASSERT(cur_tt_subwin[0] == NULL);
 	ASSERT(cur_tt_win == NULL);
 
+	lines = auto_wrap_text(tt->text, TOOLTIP_WINDOW_WIDTH, &n_lines);
 	for (size_t i = 0; i < n_lines; i++) {
 		width = MAX(XPLMMeasureString(xplmFont_Proportional, lines[i],
 		    strlen(lines[i])) + 2 * TOOLTIP_WINDOW_MARGIN, width);
@@ -273,7 +326,7 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	 * This is just a pair of backing windows to make the main
 	 * window appear to have a darker background.
 	 */
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++) {
 		cur_tt_subwin[i] = create_widget_rel(mouse_x +
 		    TOOLTIP_WINDOW_OFFSET, mouse_y - TOOLTIP_WINDOW_OFFSET,
 		    B_TRUE, width, height, 0, "", 1, NULL,
@@ -300,7 +353,7 @@ set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
 	}
 
 	free_strlist(lines, n_lines);
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++)
 		XPShowWidget(cur_tt_subwin[i]);
 	XPShowWidget(cur_tt_win);
 }
