@@ -687,7 +687,8 @@ strsplit(const char *input, char *sep, bool_t skip_empty, size_t *num)
 		if (b == NULL) {
 			b = input + strlen(input);
 			if (a != b || !skip_empty) {
-				result[i] = safe_calloc(b - a + 1, sizeof (char));
+				result[i] = safe_calloc(b - a + 1,
+				    sizeof (char));
 				memcpy(result[i], a, b - a);
 			}
 			break;
