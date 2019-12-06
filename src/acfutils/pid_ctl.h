@@ -28,7 +28,9 @@
 
 #include <math.h>
 #include <stdio.h>
+
 #include <acfutils/sysmacros.h>
+#include <acfutils/math.h>
 
 #ifdef __cplusplus
 extern "C" {
