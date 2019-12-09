@@ -59,6 +59,8 @@ typedef struct {
 
 struct tooltip_set {
 	XPLMWindowID	window;
+	int		orig_w;
+	int		orig_h;
 	list_t		tooltips;
 	list_node_t	node;
 };
@@ -202,11 +204,17 @@ tooltip_set_new(XPWidgetID window)
 tooltip_set_t *
 tooltip_set_new_native(XPLMWindowID window)
 {
+	int left, top, right, bottom;
+
 	tooltip_set_t *tts = safe_malloc(sizeof (*tts));
 	tts->window = window;
 	list_create(&tts->tooltips, sizeof (tooltip_t),
 	    offsetof(tooltip_t, node));
 	list_insert_tail(&tooltip_sets, tts);
+	XPLMGetWindowGeometry(window, &left, &top, &right, &bottom);
+	tts->orig_w = right - left;
+	tts->orig_h = top - bottom;
+
 	return (tts);
 }
 
@@ -374,12 +382,12 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	XPLMGetMouseLocation(&mouse_x, &mouse_y);
 
 	if (last_mouse_x != mouse_x || last_mouse_y != mouse_y) {
-	        last_mouse_x = mouse_x;
-	        last_mouse_y = mouse_y;
-	        mouse_moved_time = now;
-	        if (cur_tt != NULL)
-	                destroy_cur_tt();
-	        return (TOOLTIP_INTVAL);
+		last_mouse_x = mouse_x;
+		last_mouse_y = mouse_y;
+		mouse_moved_time = now;
+		if (cur_tt != NULL)
+			destroy_cur_tt();
+		return (TOOLTIP_INTVAL);
 	}
 
 	if (now - mouse_moved_time < TOOLTIP_DISPLAY_DELAY || cur_tt != NULL)
@@ -388,6 +396,7 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	for (tooltip_set_t *tts = list_head(&tooltip_sets); tts != NULL;
 	    tts = list_next(&tooltip_sets, tts)) {
 		int wleft, wtop, wright, wbottom;
+		double scalex, scaley;
 
 		XPLMGetWindowGeometry(tts->window, &wleft, &wtop, &wright,
 		    &wbottom);
@@ -395,10 +404,16 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 		    mouse_x < wleft || mouse_x > wright ||
 		    mouse_y < wbottom || mouse_y > wtop)
 			continue;
+
+		scalex = (wright - wleft) / (double)tts->orig_w;
+		scaley = (wtop - wbottom) / (double)tts->orig_h;
+
 		for (tooltip_t *tt = list_head(&tts->tooltips); tt != NULL;
 		    tt = list_next(&tts->tooltips, tt)) {
-			int x1 = wleft + tt->x, x2 = wleft + tt->x + tt->w,
-			    y1 = wtop - tt->y - tt->h, y2 = wtop - tt->y;
+			int x1 = wleft + tt->x * scalex;
+			int x2 = wleft + (tt->x + tt->w) * scalex;
+			int y1 = wtop - (tt->y + tt->h) * scaley;
+			int y2 = wtop - tt->y * scaley;
 
 			if (mouse_x >= x1 && mouse_x <= x2 &&
 			    mouse_y >= y1 && mouse_y <= y2) {
