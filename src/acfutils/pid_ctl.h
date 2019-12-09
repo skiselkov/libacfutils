@@ -56,6 +56,8 @@ typedef struct {
 	double	lim_i;
 	double	k_d;		/* derivative coefficient */
 	double	r_d;		/* derivative update rate */
+
+	bool_t	integ_clamp;
 } pid_ctl_t;
 
 static inline void pid_ctl_reset(pid_ctl_t *pid);
@@ -92,6 +94,13 @@ pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
 	pid->lim_i = lim_i;
 	pid->k_d = k_d;
 	pid->r_d = r_d;
+	pid->integ_clamp = B_TRUE;
+}
+
+static inline void
+pid_ctl_set_integ_clamp(pid_ctl_t *pid, bool_t flag)
+{
+	pid->integ_clamp = flag;
 }
 
 /*
@@ -115,10 +124,12 @@ pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
 	 * Clamp the integrated value to the current proportional value. This
 	 * prevents excessive over-correcting when the value returns to center.
 	 */
-	if (e < 0)
-		pid->e_integ = MAX(pid->e_integ, e);
-	else
-		pid->e_integ = MIN(pid->e_integ, e);
+	if (pid->integ_clamp) {
+		if (e < 0)
+			pid->e_integ = MAX(pid->e_integ, e);
+		else
+			pid->e_integ = MIN(pid->e_integ, e);
+	}
 	FILTER_IN_NAN(pid->e_deriv, delta_e, d_t, pid->r_d);
 	pid->e_prev = e;
 }
