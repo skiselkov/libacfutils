@@ -31,6 +31,7 @@ INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
 QMAKE_CFLAGS += -Wunused-result
+QMAKE_CFLAGS += -Wno-format-truncation -Wno-cast-function-type
 
 # _GNU_SOURCE needed on Linux for getline()
 # DEBUG - used by our ASSERT macro
