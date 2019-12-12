@@ -31,6 +31,7 @@
 
 #include <acfutils/assert.h>
 #include <acfutils/avl.h>
+#include <acfutils/geom.h>
 #include <acfutils/math.h>
 #include <acfutils/list.h>
 #include <acfutils/log.h>
