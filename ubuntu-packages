@@ -1,0 +1,9 @@
+#!/bin/sh
+
+sudo apt-get install \
+    build-essential \
+    cmake \
+    libglu1-mesa-dev \
+    mingw-w64-x86-64-dev \
+    pkg-config \
+    qt4-qmake
