@@ -40,6 +40,8 @@ function do_build() {
 		cd "$DIR-$ARCH"
 		if [[ "$ARCH" = "linux-64" ]]; then
 			patch -p1 < ../sndio.patch
+		elif [[ "$ARCH" = "win-64" ]]; then
+			patch -p1 < ../winnt.patch
 		fi
 		cd "build"
 		cmake -DLIBTYPE=STATIC -DCMAKE_INSTALL_PREFIX="$(pwd)/install" \
