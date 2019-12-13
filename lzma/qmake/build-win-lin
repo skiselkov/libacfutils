@@ -35,7 +35,7 @@ if [[ "$do_clean" = 1 ]]; then
 	exit
 fi
 
-if [ "$minimal" -eq 1 ]; then
+if [ "$minimal" -ne 1 ]; then
 	qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec \
 	    win32-g++ && make -j $NCPUS && mv "$RELEASE/$LIB" win-64
 	if [ $? != 0 ] ; then
