@@ -652,7 +652,7 @@ glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts)
 		pts_3d[i][1] = pts[i][1];
 		pts_3d[i][2] = 0.0;
 	}
-	nl = glutils_nl_alloc_3D(pts_3d, num_pts);
+	nl = glutils_nl_alloc_3D((void *)pts_3d, num_pts);
 	free(pts_3d);
 
 	return (nl);
