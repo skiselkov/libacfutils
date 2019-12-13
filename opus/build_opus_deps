@@ -118,8 +118,10 @@ case `uname` in
 	Linux)
 		NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo \
 		    | wc -l) + 1 ))
-		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "linux-64" && \
-		build_opusfile "win-64" "--host=x86_64-w64-mingw32"
+		CFLAGS="-m64" LDFLAGS="-m64" build_opusfile "linux-64"
+		if [ "$minimal" -ne 1 ]; then
+			build_opusfile "win-64" "--host=x86_64-w64-mingw32"
+		fi
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))

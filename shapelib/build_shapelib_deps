@@ -38,14 +38,16 @@ case `uname` in
 		    $PKG_CONFIG --cflags proj) \
 		    --with-proj-libs=$(PKG_CONFIG_PATH=libproj-linux-64/lib/pkgconfig \
 		    $PKG_CONFIG --libs proj | sed 's/[[:space:]]/\\ /g')" \
-		    "$SHAPELIB" "libshape" "lib/libshp.a" && \
-		build_dep "win-64" "--enable-static --disable-shared \
-		    --host=x86_64-w64-mingw32 \
-		    --with-proj-cflags='$(PKG_CONFIG_PATH=libproj-win-64/lib/pkgconfig \
-		    $PKG_CONFIG --cflags proj)' \
-		    --with-proj-libs='$(PKG_CONFIG_PATH=libproj-win-64/lib/pkgconfig \
-		    $PKG_CONFIG --libs proj)'" \
 		    "$SHAPELIB" "libshape" "lib/libshp.a"
+		if [ "$minimal" -ne 1 ]; then
+			build_dep "win-64" "--enable-static --disable-shared \
+			    --host=x86_64-w64-mingw32 \
+			    --with-proj-cflags='$(PKG_CONFIG_PATH=libproj-win-64/lib/pkgconfig \
+			    $PKG_CONFIG --cflags proj)' \
+			    --with-proj-libs='$(PKG_CONFIG_PATH=libproj-win-64/lib/pkgconfig \
+			    $PKG_CONFIG --libs proj)'" \
+			    "$SHAPELIB" "libshape" "lib/libshp.a"
+		fi
 		;;
 	Darwin)
 		build_dep "mac-64" "--enable-static --disable-shared" \
