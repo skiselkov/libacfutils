@@ -90,9 +90,9 @@ static uint8_t base64_dec_table_mod[256] = {
  * Front-end to base64_encode2 with mod set to zero.
  */
 size_t
-base64_encode (const uint8_t *raw, size_t raw_size, uint8_t *encoded)
+lacf_base64_encode(const uint8_t *raw, size_t raw_size, uint8_t *encoded)
 {
-  return base64_encode2(raw, raw_size, encoded, 0);
+  return (lacf_base64_encode2(raw, raw_size, encoded, 0));
 }
 
 /**
@@ -108,8 +108,8 @@ base64_encode (const uint8_t *raw, size_t raw_size, uint8_t *encoded)
  *      to BASE64_ENC_SIZE(raw_size).
  */
 size_t
-base64_encode2 (const uint8_t *raw, size_t raw_size, uint8_t *encoded,
-                int mod)
+lacf_base64_encode2(const uint8_t *raw, size_t raw_size, uint8_t *encoded,
+    int mod)
 {
   size_t i, j;
   const uint8_t *enc_table = mod ? base64_enc_table_mod : base64_enc_table;
@@ -179,9 +179,9 @@ base64_init_dec_tables (void)
  * Front-end to base64_decode2 with mod set to zero.
  */
 ssize_t
-base64_decode (const uint8_t *encoded, size_t encoded_size, uint8_t *raw)
+lacf_base64_decode(const uint8_t *encoded, size_t encoded_size, uint8_t *raw)
 {
-  return base64_decode2 (encoded, encoded_size, raw, 0);
+  return (lacf_base64_decode2(encoded, encoded_size, raw, 0));
 }
 
 /**
@@ -196,8 +196,8 @@ base64_decode (const uint8_t *encoded, size_t encoded_size, uint8_t *raw)
  *      buffer, or -1 if the input was malformed.
  */
 ssize_t
-base64_decode2 (const uint8_t *encoded, size_t encoded_size, uint8_t *raw,
-                int mod)
+lacf_base64_decode2(const uint8_t *encoded, size_t encoded_size, uint8_t *raw,
+    int mod)
 {
   const uint8_t *dec_table = mod ? base64_dec_table_mod : base64_dec_table;
   const char term_char = mod ? '-' : '=';

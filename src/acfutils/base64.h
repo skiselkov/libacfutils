@@ -37,12 +37,13 @@
  */
 #define BASE64_DEC_SIZE(__enc_size__) (((__enc_size__) / 4) * 3)
 
-size_t base64_encode (const uint8_t *raw, size_t raw_size, uint8_t *encoded);
-size_t base64_encode2 (const uint8_t *raw, size_t raw_size, uint8_t *encoded,
-                       int mod);
-ssize_t base64_decode (const uint8_t *encoded, size_t encoded_size,
-                       uint8_t *raw);
-ssize_t base64_decode2 (const uint8_t *encoded, size_t encoded_size,
-                        uint8_t *raw, int mod);
+size_t lacf_base64_encode(const uint8_t *raw, size_t raw_size,
+    uint8_t *encoded);
+size_t lacf_base64_encode2(const uint8_t *raw, size_t raw_size,
+    uint8_t *encoded, int mod);
+ssize_t lacf_base64_decode(const uint8_t *encoded, size_t encoded_size,
+    uint8_t *raw);
+ssize_t lacf_base64_decode2(const uint8_t *encoded, size_t encoded_size,
+    uint8_t *raw, int mod);
 
 #endif /* _ACFUTILS_BASE64_H_ */
