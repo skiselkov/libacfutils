@@ -53,8 +53,10 @@ case `uname` in
 	Linux)
 		build_ssl linux-64 "-fPIC -fvisibility=hidden linux-x86_64" || \
 		    exit 1
-		build_ssl win-64 \
-		    "--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
+		if [ "$minimal" -ne 1 ]; then
+			build_ssl win-64 \
+			    "--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
+		fi
 		;;
 	Darwin)
 		build_ssl mac-64 "-fvisibility=hidden BSD-generic64"

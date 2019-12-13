@@ -6,4 +6,5 @@ sudo apt-get install \
     libglu1-mesa-dev \
     mingw-w64-x86-64-dev \
     pkg-config \
-    qt4-qmake
+    qt4-qmake \
+    qt4-dev-tools

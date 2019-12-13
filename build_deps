@@ -21,7 +21,7 @@
 #	mingw-w64 libgl1-mesa-dev libglu1-mesa-dev libtool libx11-dev
 #	pkg-config qt5-default qt5-qmake unzip
 
-minimal=0
+export minimal=0
 
 while getopts "cdm" opt; do
 	case $opt in
