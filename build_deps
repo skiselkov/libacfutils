@@ -53,7 +53,8 @@ done
 			./build-mac
 		fi
 	else
-		if ! [ -f win-64/liblzma.a ] || ! [ -f linux-64/liblzma.a ];
+		if ( ! [ -f win-64/liblzma.a ] && [ "$minimal" -eq 0 ] ) || \
+		    ! [ -f linux-64/liblzma.a ];
 		    then
 			./build-win-lin
 		fi
