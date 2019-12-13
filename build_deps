@@ -21,17 +21,20 @@
 #	mingw-w64 libgl1-mesa-dev libglu1-mesa-dev libtool libx11-dev
 #	pkg-config qt5-default qt5-qmake unzip
 
-while getopts "cd" opt; do
+minimal=0
+
+while getopts "cdm" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
+	m) export minimal=1 ;;
 	esac
 done
 
 ( cd zlib && ./build_zlib_deps ) && \
     ( cd libclipboard && ./build_libclipboard_deps ) && \
     ( cd libpng && ./build_libpng_deps ) && \
-    ( cd libjpeg && ./build_libjpeg_deps ) && \
+    ( [ $minimal -eq 1 ] || ( cd libjpeg && ./build_libjpeg_deps ) ) && \
     ( cd libxml2 && ./build_libxml2_deps ) && \
     ( cd freetype && ./build_freetype_deps ) && \
     ( cd cairo && ./build_cairo_deps ) && \
@@ -39,7 +42,7 @@ done
     ( cd ssl && ./build_ssl_deps ) && \
     ( cd curl && ./build_curl_deps ) && \
     ( cd shapelib && ./build_shapelib_deps ) && \
-    ( cd ocr && ./build_ocr_deps ) && \
+    ( [ $minimal -eq 1 ] || ( cd ocr && ./build_ocr_deps ) ) && \
     ( cd pcre2 && ./build_pcre2_deps ) && \
     ( cd glew && ./build_glew_deps ) && \
     ( cd openal-soft && ./build_openal ) && \

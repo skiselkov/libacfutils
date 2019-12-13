@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # CDDL HEADER START
 #
@@ -35,27 +35,16 @@ if [[ "$do_clean" = 1 ]]; then
 	exit
 fi
 
-qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv "$RELEASE/$LIB" win-64
-if [ $? != 0 ] ; then
-  exit
-fi
-
-make distclean > /dev/null
-qmake -set CROSS_COMPILE i686-w64-mingw32- && qmake -spec win32-g++ && \
-    make -j $NCPUS && mv "$RELEASE/$LIB" win-32
-if [ $? != 0 ] ; then
-  exit
+if [ "$minimal" -eq 1 ]; then
+	qmake -set CROSS_COMPILE x86_64-w64-mingw32- && qmake -spec \
+	    win32-g++ && make -j $NCPUS && mv "$RELEASE/$LIB" win-64
+	if [ $? != 0 ] ; then
+	  exit
+	fi
 fi
 
 make distclean > /dev/null
 qmake -spec linux-g++-64 && make -j $NCPUS && mv "$LIB" linux-64
-if [ $? != 0 ] ; then
-  exit
-fi
-
-make distclean > /dev/null
-qmake -spec linux-g++-32 && make -j $NCPUS && mv "$LIB" linux-32
 if [ $? != 0 ] ; then
   exit
 fi

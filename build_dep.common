@@ -23,6 +23,10 @@ function build_dep() {
 	PRODFILE="$5"
 	PATCHFILES="$6"
 
+	if [[ "$PLATFORM" == "win-64" ]] && [[ "$minimal" == 1 ]]; then
+		return
+	fi
+
 	if [[ "$SRCDIR" = "" ]]; then
 		SRCDIR="$(basename "${TARBALL/%.tar.*/}")"
 		SRCDIR="$(basename "${SRCDIR/%.zip/}")"
