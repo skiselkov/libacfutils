@@ -25,6 +25,8 @@ CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-manual --disable-pthreads --disable-unix-sockets \
     --disable-ipv6 --disable-threaded-resolver --disable-cookies \
     --disable-ntlm-wb --disable-crypto-auth --disable-sspi \
+    --without-winidn --without-libssh2 --without-librtmp \
+    --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
     --with-pic"
 
 case `uname` in
