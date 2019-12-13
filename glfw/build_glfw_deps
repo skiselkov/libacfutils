@@ -59,9 +59,12 @@ case `uname` in
 	Linux)
 		build_platform linux-64 "glfw-linux-64/install/lib/libglfw3.a" \
 		    || exit 1
-		build_platform win-64 "glfw-win-64/install/lib/libglfw3.a" \
-		    -DCMAKE_TOOLCHAIN_FILE="../glfw-${GLFW_VERSION}/CMake/x86_64-w64-mingw32.cmake" || \
-		    exit 1
+		if [ -z "$minimal" ] || [ "$minimal" -ne 1 ]; then
+			build_platform win-64 \
+			    "glfw-win-64/install/lib/libglfw3.a" \
+			    -DCMAKE_TOOLCHAIN_FILE="../glfw-${GLFW_VERSION}/CMake/x86_64-w64-mingw32.cmake" || \
+			    exit 1
+		fi
 		;;
 	Darwin)
 		build_platform mac-64 "glfw-mac-64/install/lib/libglfw3.a" \
