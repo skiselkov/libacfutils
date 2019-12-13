@@ -30,7 +30,7 @@
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
 PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
-    libcurl openssl tesseract lept libpng16 libxml-2.0 libpcre2-8 zlib glewmx"
+    libcurl openssl libpng16 libxml-2.0 libpcre2-8 zlib glewmx"
 STATIC_OPENAL=0
 
 ARCH="$1"
@@ -53,6 +53,10 @@ fi
 if [[ "$1" = "--glfw" ]]; then
 	PACKAGES="$PACKAGES glfw3"
 	shift
+fi
+
+if [ -f "ocr/tesseract-$ARCH/lib/libtesseract.a" ]; then
+	PACKAGES="$PACKAGES tesseract lept"
 fi
 
 cd "$(dirname "$0")"
