@@ -53,7 +53,7 @@ function do_build() {
 case $(uname) in
 	Linux)
 		PRODUCT="$DIR-win-64/build/install/lib/libOpenAL32.a"
-		if [[ "$do_clean" = "1" ]]; then
+		if [[ "$do_clean" = "1" ]] || [[ "$minimal" =  "1" ]]; then
 			rm -rf "$DIR-win-64"
 		elif ! [ -f "$PRODUCT" ]; then
 			rm -fr "$DIR-win-64" && \
