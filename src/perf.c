@@ -2523,7 +2523,7 @@ adiabatic_heating_gas(double press_ratio, double start_temp, double gamma)
 double
 air_kin_visc(double temp_K)
 {
-	static vect2_t table[] = {
+	const vect2_t table[] = {
 	    VECT2(200, 0.753e-5),
 	    VECT2(225, 0.935e-5),
 	    VECT2(250, 1.132e-5),
