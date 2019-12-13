@@ -63,6 +63,16 @@ contains(debug, 0) {
 win32 {
 	# Minimum Windows version is Windows Vista (0x0600)
 	DEFINES += APL=0 IBM=1 LIN=0 MSDOS _WIN32_WINNT=0x0600
+
+	# Some older MinGW builds didn't define M_PI in math.h, so
+	# to cope with that, we define them all here:
+	DEFINES += M_PI=3.14159265358979323846
+	DEFINES += M_PI_2=1.57079632679489661923
+	DEFINES += M_PI_4=0.785398163397448309616
+	DEFINES += M_1_PI=0.318309886183790671538
+	DEFINES += M_2_PI=0.636619772367581343076
+	DEFINES += M_2_SQRTPI=1.12837916709551257390
+
 	QMAKE_CFLAGS += -Wno-misleading-indentation
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
