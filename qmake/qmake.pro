@@ -24,12 +24,16 @@ CONFIG -= thread exceptions qt rtti release
 VERSION = 1.0.0
 
 debug = $$[DEBUG]
+noerrors = $$[NOERRORS]
 
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
-QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -Werror -fvisibility=hidden
+QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -fvisibility=hidden
+contains(noerrors, 0) {
+	QMAKE_CFLAGS += -Werror
+}
 QMAKE_CFLAGS += -Wunused-result
 QMAKE_CFLAGS += -Wno-format-truncation -Wno-cast-function-type
 QMAKE_CFLAGS += -Wno-stringop-overflow -Wno-missing-field-initializers

@@ -24,6 +24,7 @@ mkdir -p mac32 mac64
 
 make distclean > /dev/null
 qmake -set DLL 0
+qmake -set NOERRORS 1
 qmake -spec macx-clang && make -j $NCPUS && mv libacfutils.a mac64
 if [ $? != 0 ] ; then
   exit
