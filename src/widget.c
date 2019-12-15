@@ -42,7 +42,7 @@ enum {
 };
 
 #define	TOOLTIP_INTVAL		0.1
-#define	TOOLTIP_DISPLAY_DELAY	SEC2USEC(1)
+#define	DEFAULT_DISPLAY_DELAY	1	/* secs */
 
 typedef struct {
 	int		x, y, w, h;
@@ -63,6 +63,7 @@ struct tooltip_set {
 	int		orig_h;
 	list_t		tooltips;
 	list_node_t	node;
+	double		display_delay;
 };
 
 #define	NUM_TOOLTIP_SUBWINDOWS	3
@@ -214,8 +215,16 @@ tooltip_set_new_native(XPLMWindowID window)
 	XPLMGetWindowGeometry(window, &left, &top, &right, &bottom);
 	tts->orig_w = right - left;
 	tts->orig_h = top - bottom;
+	tts->display_delay = DEFAULT_DISPLAY_DELAY;
 
 	return (tts);
+}
+
+void
+tooltip_set_delay(tooltip_set_t *set, double secs)
+{
+	ASSERT(set != NULL);
+	set->display_delay = secs;
 }
 
 static void
@@ -390,13 +399,16 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 		return (TOOLTIP_INTVAL);
 	}
 
-	if (now - mouse_moved_time < TOOLTIP_DISPLAY_DELAY || cur_tt != NULL)
+	if (cur_tt != NULL)
 		return (TOOLTIP_INTVAL);
 
 	for (tooltip_set_t *tts = list_head(&tooltip_sets); tts != NULL;
 	    tts = list_next(&tooltip_sets, tts)) {
 		int wleft, wtop, wright, wbottom;
 		double scalex, scaley;
+
+		if (now - mouse_moved_time < SEC2USEC(tts->display_delay))
+			continue;
 
 		XPLMGetWindowGeometry(tts->window, &wleft, &wtop, &wright,
 		    &wbottom);

@@ -55,6 +55,7 @@ API_EXPORT void tooltip_fini(void);
 
 API_EXPORT tooltip_set_t *tooltip_set_new(XPWidgetID window);
 API_EXPORT tooltip_set_t *tooltip_set_new_native(XPLMWindowID window);
+API_EXPORT void tooltip_set_delay(tooltip_set_t *set, double secs);
 API_EXPORT void tooltip_set_destroy(tooltip_set_t *tts);
 API_EXPORT void tooltip_set_opaque(tooltip_set_t *tts, bool_t opaque);
 
