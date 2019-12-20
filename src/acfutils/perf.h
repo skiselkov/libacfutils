@@ -70,6 +70,9 @@ extern "C" {
 #define	LBF2NEWTON(lb)	(LBS2KG(lb) * EARTH_GRAVITY)
 #define	NEWTON2LBF(f)	(KG2LBS((f) / EARTH_GRAVITY))
 
+#define	WATT2HP(W)	((W) * 0.001341022)	/* Watts to horsepower */
+#define	HP2WATT(W)	((W) / 0.001341022)	/* horsepower to Watts */
+
 /*
  * Pressure unit conversions
  */
