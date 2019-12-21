@@ -488,8 +488,10 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
 	ASSERT_MSG(dr->writable, "%s", dr->name); \
  \
-	if (dr->write_array_cb != NULL) \
+	if (dr->write_array_cb != NULL) { \
 		dr->write_array_cb(dr, in_values, off, count); \
+		return; \
+	} \
 	if (off < dr->count) { \
 		count = MIN(count, dr->count - off); \
 		if (dr->stride == 0) { \
