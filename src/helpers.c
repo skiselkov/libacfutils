@@ -939,6 +939,25 @@ path_last_comp_subst(const char *path, const char *replace)
 	return (result);
 }
 
+/*
+ * Returns the last path component of the path. If the path contains no
+ * separators, returns the entire input path.
+ */
+char *
+path_last_comp(const char *path)
+{
+	char *last;
+
+	ASSERT(path != NULL);
+	last = MAX(strrchr(path, '/'), strrchr(path, '\\'));
+	if (last != NULL)
+		last++;
+	else
+		last = (char *)path;
+
+	return (last);
+}
+
 char *
 file2str(const char *comp, ...)
 {
