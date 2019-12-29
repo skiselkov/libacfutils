@@ -33,6 +33,8 @@ PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
     libcurl openssl libpng16 libxml-2.0 libpcre2-8 zlib glewmx"
 STATIC_OPENAL=0
 
+cd "$(dirname "$0")"
+
 ARCH="$1"
 shift
 if [[ "$1" = "--whole-archive" ]]; then
@@ -58,8 +60,6 @@ fi
 if [ -f "ocr/tesseract-$ARCH/lib/libtesseract.a" ]; then
 	PACKAGES="$PACKAGES tesseract lept"
 fi
-
-cd "$(dirname "$0")"
 
 # The order of arguments we pass to pkg-config is important. We must list
 # dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
