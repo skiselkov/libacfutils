@@ -35,8 +35,10 @@ contains(noerrors, 0) {
 	QMAKE_CFLAGS += -Werror
 }
 QMAKE_CFLAGS += -Wunused-result
-QMAKE_CFLAGS += -Wno-format-truncation -Wno-cast-function-type
-QMAKE_CFLAGS += -Wno-stringop-overflow -Wno-missing-field-initializers
+!macx {
+	QMAKE_CFLAGS += -Wno-format-truncation -Wno-cast-function-type
+	QMAKE_CFLAGS += -Wno-stringop-overflow -Wno-missing-field-initializers
+}
 
 # _GNU_SOURCE needed on Linux for getline()
 # DEBUG - used by our ASSERT macro
