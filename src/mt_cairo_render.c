@@ -115,6 +115,8 @@ struct mt_cairo_render_s {
 	bool_t			shader_is_custom;
 	GLint			shader_loc_pvm;
 	GLint			shader_loc_tex;
+	GLint			shader_loc_vtx_pos;
+	GLint			shader_loc_vtx_tex0;
 
 	bool_t			ctx_checking;
 	glctx_t			*create_ctx;
@@ -486,6 +488,9 @@ mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 		}
 	}
 	VERIFY(mtcr->shader != 0);
+	mtcr->shader_loc_vtx_pos = glGetAttribLocation(mtcr->shader, "vtx_pos");
+	mtcr->shader_loc_vtx_tex0 = glGetAttribLocation(mtcr->shader,
+	    "vtx_tex0");
 	mtcr->shader_loc_pvm = glGetUniformLocation(mtcr->shader, "pvm");
 	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
 }
@@ -740,10 +745,10 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
 
-		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_POS, 3, GL_FLOAT,
-		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, pos));
-		glutils_enable_vtx_attr_ptr(VTX_ATTRIB_TEX0, 2, GL_FLOAT,
-		    GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
+		glutils_enable_vtx_attr_ptr(mtcr->shader_loc_vtx_pos, 3,
+		    GL_FLOAT, GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, pos));
+		glutils_enable_vtx_attr_ptr(mtcr->shader_loc_vtx_tex0, 2,
+		    GL_FLOAT, GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
 	if ((size.x < 0 && size.y >= 0) || (size.x >= 0 && size.y < 0)) {
 		glCullFace(GL_FRONT);
@@ -764,8 +769,8 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	if (use_vao) {
 		glBindVertexArray(old_vao);
 	} else {
-		glDisableVertexAttribArray(VTX_ATTRIB_POS);
-		glDisableVertexAttribArray(VTX_ATTRIB_TEX0);
+		glDisableVertexAttribArray(mtcr->shader_loc_vtx_pos);
+		glDisableVertexAttribArray(mtcr->shader_loc_vtx_tex0);
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
