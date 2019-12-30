@@ -21,6 +21,7 @@
 
 #include "assert.h"
 #include "math_core.h"
+#include "geom.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -90,6 +91,50 @@ iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
 	if (clamp_output)
 		x = clamp(x, 0, 1);
 	return (x);
+}
+
+/*
+ * This is a generic polynomial interpolator/extrapolator. Given a series
+ * of X-Y coordinates, pn_interp_init constructs a polynomial interpolation
+ * that smoothly passes through all of the input points. Please note that
+ * this function is limited to a maximum number of inputs points (mainly
+ * to make memory management easy by not requiring dynamic allocation).
+ */
+#define	MAX_PN_INTERP_ORDER	64
+typedef struct {
+	unsigned	order;
+	double		coeff[MAX_PN_INTERP_ORDER];
+} pn_interp_t;
+
+/*
+ * Given a series of X-Y coordinates, this function initializes a polynomial
+ * interpolator that smoothly passes through all the input points. When you
+ * are done with the interpolator, you DON'T have to free it. The pn_interp_t
+ * structure is entirely self-contained.
+ *
+ * @param interp Interpolator that needs to be initialized.
+ * @param points Input points that the interpolator needs to pass through.
+ * @param npts Number points in `points'. This must be GREATER than 0.
+ */
+void pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned npts);
+
+/*
+ * Given an initialized pn_interp_t (see above), calculates the Y value
+ * at a given point.
+ * @param x The X point for which to calculate the interpolated Y value.
+ * @param interp An initialized interpolator (as initialized by pn_interp_init).
+ */
+static inline double
+pn_interp_run(double x, const pn_interp_t *interp)
+{
+	double y = 0;
+
+	ASSERT(interp != NULL);
+	ASSERT(interp->order != 0);
+	for (unsigned i = 0; i < interp->order; i++)
+		y += interp->coeff[i] * pow(x, i);
+
+	return (y);
 }
 
 #ifdef	__cplusplus

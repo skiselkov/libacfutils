@@ -151,3 +151,46 @@ fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
 
 	return (out);
 }
+
+/*
+ * Algorithm credit: https://en.wikibooks.org/wiki/\
+ *	Algorithm_Implementation/Mathematics/Polynomial_interpolation
+ */
+void
+pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned numpts)
+{
+	ASSERT(interp != NULL);
+	ASSERT(points != 0);
+	ASSERT(numpts != 0);
+	ASSERT3U(numpts, <=, MAX_PN_INTERP_ORDER);
+
+	memset(interp, 0, sizeof (*interp));
+	interp->order = numpts;
+
+	for (unsigned i = 0; i < numpts; i++) {
+		double terms[MAX_PN_INTERP_ORDER] = { 0 };
+		double product = 1.0;
+
+		/* Compute Prod_{j != i} (x_i - x_j) */
+		for (unsigned j = 0; j < numpts; j++) {
+			if (i == j)
+				continue;
+			product *= points[i].x - points[j].x;
+		}
+		/* Compute y_i/Prod_{j != i} (x_i - x_j) */
+		product = points[i].y / product;
+		terms[0] = product;
+		/* Compute theterm := product * Prod_{j != i} (x - x_j) */
+		for (unsigned j = 0; j < numpts; j++) {
+			if (i == j)
+				continue;
+			for (int k = numpts - 1; k > 0; k--) {
+				terms[k] += terms[k-1];
+				terms[k-1] *= -points[j].x;
+			}
+		}
+		/* coeff += terms (as coeff vectors) */
+		for (unsigned j = 0; j < numpts; j++)
+			interp->coeff[j] += terms[j];
+	}
+}
