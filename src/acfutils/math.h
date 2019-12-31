@@ -127,12 +127,14 @@ void pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned npts);
 static inline double
 pn_interp_run(double x, const pn_interp_t *interp)
 {
-	double y = 0;
+	double y = 0, power = 1;
 
 	ASSERT(interp != NULL);
 	ASSERT(interp->order != 0);
-	for (unsigned i = 0; i < interp->order; i++)
-		y += interp->coeff[i] * pow(x, i);
+	for (unsigned i = 0; i < interp->order; i++) {
+		y += interp->coeff[i] * power;
+		power *= x;
+	}
 
 	return (y);
 }
