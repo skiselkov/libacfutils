@@ -26,7 +26,6 @@
 #ifndef	_ACF_UTILS_DELAY_LINE_H_
 #define	_ACF_UTILS_DELAY_LINE_H_
 
-#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 
