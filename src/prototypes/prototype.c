@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include "acfutils/prototype.h"
