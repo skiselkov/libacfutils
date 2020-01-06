@@ -98,7 +98,7 @@ DEF_DELAY_LINE_PULL(uint64_t, u64)
 DEF_DELAY_LINE_PULL(double, f64)
 
 /*
- * Functions that push a new vlaue to a delay line:
+ * Functions that push a new value to a delay line:
  *	delay_line_push_i64	- pushes an int64_t to the delay line
  *	delay_line_push_u64	- pushes a uint64_t to the delay line
  *	delay_line_push_f64	- pushes a double to the delay line
@@ -124,6 +124,28 @@ DEF_DELAY_LINE_PUSH(uint64_t, u64)
 DEF_DELAY_LINE_PUSH(double, f64)
 
 /*
+ * Functions that push a new value to a delay line immediately:
+ *	delay_line_push_imm_i64	- pushes an int64_t to the delay line
+ *	delay_line_push_imm_u64	- pushes a uint64_t to the delay line
+ *	delay_line_push_imm_f64	- pushes a double to the delay line
+ * Unlike the delay_line_push_* family of functions, these functions
+ * change the delay line immediately to the new value and return the
+ * new value.
+ */
+#define	DEF_DELAY_LINE_PUSH_IMM(typename, abbrev_type) \
+static inline typename \
+delay_line_push_imm_ ## abbrev_type(delay_line_t *line, typename value) \
+{ \
+	ASSERT(line != NULL); \
+	line->abbrev_type = value; \
+	line->abbrev_type ## _new = value; \
+	return (line->abbrev_type); \
+}
+DEF_DELAY_LINE_PUSH_IMM(int64_t, i64)
+DEF_DELAY_LINE_PUSH_IMM(uint64_t, u64)
+DEF_DELAY_LINE_PUSH_IMM(double, f64)
+
+/*
  * Generics require at least C11.
  */
 #if	__STDC_VERSION__ >= 201112L
@@ -138,6 +160,17 @@ DEF_DELAY_LINE_PUSH(double, f64)
 	    uint32_t:		delay_line_push_u64((line), (value)), \
 	    uint64_t:		delay_line_push_u64((line), (value)), \
 	    default:		delay_line_push_i64((line), (value)))
+/*
+ * Generic shorthand for delay_line_push_imm_*. Determines the type of push
+ * function to call automatically based on the type of the value passed.
+ */
+#define	DELAY_LINE_PUSH_IMM(line, value) \
+	_Generic((value), \
+	    float:		delay_line_push_imm_f64((line), (value)), \
+	    double:		delay_line_push_imm_f64((line), (value)), \
+	    uint32_t:		delay_line_push_imm_u64((line), (value)), \
+	    uint64_t:		delay_line_push_imm_u64((line), (value)), \
+	    default:		delay_line_push_imm_i64((line), (value)))
 #endif
 
 #ifdef	__cplusplus
