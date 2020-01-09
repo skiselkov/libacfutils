@@ -48,7 +48,7 @@ cursor_read_from_file(const char *filename_png)
 		return (NULL);
 	}
 	rep = [[img representations] objectAtIndex: 0];
-	ASSERT(rep != NULL);
+	ASSERT(rep != nil);
 	p = NSMakePoint([rep pixelsWide] / 2, [rep pixelsHigh] / 2);
 	cursor->crs = [[NSCursor alloc] initWithImage: img hotSpot: p];
 	ASSERT(cursor->crs != NULL);
