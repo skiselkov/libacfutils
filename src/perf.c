@@ -2565,10 +2565,44 @@ lacf_therm_cond_air(double T)
 	 * throughout its pressure range and deviates by less than 1%
 	 * down to about 1% of sea level pressure. Since we never really
 	 * encounter such pressures in aircraft (1% SL_p = ~84,000 ft),
-	 * we can just ignore the temperature component.
+	 * we can just ignore the pressure component.
 	 */
 	ASSERT3F(T, >, 0);
 	return (fx_lin(T, 233.2, 0.0209, 498.15, 0.0398));
+}
+
+double
+lacf_therm_cond_aluminum(double T)
+{
+	static const vect2_t curve[] = {
+	    VECT2(C2KELVIN(200), 237),
+	    VECT2(C2KELVIN(273), 236),
+	    VECT2(C2KELVIN(400), 240),
+	    VECT2(C2KELVIN(600), 232),
+	    VECT2(C2KELVIN(800), 220),
+	    NULL_VECT2	/* list terminator */
+	};
+	ASSERT3F(T, >, 0);
+	return (fx_lin_multi(T, curve, B_TRUE));
+}
+
+double
+lacf_therm_cond_glass(double T)
+{
+	/* Based on Pyrex 7740, NBS, 1966 */
+	static const vect2_t curve[] = {
+	    VECT2(100, 0.58),
+	    VECT2(200, 0.90),
+	    VECT2(300, 1.11),
+	    VECT2(400, 1.25),
+	    VECT2(500, 1.36),
+	    VECT2(600, 1.50),
+	    VECT2(700, 1.62),
+	    VECT2(800, 1.89),
+	    NULL_VECT2	/* list terminator */
+	};
+	ASSERT3F(T, >, 0);
+	return (fx_lin_multi(T, curve, B_TRUE));
 }
 
 double

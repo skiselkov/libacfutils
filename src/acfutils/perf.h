@@ -349,6 +349,18 @@ double lacf_gamma_air(double T);
 double lacf_therm_cond_air(double T);
 
 /*
+ * Returns the thermal conductivity of aluminum (in W/(m.K)).
+ * @param T Absolute temperature of the air in Kelvin.
+ */
+double lacf_therm_cond_aluminum(double T);
+
+/*
+ * Returns the thermal conductivity of Pyrex 7740 glass (in W/(m.K)).
+ * @param T Absolute temperature of the air in Kelvin.
+ */
+double lacf_therm_cond_glass(double T);
+
+/*
  * Returns very accurate Earth gravitational acceleration at a specific
  * point around the Earth. For simplicity, this assumes that the gravitational
  * field is uniform along longitude.
