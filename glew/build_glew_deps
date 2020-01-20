@@ -106,10 +106,10 @@ case `uname` in
 			    patch -p1 < ../opengl_4.6.patch && \
 			    patch -p1 < ../cmdline_flags.patch && \
 			    patch -p1 < ../ctx_funcs_1.patch && \
-			    eval gmake $MAKE_FLAGS extensions && \
+			    eval make $MAKE_FLAGS extensions && \
 			    patch -p1 < ../ctx_funcs_2.patch && \
-			    eval gmake $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
-			    eval gmake $MAKE_FLAGS install.mx && \
+			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
+			    eval make $MAKE_FLAGS install.mx && \
 			    rm install/lib/*.dylib )
 		fi
 		;;
