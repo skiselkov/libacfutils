@@ -471,6 +471,8 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 				    type_sz); \
 			} \
 		} \
+	} else { \
+		return (0); \
 	} \
  \
 	return (count); \
@@ -487,6 +489,7 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
 	ASSERT_MSG(dr->writable, "%s", dr->name); \
+	ASSERT_MSG(in_values != NULL || count == 0, "%s", dr->name); \
  \
 	if (dr->write_array_cb != NULL) { \
 		dr->write_array_cb(dr, in_values, off, count); \
@@ -517,6 +520,68 @@ DEF_WRITE_ARRAY_CB(void, Data, sizeof (uint8_t))
 #undef	DEF_READ_ARRAY_CB
 #undef	DEF_WRITE_ARRAY_CB
 
+/*
+ * For double arrays we can't use the normal array read/write callbacks,
+ * because those use memcpy when stride == 0. For double arrays, we need
+ * to convert each value as it enters/exits our interface.
+ */
+static int
+read_double_array_cb(void *refcon, float *out_values, int off, int count)
+{
+	dr_t *dr = refcon;
+
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_FloatArray, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+
+	if (dr->read_array_cb != NULL) {
+		int ret = dr->read_array_cb(dr, out_values, off, count);
+		if (ret >= 0)
+			return (ret);
+	}
+	if (out_values == NULL)
+		return (dr->count);
+	if (off < dr->count) {
+		size_t stride =
+		    (dr->stride != 0 ? dr->stride : sizeof (double));
+		count = MIN(count, dr->count - off);
+		for (int i = 0; i < count; i++) {
+			out_values[i] =
+			    *(double *)(dr->value + ((off + i) * stride));
+		}
+	} else {
+		return (0);
+	}
+
+	return (count);
+}
+
+static void
+write_double_array_cb(void *refcon, float *in_values, int off, int count)
+{
+	dr_t *dr = refcon;
+
+	ASSERT(dr != NULL);
+	ASSERT_MSG(dr->type == xplmType_FloatArray, "%s", dr->name);
+	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
+	ASSERT_MSG(dr->writable, "%s", dr->name);
+	ASSERT_MSG(in_values != NULL || count == 0, "%s", dr->name);
+
+	if (dr->write_array_cb != NULL) {
+		dr->write_array_cb(dr, in_values, off, count);
+		return;
+	}
+	if (off < dr->count) {
+		size_t stride =
+		    (dr->stride != 0 ? dr->stride : sizeof (double));
+		count = MIN(count, dr->count - off);
+		for (int i = 0; i < count; i++) {
+			*(double *)(dr->value + ((off + i) * stride)) =
+			    in_values[i];
+		}
+	}
+}
+
 void
 dr_array_set_stride(dr_t *dr, size_t stride)
 {
@@ -537,7 +602,8 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
 	    read_int_cb, write_int_cb, read_float_cb, write_float_cb,
 	    NULL, NULL, read_int_array_cb, write_int_array_cb,
-	    read_float_array_cb, write_float_array_cb,
+	    wide_type ? read_double_array_cb : read_float_array_cb,
+	    wide_type ? write_double_array_cb : write_float_array_cb,
 	    read_void_array_cb, write_void_array_cb, dr, dr);
 
 	VERIFY(dr->dr != NULL);
@@ -627,6 +693,17 @@ dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 	va_start(ap, fmt);
 	dr_create_common(dr, xplmType_FloatArray, value, n, writable,
 	    B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf64(dr_t *dr, double *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_FloatArray, value, n, writable,
+	    B_TRUE, fmt, ap);
 	va_end(ap);
 }
 

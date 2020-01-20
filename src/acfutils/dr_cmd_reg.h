@@ -47,6 +47,20 @@ XPLMCommandRef f_dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb,
 XPLMCommandRef dcr_create_cmd(const char *cmdname, const char *cmddesc,
     XPLMCommandCallback_f cb, bool before, void *refcon);
 
+
+#define	DCR_CREATE_COMMON(type, dr, ...) \
+	do { \
+		dr_create_ ## type((dr), __VA_ARGS__); \
+		dcr_add_dr((dr)); \
+	} while (0)
+#define	DCR_CREATE_I(dr, ...)		DCR_CREATE_COMMON(i, dr, __VA_ARGS__)
+#define	DCR_CREATE_F(dr, ...)		DCR_CREATE_COMMON(f, dr, __VA_ARGS__)
+#define	DCR_CREATE_F64(dr, ...)		DCR_CREATE_COMMON(f64, dr, __VA_ARGS__)
+#define	DCR_CREATE_VI(dr, ...)		DCR_CREATE_COMMON(vi, dr, __VA_ARGS__)
+#define	DCR_CREATE_VF(dr, ...)		DCR_CREATE_COMMON(vf, dr, __VA_ARGS__)
+#define	DCR_CREATE_VF64(dr, ...)	DCR_CREATE_COMMON(vf64, dr, __VA_ARGS__)
+#define	DCR_CREATE_B(dr, ...)		DCR_CREATE_COMMON(b, dr, __VA_ARGS__)
+
 #ifdef	__cplusplus
 }
 #endif

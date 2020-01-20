@@ -125,6 +125,8 @@ API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+API_EXPORT void dr_create_vf64(dr_t *dr, double *value, size_t n,
+    bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_array_set_stride(dr_t *dr, size_t stride);
