@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+typedef uint64_t (*delay_line_time_func_t)(void *userinfo);
+
 /*
  * Implements a generic variable that changes after a short delay.
  * You need to initialize the variable using delay_line_init. Subsequently,
@@ -57,6 +59,8 @@ typedef struct {
 	};
 	uint64_t		changed_t;
 	uint64_t		delay_us;
+	delay_line_time_func_t	time_func;
+	void			*time_func_userinfo;
 } delay_line_t;
 
 /*
@@ -73,6 +77,17 @@ delay_line_init(delay_line_t *line, uint64_t delay_us)
 	line->delay_us = delay_us;
 }
 
+static inline void
+delay_line_init_time_func(delay_line_t *line, uint64_t delay_us,
+    delay_line_time_func_t time_func, void *time_func_userinfo)
+{
+	ASSERT(line != NULL);
+	memset(line, 0, sizeof (*line));
+	line->delay_us = delay_us;
+	line->time_func = time_func;
+	line->time_func_userinfo = time_func_userinfo;
+}
+
 /*
  * Functions to pull the current from a delay line:
  *	delay_line_pull_i64	- reads the delay line as an int64_t
@@ -86,9 +101,12 @@ delay_line_init(delay_line_t *line, uint64_t delay_us)
 static inline typename \
 delay_line_pull_ ## abbrev_type(delay_line_t *line) \
 { \
+	uint64_t now; \
 	ASSERT(line != NULL); \
+	now = (line->time_func != NULL ? \
+	    line->time_func(line->time_func_userinfo) : microclock()); \
 	if (line->abbrev_type ## _new != line->abbrev_type && \
-	    microclock() - line->changed_t >= line->delay_us) { \
+	    now - line->changed_t >= line->delay_us) { \
 		line->abbrev_type = line->abbrev_type ## _new; \
 	} \
 	return (line->abbrev_type); \
@@ -111,10 +129,13 @@ DEF_DELAY_LINE_PULL(double, f64)
 static inline typename \
 delay_line_push_ ## abbrev_type(delay_line_t *line, typename value) \
 { \
+	uint64_t now; \
 	ASSERT(line != NULL); \
+	now = (line->time_func != NULL ? \
+	    line->time_func(line->time_func_userinfo) : microclock()); \
 	if (line->abbrev_type == line->abbrev_type ## _new && \
 	    value != line->abbrev_type ## _new) { \
-		line->changed_t = microclock(); \
+		line->changed_t = now; \
 	} \
 	line->abbrev_type ## _new = value; \
 	return (delay_line_pull_ ## abbrev_type(line)); \
