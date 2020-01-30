@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {
