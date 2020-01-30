@@ -48,7 +48,13 @@ extern "C" {
 #define	API_EXPORT_DATA	extern
 #endif	/* !IBM && !defined(_MSC_VER) */
 
-#if	__STDC_VERSION__ < 199901L
+#ifdef	__cplusplus
+# if		defined(_MSC_VER)
+#  define	restrict	__restrict
+# else
+#  define	restrict	__restrict__
+# endif
+#elif	__STDC_VERSION__ < 199901L
 # if	defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #  define	restrict	__restrict
 # else
