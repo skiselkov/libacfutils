@@ -87,6 +87,7 @@ wavg2(double x, double y, double w)
 static inline double
 iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
 {
+	ASSERT3F(min_val, !=, max_val);
 	x = (x - min_val) / (max_val - min_val);
 	if (clamp_output)
 		x = clamp(x, 0, 1);
