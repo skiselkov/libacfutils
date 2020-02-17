@@ -26,6 +26,7 @@
 #ifndef	_ACF_UTILS_DR_CMD_REG_H_
 #define	_ACF_UTILS_DR_CMD_REG_H_
 
+#include <stdarg.h>
 #include <stdbool.h>
 
 #include <acfutils/cmd.h>
@@ -40,10 +41,16 @@ void dcr_fini(void);
 
 void dcr_add_dr(dr_t *dr);
 
-XPLMCommandRef dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb,
-    bool before, void *refcon);
-XPLMCommandRef f_dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb,
-    bool before, void *refcon);
+XPLMCommandRef dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
+    XPLMCommandCallback_f cb, bool before, void *refcon, ...)
+    PRINTF_ATTR2(1, 5);
+XPLMCommandRef dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb,
+    bool before, void *refcon, va_list ap);
+XPLMCommandRef f_dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
+    XPLMCommandCallback_f cb, bool before, void *refcon, ...)
+    PRINTF_ATTR2(1, 5);
+XPLMCommandRef f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb,
+    bool before, void *refcon, va_list ap);
 XPLMCommandRef dcr_create_cmd(const char *cmdname, const char *cmddesc,
     XPLMCommandCallback_f cb, bool before, void *refcon);
 

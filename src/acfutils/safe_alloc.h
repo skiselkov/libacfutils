@@ -80,7 +80,7 @@ safe_append_realloc(char *buf, const char *str)
 	ASSERT(str != NULL);
 	if (buf == NULL)
 		return (safe_strdup(str));
-	newbuf = safe_realloc(buf, strlen(buf) + strlen(str) + 1);
+	newbuf = (char *)safe_realloc(buf, strlen(buf) + strlen(str) + 1);
 	memcpy(&newbuf[strlen(newbuf)], str, strlen(str) + 1);
 	return (newbuf);
 }

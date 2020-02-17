@@ -123,20 +123,37 @@ dcr_add_dr(dr_t *dr)
 }
 
 XPLMCommandRef
-dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb, bool before,
-    void *refcon)
+dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
+    void *refcon, ...)
 {
+	XPLMCommandRef ref;
+	va_list ap;
+
+	va_start(ap, refcon);
+	ref = dcr_find_cmd_v(fmt, cb, before, refcon, ap);
+	va_end(ap);
+
+	return ref;
+}
+
+XPLMCommandRef
+dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
+    void *refcon, va_list ap)
+{
+	char *cmdname;
 	reg_cmd_t *cmd;
 	avl_index_t where;
 
 	ASSERT(inited);
-	ASSERT(cmdname != NULL);
+	ASSERT(fmt != NULL);
 	ASSERT(cb != NULL);
 
+	cmdname = vsprintf_alloc(fmt, ap);
 	cmd = safe_calloc(1, sizeof (*cmd));
 	cmd->cmd = XPLMFindCommand(cmdname);
 	if (cmd->cmd == NULL) {
 		free(cmd);
+		free(cmdname);
 		return (NULL);
 	}
 	cmd->cb = cb;
@@ -150,15 +167,41 @@ dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb, bool before,
 	    "before: %d,  refcon: %p", cmdname, cb, before, refcon);
 	avl_insert(&cmds, cmd, where);
 
+	free(cmdname);
+
 	return (cmd->cmd);
 }
 
 XPLMCommandRef
-f_dcr_find_cmd(const char *cmdname, XPLMCommandCallback_f cb, bool before,
-    void *refcon)
+f_dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
+    void *refcon, ...)
 {
-	XPLMCommandRef ref = dcr_find_cmd(cmdname, cb, before, refcon);
-	VERIFY_MSG(ref != NULL, "Command %s not found", cmdname);
+	XPLMCommandRef ref;
+	va_list ap;
+
+	va_start(ap, refcon);
+	ref = f_dcr_find_cmd_v(fmt, cb, before, refcon, ap);
+	va_end(ap);
+
+	return (ref);
+}
+
+XPLMCommandRef
+f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
+    void *refcon, va_list ap)
+{
+	XPLMCommandRef ref;
+	va_list ap2;
+
+	va_copy(ap2, ap);
+	ref = dcr_find_cmd_v(fmt, cb, before, refcon, ap);
+	if (ref == NULL) {
+		/* No need to dealloc here, we'll be crashing anyway */
+		VERIFY_MSG(ref != NULL, "Command %s not found",
+		    vsprintf_alloc(fmt, ap2));
+	}
+	va_end(ap2);
+
 	return (ref);
 }
 
@@ -174,5 +217,5 @@ dcr_create_cmd(const char *cmdname, const char *cmddesc,
 	VERIFY_MSG(ref != NULL,
 	    "Cannot create command %s: XPLMCreateCommand failed", cmdname);
 
-	return (f_dcr_find_cmd(cmdname, cb, before, refcon));
+	return (f_dcr_find_cmd("%s", cb, before, refcon, cmdname));
 }

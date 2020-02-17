@@ -42,6 +42,7 @@
 
 #include "math_core.h"
 #include "sysmacros.h"
+#include "safe_alloc.h"
 #include "types.h"
 
 #ifdef	__cplusplus
@@ -283,21 +284,40 @@ API_EXPORT void strtoupper(char *str);
 static inline char *sprintf_alloc(PRINTF_FORMAT(const char *fmt), ...)
     PRINTF_ATTR(1);
 
+#define	vsprintf_alloc			ACFSYM(vsprintf_alloc)
+static inline char *vsprintf_alloc(const char *fmt, va_list ap);
+
 static inline char *
 sprintf_alloc(const char *fmt, ...)
 {
 	va_list ap;
+	char *str;
+
+	ASSERT(fmt != NULL);
+
+	va_start(ap, fmt);
+	str = vsprintf_alloc(fmt, ap);
+	va_end(ap);
+
+	return (str);
+}
+
+static inline char *
+vsprintf_alloc(const char *fmt, va_list ap)
+{
+	va_list ap2;
 	int l;
 	char *str;
 
-	va_start(ap, fmt);
-	l = vsnprintf(NULL, 0, fmt, ap);
-	va_end(ap);
+	ASSERT(fmt != NULL);
+
+	va_copy(ap2, ap);
+	l = vsnprintf(NULL, 0, fmt, ap2);
+	va_end(ap2);
+
 	ASSERT(l >= 0);
-	str = (char *)malloc(l + 1);
-	va_start(ap, fmt);
+	str = (char *)safe_malloc(l + 1);
 	VERIFY3S(vsnprintf(str, l + 1, fmt, ap), ==, l);
-	va_end(ap);
 
 	return (str);
 }
