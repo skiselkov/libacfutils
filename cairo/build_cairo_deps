@@ -17,14 +17,14 @@
 
 source ../build_dep.common
 
-CAIRO="cairo-1.17.2.tar.xz"
+CAIRO="cairo-1.16.0.tar.xz"
 PIXMAN="pixman-0.36.0.tar.xz"
 
 PIXMAN_PRODUCT="pixman/.libs/libpixman-1.a"
 PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
     --disable-static-testprogs"
 
-CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.36.0/pixman"
+CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.34.0/pixman"
 CAIRO_PRODUCT="lib/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
