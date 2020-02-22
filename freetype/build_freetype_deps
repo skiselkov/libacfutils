@@ -17,16 +17,12 @@
 
 source ../build_dep.common
 
-FREETYPE="freetype-2.8.1.tar.xz"
+FREETYPE="freetype-2.10.1.tar.xz"
 FREETYPE_CONFOPTS_COMMON="--disable-shared --enable-static \
     --with-zlib=yes --with-bzip2=no --with-png=no \
     --with-harfbuzz=no --with-old-mac-fonts=no --with-fsspec=no \
     --with-fsref=no --with-quickdraw-toolbox=no \
     --with-quickdraw-carbon=no --with-ats=no"
-
-if [[ "$do_dll" = 1 ]]; then
-	FREETYPE_PATCH="freetype-win-dllexport.patch"
-fi
 
 export PKG_CONFIG_PATH_IN="$(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig"
 
@@ -34,12 +30,10 @@ case `uname` in
 	Linux)
 		CFLAGS="-m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$FREETYPE_CONFOPTS_COMMON" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
-		    $FREETYPE_PATCH && \
+		    "$FREETYPE" "freetype" "lib/libfreetype.a" && \
 		build_dep "win-64" "$FREETYPE_CONFOPTS_COMMON \
 		    --enable-shared --host=x86_64-w64-mingw32" \
-		    "$FREETYPE" "freetype" "lib/libfreetype.a" \
-		    $FREETYPE_PATCH
+		    "$FREETYPE" "freetype" "lib/libfreetype.a"
 		;;
 	Darwin)
 		CFLAGS="$FREETYPE_CFLAGS_COMMON" \
