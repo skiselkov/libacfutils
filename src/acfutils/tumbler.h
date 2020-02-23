@@ -40,9 +40,10 @@ typedef struct {
 } tumbler_t;
 
 #define	TUMBLER_CAP	8
+#define	TUMBLER_LINES	5
 
 int tumbler_solve(const tumbler_t *tumblers, int idx, double value,
-    double prev_fract, char out_str[3][TUMBLER_CAP], double *fract);
+    double prev_fract, char out_str[TUMBLER_LINES][TUMBLER_CAP], double *fract);
 
 #ifdef	__cplusplus
 }
