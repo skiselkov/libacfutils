@@ -86,7 +86,7 @@ extern "C" {
  */
 #define	ISA_SL_TEMP_C		15.0	/* Sea level temperature in degrees C */
 #define	ISA_SL_TEMP_K		288.15	/* Sea level temperature in Kelvin */
-#define	ISA_SL_PRESS		101325	/* Sea level pressure in Pa */
+#define	ISA_SL_PRESS		101325.0/* Sea level pressure in Pa */
 #define	ISA_SL_DENS		1.225	/* Sea level density in kg/m^3 */
 #define	ISA_TLR_PER_1000FT	1.98	/* Temperature lapse rate per 1000ft */
 #define	ISA_TLR_PER_1M		0.0065	/* Temperature lapse rate per 1 meter */
