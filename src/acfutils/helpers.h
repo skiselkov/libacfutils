@@ -322,6 +322,19 @@ vsprintf_alloc(const char *fmt, va_list ap)
 	return (str);
 }
 
+static inline int
+fixed_decimals(double x, int digits)
+{
+	if (x > -1e-10 && x < 1e-10)
+		return (MAX(digits - 1, 0));
+	if (x < 0)
+		x *= -1;
+	/* This avoids the leading "0." not counting to the digit number */
+	if (x < 1)
+		digits = MAX(digits - 1, 0);
+	return (clampi(digits - ceil(log10(x)), 0, digits));
+}
+
 #define	utf8_charlen	ACFSYM(utf8_charlen)
 API_EXPORT size_t utf8_charlen(const char *str);
 #define	utf8_strlen	ACFSYM(utf8_strlen)
