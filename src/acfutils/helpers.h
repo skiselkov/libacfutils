@@ -188,8 +188,8 @@ API_EXPORT void append_format(char **str, size_t *sz,
 
 /* string processing helpers */
 #define	strsplit			ACFSYM(strsplit)
-API_EXPORT char **strsplit(const char *input, char *sep, bool_t skip_empty,
-    size_t *num);
+API_EXPORT char **strsplit(const char *input, const char *sep,
+    bool_t skip_empty, size_t *num);
 #define	DESTROY_STRLIST(comps, len) \
 	do { \
 		free_strlist((comps), (len)); \

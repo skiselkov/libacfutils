@@ -661,7 +661,7 @@ strip_space(char *line)
  * by the caller. Use free_strlist for that.
  */
 char **
-strsplit(const char *input, char *sep, bool_t skip_empty, size_t *num)
+strsplit(const char *input, const char *sep, bool_t skip_empty, size_t *num)
 {
 	char **result;
 	size_t i = 0, n = 0;
