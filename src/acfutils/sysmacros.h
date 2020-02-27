@@ -221,6 +221,7 @@ highbit64(unsigned long long x)
 	do { \
 		__typeof__(old_val) o = (old_val); \
 		__typeof__(new_val) n = (new_val); \
+		ASSERT(!isnan(o)); \
 		(old_val) += (n - o) * ((d_t) / (lag)); \
 		/* Prevent an overshoot */ \
 		if ((o < n && (old_val) > n) || \
