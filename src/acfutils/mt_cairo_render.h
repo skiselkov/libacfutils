@@ -102,6 +102,14 @@ API_EXPORT bool_t try_load_font(const char *fontdir, const char *fontfile,
 API_EXPORT void mt_cairo_render_rounded_rectangle(cairo_t *cr, double x,
     double y, double w, double h, double radius);
 
+#define	CAIRO_SURFACE_DESTROY(surf) \
+	do {\
+		if ((surf) != NULL) { \
+			cairo_surface_destroy((surf)); \
+			(surf) = NULL; \
+		} \
+	} while (0)
+
 #ifdef	__cplusplus
 }
 #endif
