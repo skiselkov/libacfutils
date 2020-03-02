@@ -43,7 +43,8 @@ $(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/../libpng/libpng-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/pixman-{PLATFORM}/lib/pkgconfig" \
 
-CAIRO_PATCHES="cairo-win-ulongf.patch cairo-win-fopen.patch"
+CAIRO_PATCHES="cairo-win-ulongf.patch cairo-win-fopen.patch \
+    cairo-scaled-font-mutex.patch"
 if [[ "$do_dll" = 1 ]]; then
 	CAIRO_PATCHES="$CAIRO_PATCHES cairo-win-dllexport.patch"
 fi
