@@ -2243,7 +2243,7 @@ alt2press(double alt, double qnh)
 /*
  * Calculates pressure altitude from static air pressure.
  *
- * @param alt Static air pressure in Pa.
+ * @param press Static air pressure in Pa.
  * @param qnh Local QNH in Pa.
  *
  * @return Pressure altitude in feet.
@@ -2254,6 +2254,21 @@ press2alt(double press, double qnh)
 	return (MET2FEET((ISA_SL_TEMP_K * (1 - pow(press / qnh,
 	    (R_univ * ISA_TLR_PER_1M) / (EARTH_GRAVITY * DRY_AIR_MOL)))) /
 	    ISA_TLR_PER_1M));
+}
+
+/*
+ * Same as press2alt, but uses the NOAA pressure altitude algorithm
+ * listed here: https://www.weather.gov/media/epz/wxcalc/pressureAltitude.pdf
+ *
+ * @param press Static air pressure in Pa.
+ * @param qnh Local QNH in Pa.
+ *
+ * @return Pressure altitude in feet.
+ */
+double
+press2alt_noaa(double press, double qnh)
+{
+	return (145366.45 * (1 - pow(press / qnh, 0.190284)));
 }
 
 /*

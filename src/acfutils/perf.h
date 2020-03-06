@@ -248,6 +248,8 @@ double perf_get_turn_rate(double bank_ratio, double gs_kts,
 API_EXPORT double alt2press(double alt, double qnh);
 #define	press2alt	ACFSYM(press2alt)
 API_EXPORT double press2alt(double press, double qnh);
+#define	press2alt_noaa	ACFSYM(press2alt_noaa)
+API_EXPORT double press2alt_noaa(double press, double qnh);
 
 #define	alt2fl		ACFSYM(alt2fl)
 API_EXPORT double alt2fl(double alt, double qnh);
