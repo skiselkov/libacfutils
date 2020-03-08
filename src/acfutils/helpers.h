@@ -212,6 +212,8 @@ API_EXPORT void fix_pathsep(char *str);
 API_EXPORT char *path_last_comp_subst(const char *path, const char *replace);
 #define	path_last_comp			ACFSYM(path_last_comp)
 API_EXPORT char *path_last_comp(const char *path);
+#define	path_ext_subst			ACFSYM(path_ext_subst)
+API_EXPORT char *path_ext_subst(const char *path, const char *ext);
 
 #define	file2str			ACFSYM(file2str)
 API_EXPORT char *file2str(const char *comp, ...);

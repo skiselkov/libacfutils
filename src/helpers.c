@@ -958,6 +958,33 @@ path_last_comp(const char *path)
 	return (last);
 }
 
+/*
+ * Takes `path' and substitutes its path extension (any characters following
+ * the last '.') with `ext'. If the path doesn't contain a path extension,
+ * it is appended. The newly allocated path is returned to the caller.
+ * The caller is responsible for freeing this path using lacf_free.
+ */
+char *
+path_ext_subst(const char *path, const char *ext)
+{
+	const char *period;
+	char *str;
+	int l;
+
+	ASSERT(path != NULL);
+	ASSERT(ext != NULL);
+	period = strrchr(path, '.');
+	if (period == NULL)
+		return (sprintf_alloc("%s.%s", path, ext));
+	l = period - path;
+	str = safe_malloc(l + strlen(ext) + 2);
+	strlcpy(str, path, l + 1);
+	strlcpy(&str[l], ".", 2);
+	strlcpy(&str[l + 1], ext, strlen(ext) + 1);
+
+	return (str);
+}
+
 char *
 file2str(const char *comp, ...)
 {
