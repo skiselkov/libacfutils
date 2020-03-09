@@ -405,7 +405,9 @@ dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 		return (0);
 
 	if (dl_info->bufcap < dl_info->bufsz + bytes) {
-		dl_info->bufcap += REALLOC_STEP;
+		do {
+			dl_info->bufcap += REALLOC_STEP;
+		} while (dl_info->bufcap < dl_info->bufsz + bytes);
 		dl_info->buf = realloc(dl_info->buf, dl_info->bufcap);
 	}
 	memcpy(&dl_info->buf[dl_info->bufsz], ptr, bytes);
