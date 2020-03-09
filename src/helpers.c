@@ -969,7 +969,7 @@ path_ext_subst(const char *path, const char *ext)
 {
 	const char *period;
 	char *str;
-	int l;
+	int l, k;
 
 	ASSERT(path != NULL);
 	ASSERT(ext != NULL);
@@ -977,10 +977,11 @@ path_ext_subst(const char *path, const char *ext)
 	if (period == NULL)
 		return (sprintf_alloc("%s.%s", path, ext));
 	l = period - path;
+	k = strlen(ext);
 	str = safe_malloc(l + strlen(ext) + 2);
 	strlcpy(str, path, l + 1);
 	strlcpy(&str[l], ".", 2);
-	strlcpy(&str[l + 1], ext, strlen(ext) + 1);
+	strlcpy(&str[l + 1], ext, k + 1);
 
 	return (str);
 }
