@@ -97,6 +97,7 @@ extern "C" {
  * Physical constants.
  */
 #define	EARTH_GRAVITY	9.80665		/* Earth surface grav. acceleration */
+#define	EARTH_SID_DAY	86164.0905	/* Sidereal day on Earth in seconds */
 #define	DRY_AIR_MOL	0.0289644	/* Molar mass of dry air */
 #define	GAMMA		1.4		/* Specific heat ratio of dry air */
 #define	R_univ		8.31447		/* Universal gas constant */

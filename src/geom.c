@@ -28,8 +28,6 @@
 #include <acfutils/perf.h>
 #include <acfutils/safe_alloc.h>
 
-#define	SIDEREAL_DAY		86164.0905	/* sec */
-
 /*
  * The WGS84 ellipsoid parameters.
  */
@@ -530,7 +528,7 @@ ecef2ecmi(vect3_t pos, double delta_t)
 {
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
-	return (vect3_rot(pos, 360 * (-delta_t / SIDEREAL_DAY), 2));
+	return (vect3_rot(pos, 360 * (-delta_t / EARTH_SID_DAY), 2));
 }
 
 vect3_t
@@ -538,7 +536,7 @@ ecmi2ecef(vect3_t pos, double delta_t)
 {
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
-	return (vect3_rot(pos, 360 * (delta_t / SIDEREAL_DAY), 2));
+	return (vect3_rot(pos, 360 * (delta_t / EARTH_SID_DAY), 2));
 }
 
 ellip_t
