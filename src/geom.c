@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <math.h>
@@ -528,7 +528,7 @@ ecef2ecmi(vect3_t pos, double delta_t)
 {
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
-	return (vect3_rot(pos, 360 * (-delta_t / EARTH_SID_DAY), 2));
+	return (vect3_rot(pos, -delta_t * EARTH_ROT_RATE, 2));
 }
 
 vect3_t
@@ -536,7 +536,7 @@ ecmi2ecef(vect3_t pos, double delta_t)
 {
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
-	return (vect3_rot(pos, 360 * (delta_t / EARTH_SID_DAY), 2));
+	return (vect3_rot(pos, delta_t * EARTH_ROT_RATE, 2));
 }
 
 ellip_t
