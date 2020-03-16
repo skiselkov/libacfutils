@@ -236,6 +236,13 @@ API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
 API_EXPORT geo_pos3_t ecef2sph(vect3_t v);
 API_EXPORT vect3_t sph2ecef(geo_pos3_t pos);
 /*
+ * Converts between ECEF/ECMI coordinates and OpenGL coordinates. OpenGL
+ * uses X to represent the lateral aixs, Y to represent the vertical axis
+ * and Z to represent the axis going towards the camera.
+ */
+API_EXPORT vect3_t ecef2gl(vect3_t ecmi);
+API_EXPORT vect3_t gl2ecef(vect3_t opengl);
+/*
  * ECmI stands for Earth-Centered-modified-Inertial. Unlike ECEF, it is
  * an inertial frame that doesn't rotate together with the earth. However,
  * unlike plain ECI coordinates, ECmI is aligned with the Earth equatorial

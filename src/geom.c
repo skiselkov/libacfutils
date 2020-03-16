@@ -503,7 +503,8 @@ geo2ecmi(geo_pos3_t pos, double delta_t, const ellip_t *ellip)
 	ASSERT(!IS_NULL_GEO_POS(pos));
 	ASSERT(!isnan(delta_t));
 	ASSERT(ellip != NULL);
-	return (ecef2ecmi(geo2ecef_mtr(pos, ellip), delta_t));
+	pos.lon += delta_t * EARTH_ROT_RATE;
+	return (geo2ecef_mtr(pos, ellip));
 }
 
 /*
@@ -517,10 +518,13 @@ geo2ecmi(geo_pos3_t pos, double delta_t, const ellip_t *ellip)
 geo_pos3_t
 ecmi2geo(vect3_t pos, double delta_t, const ellip_t *ellip)
 {
+	geo_pos3_t gp;
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
 	ASSERT(ellip != NULL);
-	return (ecef2geo(ecmi2ecef(pos, delta_t), ellip));
+	gp = ecef2geo(pos, ellip);
+	gp.lon -= delta_t * EARTH_ROT_RATE;
+	return (gp);
 }
 
 vect3_t
@@ -537,6 +541,18 @@ ecmi2ecef(vect3_t pos, double delta_t)
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
 	return (vect3_rot(pos, delta_t * EARTH_ROT_RATE, 2));
+}
+
+vect3_t
+ecef2gl(vect3_t ecef)
+{
+	return (VECT3(ecef.y, ecef.z, ecef.x));
+}
+
+vect3_t
+gl2ecef(vect3_t opengl)
+{
+	return (VECT3(opengl.z, opengl.x, opengl.y));
 }
 
 ellip_t
