@@ -101,6 +101,7 @@ struct mt_cairo_render_s {
 	mutex_t			lock;
 	bool_t			started;
 	bool_t			shutdown;
+	bool_t			fg_mode;
 
 	/* Only accessed from OpenGL drawing thread, so no locking req'd */
 	struct {
@@ -216,7 +217,10 @@ worker(mt_cairo_render_t *mtcr)
 	 * something to show ASAP.
 	 */
 	ASSERT(mtcr->render_cb != NULL);
-	mtcr->render_cb(mtcr->rs[0].cr, mtcr->w, mtcr->h, mtcr->userinfo);
+	if (mtcr->fps > 0) {
+		mtcr->render_cb(mtcr->rs[0].cr, mtcr->w, mtcr->h,
+		    mtcr->userinfo);
+	}
 	mtcr->rs[0].chg = B_TRUE;
 
 	mutex_enter(&mtcr->lock);
@@ -446,6 +450,27 @@ mt_cairo_render_get_fps(mt_cairo_render_t *mtcr)
 	return (mtcr->fps);
 }
 
+/*
+ * Foreground mode
+ */
+void
+mt_cairo_render_enable_fg_mode(mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	ASSERT0(mtcr->fg_mode);
+	ASSERT3F(mtcr->fps, ==, 0);
+	ASSERT(mtcr->started);
+
+	mutex_enter(&mtcr->lock);
+	mtcr->shutdown = B_TRUE;
+	cv_broadcast(&mtcr->cv);
+	mutex_exit(&mtcr->lock);
+	thread_join(&mtcr->thr);
+
+	mtcr->fg_mode = true;
+	mtcr->started = B_FALSE;
+}
+
 void
 mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
     unsigned gl_filter_enum)
@@ -502,6 +527,8 @@ mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 void
 mt_cairo_render_once(mt_cairo_render_t *mtcr)
 {
+	ASSERT(mtcr != NULL);
+	ASSERT0(mtcr->fg_mode);
 	mutex_enter(&mtcr->lock);
 	cv_broadcast(&mtcr->cv);
 	mutex_exit(&mtcr->lock);
@@ -514,12 +541,26 @@ mt_cairo_render_once(mt_cairo_render_t *mtcr)
 void
 mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 {
-	mutex_enter(&mtcr->lock);
-	mtcr->one_shot_block = B_TRUE;
-	cv_broadcast(&mtcr->cv);
-	cv_wait(&mtcr->render_done_cv, &mtcr->lock);
-	mtcr->one_shot_block = B_FALSE;
-	mutex_exit(&mtcr->lock);
+	ASSERT(mtcr != NULL);
+	if (mtcr->fg_mode) {
+		render_surf_t *rs = &mtcr->rs[!mtcr->cur_rs];
+
+		ASSERT(mtcr->render_cb != NULL);
+		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
+		rs->chg = B_TRUE;
+
+		mutex_enter(&mtcr->lock);
+		mtcr->cur_rs = !mtcr->cur_rs;
+		cv_broadcast(&mtcr->render_done_cv);
+		mutex_exit(&mtcr->lock);
+	} else {
+		mutex_enter(&mtcr->lock);
+		mtcr->one_shot_block = B_TRUE;
+		cv_broadcast(&mtcr->cv);
+		cv_wait(&mtcr->render_done_cv, &mtcr->lock);
+		mtcr->one_shot_block = B_FALSE;
+		mutex_exit(&mtcr->lock);
+	}
 }
 
 static void
