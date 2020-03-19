@@ -114,12 +114,12 @@ dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i)
 double
 dr_getf_impl(dr_t *dr, DR_DEBUG_VARS)
 {
-	if (dr->type & xplmType_Int)
-		return (XPLMGetDatai(dr->dr));
-	if (dr->type & xplmType_Float)
-		return (XPLMGetDataf(dr->dr));
 	if (dr->type & xplmType_Double)
 		return (XPLMGetDatad(dr->dr));
+	if (dr->type & xplmType_Float)
+		return (XPLMGetDataf(dr->dr));
+	if (dr->type & xplmType_Int)
+		return (XPLMGetDatai(dr->dr));
 	if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data)) {
 		double f;
@@ -137,12 +137,12 @@ dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f)
 	DR_WRITE_CHECK(VERIFY);
 	ASSERT_MSG(!isnan(f), "%s (%s%d: %s)", dr->name, filename, line,
 	    varname);
-	if (dr->type & xplmType_Int)
-		XPLMSetDatai(dr->dr, f);
+	if (dr->type & xplmType_Double)
+		XPLMSetDatad(dr->dr, f);
 	else if (dr->type & xplmType_Float)
 		XPLMSetDataf(dr->dr, f);
-	else if (dr->type & xplmType_Double)
-		XPLMSetDatad(dr->dr, f);
+	else if (dr->type & xplmType_Int)
+		XPLMSetDatai(dr->dr, f);
 	else if (dr->type & (xplmType_FloatArray | xplmType_IntArray |
 	    xplmType_Data))
 		dr_setvf_impl(dr, filename, line, varname, &f, 0, 1);
