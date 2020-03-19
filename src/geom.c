@@ -503,8 +503,7 @@ geo2ecmi(geo_pos3_t pos, double delta_t, const ellip_t *ellip)
 	ASSERT(!IS_NULL_GEO_POS(pos));
 	ASSERT(!isnan(delta_t));
 	ASSERT(ellip != NULL);
-	pos.lon += delta_t * EARTH_ROT_RATE;
-	return (geo2ecef_mtr(pos, ellip));
+	return (ecef2ecmi(geo2ecef_mtr(pos, ellip), delta_t));
 }
 
 /*
@@ -518,13 +517,10 @@ geo2ecmi(geo_pos3_t pos, double delta_t, const ellip_t *ellip)
 geo_pos3_t
 ecmi2geo(vect3_t pos, double delta_t, const ellip_t *ellip)
 {
-	geo_pos3_t gp;
 	ASSERT(!IS_NULL_VECT(pos));
 	ASSERT(!isnan(delta_t));
 	ASSERT(ellip != NULL);
-	gp = ecef2geo(pos, ellip);
-	gp.lon -= delta_t * EARTH_ROT_RATE;
-	return (gp);
+	return (ecef2geo(ecmi2ecef(pos, delta_t), ellip));
 }
 
 vect3_t
