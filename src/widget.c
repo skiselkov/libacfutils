@@ -26,13 +26,14 @@
 #include <XPLMProcessing.h>
 #include <XPStandardWidgets.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/dr.h>
-#include <acfutils/helpers.h>
-#include <acfutils/list.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/widget.h>
-#include <acfutils/time.h>
+#include "acfutils/assert.h"
+#include "acfutils/dr.h"
+#include "acfutils/geom.h"
+#include "acfutils/helpers.h"
+#include "acfutils/list.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/widget.h"
+#include "acfutils/time.h"
 
 enum {
 	TOOLTIP_LINE_HEIGHT =	13,
@@ -491,4 +492,186 @@ widget_follow_VR(XPWidgetID win)
 {
 	ASSERT(win != NULL);
 	window_follow_VR(XPGetWidgetUnderlyingWindow(win));
+}
+
+void win_resize_ctl_init(win_resize_ctl_t *ctl, XPLMWindowID win,
+    unsigned norm_w, unsigned norm_h)
+{
+	ASSERT(ctl != NULL);
+	ASSERT(win != NULL);
+	ASSERT3F(norm_w / 10, >, 0);
+	ASSERT3F(norm_h / 10, >, 0);
+
+	ctl->win = win;
+	ctl->norm_w = norm_w;
+	ctl->norm_h = norm_h;
+	ctl->w_h_ratio = norm_w / (double)norm_h;
+
+	XPLMGetWindowGeometry(win, &ctl->left, &ctl->top, &ctl->right,
+	    &ctl->bottom);
+	/*
+	 * We need a resizing limit to avoid div-by-zero when trying to
+	 * calculate the required scaling factor.
+	 */
+	XPLMSetWindowResizingLimits(win, norm_w / 10, norm_h / 10,
+	    norm_w * 10, norm_h * 10);
+	/*
+	 * X-Plane's resizing controls are kinda weird in that they always
+	 * work relative to the window's "current" size. That means if we
+	 * keep the window snapped to the normal size, it would be very
+	 * hard for the user to make an input large enough to "unsnap" it
+	 * out of the snapping range. So we instead turn the snapping
+	 * behavior on/off based on a time delay. When the user first moves
+	 * into the size snapping region (within 5% of the window's normal
+	 * size), we snap the size for up to 0.75 seconds. If the user keeps
+	 * resizing the window past that timeout, we follow their resizing
+	 * input, even if it is in the snapping region. When they move
+	 * outside of the snapping region, we reset the snapping behavior,
+	 * to allow us to snap to the normal size again.
+	 */
+	delay_line_init(&ctl->snap_hold_delay, SEC2USEC(0.75));
+	delay_line_push_imm_u64(&ctl->snap_hold_delay, B_TRUE);
+}
+
+static void
+calc_resize_geometry(win_resize_ctl_t *ctl, int top, int right,
+    int *left_p, int *top_p, int *right_p, int *bottom_p,
+    vect2_t grav_pt, bool_t grav_horiz)
+{
+	int w, h;
+
+	ASSERT(ctl != NULL);
+	ASSERT(left_p != NULL);
+	ASSERT(top_p != NULL);
+	ASSERT(right_p != NULL);
+	ASSERT(bottom_p != NULL);
+	ASSERT(!IS_NULL_VECT(grav_pt));
+
+	w = *right_p - *left_p;
+	h = *top_p - *bottom_p;
+
+	if (grav_horiz) {
+		int new_h = w / ctl->w_h_ratio;
+		double scale;
+
+		if (fabs(w / (double)ctl->norm_w - 1.0) < 0.05) {
+			if (!delay_line_push_u64(&ctl->snap_hold_delay,
+			    B_TRUE)) {
+				scale = ctl->norm_w / (double)w;
+				*right_p = grav_pt.x +
+				    (right - grav_pt.x) * scale;
+				*left_p = *right_p - ctl->norm_w;
+				new_h = ctl->norm_h;
+			}
+		} else {
+			delay_line_push_imm_u64(&ctl->snap_hold_delay, B_FALSE);
+		}
+		scale = new_h / (double)h;
+		*top_p = grav_pt.y + (top - grav_pt.y) * scale;
+		*bottom_p = *top_p - new_h;
+	} else {
+		int new_w = h * ctl->w_h_ratio;
+		double scale;
+
+		if (fabs(h / (double)ctl->norm_h - 1.0) < 0.05) {
+			if (!delay_line_push_u64(&ctl->snap_hold_delay,
+			    B_TRUE)) {
+				scale = ctl->norm_h / (double)h;
+				*top_p = grav_pt.y + (top - grav_pt.y) * scale;
+				*bottom_p = *top_p - ctl->norm_h;
+				new_w = ctl->norm_w;
+			}
+		} else {
+			delay_line_push_imm_u64(&ctl->snap_hold_delay, B_FALSE);
+		}
+		scale = new_w / (double)w;
+		*right_p = grav_pt.x + (right - grav_pt.x) * scale;
+		*left_p = *right_p - new_w;
+	}
+}
+
+void
+win_resize_ctl_update(win_resize_ctl_t *ctl)
+{
+	int left, top, right, bottom;
+	int new_left, new_top, new_right, new_bottom;
+
+	ASSERT(ctl != NULL);
+	ASSERT(ctl->win != NULL);
+
+	XPLMGetWindowGeometry(ctl->win, &left, &top, &right, &bottom);
+	new_left = left;
+	new_top = top;
+	new_right = right;
+	new_bottom = bottom;
+
+	if (left != ctl->left && top != ctl->top && right != ctl->right &&
+	    bottom != ctl->bottom) {
+		/*
+		 * If all 4 coordinates changed, it means the window is
+		 * being moved diagonally. We ignore this and simply store
+		 * the new window geometry.
+		 */
+		ctl->left = new_left = left;
+		ctl->top = new_top = top;
+		ctl->right = new_right = right;
+		ctl->bottom = new_bottom = bottom;
+	} else if (left != ctl->left && top != ctl->top) {
+		/* Resizing from top left corner, lock to lower right corner */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(right, bottom), B_TRUE);
+	} else if (left != ctl->left && bottom != ctl->bottom) {
+		/* Resizing from bottom left corner, lock to upper right */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(right, top), B_TRUE);
+	} else if (right != ctl->right && top != ctl->top) {
+		/* Resizing from top right corner, lock to lower left */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(left, bottom), B_TRUE);
+	} else if (right != ctl->right && bottom != ctl->bottom) {
+		/* Resizing from bottom right corner, lock to upper left */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(left, top), B_TRUE);
+	} else if (left != ctl->left && right == ctl->right) {
+		/* Resizing from bottom left edge, lock to right edge center */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(right, AVG(top, bottom)), B_TRUE);
+	} else if (right != ctl->right && left == ctl->left) {
+		/* Resizing from bottom right edge, lock to left edge center */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(left, AVG(top, bottom)), B_TRUE);
+	} else if (top != ctl->top && bottom == ctl->bottom) {
+		/* Resizing from top edge, lock to bottom edge center */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(AVG(left, right), bottom), B_FALSE);
+	} else if (bottom != ctl->bottom && top == ctl->top) {
+		/* Resizing from bottom edge, lock to top edge center */
+		calc_resize_geometry(ctl, top, right,
+		    &new_left, &new_top, &new_right, &new_bottom,
+		    VECT2(AVG(left, right), top), B_FALSE);
+	} else {
+		/* Horizontal/vertical window movement along a single axis. */
+		ctl->left = new_left = left;
+		ctl->top = new_top = top;
+		ctl->right = new_right = right;
+		ctl->bottom = new_bottom = bottom;
+	}
+	if (ctl->left != new_left || left != new_left ||
+	    ctl->top != new_top || top != new_top ||
+	    ctl->right != new_right || right != new_right ||
+	    ctl->bottom != new_bottom || bottom != new_bottom) {
+		ctl->left = new_left;
+		ctl->right = new_right;
+		ctl->top = new_top;
+		ctl->bottom = new_bottom;
+		XPLMSetWindowGeometry(ctl->win, new_left, new_top, new_right,
+		    new_bottom);
+	}
 }

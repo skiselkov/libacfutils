@@ -29,13 +29,26 @@
 #include <XPLMDisplay.h>
 #include <XPWidgets.h>
 
-#include <acfutils/types.h>
+#include "acfutils/delay_line.h"
+#include "acfutils/types.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
 typedef struct tooltip_set tooltip_set_t;
+
+typedef struct {
+	XPLMWindowID	win;
+	unsigned	norm_w;
+	unsigned	norm_h;
+	double		w_h_ratio;
+	int		left;
+	int		top;
+	int		right;
+	int		bottom;
+	delay_line_t	snap_hold_delay;
+} win_resize_ctl_t;
 
 #define	create_widget_rel	ACFSYM(create_widget_rel)
 API_EXPORT XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
@@ -67,6 +80,36 @@ API_EXPORT void window_follow_VR(XPLMWindowID win);
 
 #define	widget_follow_VR	ACFSYM(widget_follow_VR)
 API_EXPORT void widget_follow_VR(XPWidgetID win);
+
+/*
+ * These define an automatic window resizing controller that keeps the
+ * aspect ratio of the window constant. This is useful for windows where
+ * the contents might get squashed in undesirable ways.
+ *
+ * Use win_resize_ctl_init to initialize the controller, passing the
+ * window handle and the window's "normal" width and height in boxels.
+ * The controller will store the aspect ratio of these two numbers, as
+ * well as the normal sizes (providing automatic snapping to normal size
+ * when the user resizes the window to nearly its normal size).
+ *
+ * The normal size values MUST be greater than 10 boxels. Please note
+ * that the controller automatically sets the window resizing limits to
+ * between 10% and 1000% of its normal size. If this isn't desired,
+ * change the window's resizing limits after calling win_resize_ctl_init.
+ * Do NOT, however, allow the window to resize down to zero size, or
+ * a divide-by-zero will occur.
+ */
+#define	win_resize_ctl_init	ACFSYM(win_resize_ctl_init)
+API_EXPORT void win_resize_ctl_init(win_resize_ctl_t *ctl, XPLMWindowID win,
+    unsigned norm_w, unsigned norm_h);
+/*
+ * Call win_resize_ctl_update in your window drawing function.
+ * The controller will check the window for proper aspect ratio
+ * and/or snapping to its normal size and performs window
+ * geometry changes as necessary.
+ */
+#define	win_resize_ctl_update	ACFSYM(win_resize_ctl_update)
+API_EXPORT void win_resize_ctl_update(win_resize_ctl_t *ctl);
 
 #ifdef	__cplusplus
 }
