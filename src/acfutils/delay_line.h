@@ -192,7 +192,12 @@ DEF_DELAY_LINE_PUSH_IMM(double, f64)
 	    uint32_t:		delay_line_push_imm_u64((line), (value)), \
 	    uint64_t:		delay_line_push_imm_u64((line), (value)), \
 	    default:		delay_line_push_imm_i64((line), (value)))
-#endif
+#else	/* __STDC_VERSION__ < 201112L */
+#define	DELAY_LINE_PUSH(line, value) \
+	DELAY_LINE_PUSH_macro_requires_C11_or_greater
+#define	DELAY_LINE_PUSH_IMM(line, value) \
+	DELAY_LINE_PUSH_IMM_macro_requires_C11_or_greater
+#endif	/* __STDC_VERSION__ < 201112L */
 
 #ifdef	__cplusplus
 }
