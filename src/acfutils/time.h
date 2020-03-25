@@ -22,7 +22,8 @@
 #include <stdint.h>
 #include <time.h>
 
-#include <acfutils/core.h>
+#include "acfutils/assert.h"
+#include "acfutils/core.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -48,6 +49,20 @@ nanoclock(void)
 		return (microclock() * 1000);
 	return (ts.tv_sec * 1000000000llu + ts.tv_nsec);
 #endif	/* !IBM */
+}
+
+/*
+ * Converts a struct tm specified in UTC (not local time) into unixtime.
+ * This only considers the following fields from the tm structure, tm_year,
+ * tm_yday, tm_hour, tm_min and tm_sec. Any other fields are ignored.
+ */
+static inline time_t
+tmutc2unix(const struct tm *tm)
+{
+	ASSERT(tm != NULL);
+	return ((tm->tm_year - 70) * 365.24 * 86400 +
+	    tm->tm_yday * 86400 + tm->tm_hour * 3600 + tm->tm_min * 60 +
+	    tm->tm_sec);
 }
 
 #ifdef	__cplusplus
