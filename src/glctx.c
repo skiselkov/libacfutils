@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <string.h>
@@ -56,6 +56,9 @@ struct glctx_s {
 	GLXContext	glc;
 	GLXPbuffer	pbuf;
 #elif	IBM
+	bool_t		priv_window;
+	char		win_cls_name[32];
+	ATOM		win_cls;
 	HWND		win;
 	HDC		dc;
 	HGLRC		hgl;
@@ -169,6 +172,70 @@ glctx_get_xplane_win_ptr(void)
 #define	WGL_CONTEXT_DEBUG_BIT_ARB		0x0001
 #define	WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB	0x0002
 
+/*
+ * Creates a private window with a private device context that we
+ * utilize when we don't need sharelists. This is more stable under
+ * Vulkan, which may not set up the main window device context
+ * pixel format to be OpenGL-compatible.
+ */
+static bool_t
+glctx_create_priv_window(glctx_t *ctx)
+{
+	const PIXELFORMATDESCRIPTOR pfd = {
+	    .nSize = sizeof(pfd),
+	    .nVersion = 1,
+	    .iPixelType = PFD_TYPE_RGBA,
+	    .dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
+	    PFD_DOUBLEBUFFER,
+	    .cColorBits = 32,
+	    .cAlphaBits = 8,
+	    .iLayerType = PFD_MAIN_PLANE,
+	    .cDepthBits = 24,
+	    .cStencilBits = 8,
+	};
+	WNDCLASSA wc = {
+	    .style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC,
+	    .lpfnWndProc = DefWindowProcA,
+	    .hInstance = GetModuleHandle(NULL)
+	};
+	int pixel_format;
+
+	ASSERT(ctx != NULL);
+
+	ctx->priv_window = B_TRUE;
+	snprintf(ctx->win_cls_name, sizeof (ctx->win_cls_name),
+	    "glctx-%d", rand());
+		wc.lpszClassName = ctx->win_cls_name;
+		if (!RegisterClassA(&wc)) {
+		win_perror(GetLastError(), "Failed to register window class");
+		return (B_FALSE);
+	}
+	ctx->win = CreateWindowA(ctx->win_cls_name, ctx->win_cls_name,
+	    WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
+	    0, 0, 32, 32, NULL, NULL, GetModuleHandle(NULL), NULL);
+	if (ctx->win == NULL) {
+		win_perror(GetLastError(), "Failed to create window");
+		return (B_FALSE);
+	}
+	ctx->dc = GetDC(ctx->win);
+	if (ctx->dc == NULL) {
+		win_perror(GetLastError(),
+		    "Failed to get window device context");
+		return (B_FALSE);
+	}
+	pixel_format = ChoosePixelFormat(ctx->dc, &pfd);
+	if (pixel_format == 0) {
+		logMsg("Couldn't find a suitable pixel format");
+		return (B_FALSE);
+	}
+	if (!SetPixelFormat(ctx->dc, pixel_format, &pfd)) {
+		win_perror(GetLastError(), "Couldn't set pixel format");
+		return (B_FALSE);
+	}
+
+	return (B_TRUE);
+}
+
 glctx_t *
 glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
     int minor_ver, bool_t fwd_compat, bool_t debug)
@@ -183,13 +250,9 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 		(debug ? WGL_CONTEXT_DEBUG_BIT_ARB : 0),
 	    0 /* list terminator */
 	};
-	HWND window;
 	glctx_t *ctx;
 
 	ASSERT(share_ctx == NULL || share_ctx->hgl != NULL);
-
-	ASSERT(win_ptr != NULL);
-	window = win_ptr;
 
 	/* Get the required extensions */
 	wglCreateContextAttribsARB = (wglCreateContextAttribsProc)
@@ -201,15 +264,26 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 
 	ctx = safe_calloc(1, sizeof (*ctx));
 	ctx->created = B_TRUE;
-	ctx->dc = GetDC(window);
-	if (ctx->dc == NULL) {
-		logMsg("Failed to get window device context");
-		goto errout;
+	if (share_ctx == NULL) {
+		logMsg("Utilizing private window");
+		if (!glctx_create_priv_window(ctx))
+			goto errout;
+		ASSERT(ctx->dc != NULL);
+	} else {
+		logMsg("Utilizing shared window");
+		ctx->win = win_ptr;
+		ctx->dc = GetDC(ctx->win);
+		if (ctx->dc == NULL) {
+			win_perror(GetLastError(),
+			    "Failed to get window device context");
+			goto errout;
+		}
 	}
 	ctx->hgl = wglCreateContextAttribsARB(ctx->dc,
 	    share_ctx != NULL ? share_ctx->hgl : NULL, attrs);
 	if (ctx->hgl == NULL) {
-		logMsg("Failed to create context");
+		win_perror(GetLastError(),
+		    "Failed to create invisible OpenGL context");
 		goto errout;
 	}
 
@@ -465,11 +539,25 @@ glctx_destroy(glctx_t *ctx)
 			 */
 			glctx_destroy(cur_ctx);
 		}
+		ASSERT(ctx->win != NULL);
+		if (ctx->dc != NULL) {
+			ASSERT(ctx->win != NULL);
+			ReleaseDC(ctx->win, ctx->dc);
+		}
+		if (ctx->priv_window) {
+			if (ctx->win != NULL)
+				DestroyWindow(ctx->win);
+			if (ctx->win_cls != 0) {
+				UnregisterClassA(ctx->win_cls_name,
+				    GetModuleHandle(NULL));
+			}
+		}
 	}
 #elif	APL
 	if (ctx->created) {
 		CGLDestroyContext(ctx->cgl);
 	}
 #endif	/* APL */
+	memset(ctx, 0, sizeof (*ctx));
 	free(ctx);
 }
