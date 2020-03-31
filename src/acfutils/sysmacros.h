@@ -57,6 +57,7 @@ extern "C" {
 #define	ALIGN64(__var__)	ALIGN(__var__, 64)
 
 #if	defined(__GNUC__) || defined(__clang__)
+#define	DEPRECATED_FUNC(f)	f __attribute__((deprecated))
 #define	PRINTF_ATTR(x)		__attribute__((format(printf, x, x + 1)))
 #define	PRINTF_ATTR2(x,y)	__attribute__((format(printf, x, y)))
 #define	PRINTF_FORMAT(f)	f
@@ -80,6 +81,7 @@ extern "C" {
 #define	COND_UNLIKELY(x)	x
 
 #if	_MSC_VER >= 1400
+# define	DEPRECATED_FUNC(f)	__declspec(deprecated) f
 # include <sal.h>
 # if	_MSC_VER > 1400
 #  define	PRINTF_FORMAT(f)	_Printf_format_string_ f
