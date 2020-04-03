@@ -23,12 +23,13 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/avl.h>
-#include <acfutils/conf.h>
-#include <acfutils/helpers.h>
-#include <acfutils/log.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/avl.h"
+#include "acfutils/base64.h"
+#include "acfutils/conf.h"
+#include "acfutils/helpers.h"
+#include "acfutils/log.h"
+#include "acfutils/safe_alloc.h"
 
 /* For conf_get_da and conf_set_da. */
 CTASSERT(sizeof (double) == sizeof (unsigned long long));
@@ -53,9 +54,21 @@ struct conf {
 	avl_tree_t	tree;
 };
 
+typedef enum {
+	CONF_KEY_STR,
+	CONF_KEY_DATA
+} conf_key_type_t;
+
 typedef struct {
-	char		*key;
-	char		*value;
+	char			*key;
+	conf_key_type_t		type;
+	union {
+		char		*str;
+		struct {
+			void	*buf;
+			size_t	sz;
+		} data;
+	};
 	avl_node_t	node;
 } conf_key_t;
 
@@ -99,7 +112,16 @@ conf_free(conf_t *conf)
 
 	while ((ck = avl_destroy_nodes(&conf->tree, &cookie)) != NULL) {
 		free(ck->key);
-		free(ck->value);
+		switch (ck->type) {
+		case CONF_KEY_STR:
+			free(ck->str);
+			break;
+		case CONF_KEY_DATA:
+			free(ck->data.buf);
+			break;
+		default:
+			VERIFY(0);
+		}
 		free(ck);
 	}
 	avl_destroy(&conf->tree);
@@ -128,6 +150,24 @@ conf_read_file(const char *filename, int *errline)
 	return (conf);
 }
 
+static inline void
+ck_free_value(conf_key_t *ck)
+{
+	ASSERT(ck != NULL);
+	switch (ck->type) {
+	case CONF_KEY_STR:
+		free(ck->str);
+		ck->str = NULL;
+		break;
+	case CONF_KEY_DATA:
+		free(ck->data.buf);
+		memset(&ck->data, 0, sizeof (ck->data));
+		break;
+	default:
+		VERIFY(0);
+	}
+}
+
 /*
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
@@ -154,22 +194,27 @@ conf_read(FILE *fp, int *errline)
 		conf_key_t srch;
 		conf_key_t *ck;
 		avl_index_t where;
+		conf_key_type_t type;
 
 		if (parser_get_next_line(fp, &line, &linecap, &linenum) <= 0)
 			break;
-		sep = strstr(line, "=");
-		if (sep == NULL) {
-			conf_free(conf);
-			if (errline != NULL)
-				*errline = linenum;
-			return (NULL);
-		}
-		*sep = 0;
 
+		sep = strstr(line, "`");
+		if (sep != NULL) {
+			type = CONF_KEY_DATA;
+		} else {
+			sep = strstr(line, "=");
+			if (sep != NULL)
+				type = CONF_KEY_STR;
+			else
+				goto errout;
+		}
+		sep[0] = '\0';
 		strip_space(line);
 		strip_space(&sep[1]);
 
 		srch.key = safe_malloc(strlen(line) + 1);
+		srch.type = type;
 		strcpy(srch.key, line);
 		strtolower(srch.key);	/* keys are case-insensitive */
 		ck = avl_find(&conf->tree, &srch, &where);
@@ -182,14 +227,32 @@ conf_read(FILE *fp, int *errline)
 			/* key already exists, free the search one */
 			free(srch.key);
 		}
-		free(ck->value);
-		ck->value = safe_malloc(strlen(&sep[1]) + 1);
-		strcpy(ck->value, &sep[1]);
+		ck_free_value(ck);
+		ck->type = type;
+		if (type == CONF_KEY_STR) {
+			ck->str = safe_malloc(strlen(&sep[1]) + 1);
+			strcpy(ck->str, &sep[1]);
+		} else {
+			size_t l = strlen(&sep[1]);
+			ssize_t sz_est = BASE64_DEC_SIZE(l);
+			ssize_t sz_dec;
+			ck->data.buf = safe_malloc(sz_est);
+			sz_dec = lacf_base64_decode((const uint8_t *)&sep[1],
+			    l, ck->data.buf);
+			if (sz_dec <= 0)
+				goto errout;
+			ck->data.sz = sz_dec;
+		}
 	}
-
 	free(line);
 
 	return (conf);
+errout:
+	free(line);
+	conf_free(conf);
+	if (errline != NULL)
+		*errline = linenum;
+	return (NULL);
 }
 
 /*
@@ -216,13 +279,41 @@ conf_write_file(const conf_t *conf, const char *filename)
  */
 bool_t conf_write(const conf_t *conf, FILE *fp)
 {
+	uint8_t *data_buf = NULL;
+	size_t cap = 0;
+
 	fprintf(fp, "# libacfutils configuration file - DO NOT EDIT!\n");
 	for (conf_key_t *ck = avl_first(&conf->tree); ck != NULL;
 	    ck = AVL_NEXT(&conf->tree, ck)) {
-		if (fprintf(fp, "%s = %s\n", ck->key, ck->value) <= 0)
-			return (B_FALSE);
+		switch (ck->type) {
+		case CONF_KEY_STR:
+			if (fprintf(fp, "%s = %s\n", ck->key, ck->str) <= 0)
+				goto errout;
+			break;
+		case CONF_KEY_DATA: {
+			size_t req = BASE64_ENC_SIZE(ck->data.sz);
+			size_t act;
+			if (req > cap) {
+				free(data_buf);
+				cap = req;
+				data_buf = safe_malloc(cap + 1);
+			}
+			act = lacf_base64_encode(ck->data.buf, ck->data.sz,
+			    data_buf);
+			data_buf[act] = '\0';
+			if (fprintf(fp, "%s`%s\n", ck->key, data_buf) <= 0)
+				goto errout;
+			break;
+		}
+		default:
+			VERIFY(0);
+		}
 	}
+	free(data_buf);
 	return (B_TRUE);
+errout:
+	free(data_buf);
+	return (B_FALSE);
 }
 
 /*
@@ -246,10 +337,15 @@ conf_find(const conf_t *conf, const char *key)
 bool_t
 conf_get_str(const conf_t *conf, const char *key, const char **value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	*value = ck->value;
+	*value = ck->str;
 	return (B_TRUE);
 }
 
@@ -260,10 +356,15 @@ conf_get_str(const conf_t *conf, const char *key, const char **value)
 bool_t
 conf_get_i(const conf_t *conf, const char *key, int *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	*value = atoi(ck->value);
+	*value = atoi(ck->str);
 	return (B_TRUE);
 }
 
@@ -274,10 +375,15 @@ conf_get_i(const conf_t *conf, const char *key, int *value)
 bool_t
 conf_get_lli(const conf_t *conf, const char *key, long long *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	*value = atoll(ck->value);
+	*value = atoll(ck->str);
 	return (B_TRUE);
 }
 
@@ -288,20 +394,30 @@ conf_get_lli(const conf_t *conf, const char *key, long long *value)
 bool_t
 conf_get_d(const conf_t *conf, const char *key, double *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	return (sscanf(ck->value, "%lf", value) == 1);
+	return (sscanf(ck->str, "%lf", value) == 1);
 }
 
 /* Same as conf_get_d, but for float values */
 bool_t
 conf_get_f(const conf_t *conf, const char *key, float *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	return (sscanf(ck->value, "%f", value) == 1);
+	return (sscanf(ck->str, "%f", value) == 1);
 }
 
 /*
@@ -316,16 +432,21 @@ conf_get_f(const conf_t *conf, const char *key, float *value)
 bool_t
 conf_get_da(const conf_t *conf, const char *key, double *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
+	const conf_key_t *ck;
 	unsigned long long x;
-	if (ck == NULL)
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 #if	IBM
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"	/* Workaround for MinGW crap */
 #pragma GCC diagnostic ignored "-Wformat-extra-args"
 #endif	/* IBM */
-	if (sscanf(ck->value, "%llx", &x) != 1)
+	if (sscanf(ck->str, "%llx", &x) != 1)
 		return (B_FALSE);
 #if	IBM
 #pragma GCC diagnostic pop
@@ -344,13 +465,37 @@ conf_get_da(const conf_t *conf, const char *key, double *value)
 bool_t
 conf_get_b(const conf_t *conf, const char *key, bool_t *value)
 {
-	const conf_key_t *ck = conf_find(conf, key);
-	if (ck == NULL)
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	*value = (strcmp(ck->value, "true") == 0 ||
-	    strcmp(ck->value, "1") == 0 ||
-	    strcmp(ck->value, "yes") == 0);
+	*value = (strcmp(ck->str, "true") == 0 ||
+	    strcmp(ck->str, "1") == 0 ||
+	    strcmp(ck->str, "yes") == 0);
 	return (B_TRUE);
+}
+
+size_t
+conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
+{
+	const conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(buf != NULL);
+
+	ck = conf_find(conf, key);
+	if (ck == NULL || ck->type != CONF_KEY_DATA)
+		return (0);
+	ASSERT(ck->data.buf != NULL);
+	ASSERT(ck->data.sz != 0);
+	memcpy(buf, ck->data.buf, MIN(ck->data.sz, cap));
+
+	return (ck->data.sz);
 }
 
 /*
@@ -360,8 +505,12 @@ conf_get_b(const conf_t *conf, const char *key, bool_t *value)
 void
 conf_set_str(conf_t *conf, const char *key, const char *value)
 {
-	conf_key_t *ck = conf_find(conf, key);
+	conf_key_t *ck;
 
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	ck = conf_find(conf, key);
 	if (ck == NULL) {
 		if (value == NULL)
 			return;
@@ -369,14 +518,16 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 		ck->key = strdup(key);
 		avl_add(&conf->tree, ck);
 	}
-	free(ck->value);
+	ck_free_value(ck);
 	if (value == NULL) {
 		avl_remove(&conf->tree, ck);
 		free(ck->key);
 		free(ck);
 		return;
+	} else {
+		ck->type = CONF_KEY_STR;
+		ck->str = strdup(value);
 	}
-	ck->value = strdup(value);
 }
 
 /*
@@ -396,12 +547,14 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
 		avl_add(&conf->tree, ck);
+	} else {
+		ck_free_value(ck);
 	}
-	free(ck->value);
+	ck->type = CONF_KEY_STR;
 	n = vsnprintf(NULL, 0, fmt, ap1);
 	ASSERT3S(n, >, 0);
-	ck->value = safe_malloc(n + 1);
-	(void) vsnprintf(ck->value, n + 1, fmt, ap2);
+	ck->str = safe_malloc(n + 1);
+	(void) vsnprintf(ck->str, n + 1, fmt, ap2);
 	va_end(ap1);
 	va_end(ap2);
 }
@@ -413,6 +566,8 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 void
 conf_set_i(conf_t *conf, const char *key, int value)
 {
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 	conf_set_common(conf, key, "%i", value);
 }
 
@@ -423,6 +578,8 @@ conf_set_i(conf_t *conf, const char *key, int value)
 void
 conf_set_lli(conf_t *conf, const char *key, long long value)
 {
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 #if	IBM
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"	/* Workaround for MinGW crap */
@@ -441,12 +598,16 @@ conf_set_lli(conf_t *conf, const char *key, long long value)
 void
 conf_set_d(conf_t *conf, const char *key, double value)
 {
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 	conf_set_common(conf, key, "%.15f", value);
 }
 
 void
 conf_set_f(conf_t *conf, const char *key, float value)
 {
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 	conf_set_common(conf, key, "%.12f", value);
 }
 
@@ -460,6 +621,8 @@ conf_set_da(conf_t *conf, const char *key, double value)
 {
 	unsigned long long x;
 
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 	memcpy(&x, &value, sizeof (value));
 #if	__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	x = BSWAP64(x);
@@ -482,38 +645,71 @@ conf_set_da(conf_t *conf, const char *key, double value)
 void
 conf_set_b(conf_t *conf, const char *key, bool_t value)
 {
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
 }
 
-#define	VARIABLE_GET(getfunc) \
+void
+conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
+{
+	conf_key_t *ck;
+
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+
+	ck = conf_find(conf, key);
+	if (buf == NULL || sz == 0) {
+		if (ck != NULL) {
+			avl_remove(&conf->tree, ck);
+			ck_free_value(ck);
+			free(ck->key);
+			free(ck);
+		}
+		return;
+	}
+	if (ck == NULL) {
+		ck = safe_calloc(1, sizeof (*ck));
+		ck->key = strdup(key);
+		avl_add(&conf->tree, ck);
+	} else {
+		ck_free_value(ck);
+	}
+	ck->type = CONF_KEY_DATA;
+	ck->data.buf = safe_malloc(sz);
+	memcpy(ck->data.buf, buf, sz);
+	ck->data.sz = sz;
+}
+
+#define	VARIABLE_GET(getfunc, last_arg, ...) \
 	do { \
 		va_list ap, ap2; \
 		int l; \
 		char *key; \
-		bool_t res; \
-		va_start(ap, value); \
+		int64_t res; \
+		va_start(ap, last_arg); \
 		va_copy(ap2, ap); \
 		l = vsnprintf(NULL, 0, fmt, ap); \
 		key = safe_malloc(l + 1); \
 		vsnprintf(key, l + 1, fmt, ap2); \
-		res = getfunc(conf, key, value); \
+		res = getfunc(conf, key, __VA_ARGS__); \
 		free(key); \
 		va_end(ap); \
 		va_end(ap2); \
 		return (res); \
 	} while (0)
 
-#define	VARIABLE_SET(setfunc) \
+#define	VARIABLE_SET(setfunc, last_arg, ...) \
 	do { \
 		va_list ap, ap2; \
 		int l; \
 		char *key; \
-		va_start(ap, value); \
+		va_start(ap, last_arg); \
 		va_copy(ap2, ap); \
 		l = vsnprintf(NULL, 0, fmt, ap); \
 		key = safe_malloc(l + 1); \
 		vsnprintf(key, l + 1, fmt, ap2); \
-		setfunc(conf, key, value); \
+		setfunc(conf, key, __VA_ARGS__); \
 		free(key); \
 		va_end(ap); \
 		va_end(ap2); \
@@ -527,7 +723,10 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 bool_t
 conf_get_str_v(const conf_t *conf, const char *fmt, const char **value, ...)
 {
-	VARIABLE_GET(conf_get_str);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_str, value, value);
 }
 
 /*
@@ -536,7 +735,10 @@ conf_get_str_v(const conf_t *conf, const char *fmt, const char **value, ...)
 bool_t
 conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
 {
-	VARIABLE_GET(conf_get_i);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_i, value, value);
 }
 
 /*
@@ -545,7 +747,10 @@ conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
 bool_t
 conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
 {
-	VARIABLE_GET(conf_get_lli);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_lli, value, value);
 }
 
 /*
@@ -554,7 +759,10 @@ conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
 bool_t
 conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
 {
-	VARIABLE_GET(conf_get_f);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_f, value, value);
 }
 
 /*
@@ -563,7 +771,10 @@ conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
 bool_t
 conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
 {
-	VARIABLE_GET(conf_get_d);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_d, value, value);
 }
 
 /*
@@ -572,7 +783,23 @@ conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
 bool_t
 conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
 {
-	VARIABLE_GET(conf_get_da);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_da, value, value);
+}
+
+/*
+ * Same as conf_get_b, but with dynamic name-construction as conf_get_str_v.
+ */
+size_t
+conf_get_data_v(const conf_t *conf, const char *fmt, void *buf,
+    size_t cap, ...)
+{
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(buf != NULL);
+	VARIABLE_GET(conf_get_data, cap, buf, cap);
 }
 
 /*
@@ -581,7 +808,10 @@ conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
 bool_t
 conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
 {
-	VARIABLE_GET(conf_get_b);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_b, value, value);
 }
 
 /*
@@ -590,7 +820,9 @@ conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
 void
 conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
 {
-	VARIABLE_SET(conf_set_str);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_str, value, value);
 }
 
 /*
@@ -599,7 +831,9 @@ conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
 void
 conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
 {
-	VARIABLE_SET(conf_set_i);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_i, value, value);
 }
 
 /*
@@ -608,7 +842,9 @@ conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
 void
 conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
 {
-	VARIABLE_SET(conf_set_lli);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_lli, value, value);
 }
 
 /*
@@ -617,7 +853,9 @@ conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
 void
 conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
 {
-	VARIABLE_SET(conf_set_f);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_f, value, value);
 }
 
 /*
@@ -626,7 +864,9 @@ conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
 void
 conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
 {
-	VARIABLE_SET(conf_set_d);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_d, value, value);
 }
 
 /*
@@ -635,7 +875,9 @@ conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
 void
 conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
 {
-	VARIABLE_SET(conf_set_da);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_da, value, value);
 }
 
 /*
@@ -644,7 +886,17 @@ conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
 void
 conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
 {
-	VARIABLE_SET(conf_set_b);
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_b, value, value);
+}
+
+void conf_set_data_v(conf_t *conf, const char *fmt, const void *buf,
+    size_t sz, ...)
+{
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_data, sz, buf, sz);
 }
 
 /*
@@ -681,10 +933,15 @@ conf_walk(const conf_t *conf, const char **key, const char **value,
 			return (B_FALSE);
 		}
 	}
-	*key = ck->key;
-	*value = ck->value;
-	*cookie = AVL_NEXT(&conf->tree, ck);
-	if (*cookie == NULL) {
+	do {
+		*key = ck->key;
+		*value = ck->str;
+		ck = AVL_NEXT(&conf->tree, ck);
+		/* conf_walk is only meant for string keys */
+	} while (ck != NULL && ck->type != CONF_KEY_STR);
+	if (ck != NULL) {
+		*cookie = ck;
+	} else {
 		/* end of tree */
 		*cookie = &eol;
 	}
