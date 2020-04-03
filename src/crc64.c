@@ -21,7 +21,6 @@
 
 #include <math.h>
 
-#include <acfutils/assert.h>
 #include <acfutils/crc64.h>
 
 /*
@@ -53,8 +52,16 @@ crc64_init(void)
 uint64_t
 crc64(const void *input, size_t sz)
 {
+	uint64_t crc;
+
+	crc64_state_init(&crc);
+	return (crc64_append(crc, input, sz));
+}
+
+uint64_t
+crc64_append(uint64_t crc, const void *input, size_t sz)
+{
 	const uint8_t *in_bytes = input;
-	uint64_t crc = -1ULL;
 
 	ASSERT3U(crc64_table[128], ==, CRC64_POLY);
 	for (size_t i = 0; i < sz; i++)
