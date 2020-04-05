@@ -509,7 +509,6 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	ASSERT(value != NULL);
 	ck = conf_find(conf, key);
 	if (ck == NULL) {
 		if (value == NULL)
