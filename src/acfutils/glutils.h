@@ -56,6 +56,8 @@ typedef struct {
 	size_t	num_vtx;
 } glutils_lines_t;
 
+typedef struct glutils_cache_s glutils_cache_t;
+
 typedef void (*glutils_texsz_enum_cb_t)(const char *token, int64_t bytes,
     void *userinfo);
 
@@ -87,10 +89,22 @@ API_EXPORT void glutils_draw_quads(glutils_quads_t *quads, GLint prog);
 	glutils_init_3D_lines_impl((__lines), log_basename(__FILE__), \
 	    __LINE__, (__p), (__num_pts))
 API_EXPORT void glutils_init_3D_lines_impl(glutils_lines_t *lines,
-    const char *filename, int line, vect3_t *p, size_t num_pts);
+    const char *filename, int line, const vect3_t *p, size_t num_pts);
 
 API_EXPORT void glutils_destroy_lines(glutils_lines_t *lines);
 API_EXPORT void glutils_draw_lines(glutils_lines_t *lines, GLint prog);
+
+/*
+ * glutils cache is a generic quads/lines object cache.
+ */
+API_EXPORT glutils_cache_t *glutils_cache_new(size_t cap_bytes);
+API_EXPORT void glutils_cache_destroy(glutils_cache_t *cache);
+API_EXPORT glutils_quads_t *glutils_cache_get_2D_quads(
+    glutils_cache_t *cache, const vect2_t *p, const vect2_t *t, size_t num_pts);
+API_EXPORT glutils_quads_t *glutils_cache_get_3D_quads(
+    glutils_cache_t *cache, const vect3_t *p, const vect2_t *t, size_t num_pts);
+API_EXPORT glutils_lines_t *glutils_cache_get_3D_lines(
+    glutils_cache_t *cache, const vect3_t *p, size_t num_pts);
 
 API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
 

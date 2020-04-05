@@ -29,6 +29,7 @@
 #include <acfutils/avl.h>
 #include <acfutils/assert.h>
 #include <acfutils/glutils.h>
+#include <acfutils/list.h>
 #include <acfutils/safe_alloc.h>
 #include <acfutils/shader.h>
 #include <acfutils/thread.h>
@@ -67,6 +68,31 @@ static struct {
 	int64_t		bytes;
 	avl_tree_t	allocs;
 } texsz = { .inited = B_FALSE };
+
+typedef enum {
+	CACHE_ENTRY_2D_QUADS,
+	CACHE_ENTRY_3D_QUADS,
+	CACHE_ENTRY_3D_LINES
+} cache_entry_type_t;
+
+typedef struct  {
+	cache_entry_type_t	type;
+	union {
+		glutils_quads_t	quads;
+		glutils_lines_t	lines;
+	};
+	void			*buf[2];
+	size_t			buf_sz[2];
+	avl_node_t		tree_node;
+	list_node_t		lru_node;
+} cache_entry_t;
+
+struct glutils_cache_s {
+	avl_tree_t	tree;
+	list_t		lru;
+	size_t		sz;
+	size_t		cap;
+};
 
 static thread_id_t main_thread;
 
@@ -284,10 +310,240 @@ glutils_draw_quads(glutils_quads_t *quads, GLint prog)
 	    &quads->setup, quads->num_vtx + quads->num_vtx / 2, prog);
 }
 
+static int
+cache_compar(const void *a, const void *b)
+{
+	const cache_entry_t *ca = a, *cb = b;
+
+	if (ca->type < cb->type)
+		return (-1);
+	if (ca->type > cb->type)
+		return (1);
+	for (int i = 0; i < 2; i++) {
+		if (ca->buf_sz[i] < cb->buf_sz[i])
+			return (-1);
+		if (ca->buf_sz[i] > cb->buf_sz[i])
+			return (1);
+	}
+	for (int i = 0; i < 2; i++) {
+		int res = memcmp(ca->buf[i], cb->buf[i], cb->buf_sz[i]);
+
+		if (res < 0)
+			return (-1);
+		if (res > 0)
+			return (1);
+	}
+
+	return (0);
+}
+
+/*
+ * Constructs a new object cache with a certain defined capacity in bytes.
+ * This cache lets you construct & cache gl_utils_quads_t and gl_utils_lines_t
+ * objects on the GPU. USe glutils_cache_get_* to store & retrieve cached
+ * objects. When the cache is destroyed, the stored objects are destroyed
+ * and their memory freed from the GPU.
+ *
+ * The cache is an LRU cache, so it remembers which objects were used most
+ * recently and releases the least-recently-used when it needs to trim its
+ * memory usage down.
+ *
+ * @param cap_bytes Defines the maximum size the cache is allowed to reach
+ *	before it starts trimming least-recently-used objects.
+ */
+glutils_cache_t *
+glutils_cache_new(size_t cap_bytes)
+{
+	glutils_cache_t *cache = safe_calloc(1, sizeof (*cache));
+
+	ASSERT(cap_bytes != 0);
+
+	avl_create(&cache->tree, cache_compar, sizeof (cache_entry_t),
+	    offsetof(cache_entry_t, tree_node));
+	list_create(&cache->lru, sizeof (cache_entry_t),
+	    offsetof(cache_entry_t, lru_node));
+	cache->cap = cap_bytes;
+
+	return (cache);
+}
+
+/*
+ * Frees the storage associated with a glutils cache entry.
+ */
+static void
+free_cache_entry(cache_entry_t *ce)
+{
+	ASSERT(ce != NULL);
+
+	switch (ce->type) {
+	case CACHE_ENTRY_2D_QUADS:
+	case CACHE_ENTRY_3D_QUADS:
+		glutils_destroy_quads(&ce->quads);
+		break;
+	case CACHE_ENTRY_3D_LINES:
+		glutils_destroy_lines(&ce->lines);
+		break;
+	default:
+		VERIFY(0);
+	}
+	free(ce->buf[0]);
+	free(ce->buf[1]);
+	free(ce);
+}
+
+/*
+ * Destroys a glutils object cache. This frees all stored objects and
+ * their associated memory from both main memory and GPU memory.
+ */
+void
+glutils_cache_destroy(glutils_cache_t *cache)
+{
+	cache_entry_t *ce;
+	void *cookie;
+
+	if (cache == NULL)
+		return;
+
+	/* The entries are retained in the tree, so we'll just empty the lru */
+	while ((ce = list_remove_head(&cache->lru)) != NULL)
+		;
+	list_destroy(&cache->lru);
+
+	cookie = NULL;
+	while ((ce = avl_destroy_nodes(&cache->tree, &cookie)) != NULL)
+		free_cache_entry(ce);
+	avl_destroy(&cache->tree);
+
+	free(cache);
+}
+
+/*
+ * Takes a cache and trims its memory usage until it fits within its
+ * capacity limit. `extra_needed' specifies the extra cache storage
+ * space required to insert a new object, and thus adjusts the cache's
+ * storage target.
+ */
+static void
+trim_cache(glutils_cache_t *cache, size_t extra_needed)
+{
+	ASSERT(cache != NULL);
+
+	while (cache->sz + extra_needed > cache->cap) {
+		cache_entry_t *ce = list_remove_tail(&cache->lru);
+
+		if (ce == NULL)
+			break;
+		avl_remove(&cache->tree, ce);
+		ASSERT3U(cache->sz, >=, ce->buf_sz[0] + ce->buf_sz[1]);
+		cache->sz -= (ce->buf_sz[0] + ce->buf_sz[1]);
+		free_cache_entry(ce);
+	}
+}
+
+/*
+ * Adds a new cache entry.
+ */
+static cache_entry_t *
+cache_add_entry(glutils_cache_t *cache, avl_index_t where,
+    cache_entry_type_t type, const void *buf0, size_t buf0_sz,
+    const void *buf1, size_t buf1_sz, size_t num_pts)
+{
+	cache_entry_t *ce = safe_calloc(1, sizeof (*ce));
+
+	ASSERT(cache != NULL);
+	ASSERT(buf0 != NULL);
+
+	ce->type = type;
+
+	ce->buf_sz[0] = buf0_sz;
+	ce->buf[0] = safe_malloc(buf0_sz);
+	memcpy(ce->buf[0], buf0, buf0_sz);
+	if (buf1 != NULL) {
+		ce->buf_sz[1] = buf1_sz;
+		ce->buf[1] = safe_malloc(buf1_sz);
+		memcpy(ce->buf[1], buf1, buf1_sz);
+	}
+
+	switch (type) {
+	case CACHE_ENTRY_2D_QUADS:
+		glutils_init_2D_quads(&ce->quads, buf0, buf1, num_pts);
+		break;
+	case CACHE_ENTRY_3D_QUADS:
+		glutils_init_3D_quads(&ce->quads, buf0, buf1, num_pts);
+		break;
+	case CACHE_ENTRY_3D_LINES:
+		glutils_init_3D_lines(&ce->lines, buf0, num_pts);
+		break;
+	default:
+		VERIFY(0);
+	}
+	avl_insert(&cache->tree, ce, where);
+	list_insert_head(&cache->lru, ce);
+
+	return (ce);
+}
+
+static void *
+glutils_cache_get_common(glutils_cache_t *cache, cache_entry_type_t type,
+    const void *p, const void *t, size_t num_pts)
+{
+	size_t p_sz = (type == CACHE_ENTRY_2D_QUADS ? sizeof (vect2_t) :
+	    sizeof (vect3_t));
+	const cache_entry_t srch = {
+	    .type = type,
+	    .buf = { (void *)p, (void *)t },
+	    .buf_sz = {
+		p_sz * num_pts,
+		t != NULL ? sizeof (vect2_t) * num_pts : 0
+	    }
+	};
+	cache_entry_t *ce;
+	avl_index_t where;
+	size_t bytes = srch.buf_sz[0] + srch.buf_sz[1];
+
+	ASSERT(cache != NULL);
+	ASSERT(p != NULL);
+	ASSERT(num_pts != 0);
+
+	ce = avl_find(&cache->tree, &srch, &where);
+	if (ce == NULL) {
+		trim_cache(cache, bytes);
+		ce = cache_add_entry(cache, where, type, p, srch.buf_sz[0],
+		    t, srch.buf_sz[1], num_pts);
+	} else {
+		list_remove(&cache->lru, ce);
+		list_insert_head(&cache->lru, ce);
+	}
+	if (type <= CACHE_ENTRY_3D_QUADS)
+		return (&ce->quads);
+	else
+		return (&ce->lines);
+}
+
+glutils_quads_t *
+glutils_cache_get_2D_quads(glutils_cache_t *cache, const vect2_t *p,
+    const vect2_t *t, size_t num_pts)
+{
+	return (glutils_cache_get_common(cache, 0, p, t, num_pts));
+}
+
+glutils_quads_t *
+glutils_cache_get_3D_quads(glutils_cache_t *cache, const vect3_t *p,
+    const vect2_t *t, size_t num_pts)
+{
+	return (glutils_cache_get_common(cache, 1, p, t, num_pts));
+}
+
+glutils_lines_t *
+glutils_cache_get_3D_lines(glutils_cache_t *cache, const vect3_t *p,
+    size_t num_pts)
+{
+	return (glutils_cache_get_common(cache, 2, p, NULL, num_pts));
+}
 
 API_EXPORT void
 glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
-    int line, vect3_t *p, size_t num_pts)
+    int line, const vect3_t *p, size_t num_pts)
 {
 	vtx_t vtx_data[num_pts];
 	GLint old_vao = 0;
