@@ -486,7 +486,7 @@ conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
 
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	ASSERT(buf != NULL);
+	ASSERT(buf != NULL || cap == 0);
 
 	ck = conf_find(conf, key);
 	if (ck == NULL || ck->type != CONF_KEY_DATA)
@@ -515,6 +515,7 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 			return;
 		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
+		strtolower(ck->key);
 		avl_add(&conf->tree, ck);
 	}
 	ck_free_value(ck);
@@ -545,6 +546,7 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 	if (ck == NULL) {
 		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
+		strtolower(ck->key);
 		avl_add(&conf->tree, ck);
 	} else {
 		ck_free_value(ck);
@@ -670,6 +672,7 @@ conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 	if (ck == NULL) {
 		ck = safe_calloc(1, sizeof (*ck));
 		ck->key = strdup(key);
+		strtolower(ck->key);
 		avl_add(&conf->tree, ck);
 	} else {
 		ck_free_value(ck);
@@ -797,7 +800,7 @@ conf_get_data_v(const conf_t *conf, const char *fmt, void *buf,
 {
 	ASSERT(conf != NULL);
 	ASSERT(fmt != NULL);
-	ASSERT(buf != NULL);
+	ASSERT(buf != NULL || cap == 0);
 	VARIABLE_GET(conf_get_data, cap, buf, cap);
 }
 
