@@ -132,7 +132,8 @@ struct mt_cairo_uploader_s {
 	uint64_t	refcnt;
 	glctx_t		*ctx;
 	mutex_t		lock;
-	condvar_t	cv;
+	condvar_t	cv_queue;
+	condvar_t	cv_done;
 	list_t		queue;
 	bool_t		shutdown;
 	thread_t	worker;
@@ -243,6 +244,7 @@ worker(mt_cairo_render_t *mtcr)
 
 	while (!mtcr->shutdown) {
 		render_surf_t *rs;
+		mt_cairo_uploader_t *mtul;
 
 		if (!mtcr->one_shot_block) {
 			if (mtcr->fps > 0) {
@@ -264,20 +266,24 @@ worker(mt_cairo_render_t *mtcr)
 		rs->chg = B_TRUE;
 
 		mutex_enter(&mtcr->lock);
+		mtul = mtcr->mtul;
+		mutex_exit(&mtcr->lock);
+
+		if (mtul != NULL) {
+			mutex_enter(&mtul->lock);
+			if (!list_link_active(&mtcr->mtul_node)) {
+				list_insert_tail(&mtul->queue, mtcr);
+				cv_broadcast(&mtul->cv_queue);
+			}
+			while (rs->chg) {
+				cv_wait(&mtul->cv_done, &mtul->lock);
+			}
+			mutex_exit(&mtul->lock);
+		}
+
+		mutex_enter(&mtcr->lock);
 		mtcr->cur_rs = !mtcr->cur_rs;
 		cv_broadcast(&mtcr->render_done_cv);
-		if (mtcr->mtul != NULL) {
-			mutex_exit(&mtcr->lock);
-
-			mutex_enter(&mtcr->mtul->lock);
-			if (!list_link_active(&mtcr->mtul_node)) {
-				list_insert_tail(&mtcr->mtul->queue, mtcr);
-				cv_broadcast(&mtcr->mtul->cv);
-			}
-			mutex_exit(&mtcr->mtul->lock);
-
-			mutex_enter(&mtcr->lock);
-		}
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -594,6 +600,19 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
 		rs->chg = B_TRUE;
 
+		if (mtcr->mtul != NULL) {
+			mutex_enter(&mtcr->mtul->lock);
+			if (!list_link_active(&mtcr->mtul_node)) {
+				list_insert_tail(&mtcr->mtul->queue, mtcr);
+				cv_broadcast(&mtcr->mtul->cv_queue);
+			}
+			while (rs->chg) {
+				cv_wait(&mtcr->mtul->cv_done,
+				    &mtcr->mtul->lock);
+			}
+			mutex_exit(&mtcr->mtul->lock);
+		}
+
 		mutex_enter(&mtcr->lock);
 		mtcr->cur_rs = !mtcr->cur_rs;
 		cv_broadcast(&mtcr->render_done_cv);
@@ -689,9 +708,12 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 
 	glActiveTexture(GL_TEXTURE0);
 	rs_tex_alloc(mtcr, rs);
-	if (rs->chg && mtcr->mtul == NULL) {
-		logMsg("render upload");
-		upload_surface(mtcr, rs);
+	if (mtcr->mtul == NULL) {
+		if (rs->chg)
+			upload_surface(mtcr, rs);
+	} else {
+		if (rs->chg)
+			rs = &mtcr->rs[!mtcr->cur_rs];
 	}
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 
@@ -914,7 +936,7 @@ mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr, mt_cairo_uploader_t *mtul)
 		mtul->refcnt++;
 		if (!list_link_active(&mtcr->mtul_node)) {
 			list_insert_tail(&mtul->queue, mtcr);
-			cv_broadcast(&mtcr->mtul->cv);
+			cv_broadcast(&mtcr->mtul->cv_queue);
 		}
 		mutex_exit(&mtul->lock);
 	}
@@ -1114,11 +1136,10 @@ mtul_worker(void *arg)
 
 	while (!mtul->shutdown) {
 		mt_cairo_render_t *mtcr = list_remove_head(&mtul->queue);
-		render_surf_t *rs;
 
 		if (mtcr == NULL) {
 			ASSERT3U(glGetError(), ==, GL_NO_ERROR);
-			cv_wait(&mtul->cv, &mtul->lock);
+			cv_wait(&mtul->cv_queue, &mtul->lock);
 			continue;
 		}
 
@@ -1127,7 +1148,7 @@ mtul_worker(void *arg)
 
 		mutex_enter(&mtcr->lock);
 		if (mtcr->cur_rs >= 0 && mtcr->cur_rs < 2) {
-			rs = &mtcr->rs[mtcr->cur_rs];
+			render_surf_t *rs = &mtcr->rs[!mtcr->cur_rs];
 			rs_tex_alloc(mtcr, rs);
 			if (rs->chg)
 				upload_surface(mtcr, rs);
@@ -1136,6 +1157,7 @@ mtul_worker(void *arg)
 
 		mutex_enter(&mtul->lock);
 		mtcr->mtul_uploading = B_FALSE;
+		cv_broadcast(&mtul->cv_done);
 	}
 
 	mutex_exit(&mtul->lock);
@@ -1205,7 +1227,8 @@ mt_cairo_uploader_init(void)
 	mtul->ctx = glctx_create_invisible(glctx_get_xplane_win_ptr(),
 	    ctx_main, 2, 1, B_FALSE, B_FALSE);
 	mutex_init(&mtul->lock);
-	cv_init(&mtul->cv);
+	cv_init(&mtul->cv_queue);
+	cv_init(&mtul->cv_done);
 	list_create(&mtul->queue, sizeof (mt_cairo_render_t),
 	    offsetof(mt_cairo_render_t, mtul_node));
 
@@ -1229,7 +1252,7 @@ mt_cairo_uploader_fini(mt_cairo_uploader_t *mtul)
 
 	mutex_enter(&mtul->lock);
 	mtul->shutdown = B_TRUE;
-	cv_broadcast(&mtul->cv);
+	cv_broadcast(&mtul->cv_queue);
 	mutex_exit(&mtul->lock);
 	thread_join(&mtul->worker);
 
@@ -1237,7 +1260,8 @@ mt_cairo_uploader_fini(mt_cairo_uploader_t *mtul)
 	glctx_destroy(mtul->ctx);
 	list_destroy(&mtul->queue);
 	mutex_destroy(&mtul->lock);
-	cv_destroy(&mtul->cv);
+	cv_destroy(&mtul->cv_queue);
+	cv_destroy(&mtul->cv_done);
 
 	memset(mtul, 0, sizeof (*mtul));
 	free(mtul);
