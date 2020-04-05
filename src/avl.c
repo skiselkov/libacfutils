@@ -629,12 +629,7 @@ avl_add(avl_tree_t *tree, void *new_node)
 	 * do in userland is resort to a normal ASSERT().
 	 */
 	memset(&where, 0, sizeof (where));
-	if (avl_find(tree, new_node, &where) != NULL)
-#ifdef _KERNEL
-		panic("avl_find() succeeded inside avl_add()");
-#else
-		abort();
-#endif
+	VERIFY3P(avl_find(tree, new_node, &where), ==, NULL);
 	avl_insert(tree, new_node, where);
 }
 
