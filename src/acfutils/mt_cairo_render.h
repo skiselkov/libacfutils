@@ -46,6 +46,7 @@ typedef void (*mt_cairo_fini_cb_t)(cairo_t *cr, void *userinfo);
 typedef void (*mt_cairo_render_cb_t)(cairo_t *cr, unsigned w, unsigned h,
     void *userinfo);
 typedef struct mt_cairo_render_s mt_cairo_render_t;
+typedef struct mt_cairo_uploader_s mt_cairo_uploader_t;
 
 #define	mt_cairo_render_init(__w, __h, __fps, __init_cb, __render_cb, \
     __fini_cb, __userinfo) \
@@ -66,6 +67,7 @@ API_EXPORT void mt_cairo_render_set_shader(mt_cairo_render_t *mtcr,
     unsigned prog);
 API_EXPORT void mt_cairo_render_once(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_once_wait(mt_cairo_render_t *mtcr);
+
 API_EXPORT void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos,
     vect2_t size);
 API_EXPORT void mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
@@ -75,6 +77,11 @@ API_EXPORT void mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos,
 API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
     const GLfloat *pvm);
+API_EXPORT void mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr,
+    mt_cairo_uploader_t *mtul);
+API_EXPORT mt_cairo_uploader_t *mt_cairo_render_get_uploader(
+    mt_cairo_render_t *mtcr);
+
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
@@ -110,6 +117,9 @@ API_EXPORT void mt_cairo_render_rounded_rectangle(cairo_t *cr, double x,
 			(surf) = NULL; \
 		} \
 	} while (0)
+
+API_EXPORT mt_cairo_uploader_t *mt_cairo_uploader_init(void);
+API_EXPORT void mt_cairo_uploader_fini(mt_cairo_uploader_t *mtul);
 
 #ifdef	__cplusplus
 }

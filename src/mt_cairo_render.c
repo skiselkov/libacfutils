@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 /*
  * mt_cairo_render is a multi-threaded cairo rendering surface with
@@ -32,17 +32,18 @@
 
 #include <XPLMGraphics.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/dr.h>
-#include <acfutils/geom.h>
-#include <acfutils/glctx.h>
-#include <acfutils/glew.h>
-#include <acfutils/mt_cairo_render.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/glutils.h>
-#include <acfutils/shader.h>
-#include <acfutils/thread.h>
-#include <acfutils/time.h>
+#include "acfutils/assert.h"
+#include "acfutils/dr.h"
+#include "acfutils/geom.h"
+#include "acfutils/glctx.h"
+#include "acfutils/glew.h"
+#include "acfutils/list.h"
+#include "acfutils/mt_cairo_render.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/glutils.h"
+#include "acfutils/shader.h"
+#include "acfutils/thread.h"
+#include "acfutils/time.h"
 
 #ifdef	_USE_MATH_DEFINES
 #undef	_USE_MATH_DEFINES
@@ -83,6 +84,10 @@ struct mt_cairo_render_s {
 	int			init_line;
 	bool_t			debug;
 
+	mt_cairo_uploader_t	*mtul;
+	list_node_t		mtul_node;
+	bool_t			mtul_uploading;
+
 	GLenum			tex_filter;
 	unsigned		w, h;
 	double			fps;
@@ -121,6 +126,16 @@ struct mt_cairo_render_s {
 
 	bool_t			ctx_checking;
 	glctx_t			*create_ctx;
+};
+
+struct mt_cairo_uploader_s {
+	uint64_t	refcnt;
+	glctx_t		*ctx;
+	mutex_t		lock;
+	condvar_t	cv;
+	list_t		queue;
+	bool_t		shutdown;
+	thread_t	worker;
 };
 
 static const char *vert_shader =
@@ -251,6 +266,18 @@ worker(mt_cairo_render_t *mtcr)
 		mutex_enter(&mtcr->lock);
 		mtcr->cur_rs = !mtcr->cur_rs;
 		cv_broadcast(&mtcr->render_done_cv);
+		if (mtcr->mtul != NULL) {
+			mutex_exit(&mtcr->lock);
+
+			mutex_enter(&mtcr->mtul->lock);
+			if (!list_link_active(&mtcr->mtul_node)) {
+				list_insert_tail(&mtcr->mtul->queue, mtcr);
+				cv_broadcast(&mtcr->mtul->cv);
+			}
+			mutex_exit(&mtcr->mtul->lock);
+
+			mutex_enter(&mtcr->lock);
+		}
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -390,7 +417,25 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		mutex_exit(&mtcr->lock);
 		thread_join(&mtcr->thr);
 	}
-
+	if (mtcr->mtul != NULL) {
+		mutex_enter(&mtcr->mtul->lock);
+		ASSERT(mtcr->mtul->refcnt != 0);
+		mtcr->mtul->refcnt--;
+		if (list_link_active(&mtcr->mtul_node))
+			list_remove(&mtcr->mtul->queue, mtcr);
+		/*
+		 * MTUL might be uploading us right now. So to avoid
+		 * disappearing from underneath its hands, we do a blocking
+		 * usleep wait. The upload should be done in a few
+		 * microseconds anyway.
+		 */
+		while (mtcr->mtul_uploading) {
+			mutex_exit(&mtcr->mtul->lock);
+			usleep(1000);
+			mutex_enter(&mtcr->mtul->lock);
+		}
+		mutex_exit(&mtcr->mtul->lock);
+	}
 	if (mtcr->vao != 0)
 		glDeleteVertexArrays(1, &mtcr->vao);
 	if (mtcr->vtx_buf != 0)
@@ -638,10 +683,16 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 {
 	render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
 
+	/* Uploader will allocate & populate the texture, so just wait */
+	if (mtcr->mtul != NULL && rs->tex == 0)
+		return (B_FALSE);
+
 	glActiveTexture(GL_TEXTURE0);
 	rs_tex_alloc(mtcr, rs);
-	if (rs->chg)
+	if (rs->chg && mtcr->mtul == NULL) {
+		logMsg("render upload");
 		upload_surface(mtcr, rs);
+	}
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 
 	return (B_TRUE);
@@ -822,6 +873,71 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 }
 
 /*
+ * Configures the mt_cairo_render_t instance to use an asynchronous uploader.
+ * See mt_cairo_uploader_new for more information.
+ *
+ * @param mtcr Renderer to configure for asynchronous uploading.
+ * @param mtul Uploader to use for renderer. If you pass NULL here,
+ *	the renderer is returned to synchronous uploading.
+ */
+void
+mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr, mt_cairo_uploader_t *mtul)
+{
+	mt_cairo_uploader_t *mtul_old;
+
+	ASSERT(mtcr != NULL);
+
+	if (mtul == mtcr->mtul)
+		return;
+
+	mtul_old = mtcr->mtul;
+	if (mtul_old != NULL) {
+		mutex_enter(&mtul_old->lock);
+		ASSERT(mtul_old->refcnt != 0);
+		mtul_old->refcnt--;
+		if (list_link_active(&mtcr->mtul_node))
+			list_remove(&mtul_old->queue, mtcr);
+		mutex_exit(&mtul_old->lock);
+	}
+
+	mutex_enter(&mtcr->lock);
+	mtcr->mtul = mtul;
+	mutex_exit(&mtcr->lock);
+
+	/*
+	 * Because now the main rendering thread will no longer cause us
+	 * to upload in-sync, in case we have a pending frame, immediately
+	 * add us to the MTUL.
+	 */
+	if (mtul != NULL) {
+		mutex_enter(&mtul->lock);
+		mtul->refcnt++;
+		if (!list_link_active(&mtcr->mtul_node)) {
+			list_insert_tail(&mtul->queue, mtcr);
+			cv_broadcast(&mtcr->mtul->cv);
+		}
+		mutex_exit(&mtul->lock);
+	}
+}
+
+/*
+ * Returns the asynchronous uploader used by an mt_cairo_render_t,
+ * or NULL if the renderer doesn't utilize asynchronous uploading.
+ */
+mt_cairo_uploader_t *
+mt_cairo_render_get_uploader(mt_cairo_render_t *mtcr)
+{
+	mt_cairo_uploader_t *mtul;
+
+	ASSERT(mtcr != NULL);
+	mutex_enter(&mtcr->lock);
+	mtul = mtcr->mtul;
+	mutex_exit(&mtcr->lock);
+
+	return (mtul);
+}
+
+/*
  * Retrieves the OpenGL texture object of the surface that has currently
  * completed rendering. If no surface is ready yet, returns 0 instead.
  */
@@ -981,4 +1097,148 @@ mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
 	cairo_line_to(cr, x, y + radius);
 	cairo_arc(cr, x + radius, y + radius, radius,
 	    DEG2RAD(180), DEG2RAD(270));
+}
+
+static void
+mtul_worker(void *arg)
+{
+	mt_cairo_uploader_t *mtul;
+
+	ASSERT(arg != NULL);
+	mtul = arg;
+
+	ASSERT(mtul->ctx != NULL);
+	VERIFY(glctx_make_current(mtul->ctx));
+
+	mutex_enter(&mtul->lock);
+
+	while (!mtul->shutdown) {
+		mt_cairo_render_t *mtcr = list_remove_head(&mtul->queue);
+		render_surf_t *rs;
+
+		if (mtcr == NULL) {
+			ASSERT3U(glGetError(), ==, GL_NO_ERROR);
+			cv_wait(&mtul->cv, &mtul->lock);
+			continue;
+		}
+
+		mtcr->mtul_uploading = B_TRUE;
+		mutex_exit(&mtul->lock);
+
+		mutex_enter(&mtcr->lock);
+		if (mtcr->cur_rs >= 0 && mtcr->cur_rs < 2) {
+			rs = &mtcr->rs[mtcr->cur_rs];
+			rs_tex_alloc(mtcr, rs);
+			if (rs->chg)
+				upload_surface(mtcr, rs);
+		}
+		mutex_exit(&mtcr->lock);
+
+		mutex_enter(&mtul->lock);
+		mtcr->mtul_uploading = B_FALSE;
+	}
+
+	mutex_exit(&mtul->lock);
+
+	VERIFY(glctx_make_current(NULL));
+}
+
+/*
+ * Initializes an asynchronous render surface uploader. This should be
+ * called from the main X-Plane thread.
+ *
+ * BACKGROUND:
+ *
+ * An mt_cairo_render_t runs its Cairo rendering operations in a background
+ * thread. However, to present the final rendered image on screen, the
+ * resulting image must first be uploaded to the GPU. This requires having
+ * an OpenGL context bound to the current thread, however, OpenGL contexts
+ * cannot be shared between threads. The workaround would be to create a
+ * new context in every mt_cairo_render_t worker thread, however, given that
+ * there can be dozens of render workers, this would generate dozens of
+ * OpenGL contexts, which isn't very efficient either. In lieu of a better
+ * mechanism, mt_cairo_render would simply perform the final image upload
+ * to the GPU during the mt_cairo_render_draw operation. Which this was
+ * utilizing pixel-buffer-objects to streamline the uploading process and
+ * avoid OpenGL pipeline stalls, there was still some memcpy'ing involved,
+ * which had a non-trivial cost when invoked from the main X-Plane thread.
+ *
+ * mt_cairo_uploader_t solves all of these issues. It is a separate
+ * background worker thread with its own OpenGL context dedicated to doing
+ * nothing but uploading of finished renders to the GPU. Once created, the
+ * uploader goes into a wait-sleep, awaiting new work assignments from
+ * renderers. Once a render is finished, the uploader is notified,
+ * immediately wakes up and uploads the finished render to the GPU. This
+ * happens without waiting for the main X-Plane thread to come around
+ * wanting to draw a particular mt_cairo_render_t. With this infrastructure
+ * in place, calls to mt_cairo_render_draw no longer block for texture
+ * uploading.
+ *
+ * This machinery isn't automatically enabled on all instances of
+ * mt_cairo_render_t however. To utilize this mechanism, you should create
+ * an mt_cairo_uploader and associate it with all your mt_cairo_render
+ * instances using mt_cairo_render_set_uploader. You generally only ever
+ * need a single uploader for all renderers you create. Thus, following
+ * this pattern is a good idea:
+ *
+ *	mt_cairo_uploader_t *uploader = mt_cairo_uploader_new();
+ *	mt_cairo_render_t *mtcr1 = mt_cairo_render_init(...);
+ *	mt_cairo_render_set_uploader(mtcr1, uploader);
+ *	mt_cairo_render_t *mtcr2 = mt_cairo_render_init(...);
+ *	mt_cairo_render_set_uploader(mtcr2, uploader);
+ *	mt_cairo_render_t *mtcr3 = mt_cairo_render_init(...);
+ *	mt_cairo_render_set_uploader(mtcr3, uploader);
+ *	...use the renderers are normal...
+ *	mt_cairo_render_fini(mtcr3);
+ *	mt_cairo_render_fini(mtcr2);
+ *	mt_cairo_render_fini(mtcr1);
+ *	mt_cairo_uploader_destroy(uploader);	<- uploader fini must go last
+ */
+mt_cairo_uploader_t *
+mt_cairo_uploader_init(void)
+{
+	mt_cairo_uploader_t *mtul = safe_calloc(1, sizeof (*mtul));
+	glctx_t *ctx_main = glctx_get_current();
+
+	ASSERT(ctx_main != NULL);
+
+	mtul->ctx = glctx_create_invisible(glctx_get_xplane_win_ptr(),
+	    ctx_main, 2, 1, B_FALSE, B_FALSE);
+	mutex_init(&mtul->lock);
+	cv_init(&mtul->cv);
+	list_create(&mtul->queue, sizeof (mt_cairo_render_t),
+	    offsetof(mt_cairo_render_t, mtul_node));
+
+	VERIFY(thread_create(&mtul->worker, mtul_worker, mtul));
+
+	return (mtul);
+}
+
+/*
+ * Frees an mt_cairo_uploader_t and disposes of all of its resources.
+ * This must be called after all mt_cairo_render_t instances using it
+ * have either been destroyed, or have had their uploader link removed
+ * by a call to mt_cairo_render_set_uploader(mtcr, NULL).
+ */
+void
+mt_cairo_uploader_fini(mt_cairo_uploader_t *mtul)
+{
+	ASSERT(mtul != NULL);
+	ASSERT0(mtul->refcnt);
+	ASSERT0(list_count(&mtul->queue));
+
+	mutex_enter(&mtul->lock);
+	mtul->shutdown = B_TRUE;
+	cv_broadcast(&mtul->cv);
+	mutex_exit(&mtul->lock);
+	thread_join(&mtul->worker);
+
+	ASSERT(mtul->ctx != NULL);
+	glctx_destroy(mtul->ctx);
+	list_destroy(&mtul->queue);
+	mutex_destroy(&mtul->lock);
+	cv_destroy(&mtul->cv);
+
+	memset(mtul, 0, sizeof (*mtul));
+	free(mtul);
 }
