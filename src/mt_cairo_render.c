@@ -1131,6 +1131,7 @@ mtul_worker(void *arg)
 
 	ASSERT(mtul->ctx != NULL);
 	VERIFY(glctx_make_current(mtul->ctx));
+	VERIFY3U(glewInit(), ==, GLEW_OK);
 
 	mutex_enter(&mtul->lock);
 
