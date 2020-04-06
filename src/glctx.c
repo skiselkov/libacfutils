@@ -56,7 +56,6 @@ struct glctx_s {
 	GLXContext	glc;
 	GLXPbuffer	pbuf;
 #elif	IBM
-	bool_t		priv_window;
 	char		win_cls_name[32];
 	ATOM		win_cls;
 	HWND		win;
@@ -202,7 +201,6 @@ glctx_create_priv_window(glctx_t *ctx)
 
 	ASSERT(ctx != NULL);
 
-	ctx->priv_window = B_TRUE;
 	snprintf(ctx->win_cls_name, sizeof (ctx->win_cls_name),
 	    "glctx-%d", rand());
 		wc.lpszClassName = ctx->win_cls_name;
@@ -253,6 +251,7 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	glctx_t *ctx;
 
 	ASSERT(share_ctx == NULL || share_ctx->hgl != NULL);
+	UNUSED(win_ptr);
 
 	/* Get the required extensions */
 	wglCreateContextAttribsARB = (wglCreateContextAttribsProc)
@@ -264,21 +263,16 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 
 	ctx = safe_calloc(1, sizeof (*ctx));
 	ctx->created = B_TRUE;
-	if (share_ctx == NULL) {
-		logMsg("Utilizing private window");
-		if (!glctx_create_priv_window(ctx))
-			goto errout;
-		ASSERT(ctx->dc != NULL);
-	} else {
-		logMsg("Utilizing shared window");
-		ctx->win = win_ptr;
-		ctx->dc = GetDC(ctx->win);
-		if (ctx->dc == NULL) {
-			win_perror(GetLastError(),
-			    "Failed to get window device context");
-			goto errout;
-		}
-	}
+	/*
+	 * Trying to reuse the X-Plane window is just more problematic
+	 * than always using a private window, due a for potential pixel
+	 * incompatibility in the underlying DC when X-Plane is running
+	 * in Vulkan mode. So we just always create a private window.
+	 */
+	if (!glctx_create_priv_window(ctx))
+		goto errout;
+	ASSERT(ctx->dc != NULL);
+
 	ctx->hgl = wglCreateContextAttribsARB(ctx->dc,
 	    share_ctx != NULL ? share_ctx->hgl : NULL, attrs);
 	if (ctx->hgl == NULL) {
@@ -544,13 +538,11 @@ glctx_destroy(glctx_t *ctx)
 			ASSERT(ctx->win != NULL);
 			ReleaseDC(ctx->win, ctx->dc);
 		}
-		if (ctx->priv_window) {
-			if (ctx->win != NULL)
-				DestroyWindow(ctx->win);
-			if (ctx->win_cls != 0) {
-				UnregisterClassA(ctx->win_cls_name,
-				    GetModuleHandle(NULL));
-			}
+		if (ctx->win != NULL)
+			DestroyWindow(ctx->win);
+		if (ctx->win_cls != 0) {
+			UnregisterClassA(ctx->win_cls_name,
+			    GetModuleHandle(NULL));
 		}
 	}
 #elif	APL
