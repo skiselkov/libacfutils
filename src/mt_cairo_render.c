@@ -1227,6 +1227,11 @@ mt_cairo_uploader_init(void)
 
 	mtul->ctx = glctx_create_invisible(glctx_get_xplane_win_ptr(),
 	    ctx_main, 2, 1, B_FALSE, B_FALSE);
+	glctx_destroy(ctx_main);
+	if (mtul->ctx == NULL) {
+		free(mtul);
+		return (NULL);
+	}
 	mutex_init(&mtul->lock);
 	cv_init(&mtul->cv_queue);
 	cv_init(&mtul->cv_done);
