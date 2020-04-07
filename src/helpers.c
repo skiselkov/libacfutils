@@ -1120,6 +1120,7 @@ win_perror(DWORD err, const char *fmt, ...)
 	    FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 	    NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 	    (LPSTR)&win_msg, 0, NULL);
+	strip_space(win_msg);
 	logMsg("%s: %s", caller_msg, win_msg);
 
 	free(caller_msg);
