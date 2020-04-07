@@ -40,11 +40,12 @@
 #include <OpenGL/CGLCurrent.h>
 #endif	/* APL */
 
-#include <acfutils/assert.h>
-#include <acfutils/dr.h>
-#include <acfutils/glctx.h>
-#include <acfutils/log.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/dr.h"
+#include "acfutils/glctx.h"
+#include "acfutils/log.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/thread.h"
 
 #if	defined(__WGLEW_H__) || defined(__GLEW_H__)
 #error	"MUST NOT include GLEW headers from glctx.c"
@@ -57,8 +58,8 @@ struct glctx_s {
 	GLXPbuffer	pbuf;
 #elif	IBM
 	char		win_cls_name[32];
-	ATOM		win_cls;
 	HWND		win;
+	bool_t		release_dc;
 	HDC		dc;
 	HGLRC		hgl;
 #else	/* APL */
@@ -201,11 +202,18 @@ glctx_create_priv_window(glctx_t *ctx)
 
 	ASSERT(ctx != NULL);
 
+	/*
+	 * Using the context struct pointer should be unique enough
+	 * for the class name. Allocating two different structs with
+	 * the same address should be impossible (and if it happens,
+	 * we're dealing with MUCH bigger problems).
+	 */
 	snprintf(ctx->win_cls_name, sizeof (ctx->win_cls_name),
-	    "glctx-%d", rand());
-		wc.lpszClassName = ctx->win_cls_name;
-		if (!RegisterClassA(&wc)) {
+	    "glctx-%p", ctx);
+	wc.lpszClassName = ctx->win_cls_name;
+	if (!RegisterClassA(&wc)) {
 		win_perror(GetLastError(), "Failed to register window class");
+		memset(ctx->win_cls_name, 0, sizeof (ctx->win_cls_name));
 		return (B_FALSE);
 	}
 	ctx->win = CreateWindowA(ctx->win_cls_name, ctx->win_cls_name,
@@ -221,6 +229,7 @@ glctx_create_priv_window(glctx_t *ctx)
 		    "Failed to get window device context");
 		return (B_FALSE);
 	}
+	ctx->release_dc = B_TRUE;
 	pixel_format = ChoosePixelFormat(ctx->dc, &pfd);
 	if (pixel_format == 0) {
 		logMsg("Couldn't find a suitable pixel format");
@@ -260,19 +269,16 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 		logMsg("Missing support for WGL_ARB_create_context");
 		return (NULL);
 	}
-
 	ctx = safe_calloc(1, sizeof (*ctx));
 	ctx->created = B_TRUE;
 	/*
-	 * Trying to reuse the X-Plane window is just more problematic
-	 * than always using a private window, due a for potential pixel
-	 * incompatibility in the underlying DC when X-Plane is running
-	 * in Vulkan mode. So we just always create a private window.
+	 * We used to attempt to reuse X-Plane's window's device context
+	 * here. But since Vulkan, that is just too unreliable, so we
+	 * just always use a private window and call it a day.
 	 */
 	if (!glctx_create_priv_window(ctx))
 		goto errout;
 	ASSERT(ctx->dc != NULL);
-
 	ctx->hgl = wglCreateContextAttribsARB(ctx->dc,
 	    share_ctx != NULL ? share_ctx->hgl : NULL, attrs);
 	if (ctx->hgl == NULL) {
@@ -391,6 +397,12 @@ errout:
 #elif	IBM
 	ctx->hgl = wglGetCurrentContext();
 	if (ctx->hgl == 0) {
+		glctx_destroy(ctx);
+		return (NULL);
+	}
+	ctx->dc = wglGetCurrentDC();
+	if (ctx->dc == NULL) {
+		logMsg("Current context had no DC?!");
 		glctx_destroy(ctx);
 		return (NULL);
 	}
@@ -523,7 +535,8 @@ glctx_destroy(glctx_t *ctx)
 		 * and then we reinstall it back as the current context.
 		 */
 		cur_ctx = glctx_get_current();
-		wglDeleteContext(ctx->hgl);
+		if (!wglDeleteContext(ctx->hgl))
+			win_perror(GetLastError(), "wglDeleteContext failed");
 		if (cur_ctx != NULL) {
 			glctx_make_current(cur_ctx);
 			/*
@@ -534,13 +547,13 @@ glctx_destroy(glctx_t *ctx)
 			glctx_destroy(cur_ctx);
 		}
 		ASSERT(ctx->win != NULL);
-		if (ctx->dc != NULL) {
+		if (ctx->dc != NULL && ctx->release_dc) {
 			ASSERT(ctx->win != NULL);
 			ReleaseDC(ctx->win, ctx->dc);
 		}
 		if (ctx->win != NULL)
 			DestroyWindow(ctx->win);
-		if (ctx->win_cls != 0) {
+		if (ctx->win_cls_name[0] != '\0') {
 			UnregisterClassA(ctx->win_cls_name,
 			    GetModuleHandle(NULL));
 		}
