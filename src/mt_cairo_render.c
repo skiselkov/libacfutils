@@ -85,8 +85,8 @@ struct mt_cairo_render_s {
 	bool_t			debug;
 
 	mt_cairo_uploader_t	*mtul;
-	list_node_t		mtul_node;
 	bool_t			mtul_uploading;
+	list_node_t		mtul_queue_node;
 
 	GLenum			tex_filter;
 	unsigned		w, h;
@@ -138,6 +138,13 @@ struct mt_cairo_uploader_s {
 	bool_t		shutdown;
 	thread_t	worker;
 };
+
+typedef struct {
+	mt_cairo_render_t	*mtcr;
+	render_surf_t		*rs;
+	GLsync			sync;
+	list_node_t		node;
+} ul_work_t;
 
 static const char *vert_shader =
     "#version 120\n"
@@ -263,21 +270,20 @@ worker(mt_cairo_render_t *mtcr)
 
 		ASSERT(mtcr->render_cb != NULL);
 		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
-		rs->chg = B_TRUE;
 
 		mutex_enter(&mtcr->lock);
+		rs->chg = B_TRUE;
 		mtul = mtcr->mtul;
 		mutex_exit(&mtcr->lock);
 
 		if (mtul != NULL) {
 			mutex_enter(&mtul->lock);
-			if (!list_link_active(&mtcr->mtul_node)) {
+			if (!list_link_active(&mtcr->mtul_queue_node)) {
 				list_insert_tail(&mtul->queue, mtcr);
 				cv_broadcast(&mtul->cv_queue);
 			}
-			while (rs->chg) {
+			while (rs->chg)
 				cv_wait(&mtul->cv_done, &mtul->lock);
-			}
 			mutex_exit(&mtul->lock);
 		}
 
@@ -427,7 +433,7 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		mutex_enter(&mtcr->mtul->lock);
 		ASSERT(mtcr->mtul->refcnt != 0);
 		mtcr->mtul->refcnt--;
-		if (list_link_active(&mtcr->mtul_node))
+		if (list_link_active(&mtcr->mtul_queue_node))
 			list_remove(&mtcr->mtul->queue, mtcr);
 		/*
 		 * MTUL might be uploading us right now. So to avoid
@@ -602,7 +608,7 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 
 		if (mtcr->mtul != NULL) {
 			mutex_enter(&mtcr->mtul->lock);
-			if (!list_link_active(&mtcr->mtul_node)) {
+			if (!list_link_active(&mtcr->mtul_queue_node)) {
 				list_insert_tail(&mtcr->mtul->queue, mtcr);
 				cv_broadcast(&mtcr->mtul->cv_queue);
 			}
@@ -694,7 +700,6 @@ upload_surface(mt_cairo_render_t *mtcr, render_surf_t *rs)
 		    mtcr->init_line);
 		bind_tex_sync(mtcr, rs);
 	}
-	rs->chg = B_FALSE;
 }
 
 static bool_t
@@ -709,11 +714,12 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	glActiveTexture(GL_TEXTURE0);
 	rs_tex_alloc(mtcr, rs);
 	if (mtcr->mtul == NULL) {
-		if (rs->chg)
+		if (rs->chg) {
 			upload_surface(mtcr, rs);
+			rs->chg = B_FALSE;
+		}
 	} else {
-		if (rs->chg)
-			rs = &mtcr->rs[!mtcr->cur_rs];
+		ASSERT(!rs->chg);
 	}
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 
@@ -796,8 +802,9 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 		int vp[4];
 
 		VERIFY3S(dr_getvi(&drs.viewport, vp, 0, 4), ==, 4);
-		glm_ortho(vp[0], vp[2] - vp[0], vp[1], vp[3] - vp[1], 0, 1,
-		    pvm);
+		ASSERT3S(vp[2] - vp[0], >, 0);
+		ASSERT3S(vp[3] - vp[1], >, 0);
+		glm_ortho(vp[0], vp[2], vp[1], vp[3], 0, 1, pvm);
 	} else {
 		mat4 proj, mv;
 
@@ -917,7 +924,7 @@ mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr, mt_cairo_uploader_t *mtul)
 		mutex_enter(&mtul_old->lock);
 		ASSERT(mtul_old->refcnt != 0);
 		mtul_old->refcnt--;
-		if (list_link_active(&mtcr->mtul_node))
+		if (list_link_active(&mtcr->mtul_queue_node))
 			list_remove(&mtul_old->queue, mtcr);
 		mutex_exit(&mtul_old->lock);
 	}
@@ -934,7 +941,7 @@ mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr, mt_cairo_uploader_t *mtul)
 	if (mtul != NULL) {
 		mutex_enter(&mtul->lock);
 		mtul->refcnt++;
-		if (!list_link_active(&mtcr->mtul_node)) {
+		if (!list_link_active(&mtcr->mtul_queue_node)) {
 			list_insert_tail(&mtul->queue, mtcr);
 			cv_broadcast(&mtcr->mtul->cv_queue);
 		}
@@ -975,8 +982,10 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 		/* Upload the texture if it has changed */
 
 		rs_tex_alloc(mtcr, rs);
-		if (rs->chg)
+		if (rs->chg) {
 			upload_surface(mtcr, rs);
+			rs->chg = B_FALSE;
+		}
 		tex = rs->tex;
 	} else {
 		/* No texture ready yet */
@@ -988,21 +997,21 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	return (tex);
 }
 
-API_EXPORT unsigned
+unsigned
 mt_cairo_render_get_width(mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtcr != NULL);
 	return (mtcr->w);
 }
 
-API_EXPORT unsigned
+unsigned
 mt_cairo_render_get_height(mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtcr != NULL);
 	return (mtcr->h);
 }
 
-API_EXPORT void
+void
 mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
     mtcr_rect_t *rects, size_t num)
 {
@@ -1089,14 +1098,15 @@ mt_cairo_render_set_ctx_checking_enabled(mt_cairo_render_t *mtcr,
 	mtcr->ctx_checking = flag;
 }
 
-API_EXPORT void
+void
 mt_cairo_render_set_debug(mt_cairo_render_t *mtcr, bool_t flag)
 {
 	ASSERT(mtcr != NULL);
 	mtcr->debug = flag;
 }
 
-API_EXPORT bool_t mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr)
+bool_t
+mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtcr != NULL);
 	return (mtcr->debug);
@@ -1121,10 +1131,57 @@ mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
 	    DEG2RAD(180), DEG2RAD(270));
 }
 
+/*
+ * Starts a texture upload, generates a sync object and stores the mtcr
+ * on the uploading work queue.
+ */
+static void
+add_ul_work(list_t *list, mt_cairo_render_t *mtcr, render_surf_t *rs)
+{
+	ul_work_t *work = safe_calloc(1, sizeof (*work));
+
+	ASSERT(list != NULL);
+	ASSERT(mtcr != NULL);
+	ASSERT(rs != NULL);
+	ASSERT(rs->chg);
+
+	upload_surface(mtcr, rs);
+	work->mtcr = mtcr;
+	work->rs = rs;
+	work->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+	list_insert_tail(list, work);
+}
+
+/*
+ * When a work unit has completed upload, notifies the renderer
+ */
+static void
+complete_upload(mt_cairo_uploader_t *mtul, list_t *list, ul_work_t *work)
+{
+	ASSERT(mtul != NULL);
+	ASSERT(list != NULL);
+	ASSERT(work != NULL);
+
+	mutex_enter(&work->mtcr->lock);
+	work->rs->chg = B_FALSE;
+	mutex_exit(&work->mtcr->lock);
+
+	mutex_enter(&mtul->lock);
+	work->mtcr->mtul_uploading = B_FALSE;
+	cv_broadcast(&mtul->cv_done);
+	mutex_exit(&mtul->lock);
+
+	list_remove(list, work);
+	glDeleteSync(work->sync);
+	free(work);
+}
+
 static void
 mtul_worker(void *arg)
 {
 	mt_cairo_uploader_t *mtul;
+	list_t uploading;
+	ul_work_t *work;
 
 	ASSERT(arg != NULL);
 	mtul = arg;
@@ -1133,35 +1190,84 @@ mtul_worker(void *arg)
 	VERIFY(glctx_make_current(mtul->ctx));
 	VERIFY3U(glewInit(), ==, GLEW_OK);
 
+	list_create(&uploading, sizeof (ul_work_t), offsetof(ul_work_t, node));
+
 	mutex_enter(&mtul->lock);
 
 	while (!mtul->shutdown) {
-		mt_cairo_render_t *mtcr = list_remove_head(&mtul->queue);
+		GLenum res;
+		mt_cairo_render_t *mtcr;
 
-		if (mtcr == NULL) {
-			ASSERT3U(glGetError(), ==, GL_NO_ERROR);
+		/*
+		 * Dequeue new work assignments and schedule for upload.
+		 */
+		while ((mtcr = list_remove_head(&mtul->queue)) != NULL) {
+			mtcr->mtul_uploading = B_TRUE;
+			mutex_exit(&mtul->lock);
+
+			mutex_enter(&mtcr->lock);
+			if (mtcr->cur_rs >= 0 && mtcr->cur_rs < 2) {
+				render_surf_t *rs = &mtcr->rs[!mtcr->cur_rs];
+
+				rs_tex_alloc(mtcr, rs);
+				if (rs->chg)
+					add_ul_work(&uploading, mtcr, rs);
+				else
+					mtcr->mtul_uploading = B_FALSE;
+			} else {
+				mtcr->mtul_uploading = B_FALSE;
+			}
+			mutex_exit(&mtcr->lock);
+
+			mutex_enter(&mtul->lock);
+		}
+		/*
+		 * If we have no in-progress uploading textures, park on
+		 * the inbound work queue CV awaiting further assignments.
+		 */
+		if (list_count(&uploading) == 0) {
 			cv_wait(&mtul->cv_queue, &mtul->lock);
 			continue;
 		}
-
-		mtcr->mtul_uploading = B_TRUE;
 		mutex_exit(&mtul->lock);
+		/*
+		 * We have work units in an uploading state. We will grab
+		 * the first one and wait for up to 500us to see if it
+		 * finishes uploading. If yes, we will signal the mtcr
+		 * to a surface flip and recheck if new work has arrived.
+		 * If not, we will simply respin to check if new work has
+		 * arrived. This avoids spending too much time waiting on
+		 * textures to upload before we start new texture uploads.
+		 */
+		work = list_head(&uploading);
+		ASSERT(work != NULL);
+		ASSERT(work->mtcr != NULL);
+		ASSERT(work->rs != NULL);
+		ASSERT(work->sync != NULL);
 
-		mutex_enter(&mtcr->lock);
-		if (mtcr->cur_rs >= 0 && mtcr->cur_rs < 2) {
-			render_surf_t *rs = &mtcr->rs[!mtcr->cur_rs];
-			rs_tex_alloc(mtcr, rs);
-			if (rs->chg)
-				upload_surface(mtcr, rs);
+		res = glClientWaitSync(work->sync, 0, 500000llu);
+		if (res == GL_ALREADY_SIGNALED ||
+		    res == GL_CONDITION_SATISFIED) {
+			complete_upload(mtul, &uploading, work);
+			/*
+			 * We process at most a single work unit here, to
+			 * guarantee that we can pick up incoming work ASAP.
+			 */
+		} else {
+			VERIFY(res != GL_WAIT_FAILED);
 		}
-		mutex_exit(&mtcr->lock);
 
 		mutex_enter(&mtul->lock);
-		mtcr->mtul_uploading = B_FALSE;
-		cv_broadcast(&mtul->cv_done);
 	}
 
 	mutex_exit(&mtul->lock);
+
+	while ((work = list_remove_head(&uploading)) != NULL) {
+		ASSERT(work->sync != NULL);
+		glDeleteSync(work->sync);
+		free(work);
+	}
+	list_destroy(&uploading);
 
 	VERIFY(glctx_make_current(NULL));
 }
@@ -1236,7 +1342,7 @@ mt_cairo_uploader_init(void)
 	cv_init(&mtul->cv_queue);
 	cv_init(&mtul->cv_done);
 	list_create(&mtul->queue, sizeof (mt_cairo_render_t),
-	    offsetof(mt_cairo_render_t, mtul_node));
+	    offsetof(mt_cairo_render_t, mtul_queue_node));
 
 	VERIFY(thread_create(&mtul->worker, mtul_worker, mtul));
 
