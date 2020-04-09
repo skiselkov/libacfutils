@@ -59,6 +59,7 @@ typedef struct {
 	};
 	uint64_t		changed_t;
 	uint64_t		delay_us;
+	struct {}		__serialize_marker;
 	delay_line_time_func_t	time_func;
 	void			*time_func_userinfo;
 } delay_line_t;
