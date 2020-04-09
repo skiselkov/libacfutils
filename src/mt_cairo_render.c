@@ -263,10 +263,11 @@ worker(mt_cairo_render_t *mtcr)
 		}
 		if (mtcr->shutdown)
 			break;
-		mutex_exit(&mtcr->lock);
 
 		/* always draw into the non-current texture */
 		rs = &mtcr->rs[!mtcr->cur_rs];
+
+		mutex_exit(&mtcr->lock);
 
 		ASSERT(mtcr->render_cb != NULL);
 		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
@@ -285,11 +286,13 @@ worker(mt_cairo_render_t *mtcr)
 			while (rs->chg)
 				cv_wait(&mtul->cv_done, &mtul->lock);
 			mutex_exit(&mtul->lock);
-		}
 
-		mutex_enter(&mtcr->lock);
-		mtcr->cur_rs = !mtcr->cur_rs;
-		cv_broadcast(&mtcr->render_done_cv);
+			mutex_enter(&mtcr->lock);
+		} else {
+			mutex_enter(&mtcr->lock);
+			mtcr->cur_rs = !mtcr->cur_rs;
+			cv_broadcast(&mtcr->render_done_cv);
+		}
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -617,12 +620,12 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 				    &mtcr->mtul->lock);
 			}
 			mutex_exit(&mtcr->mtul->lock);
+		} else {
+			mutex_enter(&mtcr->lock);
+			mtcr->cur_rs = !mtcr->cur_rs;
+			cv_broadcast(&mtcr->render_done_cv);
+			mutex_exit(&mtcr->lock);
 		}
-
-		mutex_enter(&mtcr->lock);
-		mtcr->cur_rs = !mtcr->cur_rs;
-		cv_broadcast(&mtcr->render_done_cv);
-		mutex_exit(&mtcr->lock);
 	} else {
 		mutex_enter(&mtcr->lock);
 		mtcr->one_shot_block = B_TRUE;
@@ -718,8 +721,8 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 			upload_surface(mtcr, rs);
 			rs->chg = B_FALSE;
 		}
-	} else {
-		ASSERT(!rs->chg);
+	} else if (rs->chg) {
+		rs = &mtcr->rs[!mtcr->cur_rs];
 	}
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
 
@@ -1164,6 +1167,11 @@ complete_upload(mt_cairo_uploader_t *mtul, list_t *list, ul_work_t *work)
 
 	mutex_enter(&work->mtcr->lock);
 	work->rs->chg = B_FALSE;
+	if (work->rs == &work->mtcr->rs[0])
+		work->mtcr->cur_rs = 0;
+	else
+		work->mtcr->cur_rs = 1;
+	cv_broadcast(&work->mtcr->render_done_cv);
 	mutex_exit(&work->mtcr->lock);
 
 	mutex_enter(&mtul->lock);
@@ -1202,21 +1210,20 @@ mtul_worker(void *arg)
 		 * Dequeue new work assignments and schedule for upload.
 		 */
 		while ((mtcr = list_remove_head(&mtul->queue)) != NULL) {
+			render_surf_t *rs;
 			mtcr->mtul_uploading = B_TRUE;
 			mutex_exit(&mtul->lock);
 
 			mutex_enter(&mtcr->lock);
-			if (mtcr->cur_rs >= 0 && mtcr->cur_rs < 2) {
-				render_surf_t *rs = &mtcr->rs[!mtcr->cur_rs];
-
-				rs_tex_alloc(mtcr, rs);
-				if (rs->chg)
-					add_ul_work(&uploading, mtcr, rs);
-				else
-					mtcr->mtul_uploading = B_FALSE;
-			} else {
+			if (mtcr->cur_rs == -1)
+				rs = &mtcr->rs[0];
+			else
+				rs = &mtcr->rs[!mtcr->cur_rs];
+			rs_tex_alloc(mtcr, rs);
+			if (rs->chg)
+				add_ul_work(&uploading, mtcr, rs);
+			else
 				mtcr->mtul_uploading = B_FALSE;
-			}
 			mutex_exit(&mtcr->lock);
 
 			mutex_enter(&mtul->lock);
