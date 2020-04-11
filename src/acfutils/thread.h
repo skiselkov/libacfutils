@@ -31,7 +31,9 @@
 #include <windows.h>
 #endif	/* !APL && !LIN */
 
-#if	APL
+#if	__STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#include <stdatomic.h>
+#elif	APL
 #include <libkern/OSAtomic.h>
 #endif
 
@@ -171,6 +173,7 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 }
 #define	cv_init(cv)		pthread_cond_init((cv), NULL)
 #define	cv_destroy(cv)		pthread_cond_destroy((cv))
+#define	cv_signal(cv)		pthread_cond_signal((cv))
 #define	cv_broadcast(cv)	pthread_cond_broadcast((cv))
 
 #else	/* !APL && !LIN */
@@ -239,11 +242,19 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 }
 #define	cv_init		InitializeConditionVariable
 #define	cv_destroy(cv)	/* no-op */
+#define	cv_signal	WakeConditionVariable
 #define	cv_broadcast	WakeAllConditionVariable
 
 #endif	/* !APL && !LIN */
 
-#if	IBM
+#if	__STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#define	atomic32_t		_Atomic int32_t
+#define	atomic_inc_32(x)	atomic_fetch_add((x), 1)
+#define	atomic_dec_32(x)	atomic_fetch_add((x), -1)
+#define	atomic64_t		_Atomic int64_t
+#define	atomic_inc_64(x)	atomic_fetch_add((x), 1)
+#define	atomic_dec_64(x)	atomic_fetch_add((x), -1)
+#elif	IBM
 #define	atomic32_t		volatile LONG
 #define	atomic_inc_32(x)	InterlockedIncrement((x))
 #define	atomic_dec_32(x)	InterlockedDecrement((x))
