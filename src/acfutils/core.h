@@ -35,7 +35,11 @@
 extern "C" {
 #endif
 
+#if	defined(__GNUC__) || defined(__clang__)
 #define	UNUSED_ATTR	__attribute__((unused))
+#else
+#define	UNUSED_ATTR
+#endif
 #define	UNUSED(x)	(void)(x)
 
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
