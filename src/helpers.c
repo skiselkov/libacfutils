@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -181,6 +181,9 @@ static struct {
     /* end of list */
     { .cycle = -1 }
 };
+
+static ssize_t lacf_getline_impl(char **line_p, size_t *cap_p, void *fp,
+    bool_t compressed);
 
 /*
  * How to turn to get from hdg1 to hdg2 with positive being right and negative
@@ -463,6 +466,35 @@ airac_time2cycle(time_t t)
 	return (-1);
 }
 
+static ssize_t
+parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
+    unsigned *linenum, bool_t compressed)
+{
+	ASSERT(fp != NULL);
+	ASSERT(linenum != NULL);
+
+	for (;;) {
+		ssize_t len = lacf_getline_impl(linep, linecap, fp, compressed);
+		char *hash;
+		if (len == -1)
+			return (-1);
+		(*linenum)++;
+		hash = strchr(*linep, '#');
+		if (hash != NULL)
+		    *hash = '\0';
+		strip_space(*linep);
+		if (**linep == 0)
+			continue;
+		len = strlen(*linep);
+		/* substitute spaces for tabs */
+		for (ssize_t i = 0; i < len; i++) {
+			if ((*linep)[i] == '\t')
+				(*linep)[i] = ' ';
+		}
+		return (len);
+	}
+}
+
 /*
  * Grabs the next non-empty, non-comment line from a file, having stripped
  * away all leading and trailing whitespace. Any tab characters are also
@@ -483,26 +515,16 @@ airac_time2cycle(time_t t)
 ssize_t
 parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 {
-	for (;;) {
-		ssize_t len = getline(linep, linecap, fp);
-		char *hash;
-		if (len == -1)
-			return (-1);
-		(*linenum)++;
-		hash = strchr(*linep, '#');
-		if (hash != NULL)
-		    *hash = '\0';
-		strip_space(*linep);
-		if (**linep == 0)
-			continue;
-		len = strlen(*linep);
-		/* substitute spaces for tabs */
-		for (ssize_t i = 0; i < len; i++) {
-			if ((*linep)[i] == '\t')
-				(*linep)[i] = ' ';
-		}
-		return (len);
-	}
+	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
+	    B_FALSE));
+}
+
+ssize_t
+parser_get_next_gzline(gzFile fp, char **linep, size_t *linecap,
+    unsigned *linenum)
+{
+	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
+	    B_TRUE));
 }
 
 char *
@@ -762,12 +784,8 @@ unescape_percent(char *str)
 	}
 }
 
-#if	IBM
-/*
- * C getline is a POSIX function, so on Windows, we need to roll our own.
- */
-ssize_t
-getline(char **line_p, size_t *cap_p, FILE *fp)
+static ssize_t
+lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 {
 	ASSERT(line_p != NULL);
 	ASSERT(cap_p != NULL);
@@ -776,13 +794,23 @@ getline(char **line_p, size_t *cap_p, FILE *fp)
 	char *line = *line_p;
 	size_t cap = *cap_p, n = 0;
 
+#if	APL || LIN
+	/* No POSIX we can use the libc version when uncompressed */
+	if (!compressed)
+		return (getline(line_p, cap_p, fp));
+#endif	/* APL || LIN */
+
 	do {
+		char *p;
+
 		if (n + 1 >= cap) {
 			cap += 256;
 			line = realloc(line, cap);
 		}
 		ASSERT(n < cap);
-		if (fgets(&line[n], cap - n, fp) == NULL) {
+		p = (compressed ? gzgets(fp, &line[n], cap - n) :
+		    fgets(&line[n], cap - n, fp));
+		if (p == NULL) {
 			if (n != 0) {
 				break;
 			} else {
@@ -799,7 +827,15 @@ getline(char **line_p, size_t *cap_p, FILE *fp)
 
 	return (n);
 }
-#endif	/* IBM */
+
+/*
+ * C getline is a POSIX function, so on Windows, we need to roll our own.
+ */
+ssize_t
+lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
+{
+	return (lacf_getline_impl(line_p, cap_p, fp, B_FALSE));
+}
 
 API_EXPORT void
 strtolower(char *str)

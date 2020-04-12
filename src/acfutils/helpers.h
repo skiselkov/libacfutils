@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_HELPERS_H_
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <zlib.h>
 #include <math.h>
 #if	APL || LIN
 #include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
@@ -173,6 +174,9 @@ API_EXPORT int airac_time2cycle(time_t t);
 #define	parser_get_next_line		ACFSYM(parser_get_next_line)
 API_EXPORT ssize_t parser_get_next_line(FILE *fp, char **linep,
     size_t *linecap, unsigned *linenum);
+#define	parser_get_next_gzline		ACFSYM(parser_get_next_gzline)
+API_EXPORT ssize_t parser_get_next_gzline(gzFile fp, char **linep,
+    size_t *linecap, unsigned *linenum);
 #define	parser_get_next_quoted_str	ACFSYM(parser_get_next_quoted_str)
 API_EXPORT char *parser_get_next_quoted_str(FILE *fp);
 #define	parser_get_next_quoted_str2	ACFSYM(parser_get_next_quoted_str2)
@@ -272,9 +276,9 @@ lacf_basename(const char *str)
 	return (&sep[1]);
 }
 
+API_EXPORT ssize_t lacf_getline(char **lineptr, size_t *n, FILE *stream);
 #if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
-#define	getline				ACFSYM(getline)
-API_EXPORT ssize_t getline(char **lineptr, size_t *n, FILE *stream);
+#define	getline				lacf_getline
 #endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
 
 #define	strtolower			ACFSYM(strtolower)

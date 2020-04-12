@@ -44,7 +44,11 @@ API_EXPORT void conf_free(conf_t *conf);
 
 API_EXPORT conf_t *conf_read_file(const char *filename, int *errline);
 API_EXPORT conf_t *conf_read(FILE *fp, int *errline);
+API_EXPORT conf_t *conf_read2(void *fp, int *errline, bool_t compressed);
+
 API_EXPORT bool_t conf_write_file(const conf_t *conf, const char *filename);
+API_EXPORT bool_t conf_write_file2(const conf_t *conf, const char *filename,
+    bool_t compressed);
 API_EXPORT bool_t conf_write(const conf_t *conf, FILE *fp);
 
 API_EXPORT bool_t conf_get_str(const conf_t *conf, const char *key,

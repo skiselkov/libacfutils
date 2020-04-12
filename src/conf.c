@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <zlib.h>
 
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"
@@ -74,6 +75,7 @@ typedef struct {
 
 static void conf_set_common(conf_t *conf, const char *key,
     const char *fmt, ...) PRINTF_ATTR(3);
+static bool_t conf_write_impl(const conf_t *conf, void *fp, bool_t compressed);
 
 static int
 conf_key_compar(const void *a, const void *b)
@@ -136,6 +138,7 @@ conf_free(conf_t *conf)
 conf_t *
 conf_read_file(const char *filename, int *errline)
 {
+	uint8_t gz_magic[2];
 	FILE *fp = fopen(filename, "rb");
 	conf_t *conf;
 
@@ -144,8 +147,33 @@ conf_read_file(const char *filename, int *errline)
 			*errline = -1;
 		return (NULL);
 	}
-	conf = conf_read(fp, errline);
-	fclose(fp);
+	/*
+	 * We automatically detect the 16-bit Gzip magic header. We know
+	 * a valid conf file will never contain this header unless it really
+	 * is Gzip compressed.
+	 */
+	if (fread(gz_magic, 1, sizeof (gz_magic), fp) != sizeof (gz_magic)) {
+		if (errline != NULL)
+			*errline = -1;
+		fclose(fp);
+		return (NULL);
+	}
+	rewind(fp);
+	if (gz_magic[0] == 0x1f && gz_magic[1] == 0x8b) {
+		gzFile gz_fp = gzopen(filename, "r");
+
+		fclose(fp);
+		if (gz_fp == NULL) {
+			if (errline != NULL)
+				*errline = -1;
+			return (NULL);
+		}
+		conf = conf_read2(gz_fp, errline, B_TRUE);
+		gzclose(gz_fp);
+	} else {
+		conf = conf_read2(fp, errline, B_FALSE);
+		fclose(fp);
+	}
 
 	return (conf);
 }
@@ -182,22 +210,50 @@ ck_free_value(conf_key_t *ck)
 conf_t *
 conf_read(FILE *fp, int *errline)
 {
+	return (conf_read2(fp, errline, B_FALSE));
+}
+
+/*
+ * Parses a configuration from a file. The file is structured as a
+ * series of "key = value" lines. The parser understands "#" and "--"
+ * comments.
+ *
+ * Returns the parsed conf_t object, or NULL in case an error was found.
+ * If errline is not NULL, it is set to the line number where the error
+ * was encountered.
+ *
+ * Use conf_free to free the returned structure.
+ */
+conf_t *
+conf_read2(void *fp, int *errline, bool_t compressed)
+{
 	conf_t *conf;
 	char *line = NULL;
 	size_t linecap = 0;
 	unsigned linenum = 0;
+	ASSERT(fp != NULL);
+	FILE *f_fp = compressed ? NULL : fp;
+	gzFile gz_fp = compressed ? fp : NULL;
 
 	conf = conf_create_empty();
-
-	while (!feof(fp)) {
+	while (compressed ? !gzeof(gz_fp) : !feof(f_fp)) {
 		char *sep;
 		conf_key_t srch;
 		conf_key_t *ck;
 		avl_index_t where;
 		conf_key_type_t type;
 
-		if (parser_get_next_line(fp, &line, &linecap, &linenum) <= 0)
-			break;
+		if (compressed) {
+			if (parser_get_next_gzline(gz_fp, &line, &linecap,
+			    &linenum) <= 0) {
+				break;
+			}
+		} else {
+			if (parser_get_next_line(f_fp, &line, &linecap,
+			    &linenum) <= 0) {
+				break;
+			}
+		}
 
 		sep = strstr(line, "`");
 		if (sep != NULL) {
@@ -262,33 +318,64 @@ errout:
 bool_t
 conf_write_file(const conf_t *conf, const char *filename)
 {
-	FILE *fp = fopen(filename, "wb");
+	return (conf_write_file2(conf, filename, B_FALSE));
+}
+
+/*
+ * Same as conf_write_file, but lets you specify whether the output
+ * should be Gzip-compressed.
+ */
+bool_t
+conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
+{
 	bool_t res;
 
-	if (fp == NULL)
-		return (B_FALSE);
-	res = conf_write(conf, fp);
-	fclose (fp);
+	ASSERT(conf != NULL);
+	ASSERT(filename != NULL);
+
+	if (!compressed) {
+		FILE *fp = fopen(filename, "wb");
+
+		if (fp == NULL)
+			return (B_FALSE);
+		res = conf_write_impl(conf, fp, B_FALSE);
+		fclose(fp);
+	} else {
+		gzFile fp = gzopen(filename, "w");
+
+		if (fp == NULL)
+			return (B_FALSE);
+		res = conf_write_impl(conf, fp, B_TRUE);
+		gzclose(fp);
+	}
 
 	return (res);
 }
 
-/*
- * Writes a conf_t object to a file. Returns B_TRUE if the write was
- * successful, B_FALSE otherwise.
- */
-bool_t conf_write(const conf_t *conf, FILE *fp)
+static bool_t
+conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 {
-	uint8_t *data_buf = NULL;
+	char *data_buf = NULL;
 	size_t cap = 0;
+	ASSERT(fp != NULL);
+	FILE *f_fp = compressed ? NULL : fp;
+	gzFile gz_fp = compressed ? fp : NULL;
 
-	fprintf(fp, "# libacfutils configuration file - DO NOT EDIT!\n");
+	ASSERT(conf != NULL);
+
+	if (!compressed && fprintf(f_fp, "# libacfutils configuration file - "
+	    "DO NOT EDIT!\n") < 0) {
+		goto errout;
+	}
 	for (conf_key_t *ck = avl_first(&conf->tree); ck != NULL;
 	    ck = AVL_NEXT(&conf->tree, ck)) {
 		switch (ck->type) {
 		case CONF_KEY_STR:
-			if (fprintf(fp, "%s = %s\n", ck->key, ck->str) <= 0)
+			if ((compressed ?
+			    gzprintf(gz_fp, "%s = %s\n", ck->key, ck->str) < 0 :
+			    fprintf(f_fp, "%s = %s\n", ck->key, ck->str) < 0)) {
 				goto errout;
+			}
 			break;
 		case CONF_KEY_DATA: {
 			size_t req = BASE64_ENC_SIZE(ck->data.sz);
@@ -299,10 +386,16 @@ bool_t conf_write(const conf_t *conf, FILE *fp)
 				data_buf = safe_malloc(cap + 1);
 			}
 			act = lacf_base64_encode(ck->data.buf, ck->data.sz,
-			    data_buf);
+			    (uint8_t*)data_buf);
 			data_buf[act] = '\0';
-			if (fprintf(fp, "%s`%s\n", ck->key, data_buf) <= 0)
-				goto errout;
+			if (compressed) {
+				gzwrite(gz_fp, ck->key, strlen(ck->key));
+				gzwrite(gz_fp, "`", 1);
+				gzwrite(gz_fp, data_buf, strlen(data_buf));
+				gzwrite(gz_fp, "\n", 1);
+			} else {
+				fprintf(f_fp, "%s`%s\n", ck->key, data_buf);
+			}
 			break;
 		}
 		default:
@@ -314,6 +407,16 @@ bool_t conf_write(const conf_t *conf, FILE *fp)
 errout:
 	free(data_buf);
 	return (B_FALSE);
+}
+
+/*
+ * Writes a conf_t object to a file. Returns B_TRUE if the write was
+ * successful, B_FALSE otherwise.
+ */
+bool_t
+conf_write(const conf_t *conf, FILE *fp)
+{
+	return (conf_write_impl(conf, fp, B_FALSE));
 }
 
 /*
