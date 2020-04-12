@@ -48,7 +48,14 @@ typedef unsigned int bool_t;
 #define	restrict
 #endif
 
-#endif	/* _MSC_VER */
+#elif	defined(__cplusplus)
+
+/* C++ doesn't understand restrict */
+#ifndef	restrict
+#define	restrict
+#endif
+
+#endif	/* (_MSC_VER) */
 
 #ifdef	__cplusplus
 }
