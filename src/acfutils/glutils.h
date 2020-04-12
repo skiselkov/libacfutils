@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_GLUTILS_H_
