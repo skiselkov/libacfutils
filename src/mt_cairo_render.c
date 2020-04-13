@@ -230,11 +230,16 @@ ft_err2str(FT_Error err)
  * Recalculates the absolute cv_timedwait sleep target based on our framerate.
  */
 static uint64_t
-recalc_sleep_time(const mt_cairo_render_t *mtcr)
+recalc_sleep_time(mt_cairo_render_t *mtcr)
 {
+	double fps;
 	ASSERT(mtcr != NULL);
-	ASSERT(mtcr->fps != 0);
-	return (microclock() + SEC2USEC(1.0 / mtcr->fps));
+	mutex_enter(&mtcr->lock);
+	fps = mtcr->fps;
+	mutex_exit(&mtcr->lock);
+	if (fps <= 0)
+		return (0);
+	return (microclock() + SEC2USEC(1.0 / fps));
 }
 
 /*
