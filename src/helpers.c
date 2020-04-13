@@ -30,6 +30,7 @@
 #include <math.h>
 #include <ctype.h>
 #include <time.h>
+#include <zlib.h>
 
 #if	IBM
 #include <windows.h>
@@ -520,10 +521,10 @@ parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 }
 
 ssize_t
-parser_get_next_gzline(gzFile fp, char **linep, size_t *linecap,
+parser_get_next_gzline(void *gz_fp, char **linep, size_t *linecap,
     unsigned *linenum)
 {
-	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
+	return (parser_get_next_line_impl(gz_fp, linep, linecap, linenum,
 	    B_TRUE));
 }
 
