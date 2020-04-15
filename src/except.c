@@ -42,11 +42,12 @@ static bool_t inited = B_FALSE;
 
 #if	APL || LIN
 
-static struct sigaction old_sigsegv;
-static struct sigaction old_sigfpe;
-static struct sigaction old_sigint;
-static struct sigaction old_sigill;
-static struct sigaction old_sigterm;
+static struct sigaction old_sigsegv = {};
+static struct sigaction old_sigabrt = {};
+static struct sigaction old_sigfpe = {};
+static struct sigaction old_sigint = {};
+static struct sigaction old_sigill = {};
+static struct sigaction old_sigterm = {};
 
 static const char *
 sigfpe2str(int si_code)
@@ -101,12 +102,22 @@ sigill2str(int si_code)
 static void
 handle_posix_sig(int sig, siginfo_t *siginfo, void *context)
 {
-	UNUSED(context);
-
+#define	SIGNAL_FORWARD(sigact) \
+	do { \
+		if ((sigact)->sa_sigaction != NULL && \
+		    ((sigact)->sa_flags & SA_SIGINFO)) { \
+			(sigact)->sa_sigaction(sig, siginfo, context); \
+		} else if ((sigact)->sa_handler != NULL) { \
+			(sigact)->sa_handler(sig); \
+		} \
+	} while (0)
 	switch (sig) {
 	case SIGSEGV:
 		logMsg("Caught SIGSEGV: segmentation fault (%p)",
 		    siginfo->si_addr);
+		break;
+	case SIGABRT:
+		logMsg("Caught SIGABORT: abort (%p)", siginfo->si_addr);
 		break;
 	case SIGFPE:
 		logMsg("Caught SIGFPE: floating point exception (%s)",
@@ -123,12 +134,28 @@ handle_posix_sig(int sig, siginfo_t *siginfo, void *context)
 		logMsg("Caught signal %d", sig);
 		break;
 	}
+
 	log_backtrace(1);
-	/*
-	 * We deliberately avoid overriding SIGABRT to let X-Plane's
-	 * crash report handler kick in here.
-	 */
-	abort();
+
+	switch (sig) {
+	case SIGSEGV:
+		SIGNAL_FORWARD(&old_sigsegv);
+		break;
+	case SIGABRT:
+		SIGNAL_FORWARD(&old_sigabrt);
+		break;
+	case SIGFPE:
+		SIGNAL_FORWARD(&old_sigfpe);
+		break;
+	case SIGILL:
+		SIGNAL_FORWARD(&old_sigill);
+		break;
+	case SIGTERM:
+		SIGNAL_FORWARD(&old_sigterm);
+		break;
+	}
+
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -153,6 +180,7 @@ signal_handler_init(void)
 #endif	/* !LIN */
 
 	VERIFY0(sigaction(SIGSEGV, &sig_action, &old_sigsegv));
+	VERIFY0(sigaction(SIGABRT, &sig_action, &old_sigabrt));
 	VERIFY0(sigaction(SIGFPE, &sig_action, &old_sigfpe));
 	VERIFY0(sigaction(SIGINT, &sig_action, &old_sigint));
 	VERIFY0(sigaction(SIGILL, &sig_action, &old_sigill));
@@ -163,6 +191,7 @@ static void
 signal_handler_fini(void)
 {
 	VERIFY0(sigaction(SIGSEGV, &old_sigsegv, NULL));
+	VERIFY0(sigaction(SIGABRT, &old_sigabrt, NULL));
 	VERIFY0(sigaction(SIGFPE, &old_sigfpe, NULL));
 	VERIFY0(sigaction(SIGINT, &old_sigint, NULL));
 	VERIFY0(sigaction(SIGILL, &old_sigill, NULL));
@@ -244,6 +273,9 @@ handle_windows_exception(EXCEPTION_POINTERS *ei)
 	}
 	log_backtrace_sw64(ei->ContextRecord);
 
+	if (prev_windows_except_handler != NULL)
+		return (prev_windows_except_handler(ei));
+
 	return (EXCEPTION_CONTINUE_SEARCH);
 }
 
@@ -275,21 +307,4 @@ except_fini(void)
 #else	/* !LIN && !APL */
 	SetUnhandledExceptionFilter(prev_windows_except_handler);
 #endif	/* !LIN && !APL */
-}
-
-void
-except_floop_cb(void)
-{
-#if	IBM
-	/*
-	 * Sometimes 3rd party plugins can uninstall our exception handler.
-	 * We want to always reinstall it.
-	 */
-	LPTOP_LEVEL_EXCEPTION_FILTER old_handler =
-	    SetUnhandledExceptionFilter(handle_windows_exception);
-	if (old_handler != handle_windows_exception) {
-		logMsg("Something reinstalled our exception handler, "
-		    "replaced it with %p", old_handler);
-	}
-#endif	/* IBM */
 }

@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_EXCEPT_H_
@@ -36,8 +36,6 @@ extern "C" {
 API_EXPORT void except_init(void);
 #define	except_fini	ACFSYM(except_fini)
 API_EXPORT void except_fini(void);
-#define	except_floop_cb	ACFSYM(except_floop_cb)
-API_EXPORT void except_floop_cb(void);
 
 #ifdef __cplusplus
 }

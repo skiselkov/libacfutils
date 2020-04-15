@@ -53,7 +53,6 @@ extern "C" {
 		if (COND_UNLIKELY(!(x))) { \
 			log_impl(log_basename(__FILE__), __LINE__, \
 			    "assertion \"%s\" failed: " fmt, #x, __VA_ARGS__); \
-			log_backtrace(0); \
 			abort(); \
 		} \
 	} while (0)
@@ -68,7 +67,6 @@ extern "C" {
 			log_impl(log_basename(__FILE__), __LINE__, \
 			    "assertion %s %s %s failed (" fmt " %s " \
 			    fmt ")", #x, #op, #y, tmp_x, #op, tmp_y); \
-			log_backtrace(0); \
 			abort(); \
 		} \
 	} while (0)
