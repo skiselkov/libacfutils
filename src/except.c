@@ -242,7 +242,7 @@ handle_windows_exception(EXCEPTION_POINTERS *ei)
 		    ei->ExceptionRecord->ExceptionCode);
 		break;
 	}
-	log_backtrace(1);
+	log_backtrace_sw64(ei->ContextRecord);
 
 	return (EXCEPTION_CONTINUE_SEARCH);
 }
