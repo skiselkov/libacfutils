@@ -64,6 +64,8 @@ static mutex_t backtrace_lock;
 static HMODULE modules[MAX_MODULES];
 static MODULEINFO mi[MAX_MODULES];
 static DWORD num_modules;
+
+#define	SYMNAME_MAXLEN	1023	/* C++ symbols can be HUUUUGE */
 #endif	/* IBM */
 
 static logfunc_t log_func = NULL;
@@ -148,7 +150,6 @@ static void
 find_symbol(const char *filename, void *addr, char *symname,
     size_t symname_cap)
 {
-#define	SYMNAME_MAXLEN	1023	/* C++ symbols can be HUUUUGE */
 	/*
 	 * Note the `static' here is deliberate to cause these to become
 	 * BSS-allocated variables instead of stack-allocated. When parsing
@@ -157,10 +158,10 @@ find_symbol(const char *filename, void *addr, char *symname,
 	 */
 	static char symstxtname[MAX_PATH];
 	static char prevsym[SYMNAME_MAXLEN + 1];
-	const char *sep;
-	FILE *fp;
-	void *prevptr = NULL;
-	void *image_base = NULL;
+	static const char *sep;
+	static FILE *fp;
+	static void *prevptr = NULL;
+	static void *image_base = NULL;
 
 	*symname = 0;
 	*prevsym = 0;
@@ -176,8 +177,8 @@ find_symbol(const char *filename, void *addr, char *symname,
 		return;
 
 	while (!feof(fp)) {
-		char unused_c;
-		void *ptr;
+		static char unused_c;
+		static void *ptr;
 		static char sym[SYMNAME_MAXLEN + 1];
 
 		if (fscanf(fp, "%p %c %" SCANF_STR_AUTOLEN(SYMNAME_MAXLEN) "s",
@@ -198,15 +199,16 @@ find_symbol(const char *filename, void *addr, char *symname,
 		lacf_strlcpy(prevsym, sym, sizeof (prevsym));
 	}
 	fclose(fp);
-#undef	SYMNAME_MAXLEN
 }
 
 static HMODULE
 find_module(LPVOID pc, DWORD64 *module_base)
 {
-	for (DWORD i = 0; i < num_modules; i++) {
-		LPVOID start = mi[i].lpBaseOfDll;
-		LPVOID end = start + mi[i].SizeOfImage;
+	static DWORD i;
+	for (i = 0; i < num_modules; i++) {
+		static LPVOID start, end;
+		start = mi[i].lpBaseOfDll;
+		end = start + mi[i].SizeOfImage;
 		if (start <= pc && end > pc) {
 			*module_base = (DWORD64)start;
 			return (modules[i]);
@@ -231,12 +233,12 @@ gather_module_info(void)
 void
 log_backtrace(int skip_frames)
 {
-	unsigned frames;
-	void *stack[MAX_STACK_FRAMES];
-	SYMBOL_INFO *symbol;
-	HANDLE process;
-	DWORD displacement;
-	IMAGEHLP_LINE64 *line;
+	static unsigned frames;
+	static void *stack[MAX_STACK_FRAMES];
+	static SYMBOL_INFO *symbol;
+	static HANDLE process;
+	static DWORD displacement;
+	static IMAGEHLP_LINE64 *line;
 	static char filename[MAX_PATH];
 
 	frames = RtlCaptureStackBackTrace(skip_frames + 1, MAX_STACK_FRAMES,
@@ -264,19 +266,23 @@ log_backtrace(int skip_frames)
 	lacf_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
 	for (unsigned frame_nr = 0; frame_nr < frames; frame_nr++) {
-		DWORD64 address = (DWORD64)(uintptr_t)stack[frame_nr];
-		int fill = strlen(backtrace_buf);
+		static DWORD64 address;
+		static int fill;
+
+		address = (DWORD64)(uintptr_t)stack[frame_nr];
+		fill = strlen(backtrace_buf);
 
 		memset(symbol_buf, 0, sizeof (symbol_buf));
 		/*
 		 * Try to grab the symbol name from the stored %rip data.
 		 */
 		if (!SymFromAddr(process, address, 0, symbol)) {
-			DWORD64 start;
-			HMODULE module = find_module((void *)address, &start);
+			static DWORD64 start;
+			static HMODULE module;
 
+			module = find_module((void *)address, &start);
 			if (module != NULL) {
-				char symname[128];
+				static char symname[SYMNAME_MAXLEN + 1];
 
 				GetModuleFileNameA(module, filename,
 				    sizeof (filename));
@@ -327,10 +333,10 @@ log_backtrace_sw64(PCONTEXT ctx)
 {
 	static char filename[MAX_PATH];
 	static DWORD64 pcs[MAX_STACK_FRAMES];
-	unsigned num_stack_frames;
-	HANDLE process, thread;
-	DWORD machine;
-	STACKFRAME64 sf;
+	static unsigned num_stack_frames;
+	static STACKFRAME64 sf;
+	static HANDLE process, thread;
+	static DWORD machine;
 
 	process = GetCurrentProcess();
 	thread = GetCurrentThread();
@@ -380,11 +386,14 @@ log_backtrace_sw64(PCONTEXT ctx)
 	lacf_strlcpy(backtrace_buf, BACKTRACE_STR, sizeof (backtrace_buf));
 
 	for (unsigned i = 0; i < num_stack_frames; i++) {
-		int fill = strlen(backtrace_buf);
-		DWORD64 pc = pcs[i];
-		char symname[128];
-		HMODULE module;
-		DWORD64 mbase;
+		static int fill;
+		static DWORD64 pc;
+		static char symname[SYMNAME_MAXLEN + 1];
+		static HMODULE module;
+		static DWORD64 mbase;
+
+		fill = strlen(backtrace_buf);
+		pc = pcs[i];
 
 		module = find_module((LPVOID)pc, &mbase);
 		GetModuleFileNameA(module, filename, sizeof (filename));
@@ -411,11 +420,11 @@ log_backtrace_sw64(PCONTEXT ctx)
 void
 log_backtrace(int skip_frames)
 {
-	char *msg;
-	size_t msg_len;
-	void *trace[MAX_STACK_FRAMES];
-	size_t i, j, sz;
-	char **fnames;
+	static char *msg;
+	static size_t msg_len;
+	static void *trace[MAX_STACK_FRAMES];
+	static size_t i, j, sz;
+	static char **fnames;
 
 	sz = backtrace(trace, MAX_STACK_FRAMES);
 	fnames = backtrace_symbols(trace, sz);
