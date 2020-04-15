@@ -267,6 +267,9 @@ highbit64(unsigned long long x)
 			(old_val) += s; \
 	} while (0)
 
+#define	SCANF_STR_AUTOLEN_IMPL(_str_)	#_str_
+#define	SCANF_STR_AUTOLEN(_str_)	SCANF_STR_AUTOLEN_IMPL(_str_)
+
 #ifdef	__cplusplus
 }
 #endif

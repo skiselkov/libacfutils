@@ -140,12 +140,23 @@ log_impl_v(const char *filename, int line, const char *fmt, va_list ap)
  * filename.
  * If found, the symbol name + symbol relative address is placed into
  * `symname' in the "symbol+offset" format.
+ * This function is deliberately designed to be simple and use as little
+ * memory as possible, because when called from an exception handler, the
+ * process' memory state can be assumed to be quite broken already.
  */
 static void
-find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
+find_symbol(const char *filename, void *addr, char *symname,
+    size_t symname_cap)
 {
+#define	SYMNAME_MAXLEN	1023	/* C++ symbols can be HUUUUGE */
+	/*
+	 * Note the `static' here is deliberate to cause these to become
+	 * BSS-allocated variables instead of stack-allocated. When parsing
+	 * through a stack trace we are in a pretty precarious state, so we
+	 * can't rely on having much stack space available.
+	 */
 	static char symstxtname[MAX_PATH];
-	static char prevsym[128];
+	static char prevsym[SYMNAME_MAXLEN + 1];
 	const char *sep;
 	FILE *fp;
 	void *prevptr = NULL;
@@ -163,13 +174,16 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 	fp = fopen(symstxtname, "rb");
 	if (fp == NULL)
 		return;
+
 	while (!feof(fp)) {
 		char unused_c;
 		void *ptr;
-		static char sym[128];
+		static char sym[SYMNAME_MAXLEN + 1];
 
-		if (fscanf(fp, "%p %c %127s", &ptr, &unused_c, sym) != 3)
+		if (fscanf(fp, "%p %c %" SCANF_STR_AUTOLEN(SYMNAME_MAXLEN) "s",
+		    &ptr, &unused_c, sym) != 3) {
 			break;
+		}
 		if (strcmp(sym, "__image_base__") == 0) {
 			image_base = ptr;
 			continue;
@@ -184,6 +198,7 @@ find_symbol(const char *filename, void *addr, char *symname, size_t symname_cap)
 		lacf_strlcpy(prevsym, sym, sizeof (prevsym));
 	}
 	fclose(fp);
+#undef	SYMNAME_MAXLEN
 }
 
 static HMODULE
