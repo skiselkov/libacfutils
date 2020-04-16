@@ -162,6 +162,10 @@ static void
 signal_handler_init(void)
 {
 	struct sigaction sig_action = { .sa_sigaction = handle_posix_sig };
+
+	sigemptyset(&sig_action.sa_mask);
+
+#if	LIN
 	static uint8_t alternate_stack[SIGSTKSZ];
 	stack_t ss = {
 	    .ss_sp = (void*)alternate_stack,
@@ -169,10 +173,11 @@ signal_handler_init(void)
 	    .ss_flags = 0
 	};
 
-	sigemptyset(&sig_action.sa_mask);
-
 	VERIFY0(sigaltstack(&ss, NULL));
 	sig_action.sa_flags = SA_SIGINFO | SA_ONSTACK;
+#else	/* !LIN */
+	sig_action.sa_flags = SA_SIGINFO;
+#endif	/* !LIN */
 
 	VERIFY0(sigaction(SIGSEGV, &sig_action, &old_sigsegv));
 	VERIFY0(sigaction(SIGABRT, &sig_action, &old_sigabrt));
