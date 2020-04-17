@@ -28,7 +28,7 @@
 
 #include <stdint.h>
 
-#include <AL/al.h>
+#include <al.h>
 
 #include "geom.h"
 #include "types.h"
