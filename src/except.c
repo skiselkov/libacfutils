@@ -200,7 +200,7 @@ signal_handler_fini(void)
 
 #else	/* APL || LIN */
 
-static PVOID handler = NULL;
+static LPTOP_LEVEL_EXCEPTION_FILTER prev_windows_except_handler = NULL;
 
 LONG WINAPI
 handle_windows_exception(EXCEPTION_POINTERS *ei)
@@ -267,10 +267,14 @@ handle_windows_exception(EXCEPTION_POINTERS *ei)
 		logMsg("Caught EXCEPTION_STACK_OVERFLOW");
 		break;
 	default:
-		/* Probably some a C++ exception from somebody else, ignore */
-		return (EXCEPTION_CONTINUE_SEARCH);
+		logMsg("Caught unknown exception %lx",
+		    ei->ExceptionRecord->ExceptionCode);
+		break;
 	}
 	log_backtrace_sw64(ei->ContextRecord);
+
+	if (prev_windows_except_handler != NULL)
+		return (prev_windows_except_handler(ei));
 
 	return (EXCEPTION_CONTINUE_SEARCH);
 }
@@ -286,7 +290,8 @@ except_init(void)
 #if	LIN || APL
 	signal_handler_init();
 #else	/* !LIN && !APL */
-	handler = AddVectoredExceptionHandler(B_TRUE, handle_windows_exception);
+	prev_windows_except_handler =
+	    SetUnhandledExceptionFilter(handle_windows_exception);
 #endif	/* !LIN && !APL */
 }
 
@@ -300,9 +305,6 @@ except_fini(void)
 #if	LIN || APL
 	signal_handler_fini();
 #else	/* !LIN && !APL */
-	if (handler != NULL) {
-		RemoveVectoredExceptionHandler(handler);
-		handler = NULL;
-	}
+	SetUnhandledExceptionFilter(prev_windows_except_handler);
 #endif	/* !LIN && !APL */
 }
