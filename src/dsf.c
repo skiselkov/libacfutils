@@ -236,7 +236,7 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 
 	if (atom->payload_sz < 2) {
 		snprintf(reason, DSF_REASON_SZ, "PROP atom too short");
-		goto errout;
+		return (B_FALSE);
 	}
 	for (const char *name = (const char *)atom->payload;
 	    name < payload_end;) {
@@ -248,19 +248,19 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 		if (name_len == (size_t)(payload_end - name)) {
 			snprintf(reason, DSF_REASON_SZ, "PROP atom contains "
 			    "an unterminated name string");
-			goto errout;
+			return (B_FALSE);
 		}
 		value = name + name_len + 1;
 		if (value >= payload_end) {
 			snprintf(reason, DSF_REASON_SZ, "Last name-value pair "
 			    "in PROP atom is missing the value");
-			goto errout;
+			return (B_FALSE);
 		}
 		value_len = strnlen(value, payload_end - value);
 		if (value_len == (size_t)(payload_end - value)) {
 			snprintf(reason, DSF_REASON_SZ, "PROP atom contains "
 			    "an unterminated value string");
-			goto errout;
+			return (B_FALSE);
 		}
 		prop = safe_calloc(1, sizeof (*prop));
 		prop->name = name;
@@ -271,10 +271,6 @@ parse_prop_atom(dsf_atom_t *atom, char reason[DSF_REASON_SZ])
 	}
 
 	return (B_TRUE);
-errout:
-	destroy_prop_atom(atom);
-
-	return (B_FALSE);
 }
 
 #define	CHECK_LEN(x) \
@@ -530,7 +526,7 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 		snprintf(reason, DSF_REASON_SZ, "invalid planar numeric atom "
 		    "%c%c%c%c at %lx: not enough payload",
 		    DSF_ATOM_ID_PRINTF(atom), (unsigned long)atom->file_off);
-		goto errout;
+		return (B_FALSE);
 	}
 
 	pa->data_type = data_type;
@@ -544,7 +540,7 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 		    plane_p, end, reason);
 		if (len < 0) {
 			printf("plane parse error\n");
-			goto errout;
+			return (B_FALSE);
 		}
 		plane_p += len;
 	}
@@ -553,16 +549,10 @@ parse_planar_numeric_atom(dsf_atom_t *atom, dsf_data_type_t data_type,
 		snprintf(reason, DSF_REASON_SZ, "planar numeric atom %c%c%c%c "
 		    "at %lx contained trailing garbage",
 		    DSF_ATOM_ID_PRINTF(atom), (unsigned long)atom->file_off);
-		goto errout;
+		return (B_FALSE);
 	}
 
 	return (B_TRUE);
-errout:
-	if (atom->subtype_inited) {
-		destroy_planar_numeric_atom(atom);
-		atom->subtype_inited = B_FALSE;
-	}
-	return (B_FALSE);
 }
 
 static bool_t
