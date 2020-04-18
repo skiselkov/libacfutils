@@ -83,6 +83,12 @@ API_EXPORT void *lacf_malloc(size_t n);
 	} while (0)
 API_EXPORT void lacf_free(void *buf);
 
+/*
+ * Simple shorthand for calculating number of elements in an array at
+ * compile time. Useful for arrays with flexible sizing.
+ */
+#define	ARRAY_NUM_ELEM(_array) (sizeof (_array) / sizeof (*(_array)))
+
 #ifdef	__cplusplus
 }
 #endif
