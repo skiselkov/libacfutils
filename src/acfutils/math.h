@@ -140,6 +140,29 @@ pn_interp_run(double x, const pn_interp_t *interp)
 	return (y);
 }
 
+/*
+ * Implements the smoothstep function from GLSL. See Wikipedia
+ * for more info: https://en.wikipedia.org/wiki/Smoothstep
+ */
+static inline double
+smoothstep(double x, double edge0, double edge1)
+{
+	ASSERT(!isnan(x));
+	ASSERT3F(edge1, >, edge0);
+	x = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+	return (POW2(x) * (3 - 2 * x));
+}
+
+/*
+ * Inverse of smoothstep. The returned value is always in the range of 0-1.
+ */
+static inline double
+smoothstep_inv(double x)
+{
+	ASSERT(!isnan(x));
+	return (0.5 - sin(asin(1 - 2 * x) / 3));
+}
+
 #ifdef	__cplusplus
 }
 #endif
