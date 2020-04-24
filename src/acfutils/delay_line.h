@@ -90,7 +90,7 @@ delay_line_init_time_func(delay_line_t *line, uint64_t delay_us,
 }
 
 /*
- * Functions to pull the current from a delay line:
+ * Functions to pull the current value from a delay line:
  *	delay_line_pull_i64	- reads the delay line as an int64_t
  *	delay_line_pull_u64	- reads the delay line as a uint64_t
  *	delay_line_pull_f64	- reads the delay line as a double
@@ -115,6 +115,26 @@ delay_line_pull_ ## abbrev_type(delay_line_t *line) \
 DEF_DELAY_LINE_PULL(int64_t, i64)
 DEF_DELAY_LINE_PULL(uint64_t, u64)
 DEF_DELAY_LINE_PULL(double, f64)
+
+/*
+ * Functions to peek at the old value in a delay line without ever
+ * affecting its state change to a new value. Can be used in combination
+ * with delay_line_push_* to look for a state change in a delay line in
+ * response to the passage of time.
+ *	delay_line_pull_i64	- peeks at the delay line as an int64_t
+ *	delay_line_pull_u64	- peeks at the delay line as a uint64_t
+ *	delay_line_pull_f64	- peeks at the delay line as a double
+ */
+#define	DEF_DELAY_LINE_PEEK(typename, abbrev_type) \
+static inline typename \
+delay_line_peek_ ## abbrev_type(const delay_line_t *line) \
+{ \
+	ASSERT(line != NULL); \
+	return (line->abbrev_type); \
+}
+DEF_DELAY_LINE_PEEK(int64_t, i64)
+DEF_DELAY_LINE_PEEK(uint64_t, u64)
+DEF_DELAY_LINE_PEEK(double, f64)
 
 /*
  * Functions that push a new value to a delay line:
