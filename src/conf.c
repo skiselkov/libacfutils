@@ -17,6 +17,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -329,25 +330,63 @@ bool_t
 conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 {
 	bool_t res;
+	char *filename_tmp;
+	int rename_err = 0;
 
 	ASSERT(conf != NULL);
 	ASSERT(filename != NULL);
+	/*
+	 * Initially we write the file into a .tmp temporary file on the side.
+	 * We when atomically replace the target file to avoid the possibility
+	 * of writing an incomplete file.
+	 */
+	filename_tmp = sprintf_alloc("%s.tmp", filename);
 
 	if (!compressed) {
-		FILE *fp = fopen(filename, "wb");
+		FILE *fp = fopen(filename_tmp, "wb");
 
-		if (fp == NULL)
+		if (fp == NULL) {
+			free(filename_tmp);
 			return (B_FALSE);
+		}
 		res = conf_write_impl(conf, fp, B_FALSE);
 		fclose(fp);
 	} else {
-		gzFile fp = gzopen(filename, "w");
+		gzFile fp = gzopen(filename_tmp, "w");
 
-		if (fp == NULL)
+		if (fp == NULL) {
+			free(filename_tmp);
 			return (B_FALSE);
+		}
 		res = conf_write_impl(conf, fp, B_TRUE);
 		gzclose(fp);
 	}
+	if (res) {
+#if	IBM
+		/*
+		 * Windows needs special handling, because it doesn't let us
+		 * use rename for the replace operation.
+		 */
+		if (file_exists(filename, NULL)) {
+			if (!ReplaceFileA(filename, filename_tmp, NULL,
+			    REPLACEFILE_IGNORE_MERGE_ERRORS |
+			    REPLACEFILE_IGNORE_ACL_ERRORS, NULL, NULL)) {
+				win_perror(GetLastError(), "Error writing %s: "
+				"ReplaceFile failed", filename);
+			}
+		} else {
+			rename_err = rename(filename_tmp, filename);
+		}
+#else	/* !IBM */
+		rename_err = rename(filename_tmp, filename);
+#endif	/* !IBM */
+		if (rename_err != 0) {
+			logMsg("Error writing %s: atomic rename failed: %s",
+			    filename, strerror(errno));
+			res = B_FALSE;
+		}
+	}
+	free(filename_tmp);
 
 	return (res);
 }
