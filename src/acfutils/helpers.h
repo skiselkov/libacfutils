@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <math.h>
 #if	APL || LIN
+#include <sys/stat.h>
 #include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
 #include <unistd.h>
 #endif
