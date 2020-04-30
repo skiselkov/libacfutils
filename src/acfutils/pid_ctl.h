@@ -88,6 +88,7 @@ static inline void
 pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
     double r_d)
 {
+	ASSERT(pid != NULL);
 	pid_ctl_reset(pid);
 	pid->k_p = k_p;
 	pid->k_i = k_i;
@@ -100,6 +101,7 @@ pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
 static inline void
 pid_ctl_set_integ_clamp(pid_ctl_t *pid, bool_t flag)
 {
+	ASSERT(pid != NULL);
 	pid->integ_clamp = flag;
 }
 
@@ -116,7 +118,11 @@ pid_ctl_set_integ_clamp(pid_ctl_t *pid, bool_t flag)
 static inline void
 pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
 {
-	double delta_e = (e - pid->e_prev) / d_t;
+	double delta_e;
+
+	ASSERT(pid != NULL);
+
+	delta_e = (e - pid->e_prev) / d_t;
 	if (isnan(pid->e_integ))
 		pid->e_integ = 0;
 	pid->e_integ = clamp(pid->e_integ + e * d_t, -pid->lim_i, pid->lim_i);
@@ -147,6 +153,7 @@ pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
 static inline double
 pid_ctl_get(const pid_ctl_t *pid)
 {
+	ASSERT(pid != NULL);
 	ASSERT(!isnan(pid->e_prev));
 	return (pid->k_p * pid->e_prev + pid->k_i * pid->e_integ +
 	    pid->k_d * pid->e_deriv);
@@ -155,6 +162,7 @@ pid_ctl_get(const pid_ctl_t *pid)
 static inline void
 pid_ctl_reset(pid_ctl_t *pid)
 {
+	ASSERT(pid != NULL);
 	pid->e_prev = NAN;
 	pid->e_integ = NAN;
 	pid->e_deriv = NAN;
@@ -163,43 +171,64 @@ pid_ctl_reset(pid_ctl_t *pid)
 static inline void
 pid_ctl_set_k_p(pid_ctl_t *pid, double k_p)
 {
+	ASSERT(pid != NULL);
 	pid->k_p = k_p;
 }
 
 static inline void
 pid_ctl_set_k_i(pid_ctl_t *pid, double k_i)
 {
+	ASSERT(pid != NULL);
 	pid->k_i = k_i;
 }
 
 static inline void
 pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i)
 {
+	ASSERT(pid != NULL);
 	pid->lim_i = lim_i;
 }
 
 static inline void
 pid_ctl_set_k_d(pid_ctl_t *pid, double k_d)
 {
+	ASSERT(pid != NULL);
 	pid->k_d = k_d;
 }
 
 static inline void
 pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
 {
+	ASSERT(pid != NULL);
 	pid->r_d = r_d;
 }
 
 static inline double
 pid_ctl_get_integ(pid_ctl_t *pid)
 {
+	ASSERT(pid != NULL);
 	return (pid->e_integ);
+}
+
+static inline double
+pid_ctl_get_integ_lim(pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->lim_i);
 }
 
 static inline double
 pid_ctl_get_deriv(pid_ctl_t *pid)
 {
+	ASSERT(pid != NULL);
 	return (pid->e_deriv);
+}
+
+static inline double
+pid_ctl_get_deriv_rate(pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->r_d);
 }
 
 #define	PID_CTL_DEBUG(pid_ptr) \
