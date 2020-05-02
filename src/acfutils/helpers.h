@@ -206,7 +206,7 @@ API_EXPORT void free_strlist(char **comps, size_t len);
 API_EXPORT void unescape_percent(char *str);
 
 #define	mkpathname			ACFSYM(mkpathname)
-API_EXPORT char *mkpathname(const char *comp, ...);
+API_EXPORT char *mkpathname(const char *comp, ...) SENTINEL_ATTR;
 #define	mkpathname_v			ACFSYM(mkpathname_v)
 API_EXPORT char *mkpathname_v(const char *comp, va_list ap);
 #define	fix_pathsep			ACFSYM(fix_pathsep)
@@ -220,9 +220,9 @@ API_EXPORT char *path_last_comp(const char *path);
 API_EXPORT char *path_ext_subst(const char *path, const char *ext);
 
 #define	file2str			ACFSYM(file2str)
-API_EXPORT char *file2str(const char *comp, ...);
+API_EXPORT char *file2str(const char *comp, ...) SENTINEL_ATTR;
 #define	file2str_ext			ACFSYM(file2str_ext)
-API_EXPORT char *file2str_ext(long *len_p, const char *comp, ...);
+API_EXPORT char *file2str_ext(long *len_p, const char *comp, ...) SENTINEL_ATTR;
 #define	file2str_name			ACFSYM(file2str_name)
 API_EXPORT char *file2str_name(long *len_p, const char *filename);
 #define	file2buf			ACFSYM(file2buf)
