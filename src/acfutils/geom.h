@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "sysmacros.h"
 #include "types.h"
 
 #ifdef	__cplusplus
@@ -185,63 +186,63 @@ API_EXPORT bool_t is_on_arc(double angle_x, double angle1, double angle2,
 /*
  * Angle util functions.
  */
-API_EXPORT double rel_angle(double a1, double a2);
+API_EXPORT double rel_angle(double a1, double a2) PURE_ATTR;
 
 /*
  * Vector math.
  */
-API_EXPORT double vect3_abs(vect3_t a);
-API_EXPORT double vect3_dist(vect3_t a, vect3_t b);
-API_EXPORT double vect2_abs(vect2_t a);
-API_EXPORT double vect2_dist(vect2_t a, vect2_t b);
-API_EXPORT vect3_t vect3_set_abs(vect3_t a, double abs);
-API_EXPORT vect2_t vect2_set_abs(vect2_t a, double abs);
+API_EXPORT double vect3_abs(vect3_t a) PURE_ATTR;
+API_EXPORT double vect3_dist(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT double vect2_abs(vect2_t a) PURE_ATTR;
+API_EXPORT double vect2_dist(vect2_t a, vect2_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_set_abs(vect3_t a, double abs) PURE_ATTR;
+API_EXPORT vect2_t vect2_set_abs(vect2_t a, double abs) PURE_ATTR;
 API_EXPORT vect3_t vect3_unit(vect3_t a, double *l);
 API_EXPORT vect2_t vect2_unit(vect2_t a, double *l);
 
-API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b);
-API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b);
-API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b);
-API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b);
-API_EXPORT vect3_t vect3_mul(vect3_t a, vect3_t b);
-API_EXPORT vect2_t vect2_mul(vect2_t a, vect2_t b);
-API_EXPORT vect3_t vect3_scmul(vect3_t a, double b);
-API_EXPORT vect2_t vect2_scmul(vect2_t a, double b);
-API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b);
-API_EXPORT double vect2_dotprod(vect2_t a, vect2_t b);
-API_EXPORT vect3_t vect3_xprod(vect3_t a, vect3_t b);
-API_EXPORT vect3_t vect3_mean(vect3_t a, vect3_t b);
-API_EXPORT vect2_t vect2_mean(vect2_t a, vect2_t b);
+API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_mul(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect2_t vect2_mul(vect2_t a, vect2_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_scmul(vect3_t a, double b) PURE_ATTR;
+API_EXPORT vect2_t vect2_scmul(vect2_t a, double b) PURE_ATTR;
+API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT double vect2_dotprod(vect2_t a, vect2_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_xprod(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3_t vect3_mean(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect2_t vect2_mean(vect2_t a, vect2_t b) PURE_ATTR;
 
-API_EXPORT vect2_t vect2_norm(vect2_t v, bool_t right);
-API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis);
-API_EXPORT vect2_t vect2_rot(vect2_t v, double angle);
-API_EXPORT vect3_t vect3_neg(vect3_t v);
-API_EXPORT vect2_t vect2_neg(vect2_t v);
+API_EXPORT vect2_t vect2_norm(vect2_t v, bool_t right) PURE_ATTR;
+API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis) PURE_ATTR;
+API_EXPORT vect2_t vect2_rot(vect2_t v, double angle) PURE_ATTR;
+API_EXPORT vect3_t vect3_neg(vect3_t v) PURE_ATTR;
+API_EXPORT vect2_t vect2_neg(vect2_t v) PURE_ATTR;
 
 API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
-    double hdgt);
+    double hdgt) PURE_ATTR;
 API_EXPORT vect3_t vect3_acf2local(vect3_t v, double roll, double pitch,
-    double hdgt);
+    double hdgt) PURE_ATTR;
 
 /*
  * Spherical, geodesic, ECEF and ECmI coordinate conversion.
  */
 API_EXPORT ellip_t ellip_init(double semi_major, double semi_minor,
     double flattening);
-API_EXPORT geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip);
-API_EXPORT vect3_t geo2ecef_mtr(geo_pos3_t pos, const ellip_t *ellip);
-API_EXPORT vect3_t geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip);
-API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip);
-API_EXPORT geo_pos3_t ecef2sph(vect3_t v);
-API_EXPORT vect3_t sph2ecef(geo_pos3_t pos);
+API_EXPORT geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+API_EXPORT vect3_t geo2ecef_mtr(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+API_EXPORT vect3_t geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip) PURE_ATTR;
+API_EXPORT geo_pos3_t ecef2sph(vect3_t v) PURE_ATTR;
+API_EXPORT vect3_t sph2ecef(geo_pos3_t pos) PURE_ATTR;
 /*
  * Converts between ECEF/ECMI coordinates and OpenGL coordinates. OpenGL
  * uses X to represent the lateral aixs, Y to represent the vertical axis
  * and Z to represent the axis going towards the camera.
  */
-API_EXPORT vect3_t ecef2gl(vect3_t ecmi);
-API_EXPORT vect3_t gl2ecef(vect3_t opengl);
+API_EXPORT vect3_t ecef2gl(vect3_t ecmi) PURE_ATTR;
+API_EXPORT vect3_t gl2ecef(vect3_t opengl) PURE_ATTR;
 /*
  * ECmI stands for Earth-Centered-modified-Inertial. Unlike ECEF, it is
  * an inertial frame that doesn't rotate together with the earth. However,
@@ -255,11 +256,11 @@ API_EXPORT vect3_t gl2ecef(vect3_t opengl);
  * as a delta from the reference time (which can be arbitrary).
  */
 API_EXPORT vect3_t geo2ecmi(geo_pos3_t pos, double delta_t,
-    const ellip_t *ellip);
+    const ellip_t *ellip) PURE_ATTR;
 API_EXPORT geo_pos3_t ecmi2geo(vect3_t pos, double delta_t,
-    const ellip_t *ellip);
-API_EXPORT vect3_t ecef2ecmi(vect3_t ecef, double delta_t);
-API_EXPORT vect3_t ecmi2ecef(vect3_t ecmi, double delta_t);
+    const ellip_t *ellip) PURE_ATTR;
+API_EXPORT vect3_t ecef2ecmi(vect3_t ecef, double delta_t) PURE_ATTR;
+API_EXPORT vect3_t ecmi2ecef(vect3_t ecmi, double delta_t) PURE_ATTR;
 
 /*
  * Interesections.
@@ -269,27 +270,28 @@ API_EXPORT unsigned vect2sph_isect(vect3_t v, vect3_t o, vect3_t c, double r,
 API_EXPORT unsigned vect2circ_isect(vect2_t v, vect2_t o, vect2_t c, double r,
     bool_t confined, vect2_t i[2]);
 API_EXPORT vect2_t vect2vect_isect(vect2_t da, vect2_t oa, vect2_t db,
-    vect2_t ob, bool_t confined);
+    vect2_t ob, bool_t confined) PURE_ATTR;
 API_EXPORT unsigned circ2circ_isect(vect2_t ca, double ra, vect2_t cb,
     double rb, vect2_t i[2]);
-API_EXPORT unsigned vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly);
-API_EXPORT bool_t point_in_poly(vect2_t pt, const vect2_t *poly);
+API_EXPORT unsigned vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly)
+    PURE_ATTR;
+API_EXPORT bool_t point_in_poly(vect2_t pt, const vect2_t *poly) PURE_ATTR;
 
 /*
  * Converting between headings and direction vectors on a 2D plane.
  */
 #define	hdg2dir	ACFSYM(hdg2dir)
-API_EXPORT vect2_t hdg2dir(double truehdg);
+API_EXPORT vect2_t hdg2dir(double truehdg) PURE_ATTR;
 #define	dir2hdg	ACFSYM(dir2hdg)
-API_EXPORT double dir2hdg(vect2_t dir);
+API_EXPORT double dir2hdg(vect2_t dir) PURE_ATTR;
 
 /*
  * Calculating coordinate displacement & radial intersection.
  */
 API_EXPORT geo_pos2_t geo_displace(const ellip_t *ellip, geo_pos2_t pos,
-    double truehdg, double dist);
+    double truehdg, double dist) PURE_ATTR;
 API_EXPORT geo_pos2_t geo_displace_dir(const ellip_t *ellip, geo_pos2_t pos,
-    vect2_t dir, double dist);
+    vect2_t dir, double dist) PURE_ATTR;
 
 /*
  * Geometry parser & validator helpers.
@@ -310,8 +312,10 @@ typedef struct {
 
 API_EXPORT sph_xlate_t sph_xlate_init(geo_pos2_t displacement,
     double rotation, bool_t inv);
-API_EXPORT geo_pos2_t sph_xlate(geo_pos2_t pos, const sph_xlate_t *xlate);
-API_EXPORT vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate);
+API_EXPORT geo_pos2_t sph_xlate(geo_pos2_t pos, const sph_xlate_t *xlate)
+    PURE_ATTR;
+API_EXPORT vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate)
+    PURE_ATTR;
 
 /*
  * Great circle functions.
@@ -340,8 +344,8 @@ API_EXPORT fpp_t gnomo_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
 API_EXPORT fpp_t stereo_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
-API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp);
-API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp);
+API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp) PURE_ATTR;
+API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp) PURE_ATTR;
 
 /*
  * Lambert conformal conic projection
@@ -356,7 +360,7 @@ typedef struct {
 
 API_EXPORT lcc_t lcc_init(double reflat, double reflon, double stdpar1,
     double stdpar2);
-API_EXPORT vect2_t geo2lcc(geo_pos2_t pos, const lcc_t *lcc);
+API_EXPORT vect2_t geo2lcc(geo_pos2_t pos, const lcc_t *lcc) PURE_ATTR;
 
 /*
  *  Bezier curve functions.
