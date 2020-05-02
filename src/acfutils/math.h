@@ -118,8 +118,7 @@ typedef struct {
  * @param points Input points that the interpolator needs to pass through.
  * @param npts Number points in `points'. This must be GREATER than 0.
  */
-void pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned npts)
-    PURE_ATTR;
+void pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned npts);
 
 /*
  * Given an initialized pn_interp_t (see above), calculates the Y value
