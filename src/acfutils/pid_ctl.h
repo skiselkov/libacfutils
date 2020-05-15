@@ -75,7 +75,10 @@ static inline void pid_ctl_set_r_d(pid_ctl_t *pid, double r_d);
  *	proportional input contributes to the output)..
  * @param k_i Integral coefficient (multiplier of how much the integral
  *	input contributes to the output).
- * @param lim_i
+ * @param lim_i Integration limit value of the controller. The integrated
+ *	error value will be clamped to (-lim_i,+lim_i) inclusive. If you
+ *	want your PID controller to be unclamped in the integration error
+ *	value, call pid_ctl_set_integ_clamp with B_FALSE after init.
  * @param k_d Derivative coefficient (multiplier of how much the derivative
  *	input contributes to the output).
  * @param r_d Rate at which we update the derivative to the current rate
@@ -159,6 +162,11 @@ pid_ctl_get(const pid_ctl_t *pid)
 	    pid->k_d * pid->e_deriv);
 }
 
+/*
+ * Sets a PID controller to its initial "reset" state. After this, you
+ * must call pid_ctl_update at least twice before the PID controller
+ * starts returning non-NAN values from pid_ctl_get.
+ */
 static inline void
 pid_ctl_reset(pid_ctl_t *pid)
 {
@@ -168,6 +176,10 @@ pid_ctl_reset(pid_ctl_t *pid)
 	pid->e_deriv = NAN;
 }
 
+/*
+ * Sets the PID controller's proportional coefficient. Use this to
+ * dynamic reconfigure the PID controller after initializing it.
+ */
 static inline void
 pid_ctl_set_k_p(pid_ctl_t *pid, double k_p)
 {
@@ -175,6 +187,10 @@ pid_ctl_set_k_p(pid_ctl_t *pid, double k_p)
 	pid->k_p = k_p;
 }
 
+/*
+ * Sets the PID controller's integral coefficient. Use this to
+ * dynamic reconfigure the PID controller after initializing it.
+ */
 static inline void
 pid_ctl_set_k_i(pid_ctl_t *pid, double k_i)
 {
@@ -182,6 +198,10 @@ pid_ctl_set_k_i(pid_ctl_t *pid, double k_i)
 	pid->k_i = k_i;
 }
 
+/*
+ * Sets the PID controller's integration error value limit. Use
+ * pid_ctl_set_integ_clamp to disable integration error clamping.
+ */
 static inline void
 pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i)
 {
@@ -189,6 +209,10 @@ pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i)
 	pid->lim_i = lim_i;
 }
 
+/*
+ * Sets the PID controller's integral coefficient. Use this to
+ * dynamic reconfigure the PID controller after initializing it.
+ */
 static inline void
 pid_ctl_set_k_d(pid_ctl_t *pid, double k_d)
 {
@@ -204,28 +228,42 @@ pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
 }
 
 static inline double
-pid_ctl_get_integ(pid_ctl_t *pid)
+pid_ctl_set_integ(pid_ctl_t *pid, double e_integ)
+{
+	ASSERT(pid != NULL);
+	pid->e_integ = e_integ;
+}
+
+static inline double
+pid_ctl_get_integ(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->e_integ);
 }
 
 static inline double
-pid_ctl_get_integ_lim(pid_ctl_t *pid)
+pid_ctl_get_integ_lim(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->lim_i);
 }
 
 static inline double
-pid_ctl_get_deriv(pid_ctl_t *pid)
+pid_ctl_set_deriv(pid_ctl_t *pid, double e_deriv)
+{
+	ASSERT(pid != NULL);
+	pid->e_deriv = e_deriv;
+}
+
+static inline double
+pid_ctl_get_deriv(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->e_deriv);
 }
 
 static inline double
-pid_ctl_get_deriv_rate(pid_ctl_t *pid)
+pid_ctl_get_deriv_rate(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->r_d);
