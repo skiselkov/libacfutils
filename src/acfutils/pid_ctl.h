@@ -227,7 +227,7 @@ pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
 	pid->r_d = r_d;
 }
 
-static inline double
+static inline void
 pid_ctl_set_integ(pid_ctl_t *pid, double e_integ)
 {
 	ASSERT(pid != NULL);
@@ -248,7 +248,7 @@ pid_ctl_get_integ_lim(const pid_ctl_t *pid)
 	return (pid->lim_i);
 }
 
-static inline double
+static inline void
 pid_ctl_set_deriv(pid_ctl_t *pid, double e_deriv)
 {
 	ASSERT(pid != NULL);
