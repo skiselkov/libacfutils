@@ -261,6 +261,8 @@ highbit64(unsigned long long x)
 		double o = (old_val); \
 		double t = (tgt); \
 		double s; \
+		if (isnan(o)) \
+			o = t; \
 		if (o < t) \
 			s = (d_t) * (step); \
 		else \
