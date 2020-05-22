@@ -157,7 +157,6 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "EI", .cc = "IE", .lang = "en" },	/* Ireland */
     { .icao = "EK", .cc = "DK", .lang = "da" },	/* Denmark */
     { .icao = "EL", .cc = "LU", .lang = "de" },	/* Luxembourg */
-    { .icao = "EN", .cc = "MH", .lang = "en" },	/* Marshall Islands */
     { .icao = "EN", .cc = "NO", .lang = "nn" },	/* Norway */
     { .icao = "EP", .cc = "PL", .lang = "pl" },	/* Poland */
     { .icao = "ES", .cc = "SE", .lang = "sv" },	/* Sweden */
