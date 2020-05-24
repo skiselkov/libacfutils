@@ -72,8 +72,8 @@ typedef struct {
 } vtx_t;
 
 typedef	struct {
-	bool_t		chg;
-
+	bool_t		chg;	/* renderer has changed the surface, reupload */
+	bool_t		texed;	/* has glTexImage2D been applied? */
 	GLuint		tex;
 	GLuint		pbo;
 	cairo_surface_t	*surf;
@@ -86,7 +86,6 @@ struct mt_cairo_render_s {
 	bool_t			debug;
 
 	mt_cairo_uploader_t	*mtul;
-	unsigned		mtul_uploading;
 	list_node_t		mtul_queue_node;
 
 	GLenum			tex_filter;
@@ -138,15 +137,6 @@ struct mt_cairo_uploader_s {
 	bool_t		shutdown;
 	thread_t	worker;
 };
-
-typedef struct {
-	mt_cairo_render_t	*mtcr;
-	render_surf_t		*rs;
-	GLuint			tex;
-	GLuint			pbo;
-	GLsync			sync;
-	list_node_t		node;
-} ul_work_t;
 
 static const char *vert_shader =
     "#version 120\n"
@@ -212,10 +202,8 @@ static struct {
 	dr_t	draw_call_type;
 } drs;
 
-static void rs_tex_alloc(const mt_cairo_render_t *mtcr, GLuint *tex,
-    GLuint *pbo);
-static void rs_tex_free(const mt_cairo_render_t *mtcr, GLuint *tex,
-    GLuint *pbo);
+static void rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs);
+static void rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs);
 
 const char *
 ft_err2str(FT_Error err)
@@ -326,6 +314,7 @@ worker(mt_cairo_render_t *mtcr)
 			}
 			while (rs->chg)
 				cv_wait(&mtul->cv_done, &mtul->lock);
+			/* render_done_cv will be signalled by the uploader */
 			mutex_exit(&mtul->lock);
 
 			mutex_enter(&mtcr->lock);
@@ -479,17 +468,6 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 		mtcr->mtul->refcnt--;
 		if (list_link_active(&mtcr->mtul_queue_node))
 			list_remove(&mtcr->mtul->queue, mtcr);
-		/*
-		 * MTUL might be uploading us right now. So to avoid
-		 * disappearing from underneath its hands, we do a blocking
-		 * usleep wait. The upload should be done in a few
-		 * microseconds anyway.
-		 */
-		while (mtcr->mtul_uploading != 0) {
-			mutex_exit(&mtcr->mtul->lock);
-			usleep(1000);
-			mutex_enter(&mtcr->mtul->lock);
-		}
 		mutex_exit(&mtcr->mtul->lock);
 	}
 	if (mtcr->vao != 0)
@@ -508,7 +486,7 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 			cairo_destroy(rs->cr);
 			cairo_surface_destroy(rs->surf);
 		}
-		rs_tex_free(mtcr, &rs->tex, &rs->pbo);
+		rs_tex_free(mtcr, rs);
 	}
 	if (mtcr->shader != 0 && !mtcr->shader_is_custom)
 		glDeleteProgram(mtcr->shader);
@@ -655,6 +633,7 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 				cv_wait(&mtcr->mtul->cv_done,
 				    &mtcr->mtul->lock);
 			}
+			/* render_done_cv will be signalled by the uploader */
 			mutex_exit(&mtcr->mtul->lock);
 		} else {
 			mutex_enter(&mtcr->lock);
@@ -677,15 +656,14 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
  * The texture & PBO IDs are placed in `tex' and `pbo' respectively.
  */
 static void
-rs_tex_alloc(const mt_cairo_render_t *mtcr, GLuint *tex, GLuint *pbo)
+rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	ASSERT(mtcr != NULL);
-	ASSERT(tex != NULL);
-	ASSERT(pbo != NULL);
+	ASSERT(rs != NULL);
 
-	if (*tex == 0) {
-		glGenTextures(1, tex);
-		glBindTexture(GL_TEXTURE_2D, *tex);
+	if (rs->tex == 0) {
+		glGenTextures(1, &rs->tex);
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
 		    mtcr->tex_filter);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -693,17 +671,14 @@ rs_tex_alloc(const mt_cairo_render_t *mtcr, GLuint *tex, GLuint *pbo)
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
 		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+		/* Texture data assignment will be done in bind_cur_tex */
 	}
-	if (*pbo == 0) {
-		size_t sz = mtcr->w * mtcr->h * 4;
-
-		glGenBuffers(1, pbo);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, *pbo);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, 0, GL_STREAM_DRAW);
+	if (rs->pbo == 0) {
+		glGenBuffers(1, &rs->pbo);
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
 		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		/* Buffer specification will take place in upload_surface */
 	}
 }
 
@@ -713,21 +688,20 @@ rs_tex_alloc(const mt_cairo_render_t *mtcr, GLuint *tex, GLuint *pbo)
  * The targets of the `tex' and `pbo' arguments are set to 0 after freeing.
  */
 static void
-rs_tex_free(const mt_cairo_render_t *mtcr, GLuint *tex, GLuint *pbo)
+rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	ASSERT(mtcr != NULL);
-	ASSERT(tex != NULL);
-	ASSERT(pbo != NULL);
+	ASSERT(rs != NULL);
 
-	if (*tex != 0) {
-		glDeleteTextures(1, tex);
-		*tex = 0;
+	if (rs->tex != 0) {
+		glDeleteTextures(1, &rs->tex);
+		rs->tex = 0;
 		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
 		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
-	if (*pbo != 0) {
-		glDeleteBuffers(1, pbo);
-		*pbo = 0;
+	if (rs->pbo != 0) {
+		glDeleteBuffers(1, &rs->pbo);
+		rs->pbo = 0;
 		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
 		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
@@ -739,34 +713,47 @@ rs_tex_free(const mt_cairo_render_t *mtcr, GLuint *tex, GLuint *pbo)
  * upload is performed synchronously.
  */
 static void
-upload_surface(const mt_cairo_render_t *mtcr, cairo_surface_t *surf,
-    GLuint tex, GLuint pbo)
+upload_surface(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	void *src, *dest;
+	size_t sz;
 
 	ASSERT(mtcr != NULL);
-	ASSERT(surf != NULL);
-	ASSERT(tex != 0);
-	ASSERT(pbo != 0);
+	ASSERT(rs != NULL);
+	ASSERT(rs->surf != NULL);
+	ASSERT(rs->tex != 0);
+	ASSERT(rs->pbo != 0);
 
-	src = cairo_image_surface_get_data(surf);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+	sz = mtcr->w * mtcr->h * 4;
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+	/* Buffer respecification - makes sure to orphan the old buffer! */
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, NULL, GL_STREAM_DRAW);
+	src = cairo_image_surface_get_data(rs->surf);
 	dest = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 	if (dest != NULL) {
 		memcpy(dest, src, mtcr->w * mtcr->h * 4);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
-		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		/*
+		 * We MUSTN'T call glTexImage2D yet, because if we're running
+		 * on a background uploader thread, the OpenGL renderer can
+		 * break and update the texture with old memory contents.
+		 * Don't ask me why, I have NO CLUE why the driver messes
+		 * this up. So we need to do the glTexImage2D synchronously
+		 * on the rendering thread. That seems to pick up the buffer
+		 * orphaning operation correctly.
+		 */
+		rs->texed = B_FALSE;
 	} else {
 		logMsg("Error asynchronously updating mt_cairo_render "
 		    "surface %p(%s:%d): glMapBuffer returned NULL",
 		    mtcr, mtcr->init_filename, mtcr->init_line);
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
 		    GL_BGRA, GL_UNSIGNED_BYTE, src);
+		rs->texed = B_TRUE;
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 /*
@@ -777,7 +764,7 @@ upload_surface(const mt_cairo_render_t *mtcr, cairo_surface_t *surf,
  * @return The render_surf_t that was bound, or NULL if none is available
  *	for display.
  */
-static render_surf_t *
+static bool_t
 bind_cur_tex(mt_cairo_render_t *mtcr)
 {
 	render_surf_t *rs;
@@ -787,21 +774,29 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	rs = &mtcr->rs[mtcr->cur_rs];
 	/* Uploader will allocate & populate the texture, so just wait */
 	if (mtcr->mtul != NULL && rs->tex == 0)
-		return (NULL);
+		return (B_FALSE);
 
 	glActiveTexture(GL_TEXTURE0);
 	if (mtcr->mtul == NULL) {
 		if (rs->chg) {
-			rs_tex_alloc(mtcr, &rs->tex, &rs->pbo);
-			upload_surface(mtcr, rs->surf, rs->tex, rs->pbo);
+			rs_tex_alloc(mtcr, rs);
+			upload_surface(mtcr, rs);
 			rs->chg = B_FALSE;
 		}
 	} else {
 		ASSERT0(rs->chg);
 	}
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
+	if (!rs->texed) {
+		/* NOW we can safely update the texture */
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
+		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		rs->texed = B_TRUE;
+	}
 
-	return (rs);
+	return (B_TRUE);
 }
 
 static void
@@ -913,13 +908,11 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
     const GLfloat *pvm)
 {
-	GLuint tex, pbo;
 	GLint old_vao = 0;
 	bool_t use_vao;
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 	bool cull_front = false;
-	render_surf_t *rs;
 
 	if (mtcr->cur_rs == -1)
 		return;
@@ -927,22 +920,10 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	ASSERT3S(mtcr->cur_rs, <, 2);
 
 	mutex_enter(&mtcr->lock);
-	rs = bind_cur_tex(mtcr);
-	if (rs == NULL) {
+	if (!bind_cur_tex(mtcr)) {
 		mutex_exit(&mtcr->lock);
 		return;
 	}
-	/*
-	 * We take exclusive ownership of the texture & PBO during the
-	 * render. If an async uploader happens to come by and insert
-	 * a newly uploaded texture & PBO, we deallocate the copies we
-	 * just grabbed, otherwise we replace them back into the
-	 * render_surf_t to reuse them in the next frame.
-	 */
-	tex = rs->tex;
-	pbo = rs->pbo;
-	rs->tex = 0;
-	rs->pbo = 0;
 	mutex_exit(&mtcr->lock);
 
 	use_vao = (mtcr->vao != 0 &&
@@ -1000,21 +981,6 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glUseProgram(0);
-	/*
-	 * If the background uploader finished pushing a new texture to
-	 * the render_surf_t, deallocate our local copies. Otherwise, put
-	 * them back into the render_surf_t so they can be reused when
-	 * rendering the next frame.
-	 */
-	mutex_enter(&mtcr->lock);
-	if (rs->tex == 0) {
-		ASSERT0(rs->pbo);
-		rs->tex = tex;
-		rs->pbo = pbo;
-	} else {
-		rs_tex_free(mtcr, &tex, &pbo);
-	}
-	mutex_exit(&mtcr->lock);
 }
 
 /*
@@ -1098,8 +1064,8 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 		/* Upload the texture if it has changed */
 
 		if (rs->chg) {
-			rs_tex_alloc(mtcr, &rs->tex, &rs->pbo);
-			upload_surface(mtcr, rs->surf, rs->tex, rs->pbo);
+			rs_tex_alloc(mtcr, rs);
+			upload_surface(mtcr, rs);
 			rs->chg = B_FALSE;
 		}
 		tex = rs->tex;
@@ -1247,89 +1213,33 @@ mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
 	    DEG2RAD(180), DEG2RAD(270));
 }
 
-/*
- * Starts a texture upload, generates a sync object and stores the mtcr
- * on the uploading work queue.
- *
- * This allocates a new texture & PBO to prevent any chance of interfering
- * with the foreground rendering process.
- */
 static void
-add_ul_work(list_t *list, mt_cairo_render_t *mtcr, render_surf_t *rs)
+mtul_upload(mt_cairo_render_t *mtcr)
 {
-	ul_work_t *work = safe_calloc(1, sizeof (*work));
+	render_surf_t *rs;
 
-	ASSERT_MUTEX_HELD(&mtcr->lock);
-	ASSERT(list != NULL);
 	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
-	ASSERT(rs->chg);
 
-	work->mtcr = mtcr;
-	work->rs = rs;
-	rs_tex_alloc(mtcr, &work->tex, &work->pbo);
-	upload_surface(mtcr, rs->surf, work->tex, work->pbo);
-	work->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-	list_insert_tail(list, work);
-}
+	mutex_enter(&mtcr->lock);
 
-/*
- * When a work unit has completed upload, notifies the renderer
- */
-static void
-complete_upload(mt_cairo_uploader_t *mtul, list_t *list, ul_work_t *work)
-{
-	GLuint old_tex[2];
-	GLuint old_pbo[2];
-
-	ASSERT(mtul != NULL);
-	ASSERT(list != NULL);
-	ASSERT(work != NULL);
-
-	mutex_enter(&work->mtcr->lock);
-	work->rs->chg = B_FALSE;
-
-	if (work->rs == &work->mtcr->rs[0]) {
-		work->mtcr->cur_rs = 0;
-	} else {
-		ASSERT3P(work->rs, ==, &work->mtcr->rs[1]);
-		work->mtcr->cur_rs = 1;
+	if (mtcr->cur_rs == -1)
+		rs = &mtcr->rs[0];
+	else
+		rs = &mtcr->rs[!mtcr->cur_rs];
+	if (rs->chg) {
+		rs_tex_alloc(mtcr, rs);
+		upload_surface(mtcr, rs);
+		rs->chg = B_FALSE;
+		if (rs == &mtcr->rs[0]) {
+			mtcr->cur_rs = 0;
+		} else {
+			ASSERT3P(rs, ==, &mtcr->rs[1]);
+			mtcr->cur_rs = 1;
+		}
+		cv_broadcast(&mtcr->render_done_cv);
 	}
-	/*
-	 * We atomically take exclusive posession of the old texture & PBO
-	 * and de-allocate them. If the foreground renderer was using them,
-	 * it will have set `tex' and `pbo' in the render_surf_t to 0.
-	 */
-	for (int i = 0; i < 2; i++) {
-		old_tex[i] = work->mtcr->rs[i].tex;
-		old_pbo[i] = work->mtcr->rs[i].pbo;
-		work->mtcr->rs[i].tex = 0;
-		work->mtcr->rs[i].pbo = 0;
-	}
-	/*
-	 * Substitute our new texture & PBO into the current render_surf_t.
-	 */
-	work->rs->tex = work->tex;
-	work->rs->pbo = work->pbo;
 
-	cv_broadcast(&work->mtcr->render_done_cv);
-	mutex_exit(&work->mtcr->lock);
-	/*
-	 * Now without holding the lock, we can take our time deallocating
-	 * the old texture & PBO (if any were present).
-	 */
-	for (int i = 0; i < 2; i++)
-		rs_tex_free(work->mtcr, &old_tex[i], &old_pbo[i]);
-
-	mutex_enter(&mtul->lock);
-	ASSERT(work->mtcr->mtul_uploading != 0);
-	work->mtcr->mtul_uploading--;
-	cv_broadcast(&mtul->cv_done);
-	mutex_exit(&mtul->lock);
-
-	list_remove(list, work);
-	glDeleteSync(work->sync);
-	free(work);
+	mutex_exit(&mtcr->lock);
 }
 
 /*
@@ -1350,8 +1260,6 @@ static void
 mtul_worker(void *arg)
 {
 	mt_cairo_uploader_t *mtul;
-	list_t uploading;
-	ul_work_t *work;
 
 	ASSERT(arg != NULL);
 	mtul = arg;
@@ -1360,90 +1268,27 @@ mtul_worker(void *arg)
 	VERIFY(glctx_make_current(mtul->ctx));
 	VERIFY3U(glewInit(), ==, GLEW_OK);
 
-	list_create(&uploading, sizeof (ul_work_t), offsetof(ul_work_t, node));
-
 	mutex_enter(&mtul->lock);
 
 	while (!mtul->shutdown) {
-		GLenum res;
 		mt_cairo_render_t *mtcr;
-
 		/*
-		 * Dequeue new work assignments and schedule for upload.
+		 * Dequeue new work assignments and do the upload.
 		 */
 		while ((mtcr = list_remove_head(&mtul->queue)) != NULL) {
-			render_surf_t *rs;
-			mtcr->mtul_uploading++;
 			mutex_exit(&mtul->lock);
-
-			mutex_enter(&mtcr->lock);
-			if (mtcr->cur_rs == -1)
-				rs = &mtcr->rs[0];
-			else
-				rs = &mtcr->rs[!mtcr->cur_rs];
-			if (rs->chg) {
-				add_ul_work(&uploading, mtcr, rs);
-			} else {
-				ASSERT(mtcr->mtul_uploading != 0);
-				mtcr->mtul_uploading--;
-			}
-			mutex_exit(&mtcr->lock);
-
+			mtul_upload(mtcr);
 			mutex_enter(&mtul->lock);
+			cv_broadcast(&mtul->cv_done);
 		}
+		GLUTILS_ASSERT_NO_ERROR();
 		/*
-		 * If we have no in-progress uploading textures, park on
-		 * the inbound work queue CV awaiting further assignments.
+		 * Pause for more work.
 		 */
-		if (list_count(&uploading) == 0) {
-			GLUTILS_ASSERT_NO_ERROR();
-			cv_wait(&mtul->cv_queue, &mtul->lock);
-			continue;
-		}
-		mutex_exit(&mtul->lock);
-		/*
-		 * We have work units in an uploading state. We will grab
-		 * the first one and wait for up to 500us to see if it
-		 * finishes uploading. If yes, we will signal the mtcr
-		 * to a surface flip and recheck if new work has arrived.
-		 * If not, we will simply respin to check if new work has
-		 * arrived. This avoids spending too much time waiting on
-		 * textures to upload before we start new texture uploads.
-		 */
-		work = list_head(&uploading);
-		ASSERT(work != NULL);
-		ASSERT(work->mtcr != NULL);
-		ASSERT(work->rs != NULL);
-		ASSERT(work->sync != NULL);
-
-		res = glClientWaitSync(work->sync, 0, 500000llu);
-		if (res == GL_ALREADY_SIGNALED ||
-		    res == GL_CONDITION_SATISFIED) {
-			complete_upload(mtul, &uploading, work);
-			/*
-			 * We process at most a single work unit here, to
-			 * guarantee that we can pick up incoming work ASAP.
-			 */
-		} else {
-			VERIFY(res != GL_WAIT_FAILED);
-		}
-
-		mutex_enter(&mtul->lock);
+		cv_wait(&mtul->cv_queue, &mtul->lock);
 	}
 
 	mutex_exit(&mtul->lock);
-
-	while ((work = list_remove_head(&uploading)) != NULL) {
-		ASSERT(work->sync != NULL);
-		ASSERT(work->mtcr != NULL);
-		glDeleteSync(work->sync);
-		mutex_enter(&work->mtcr->lock);
-		ASSERT(work->mtcr->mtul_uploading != 0);
-		work->mtcr->mtul_uploading--;
-		mutex_exit(&work->mtcr->lock);
-		free(work);
-	}
-	list_destroy(&uploading);
 
 	VERIFY(glctx_make_current(NULL));
 }
