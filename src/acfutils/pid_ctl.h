@@ -47,9 +47,10 @@ extern "C" {
  */
 
 typedef struct {
-	double	e_prev;		/* previous error value */
-	double	e_integ;	/* integrated error value */
-	double	e_deriv;	/* derivative error value */
+	double	e_prev;		/* current error value */
+	double	V_prev;		/* previous actual value */
+	double	integ;		/* integrated value */
+	double	deriv;		/* derivative value */
 
 	double	k_p;		/* proportional coefficient */
 	double	k_i;		/* integral coefficient */
@@ -109,38 +110,55 @@ pid_ctl_set_integ_clamp(pid_ctl_t *pid, bool_t flag)
 }
 
 /*
- * Updates the PID controller with a new error value.
+ * Updates the PID controller with a new error value and a new "current"
+ * value. The error is used to calculate the proportional and integral
+ * response, whereas the current value is used to calculate the derivate
+ * response. Passing a separate current value is typically used to avoid
+ * derivate response kick when the system's set point is changed.
  *
- * @param e New error value with which to update the PID controller.
- *	If you want to reset the PID controller to a nil state, pass
- *	a NAN for this parameter.
+ * @param e New error value with which to update the PID controller's
+ *	proportional and integral responses.
+ * @param V New "current" process value which is used to update the
+ *	controller's derivate response.
  * @param d_t Delta-time elapsed since last update (arbitrary units,
  *	but usually seconds). This is used to control the rate at which
  *	the integral and derivative values are updated.
  */
 static inline void
-pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
+pid_ctl_update_dV(pid_ctl_t *pid, double e, double V, double d_t)
 {
-	double delta_e;
+	double delta_V;
 
 	ASSERT(pid != NULL);
 
-	delta_e = (e - pid->e_prev) / d_t;
-	if (isnan(pid->e_integ))
-		pid->e_integ = 0;
-	pid->e_integ = clamp(pid->e_integ + e * d_t, -pid->lim_i, pid->lim_i);
+	delta_V = (V - pid->V_prev) / d_t;
+	if (isnan(pid->integ))
+		pid->integ = 0;
+	pid->integ = clamp(pid->integ + e * d_t, -pid->lim_i, pid->lim_i);
 	/*
 	 * Clamp the integrated value to the current proportional value. This
 	 * prevents excessive over-correcting when the value returns to center.
 	 */
 	if (pid->integ_clamp) {
 		if (e < 0)
-			pid->e_integ = MAX(pid->e_integ, e);
+			pid->integ = MAX(pid->integ, e);
 		else
-			pid->e_integ = MIN(pid->e_integ, e);
+			pid->integ = MIN(pid->integ, e);
 	}
-	FILTER_IN_NAN(pid->e_deriv, delta_e, d_t, pid->r_d);
+	FILTER_IN_NAN(pid->deriv, delta_V, d_t, pid->r_d);
 	pid->e_prev = e;
+	pid->V_prev = V;
+}
+
+/*
+ * Same as pid_ctl_update_dV, but passes the error value as the current
+ * value as well, which means all three responses from the PID controller
+ * are based only on the error value.
+ */
+static inline void
+pid_ctl_update(pid_ctl_t *pid, double e, double d_t)
+{
+	pid_ctl_update_dV(pid, e, e, d_t);
 }
 
 /*
@@ -158,8 +176,8 @@ pid_ctl_get(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	ASSERT(!isnan(pid->e_prev));
-	return (pid->k_p * pid->e_prev + pid->k_i * pid->e_integ +
-	    pid->k_d * pid->e_deriv);
+	return (pid->k_p * pid->e_prev + pid->k_i * pid->integ +
+	    pid->k_d * pid->deriv);
 }
 
 /*
@@ -172,8 +190,9 @@ pid_ctl_reset(pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	pid->e_prev = NAN;
-	pid->e_integ = NAN;
-	pid->e_deriv = NAN;
+	pid->V_prev = NAN;
+	pid->integ = NAN;
+	pid->deriv = NAN;
 }
 
 /*
@@ -228,17 +247,17 @@ pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
 }
 
 static inline void
-pid_ctl_set_integ(pid_ctl_t *pid, double e_integ)
+pid_ctl_set_integ(pid_ctl_t *pid, double integ)
 {
 	ASSERT(pid != NULL);
-	pid->e_integ = e_integ;
+	pid->integ = integ;
 }
 
 static inline double
 pid_ctl_get_integ(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
-	return (pid->e_integ);
+	return (pid->integ);
 }
 
 static inline double
@@ -249,17 +268,17 @@ pid_ctl_get_integ_lim(const pid_ctl_t *pid)
 }
 
 static inline void
-pid_ctl_set_deriv(pid_ctl_t *pid, double e_deriv)
+pid_ctl_set_deriv(pid_ctl_t *pid, double deriv)
 {
 	ASSERT(pid != NULL);
-	pid->e_deriv = e_deriv;
+	pid->deriv = deriv;
 }
 
 static inline double
 pid_ctl_get_deriv(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
-	return (pid->e_deriv);
+	return (pid->deriv);
 }
 
 static inline double
@@ -273,7 +292,7 @@ pid_ctl_get_deriv_rate(const pid_ctl_t *pid)
 	do { \
 		const pid_ctl_t *pid = (pid_ptr); \
 		printf(#pid_ptr ": e: %f  integ: %f  deriv: %f\n", \
-		    pid->e_prev, pid->e_integ, pid->e_deriv); \
+		    pid->e_prev, pid->integ, pid->deriv); \
 	} while (0)
 
 #ifdef __cplusplus
