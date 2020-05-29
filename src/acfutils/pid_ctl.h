@@ -206,6 +206,13 @@ pid_ctl_set_k_p(pid_ctl_t *pid, double k_p)
 	pid->k_p = k_p;
 }
 
+static inline double
+pid_ctl_get_k_p(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_p);
+}
+
 /*
  * Sets the PID controller's integral coefficient. Use this to
  * dynamic reconfigure the PID controller after initializing it.
@@ -215,6 +222,13 @@ pid_ctl_set_k_i(pid_ctl_t *pid, double k_i)
 {
 	ASSERT(pid != NULL);
 	pid->k_i = k_i;
+}
+
+static inline double
+pid_ctl_get_k_i(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_i);
 }
 
 /*
@@ -228,6 +242,13 @@ pid_ctl_set_lim_i(pid_ctl_t *pid, double lim_i)
 	pid->lim_i = lim_i;
 }
 
+static inline double
+pid_ctl_get_lim_i(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->lim_i);
+}
+
 /*
  * Sets the PID controller's integral coefficient. Use this to
  * dynamic reconfigure the PID controller after initializing it.
@@ -239,11 +260,25 @@ pid_ctl_set_k_d(pid_ctl_t *pid, double k_d)
 	pid->k_d = k_d;
 }
 
+static inline double
+pid_ctl_get_k_d(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_d);
+}
+
 static inline void
 pid_ctl_set_r_d(pid_ctl_t *pid, double r_d)
 {
 	ASSERT(pid != NULL);
 	pid->r_d = r_d;
+}
+
+static inline double
+pid_ctl_get_r_d(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->r_d);
 }
 
 static inline void
@@ -260,13 +295,6 @@ pid_ctl_get_integ(const pid_ctl_t *pid)
 	return (pid->integ);
 }
 
-static inline double
-pid_ctl_get_integ_lim(const pid_ctl_t *pid)
-{
-	ASSERT(pid != NULL);
-	return (pid->lim_i);
-}
-
 static inline void
 pid_ctl_set_deriv(pid_ctl_t *pid, double deriv)
 {
@@ -279,13 +307,6 @@ pid_ctl_get_deriv(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->deriv);
-}
-
-static inline double
-pid_ctl_get_deriv_rate(const pid_ctl_t *pid)
-{
-	ASSERT(pid != NULL);
-	return (pid->r_d);
 }
 
 #define	PID_CTL_DEBUG(pid_ptr) \
