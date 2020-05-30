@@ -52,10 +52,13 @@ typedef struct {
 	double	integ;		/* integrated value */
 	double	deriv;		/* derivative value */
 
+	double	k_p_gain;
 	double	k_p;		/* proportional coefficient */
+	double	k_i_gain;
 	double	k_i;		/* integral coefficient */
 	double	lim_i;
 	double	k_d;		/* derivative coefficient */
+	double	k_d_gain;
 	double	r_d;		/* derivative update rate */
 
 	bool_t	integ_clamp;
@@ -95,9 +98,12 @@ pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
 	ASSERT(pid != NULL);
 	pid_ctl_reset(pid);
 	pid->k_p = k_p;
+	pid->k_p_gain = 1;
 	pid->k_i = k_i;
+	pid->k_i_gain = 1;
 	pid->lim_i = lim_i;
 	pid->k_d = k_d;
+	pid->k_d_gain = 1;
 	pid->r_d = r_d;
 	pid->integ_clamp = B_TRUE;
 }
@@ -176,8 +182,9 @@ pid_ctl_get(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	ASSERT(!isnan(pid->e_prev));
-	return (pid->k_p * pid->e_prev + pid->k_i * pid->integ +
-	    pid->k_d * pid->deriv);
+	return (pid->k_p_gain * pid->k_p * pid->e_prev +
+	    pid->k_i_gain * pid->k_i * pid->integ +
+	    pid->k_d_gain * pid->k_d * pid->deriv);
 }
 
 /*
@@ -213,6 +220,20 @@ pid_ctl_get_k_p(const pid_ctl_t *pid)
 	return (pid->k_p);
 }
 
+static inline void
+pid_ctl_set_k_p_gain(pid_ctl_t *pid, double k_p_gain)
+{
+	ASSERT(pid != NULL);
+	pid->k_p_gain = k_p_gain;
+}
+
+static inline double
+pid_ctl_get_k_p_gain(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_p_gain);
+}
+
 /*
  * Sets the PID controller's integral coefficient. Use this to
  * dynamic reconfigure the PID controller after initializing it.
@@ -229,6 +250,20 @@ pid_ctl_get_k_i(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->k_i);
+}
+
+static inline void
+pid_ctl_set_k_i_gain(pid_ctl_t *pid, double k_i_gain)
+{
+	ASSERT(pid != NULL);
+	pid->k_i_gain = k_i_gain;
+}
+
+static inline double
+pid_ctl_get_k_i_gain(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_i_gain);
 }
 
 /*
@@ -265,6 +300,20 @@ pid_ctl_get_k_d(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->k_d);
+}
+
+static inline void
+pid_ctl_set_k_d_gain(pid_ctl_t *pid, double k_d_gain)
+{
+	ASSERT(pid != NULL);
+	pid->k_d_gain = k_d_gain;
+}
+
+static inline double
+pid_ctl_get_k_d_gain(const pid_ctl_t *pid)
+{
+	ASSERT(pid != NULL);
+	return (pid->k_d_gain);
 }
 
 static inline void
