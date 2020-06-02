@@ -2566,10 +2566,29 @@ air_reynolds(double vel, double chord, double temp_K)
 double
 lacf_gamma_air(double T)
 {
-	static const double a[] = {
-	    -7.6942651e-13, 1.3764661e-08, -7.8185709e-05, 1.436914
+	static const vect2_t curve[] = {
+	    VECT2(250,	1.401),
+	    VECT2(300,	1.4),
+	    VECT2(350,	1.398),
+	    VECT2(400,	1.395),
+	    VECT2(450,	1.391),
+	    VECT2(500,	1.387),
+	    VECT2(550,	1.381),
+	    VECT2(600,	1.376),
+	    VECT2(650,	1.37),
+	    VECT2(700,	1.364),
+	    VECT2(750,	1.359),
+	    VECT2(800,	1.354),
+	    VECT2(900,	1.344),
+	    VECT2(1000,	1.336),
+	    VECT2(1100,	1.331),
+	    VECT2(1200,	1.324),
+	    VECT2(1300,	1.318),
+	    VECT2(1400,	1.313),
+	    VECT2(1500,	1.309),
+	    NULL_VECT2
 	};
-	return (a[0] * POW3(T) + a[1] * POW2(T) + a[2] * T + a[3]);
+	return (fx_lin_multi(T, curve, B_TRUE));
 }
 
 double
