@@ -68,6 +68,12 @@ typedef struct {
 	double	z;
 } vect3_t;
 
+typedef struct {
+	long double	x;
+	long double	y;
+	long double	z;
+} vect3l_t;
+
 /*
  * Generic 2-space vector. On euclidian 2-space, axes are:
  * x: left-to-right (increasing right)
@@ -115,6 +121,7 @@ typedef struct {
 #define	GEO_POS3(lat, lon, elev)	((geo_pos3_t){(lat), (lon), (elev)})
 #define	VECT2(x, y)			((vect2_t){(x), (y)})
 #define	VECT3(x, y, z)			((vect3_t){(x), (y), (z)})
+#define	VECT3L(x, y, z)			((vect3l_t){(x), (y), (z)})
 #define	VECT2_EQ(a, b)			((a).x == (b).x && (a).y == (b).y)
 #define	VECT3_EQ(a, b)	\
 	((a).x == (b).x && (a).y == (b).y && (a).z == (b).z)
@@ -126,8 +133,10 @@ typedef struct {
  */
 #define	ZERO_VECT2		((vect2_t){0.0, 0.0})
 #define	ZERO_VECT3		((vect3_t){0.0, 0.0, 0.0})
+#define	ZERO_VECT3L		((vect3l_t){0.0, 0.0, 0.0})
 #define	NULL_VECT2		((vect2_t){NAN, NAN})
 #define	NULL_VECT3		((vect3_t){NAN, NAN, NAN})
+#define	NULL_VECT3L		((vect3l_t){NAN, NAN, NAN})
 #define	NULL_GEO_POS3		((geo_pos3_t){NAN, NAN, NAN})
 #define	NULL_GEO_POS2		((geo_pos2_t){NAN, NAN})
 #define	IS_NULL_VECT(a)		(isnan((a).x))
@@ -140,6 +149,8 @@ typedef struct {
 
 #define	VECT2_TO_VECT3(v, z)	((vect3_t){(v).x, (v).y, (z)})
 #define	VECT3_TO_VECT2(v)	((vect2_t){(v).x, (v).y})
+#define	VECT3L_TO_VECT3(v)	((vect3_t){(v).x, (v).y, (v).z})
+#define	VECT3_TO_VECT3L(v)	((vect3l_t){(v).x, (v).y, (v).z})
 
 #define	GEO2_TO_GEO3(v, a)	((geo_pos3_t){(v).lat, (v).lon, (a)})
 #define	GEO3_TO_GEO2(v)		((geo_pos2_t){(v).lat, (v).lon})
@@ -192,32 +203,45 @@ API_EXPORT double rel_angle(double a1, double a2) PURE_ATTR;
  * Vector math.
  */
 API_EXPORT double vect3_abs(vect3_t a) PURE_ATTR;
+API_EXPORT long double vect3l_abs(vect3l_t a) PURE_ATTR;
 API_EXPORT double vect3_dist(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT long double vect3l_dist(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT double vect2_abs(vect2_t a) PURE_ATTR;
 API_EXPORT double vect2_dist(vect2_t a, vect2_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_set_abs(vect3_t a, double abs) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_set_abs(vect3l_t a, long double abs) PURE_ATTR;
 API_EXPORT vect2_t vect2_set_abs(vect2_t a, double abs) PURE_ATTR;
 API_EXPORT vect3_t vect3_unit(vect3_t a, double *l);
 API_EXPORT vect2_t vect2_unit(vect2_t a, double *l);
 
 API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_add(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_sub(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_mul(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_mul(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT vect2_t vect2_mul(vect2_t a, vect2_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_scmul(vect3_t a, double b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_scmul(vect3l_t a, long double b) PURE_ATTR;
 API_EXPORT vect2_t vect2_scmul(vect2_t a, double b) PURE_ATTR;
 API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT long double vect3l_dotprod(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT double vect2_dotprod(vect2_t a, vect2_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_xprod(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_xprod(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT vect3_t vect3_mean(vect3_t a, vect3_t b) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_mean(vect3l_t a, vect3l_t b) PURE_ATTR;
 API_EXPORT vect2_t vect2_mean(vect2_t a, vect2_t b) PURE_ATTR;
 
 API_EXPORT vect2_t vect2_norm(vect2_t v, bool_t right) PURE_ATTR;
 API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_rot(vect3l_t v, long double angle, unsigned axis)
+    PURE_ATTR;
 API_EXPORT vect2_t vect2_rot(vect2_t v, double angle) PURE_ATTR;
 API_EXPORT vect3_t vect3_neg(vect3_t v) PURE_ATTR;
+API_EXPORT vect3l_t vect3l_neg(vect3l_t v) PURE_ATTR;
 API_EXPORT vect2_t vect2_neg(vect2_t v) PURE_ATTR;
 
 API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
@@ -243,6 +267,8 @@ API_EXPORT vect3_t sph2ecef(geo_pos3_t pos) PURE_ATTR;
  */
 API_EXPORT vect3_t ecef2gl(vect3_t ecmi) PURE_ATTR;
 API_EXPORT vect3_t gl2ecef(vect3_t opengl) PURE_ATTR;
+API_EXPORT vect3l_t ecef2gl_l(vect3l_t ecmi) PURE_ATTR;
+API_EXPORT vect3l_t gl2ecef_l(vect3l_t opengl) PURE_ATTR;
 /*
  * ECmI stands for Earth-Centered-modified-Inertial. Unlike ECEF, it is
  * an inertial frame that doesn't rotate together with the earth. However,
@@ -259,6 +285,8 @@ API_EXPORT vect3_t geo2ecmi(geo_pos3_t pos, double delta_t,
     const ellip_t *ellip) PURE_ATTR;
 API_EXPORT geo_pos3_t ecmi2geo(vect3_t pos, double delta_t,
     const ellip_t *ellip) PURE_ATTR;
+API_EXPORT vect3_t sph2ecmi(geo_pos3_t pos, double delta_t) PURE_ATTR;
+API_EXPORT geo_pos3_t ecmi2sph(vect3_t pos, double delta_t) PURE_ATTR;
 API_EXPORT vect3_t ecef2ecmi(vect3_t ecef, double delta_t) PURE_ATTR;
 API_EXPORT vect3_t ecmi2ecef(vect3_t ecmi, double delta_t) PURE_ATTR;
 

@@ -112,12 +112,30 @@ vect3_abs(vect3_t a)
 }
 
 /*
+ * Same as vect3_abs, but for long-double vectors.
+ */
+long double
+vect3l_abs(vect3l_t a)
+{
+	return (sqrtl(POW2(a.x) + POW2(a.y) + POW2(a.z)));
+}
+
+/*
  * Returns the distance between two points defined by vectors `a' and `b'.
  */
 double
 vect3_dist(vect3_t a, vect3_t b)
 {
 	return (vect3_abs(vect3_sub(a, b)));
+}
+
+/*
+ * Same as vect3_dist, but for long-double vectors.
+ */
+long double
+vect3l_dist(vect3l_t a, vect3l_t b)
+{
+	return (vect3l_abs(vect3l_sub(a, b)));
 }
 
 /*
@@ -133,6 +151,15 @@ vect3_t
 vect3_mul(vect3_t a, vect3_t b)
 {
 	return (VECT3(a.x * b.x, a.y * b.y, a.z * b.z));
+}
+
+/*
+ * Same as vect3_mul, but for long-double vectors.
+ */
+vect3l_t
+vect3l_mul(vect3l_t a, vect3l_t b)
+{
+	return (VECT3L(a.x * b.x, a.y * b.y, a.z * b.z));
 }
 
 vect2_t
@@ -165,6 +192,19 @@ vect3_set_abs(vect3_t a, double abs)
 }
 
 /*
+ * Same as vect3_set_abs, but for long-double vectors.
+ */
+vect3l_t
+vect3l_set_abs(vect3l_t a, long double abs)
+{
+	long double oldval = vect3l_abs(a);
+	if (oldval != 0.0)
+		return (vect3l_scmul(a, abs / oldval));
+	else
+		return (ZERO_VECT3L);
+}
+
+/*
  * Same as vect3_set_abs, but for 2-space vectors.
  */
 vect2_t
@@ -184,14 +224,28 @@ vect2_set_abs(vect2_t a, double abs)
 vect3_t
 vect3_unit(vect3_t a, double *l)
 {
-	double len;
-	len = vect3_abs(a);
+	double len = vect3_abs(a);
 	/* Always be sure to give the caller the length, even if it's zero! */
 	if (l != NULL)
 		*l = len;
 	if (len == 0)
 		return (NULL_VECT3);
 	return (VECT3(a.x / len, a.y / len, a.z / len));
+}
+
+/*
+ * Sames as vect3_unit, but for long-double vectors.
+ */
+vect3l_t
+vect3l_unit(vect3l_t a, long double *l)
+{
+	long double len = vect3l_abs(a);
+	/* Always be sure to give the caller the length, even if it's zero! */
+	if (l != NULL)
+		*l = len;
+	if (len == 0)
+		return (NULL_VECT3L);
+	return (VECT3L(a.x / len, a.y / len, a.z / len));
 }
 
 /*
@@ -222,6 +276,15 @@ vect3_add(vect3_t a, vect3_t b)
 }
 
 /*
+ * Same as vect3_add, but for long-double vectors.
+ */
+vect3l_t
+vect3l_add(vect3l_t a, vect3l_t b)
+{
+	return (VECT3L(a.x + b.x, a.y + b.y, a.z + b.z));
+}
+
+/*
  * Same as vect3_add, but for 2-space vectors.
  */
 vect2_t
@@ -239,6 +302,15 @@ vect3_t
 vect3_sub(vect3_t a, vect3_t b)
 {
 	return (VECT3(a.x - b.x, a.y - b.y, a.z - b.z));
+}
+
+/*
+ * Same as vect3_sub, but for long-double vectors.
+ */
+vect3l_t
+vect3l_sub(vect3l_t a, vect3l_t b)
+{
+	return (VECT3L(a.x - b.x, a.y - b.y, a.z - b.z));
 }
 
 /*
@@ -263,6 +335,15 @@ vect3_scmul(vect3_t a, double b)
 }
 
 /*
+ * Same as vect3_scmul, but for long-double vectors.
+ */
+vect3l_t
+vect3l_scmul(vect3l_t a, long double b)
+{
+	return (VECT3L(a.x * b, a.y * b, a.z * b));
+}
+
+/*
  * Same as vect3_scmul, but for 2-space vectors.
  */
 vect2_t
@@ -278,6 +359,15 @@ vect2_scmul(vect2_t a, double b)
  */
 double
 vect3_dotprod(vect3_t a, vect3_t b)
+{
+	return (a.x * b.x + a.y * b.y + a.z * b.z);
+}
+
+/*
+ * Same as vect3_dotprod, but for long-double vectors.
+ */
+long double
+vect3l_dotprod(vect3l_t a, vect3l_t b)
 {
 	return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
@@ -304,6 +394,16 @@ vect3_xprod(vect3_t a, vect3_t b)
 }
 
 /*
+ * Same as vect3_xprod, but for long-double vectors.
+ */
+vect3l_t
+vect3l_xprod(vect3l_t a, vect3l_t b)
+{
+	return (VECT3L(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
+	    a.x * b.y - a.y * b.x));
+}
+
+/*
  * Returns the mean vector of 3-space vectors `a' and `b'. That is, the
  * resulting vector will point exactly in between `a' and `b':
  *
@@ -320,6 +420,15 @@ vect3_t
 vect3_mean(vect3_t a, vect3_t b)
 {
 	return (VECT3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2));
+}
+
+/*
+ * Same as vect3_mean, but for long-double vectors.
+ */
+vect3l_t
+vect3l_mean(vect3l_t a, vect3l_t b)
+{
+	return (VECT3L((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2));
 }
 
 /*
@@ -341,7 +450,6 @@ vect2_mean(vect2_t a, vect2_t b)
 vect3_t
 vect3_rot(vect3_t v, double a, unsigned axis)
 {
-
 	ASSERT3U(axis, <=, 2);
 	switch (axis) {
 	case 0: {
@@ -357,6 +465,32 @@ vect3_rot(vect3_t v, double a, unsigned axis)
 	default: {
 		double sin_a = sin(DEG2RAD(-a)), cos_a = cos(DEG2RAD(-a));
 		return (VECT3(v.x * cos_a - v.y * sin_a,
+		    v.x * sin_a + v.y * cos_a, v.z));
+	}
+	}
+}
+
+/*
+ * Same as vect3_rot, but for long-double vectors.
+ */
+vect3l_t
+vect3l_rot(vect3l_t v, long double a, unsigned axis)
+{
+	ASSERT3U(axis, <=, 2);
+	switch (axis) {
+	case 0: {
+		double sin_a = sinl(DEG2RAD(-a)), cos_a = cosl(DEG2RAD(-a));
+		return (VECT3L(v.x, v.y * cos_a - v.z * sin_a,
+		    v.y * sin_a + v.z * cos_a));
+	}
+	case 1: {
+		double sin_a = sinl(DEG2RAD(a)), cos_a = cosl(DEG2RAD(a));
+		return (VECT3L(v.x * cos_a - v.z * sin_a, v.y,
+		    v.x * sin_a + v.z * cos_a));
+	}
+	default: {
+		double sin_a = sinl(DEG2RAD(-a)), cos_a = cosl(DEG2RAD(-a));
+		return (VECT3L(v.x * cos_a - v.y * sin_a,
 		    v.x * sin_a + v.y * cos_a, v.z));
 	}
 	}
@@ -392,6 +526,15 @@ vect3_t
 vect3_neg(vect3_t v)
 {
 	return (VECT3(-v.x, -v.y, -v.z));
+}
+
+/*
+ * Same as vect3_neg, but for long-double vectors.
+ */
+vect3l_t
+vect3l_neg(vect3l_t v)
+{
+	return (VECT3L(-v.x, -v.y, -v.z));
 }
 
 /*
@@ -524,6 +667,22 @@ ecmi2geo(vect3_t pos, double delta_t, const ellip_t *ellip)
 }
 
 vect3_t
+sph2ecmi(geo_pos3_t pos, double delta_t)
+{
+	ASSERT(!IS_NULL_GEO_POS(pos));
+	ASSERT(!isnan(delta_t));
+	return (ecef2ecmi(sph2ecef(pos), delta_t));
+}
+
+geo_pos3_t
+ecmi2sph(vect3_t pos, double delta_t)
+{
+	ASSERT(!IS_NULL_VECT(pos));
+	ASSERT(!isnan(delta_t));
+	return (ecef2sph(ecmi2ecef(pos, delta_t)));
+}
+
+vect3_t
 ecef2ecmi(vect3_t pos, double delta_t)
 {
 	ASSERT(!IS_NULL_VECT(pos));
@@ -549,6 +708,18 @@ vect3_t
 gl2ecef(vect3_t opengl)
 {
 	return (VECT3(opengl.z, opengl.x, opengl.y));
+}
+
+vect3l_t
+ecef2gl_l(vect3l_t ecef)
+{
+	return (VECT3L(ecef.y, ecef.z, ecef.x));
+}
+
+vect3l_t
+gl2ecef_l(vect3l_t opengl)
+{
+	return (VECT3L(opengl.z, opengl.x, opengl.y));
 }
 
 ellip_t
