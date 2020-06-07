@@ -1165,13 +1165,21 @@ get_poly_num_pts(const vect2_t *poly)
  *	`poly' An array of 2-space vectors specifying the points of the
  *		polygon. Must contain at least 3 points and must be
  *		terminated by a final NULL_VECT2 point.
+ *	`isects` An array that will be populated with the intersection
+ *		points. At most `cap' elements will be written to the
+ *		array. The return value is the total number of intersections.
+ *		Can be NULL if you do not wish to receive the intersections.
+ *	`cap' Number of elements in `isects' that can be populated with
+ *		intersections. No more than `cap' elements will be written
+ *		to `isects'.
  * Returns the number of the polygon's sides that the vector intersects.
  * Please note that this only checks intersection with the sides, not if
  * the vector is contained completely inside the polygon. Use vect2_in_poly
  * with the vector's to test for that scenario.
  */
 unsigned
-vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly)
+vect2poly_isect_get(vect2_t a, vect2_t oa, const vect2_t *poly,
+    vect2_t *isects, unsigned cap)
 {
 	unsigned n_isects = 0;
 	unsigned npts;
@@ -1184,11 +1192,29 @@ vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly)
 		vect2_t pt2 = poly[(i + 1) % npts];
 		vect2_t v = vect2_sub(pt2, pt1);
 		vect2_t isect = vect2vect_isect(a, oa, v, pt1, B_TRUE);
-		if (!IS_NULL_VECT(isect))
+		if (!IS_NULL_VECT(isect)) {
 			n_isects++;
+			if (cap != 0) {
+				ASSERT(isects != NULL);
+				*isects = isect;
+				isects++;
+				cap--;
+			}
+		}
 	}
 
 	return (n_isects);
+}
+
+/*
+ * Same as vect2poly_isect_get, but only returns the number of intersections.
+ * This function is primarily for legacy code that might depend on it. Use
+ * vect2poly_isect_get for new code, as it provides more flexibility.
+ */
+unsigned
+vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly)
+{
+	return (vect2poly_isect_get(a, oa, poly, NULL, 0));
 }
 
 /*
