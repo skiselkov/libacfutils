@@ -414,8 +414,8 @@ API_EXPORT void closedir(DIR *dirp);
 #define	stat		ACFSYM(stat)
 struct stat {
 	uint64_t	st_size;
-	uint64_t	st_atime;
-	uint64_t	st_mtime;
+	time_t		st_atime;
+	time_t		st_mtime;
 };
 API_EXPORT int stat(const char *pathname, struct stat *buf);
 #endif	/* !defined(_MSC_VER) */
