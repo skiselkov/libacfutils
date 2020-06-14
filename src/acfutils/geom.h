@@ -170,6 +170,7 @@ typedef struct {
 #if	1
 #define	PRINT_VECT2(v)	printf(#v "(%f, %f)\n", v.x, v.y)
 #define	PRINT_VECT3(v)	printf(#v "(%f, %f, %f)\n", v.x, v.y, v.z)
+#define	PRINT_VECT3L(v)	printf(#v "(%Lf, %Lf, %Lf)\n", v.x, v.y, v.z)
 #define	PRINT_GEO2(p)	printf(#p "(%f, %f)\n", p.lat, p.lon)
 #define	PRINT_GEO3(p)	printf(#p "(%f, %f, %f)\n", p.lat, p.lon, p.elev)
 #define	DEBUG_PRINT(...)	printf(__VA_ARGS__)
