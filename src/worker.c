@@ -170,7 +170,7 @@ worker_fini(worker_t *wk)
 	cv_destroy(&wk->cv);
 }
 
-API_EXPORT void
+void
 worker_set_interval(worker_t *wk, uint64_t intval_us)
 {
 	mutex_enter(&wk->lock);
@@ -181,6 +181,18 @@ worker_set_interval(worker_t *wk, uint64_t intval_us)
 		wk->intval_us = intval_us;
 		cv_broadcast(&wk->cv);
 	}
+	mutex_exit(&wk->lock);
+}
+
+/*
+ * Same as worker_set_interval, but doesn't cause the worker to
+ * immediately wake up and run another loop.
+ */
+void
+worker_set_interval_nowake(worker_t *wk, uint64_t intval_us)
+{
+	mutex_enter(&wk->lock);
+	wk->intval_us = intval_us;
 	mutex_exit(&wk->lock);
 }
 
