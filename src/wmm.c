@@ -35,7 +35,8 @@
 
 struct wmm_s {
 	/* time-modified model according to year passed to wmm_open */
-	MAGtype_MagneticModel	*model;
+	MAGtype_MagneticModel	*timed_model;
+	MAGtype_MagneticModel	*fixed_model;
 	MAGtype_Ellipsoid	ellip;
 };
 
@@ -60,20 +61,17 @@ wmm_open(const char *filename, double year)
 	wmm_t			*wmm;
 	int			n_max, n_terms;
 	MAGtype_Date		date = { .DecimalYear = year };
-	MAGtype_MagneticModel	*fixed_model;
 
-	if (!MAG_robustReadMagModels(filename, &fixed_model))
+	wmm = safe_calloc(1, sizeof (*wmm));
+	if (!MAG_robustReadMagModels(filename, &wmm->fixed_model)) {
+		free(wmm);
 		return (NULL);
-
-	n_max = MAX(fixed_model->nMax, 0);
+	}
+	n_max = MAX(wmm->fixed_model->nMax, 0);
 	n_terms = ((n_max + 1) * (n_max + 2) / 2);
-
-	wmm = safe_calloc(sizeof (*wmm), 1);
-	wmm->model = MAG_AllocateModelMemory(n_terms);
-	ASSERT(wmm->model != NULL);
-	MAG_TimelyModifyMagneticModel(date, fixed_model, wmm->model);
-	MAG_FreeMagneticModelMemory(fixed_model);
-
+	wmm->timed_model = MAG_AllocateModelMemory(n_terms);
+	ASSERT(wmm->timed_model != NULL);
+	MAG_TimelyModifyMagneticModel(date, wmm->fixed_model, wmm->timed_model);
 	wmm->ellip = (MAGtype_Ellipsoid){
 		.a = wgs84.a,
 		.b = wgs84.b,
@@ -86,6 +84,18 @@ wmm_open(const char *filename, double year)
 	return (wmm);
 }
 
+void
+wmm_reopen(wmm_t *wmm, double year)
+{
+	MAGtype_Date date = { .DecimalYear = year };
+
+	ASSERT(wmm != NULL);
+	ASSERT(wmm->fixed_model != NULL);
+	ASSERT(wmm->timed_model != NULL);
+
+	MAG_TimelyModifyMagneticModel(date, wmm->fixed_model, wmm->timed_model);
+}
+
 /*
  * Closes a model returned by wmm_open and releases all its resources.
  */
@@ -93,7 +103,8 @@ void
 wmm_close(wmm_t *wmm)
 {
 	ASSERT(wmm != NULL);
-	MAG_FreeMagneticModelMemory(wmm->model);
+	MAG_FreeMagneticModelMemory(wmm->fixed_model);
+	MAG_FreeMagneticModelMemory(wmm->timed_model);
 	free(wmm);
 }
 
@@ -103,7 +114,7 @@ wmm_close(wmm_t *wmm)
 double
 wmm_get_start(const wmm_t *wmm)
 {
-	return (wmm->model->epoch);
+	return (wmm->timed_model->epoch);
 }
 
 /*
@@ -112,7 +123,7 @@ wmm_get_start(const wmm_t *wmm)
 double
 wmm_get_end(const wmm_t *wmm)
 {
-	return (wmm->model->CoefficientFileEndDate);
+	return (wmm->timed_model->CoefficientFileEndDate);
 }
 
 /*
@@ -134,7 +145,7 @@ wmm_get_decl(const wmm_t *wmm, geo_pos3_t p)
 	MAGtype_GeoMagneticElements	gme;
 
 	MAG_GeodeticToSpherical(wmm->ellip, coord_geo, &coord_sph);
-	MAG_Geomag(wmm->ellip, coord_sph, coord_geo, wmm->model, &gme);
+	MAG_Geomag(wmm->ellip, coord_sph, coord_geo, wmm->timed_model, &gme);
 
 	return (gme.Decl);
 }

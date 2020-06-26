@@ -37,6 +37,7 @@ extern "C" {
 typedef struct wmm_s wmm_t;
 
 API_EXPORT wmm_t *wmm_open(const char *filename, double year);
+API_EXPORT void wmm_reopen(wmm_t *wmm, double year);
 API_EXPORT void wmm_close(wmm_t *wmm);
 
 API_EXPORT double wmm_get_start(const wmm_t *wmm);
