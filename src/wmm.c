@@ -45,7 +45,7 @@ struct wmm_s {
  * @param filename Filename containing the world magnetic model (usually
  *	named something like 'WMM.COF').
  * @param year Fractional year for which to time-adjust the model. For
- *	example, Apr 19 2016 is the 10th day of the year 2015, so it is
+ *	example, Apr 19 2016 is the 109th day of the year 2016, so it is
  *	fractional year 2016.3 (rounding to 1 decimal digit is sufficient).
  *	N.B. the model has limits of applicability. Be sure to check them
  *	using wmm_get_start and wmm_get_end before trusting the values
