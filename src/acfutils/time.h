@@ -65,6 +65,12 @@ tmutc2unix(const struct tm *tm)
 	    tm->tm_sec);
 }
 
+time_t lacf_timegm(const struct tm *tm);
+
+#if	IBM
+#define	timegm lacf_timegm
+#endif
+
 #ifdef	__cplusplus
 }
 #endif
