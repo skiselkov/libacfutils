@@ -627,7 +627,7 @@ conf_get_b2(const conf_t *conf, const char *key, bool *value)
 	bool_t tmp;
 	if (!conf_get_b(conf, key, &tmp))
 		return (false);
-	*value = value;
+	*value = tmp;
 	return (true);
 }
 
