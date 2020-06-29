@@ -1598,6 +1598,7 @@ check_cache_version(const airportdb_t *db)
 bool_t
 airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 {
+	int linenum = 0;
 	char *line = NULL;
 	size_t linecap = 0;
 	char *filename;
@@ -1618,10 +1619,16 @@ airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 
 	while (!feof(fp)) {
 		const char *word_start;
+
+		/* Early abort if the header of the file was passed */
+		if (linenum++ > 20)
+			break;
 		if (getline(&line, &linecap, fp) <= 0 ||
-		    strstr(line, "1100 ") != line ||
-		    (word_start = strstr(line, " data cycle ")) == NULL)
+		    (strstr(line, "1100 ") != line &&
+		    strstr(line, "1150 ") != line) ||
+		    (word_start = strstr(line, " data cycle ")) == NULL) {
 			continue;
+		}
 		/* constant is length of " data cycle " string */
 		success = (sscanf(word_start + 12, "%d", cycle) == 1);
 		if (success)

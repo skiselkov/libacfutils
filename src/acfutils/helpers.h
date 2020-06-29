@@ -176,6 +176,8 @@ API_EXPORT void copy_rwy_ID(const char *src, char dst[4]);
 /* AIRAC date functions */
 #define	airac_cycle2eff_date	ACFSYM(airac_cycle2eff_date)
 API_EXPORT const char *airac_cycle2eff_date(int cycle);
+#define	airac_cycle2eff_date2	ACFSYM(airac_cycle2eff_date2)
+API_EXPORT time_t airac_cycle2eff_date2(int cycle);
 #define	airac_cycle2exp_date	ACFSYM(airac_cycle2exp_date)
 API_EXPORT bool_t airac_cycle2exp_date(int cycle, char buf[16],
     time_t *cycle_end_p);

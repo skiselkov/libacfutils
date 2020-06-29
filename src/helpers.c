@@ -43,10 +43,11 @@
 #include <unistd.h>
 #endif	/* !IBM */
 
-#include <acfutils/assert.h>
-#include <acfutils/helpers.h>
-#include <acfutils/log.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/helpers.h"
+#include "acfutils/log.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/time.h"
 
 /*
  * The single-letter versions of the IDs need to go after the two-letter ones
@@ -399,16 +400,6 @@ nr2month(unsigned tm_mon)
 	return (months[tm_mon]);
 }
 
-const char *
-airac_cycle2eff_date(int cycle)
-{
-	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
-		if (airac_eff_dates[i].cycle == cycle)
-			return (airac_eff_dates[i].start);
-	}
-	return (NULL);
-}
-
 static time_t
 cycle2start(int i)
 {
@@ -427,26 +418,45 @@ cycle2start(int i)
 	cyc_tm.tm_yday = -1;
 	cyc_tm.tm_isdst = -1;
 
-	return (mktime(&cyc_tm));
+	return (lacf_timegm(&cyc_tm));
+}
+
+const char *
+airac_cycle2eff_date(int cycle)
+{
+	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
+		if (airac_eff_dates[i].cycle == cycle)
+			return (airac_eff_dates[i].start);
+	}
+	return (NULL);
+}
+
+time_t
+airac_cycle2eff_date2(int cycle) {
+	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
+		if (airac_eff_dates[i].cycle == cycle)
+			return (cycle2start(i));
+	}
+	return (-1u);
 }
 
 bool_t
 airac_cycle2exp_date(int cycle, char buf[16], time_t *cycle_end_p)
 {
 	for (int i = 0; airac_eff_dates[i].cycle != -1; i++) {
-		if (airac_eff_dates[i].cycle == cycle &&
-		    airac_eff_dates[i + 1].cycle != -1) {
+		if (airac_eff_dates[i].cycle == cycle) {
 			/*
 			 * Grab the effective date of the next cycle and
 			 * subtract one day second. The end time will be
 			 * the previous day at 23:59:59.
 			 */
-			time_t cycle_end_t = cycle2start(i + 1) - 1;
-			const struct tm *end_tm = gmtime(&cycle_end_t);
+			time_t cycle_end_t = cycle2start(i) + 28 * 86400;
+			const struct tm end_tm = *gmtime(&cycle_end_t);
 
-			VERIFY(end_tm != NULL);
-			snprintf(buf, 16, "%02d-%s", end_tm->tm_mday,
-			    nr2month(end_tm->tm_mon));
+			if (buf != NULL) {
+				snprintf(buf, 16, "%02d-%s", end_tm.tm_mday,
+				    nr2month(end_tm.tm_mon));
+			}
 			if (cycle_end_p != NULL)
 				*cycle_end_p = cycle_end_t;
 
