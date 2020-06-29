@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#if	__STDC_VERSION__ >= 199901L
+#include <stdbool.h>
+#endif
+
 #include <acfutils/helpers.h>
 #include <acfutils/types.h>
 #include <acfutils/avl.h>
@@ -112,6 +116,16 @@ API_EXPORT void conf_set_b_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
     bool_t value, ...) PRINTF_ATTR2(2, 4);
 API_EXPORT void conf_set_data_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
     const void *buf, size_t sz, ...) PRINTF_ATTR2(2, 5);
+
+#if	__STDC_VERSION__ >= 199901L
+API_EXPORT bool conf_get_b2(const conf_t *conf, const char *key,
+    bool *value);
+API_EXPORT void conf_set_b2(conf_t *conf, const char *key, bool value);
+API_EXPORT bool conf_get_b2_v(const conf_t *conf,
+    PRINTF_FORMAT(const char *fmt), bool *value, ...) PRINTF_ATTR2(2, 4);
+API_EXPORT void conf_set_b2_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
+    bool value, ...) PRINTF_ATTR2(2, 4);
+#endif	/* __STDC_VERSION__ >= 199901L */
 
 API_EXPORT bool_t conf_walk(const conf_t *conf, const char **key,
     const char **value, void **cookie);

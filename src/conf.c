@@ -621,6 +621,16 @@ conf_get_b(const conf_t *conf, const char *key, bool_t *value)
 	return (B_TRUE);
 }
 
+bool
+conf_get_b2(const conf_t *conf, const char *key, bool *value)
+{
+	bool_t tmp;
+	if (!conf_get_b(conf, key, &tmp))
+		return (false);
+	*value = value;
+	return (true);
+}
+
 size_t
 conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
 {
@@ -793,6 +803,17 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
 }
 
+/*
+ * Same as conf_set_b, but using C99's native bool type.
+ */
+void
+conf_set_b2(conf_t *conf, const char *key, bool value)
+{
+	ASSERT(conf != NULL);
+	ASSERT(key != NULL);
+	conf_set_common(conf, key, "%s", value ? "true" : "false");
+}
+
 void
 conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 {
@@ -959,6 +980,18 @@ conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
 }
 
 /*
+ * Same as conf_get_b_v, but using the C99 native bool type.
+ */
+bool
+conf_get_b2_v(const conf_t *conf, const char *fmt, bool *value, ...)
+{
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(value != NULL);
+	VARIABLE_GET(conf_get_b2, value, value);
+}
+
+/*
  * Same as conf_set_str, but with dynamic name-construction as conf_get_str_v.
  */
 void
@@ -1033,6 +1066,17 @@ conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
 	ASSERT(conf != NULL);
 	ASSERT(fmt != NULL);
 	VARIABLE_SET(conf_set_b, value, value);
+}
+
+/*
+ * Same as conf_set_b_v, but using C99's native bool type.
+ */
+void
+conf_set_b2_v(conf_t *conf, const char *fmt, bool value, ...)
+{
+	ASSERT(conf != NULL);
+	ASSERT(fmt != NULL);
+	VARIABLE_SET(conf_set_b2, value, value);
 }
 
 void conf_set_data_v(conf_t *conf, const char *fmt, const void *buf,
