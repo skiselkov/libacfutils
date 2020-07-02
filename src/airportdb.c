@@ -12,7 +12,7 @@
  *
  * CDDL HEADER END
  *
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -1083,6 +1083,8 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok)
 				double lon = atof(comps[2]);
 				if (is_valid_lon(lon))
 					arpt->refpt.lon = lon;
+			} else if (strcmp(comps[1], "region_code") == 0) {
+				strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
 			}
 
 			free_strlist(comps, ncomps);
@@ -1119,6 +1121,8 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	fprintf(fp, "1 %.0f 0 0 %s TA:%.0f TL:%.0f LAT:%f LON:%f\n",
 	    arpt->refpt.elev, arpt->icao, arpt->TL, arpt->TA,
 	    arpt->refpt.lat, arpt->refpt.lon);
+	if (*arpt->cc != 0)
+		fprintf(fp, "1302 region_code %s\n", arpt->cc);
 	for (const runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
 	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
 		ASSERT(!isnan(rwy->ends[0].gpa));

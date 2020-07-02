@@ -1528,3 +1528,51 @@ stat(const char *pathname, struct stat *buf)
 }
 
 #endif	/* IBM */
+
+static size_t
+qsort_partition(void *base, long lo, long hi, size_t size,
+    int (*compar)(const void *, const void *, void *), void *arg)
+{
+#define	SWAP(i, j) \
+	do { \
+		uint8_t tmp[size]; \
+		memcpy(tmp, base + size * (i), size); \
+		memcpy(base + size * (i), base + size * (j), size); \
+		memcpy(base + size * (j), tmp, size); \
+	} while (0)
+	void *pivot = base + hi * size;
+	long i = lo;
+
+	for (long j = lo; j < hi; j++) {
+		if (compar(base + j * size, pivot, arg) < 0) {
+			SWAP(i, j);
+			i++;
+		}
+	}
+	SWAP(i, hi);
+
+	return (i);
+#undef	SWAP
+}
+
+static void
+qsort_r_impl(void *base, long lo, long hi, size_t size,
+    int (*compar)(const void *, const void *, void *), void *arg)
+{
+	if (lo < hi) {
+		long p = qsort_partition(base, lo, hi, size, compar, arg);
+
+		qsort_r_impl(base, lo, p - 1, size, compar, arg);
+		qsort_r_impl(base, p + 1, hi, size, compar, arg);
+	}
+}
+
+void
+lacf_qsort_r(void *base, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *, void *), void *arg)
+{
+	ASSERT(base != NULL);
+	ASSERT(compar != NULL);
+	if (nmemb != 0)
+		qsort_r_impl(base, 0, nmemb - 1, size, compar, arg);
+}

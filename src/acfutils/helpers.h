@@ -164,7 +164,7 @@ static inline bool_t is_valid_loc_freq_hz(uint32_t freq_hz)
 API_EXPORT bool_t is_valid_ndb_freq(double freq_khz);
 static inline bool_t is_valid_ndb_freq_hz(uint32_t freq_hz)
 {
-	return (is_valid_loc_freq(freq_hz / 1000.0));
+	return (is_valid_ndb_freq(freq_hz / 1000.0));
 }
 #define	is_valid_tacan_freq	ACFSYM(is_valid_tacan_freq)
 API_EXPORT bool_t is_valid_tacan_freq(double freq_mhz);
@@ -434,6 +434,9 @@ API_EXPORT void win_perror(DWORD err, PRINTF_FORMAT(const char *fmt), ...)
     PRINTF_ATTR(2);
 
 #endif	/* IBM */
+
+API_EXPORT void lacf_qsort_r(void *base, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *, void *), void *arg);
 
 #ifdef	__cplusplus
 }

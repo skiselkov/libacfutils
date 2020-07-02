@@ -118,6 +118,7 @@ typedef struct {
 
 struct airport {
 	char		icao[5];	/* 4-letter ID, nul terminated */
+	char		cc[4];		/* 2-letter ICAO country/region code */
 	geo_pos3_t	refpt;		/* airport reference point location */
 					/* (^^^ elev in FEET!) */
 	bool_t		geo_linked;	/* airport is in geo_table */
