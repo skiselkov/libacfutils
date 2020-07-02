@@ -208,6 +208,21 @@ list_prev(const list_t *list, const void *object)
 	return (NULL);
 }
 
+void *
+list_get_i(const list_t *list, unsigned i)
+{
+	void *obj;
+
+	ASSERT(list != NULL);
+	ASSERT(i < list_count(list));
+
+	obj = list_head(list);
+	for (unsigned j = 0; j < i; j++)
+		obj = list_next(list, obj);
+
+	return (obj);
+}
+
 /*
  *  Insert src list after dst list. Empty src list thereafter.
  */
