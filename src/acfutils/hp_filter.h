@@ -72,7 +72,7 @@ hp_filter_get(const hp_filter_t *filt)
 	return (filt->state);
 }
 
-static inline double
+static inline void
 hp_filter_set_f_cutoff(hp_filter_t *filt, double f_cutoff)
 {
 	ASSERT(filt != NULL);
