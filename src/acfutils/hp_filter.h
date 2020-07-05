@@ -80,6 +80,13 @@ hp_filter_set_f_cutoff(hp_filter_t *filt, double f_cutoff)
 	filt->RC = 1.0 / (2 * M_PI * f_cutoff);
 }
 
+static inline double
+hp_filter_get_f_cutoff(const hp_filter_t *filt)
+{
+	ASSERT(filt != NULL);
+	return (1.0 / (2 * M_PI * filt->RC));
+}
+
 #ifdef	__cplusplus
 }
 #endif
