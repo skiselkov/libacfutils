@@ -1068,17 +1068,6 @@ conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
 	VARIABLE_SET(conf_set_b, value, value);
 }
 
-/*
- * Same as conf_set_b_v, but using C99's native bool type.
- */
-void
-conf_set_b2_v(conf_t *conf, const char *fmt, bool value, ...)
-{
-	ASSERT(conf != NULL);
-	ASSERT(fmt != NULL);
-	VARIABLE_SET(conf_set_b2, value, value);
-}
-
 void conf_set_data_v(conf_t *conf, const char *fmt, const void *buf,
     size_t sz, ...)
 {

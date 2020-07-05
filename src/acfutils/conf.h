@@ -123,8 +123,12 @@ API_EXPORT bool conf_get_b2(const conf_t *conf, const char *key,
 API_EXPORT void conf_set_b2(conf_t *conf, const char *key, bool value);
 API_EXPORT bool conf_get_b2_v(const conf_t *conf,
     PRINTF_FORMAT(const char *fmt), bool *value, ...) PRINTF_ATTR2(2, 4);
-API_EXPORT void conf_set_b2_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
-    bool value, ...) PRINTF_ATTR2(2, 4);
+/*
+ * We can't declare a native bool-type conf_set_b2_v here, because bool
+ * isn't a formally declared type. This results in default argument
+ * promotion, which is undefined behavior in varargs.
+ */
+#define	conf_set_b2_v	conf_set_b_v
 #endif	/* __STDC_VERSION__ >= 199901L */
 
 API_EXPORT bool_t conf_walk(const conf_t *conf, const char **key,
