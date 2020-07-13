@@ -1571,8 +1571,9 @@ void
 lacf_qsort_r(void *base, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *, void *), void *arg)
 {
-	ASSERT(base != NULL);
 	ASSERT(compar != NULL);
-	if (nmemb != 0)
+	if (nmemb != 0) {
+		ASSERT(base != NULL);
 		qsort_r_impl(base, 0, nmemb - 1, size, compar, arg);
+	}
 }
