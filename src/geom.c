@@ -1680,7 +1680,7 @@ fpp2geo(vect2_t pos, const fpp_t *fpp)
 		 * one that's closer to the projection origin while located
 		 * between it and the projection plane and place it in i[0].
 		 */
-		if (fpp->dist >= -EARTH_MSL) {
+		if (fpp->dist >= -2 * EARTH_MSL) {
 			if (i[1].x > i[0].x)
 				i[0] = i[1];
 		} else {
