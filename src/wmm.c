@@ -134,7 +134,7 @@ wmm_get_end(const wmm_t *wmm)
  * @param p Geodetic position on the WGS84 spheroid for which to determine
  *	the magnetic declination.
  */
-static double
+double
 wmm_get_decl(const wmm_t *wmm, geo_pos3_t p)
 {
 	MAGtype_CoordSpherical		coord_sph;

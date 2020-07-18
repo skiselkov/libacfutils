@@ -45,6 +45,7 @@ API_EXPORT double wmm_get_end(const wmm_t *wmm);
 
 API_EXPORT double wmm_mag2true(const wmm_t *wmm, double m, geo_pos3_t pos);
 API_EXPORT double wmm_true2mag(const wmm_t *wmm, double t, geo_pos3_t pos);
+API_EXPORT double wmm_get_decl(const wmm_t *wmm, geo_pos3_t pos);
 
 #ifdef	__cplusplus
 }
