@@ -776,6 +776,34 @@ append_format(char **str, size_t *sz, const char *format, ...)
 }
 
 /*
+ * Same as append_format, but instead of reallocating a new string, this
+ * only ever writes to the same string `str'. `cap' is the maximum length
+ * of the buffer at `str'. This is never overstepped and the function
+ * always nul-terminates `str'. The recommended usage method for this is
+ * as follows:
+ *	char buf[32] = {};
+ *	append_format_buf(buf, sizeof (buf), ...);
+ * You can safely do append_format_buf as many times as you want. `buf'
+ * will always remain a nul-terminated of at most cap bytes (including nul).
+ */
+void
+append_format_buf(char *str, size_t cap, const char *format, ...)
+{
+	size_t l;
+	va_list ap;
+
+	ASSERT(str != NULL || cap == 0);
+	if (cap == 0)
+		return;
+	l = strlen(str);
+	ASSERT3U(l, <, cap);
+
+	va_start(ap, format);
+	vsnprintf(&str[l], cap - l, format, ap);
+	va_end(ap);
+}
+
+/*
  * Unescapes a string that uses '%XX' escape sequences, where 'XX' are two
  * hex digits denoting the ASCII code of the character to be inserted in
  * place of the escape sequence. The argument 'str' is shortened appropriately.
