@@ -75,6 +75,11 @@ extern "C" {
 #define	VERIFY3F(x, op, y)	VERIFY3_impl(x, op, y, double, "%f")
 #define	VERIFY3P(x, op, y)	VERIFY3_impl(x, op, y, void *, "%p")
 #define	VERIFY0(x)		VERIFY3S((x), ==, 0)
+#define	VERIFY_FAIL()		\
+	do { \
+		log_impl(log_basename(__FILE__), __LINE__, "Internal error"); \
+		abort(); \
+	} while (0)
 
 #ifdef	DEBUG
 #define	ASSERT(x)		VERIFY(x)

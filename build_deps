@@ -32,6 +32,7 @@ while getopts "cdm" opt; do
 done
 
 ( cd zlib && ./build_zlib_deps ) && \
+    ( cd libiconv && ./build_libiconv_deps ) && \
     ( cd libclipboard && ./build_libclipboard_deps ) && \
     ( cd libpng && ./build_libpng_deps ) && \
     ( [ $minimal -eq 1 ] || ( cd libjpeg && ./build_libjpeg_deps ) ) && \

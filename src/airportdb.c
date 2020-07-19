@@ -16,7 +16,9 @@
  */
 
 #include <errno.h>
+#include <iconv.h>
 #include <stddef.h>
+#include <locale.h>
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
@@ -566,9 +568,9 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
  * airport data cache creation process.
  */
 static airport_t *
-parse_apt_dat_1_line(airportdb_t *db, const char *line)
+parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 {
-	char name[32] = {};
+	char name[48] = {};
 	const char *new_icao;
 	geo_pos3_t pos = NULL_GEO_POS3;
 	char **comps;
@@ -606,9 +608,38 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line)
 	list_create(&arpt->freqs, sizeof (freq_info_t),
 	    offsetof(freq_info_t, node));
 	lacf_strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
-	lacf_strlcpy(arpt->name, name, sizeof (arpt->name));
 	strtoupper(arpt->icao);
-	strtoupper(arpt->name);
+
+	/*
+	 * Unfortunately, X-Plane's scenery authors put all kinds of
+	 * weird chars into their airport names. So we employ libiconv
+	 * to hopefully transliterate that junk away as much as possible.
+	 */
+	if (cd_p != NULL) {
+		char name_conv[48] = {};
+		char *conv_in = name, *conv_out = name_conv;
+		size_t conv_in_sz = strlen(name);
+		size_t conv_out_sz = sizeof (name_conv);
+
+		iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
+		for (size_t i = 0, j = 0; name_conv[i] != '\0' &&
+		    j + 1 < sizeof (arpt->name); i++) {
+			if (name_conv[i] != '\'' && name_conv[i] != '`' &&
+			    name_conv[i] != '^' && name_conv[i] != '\\' &&
+			    name_conv[i] != '"') {
+				arpt->name[j++] = name_conv[i];
+			}
+		}
+		strtoupper(arpt->name);
+	} else {
+		/*
+		 * iconv is NOT used when reading our own apt.dat cache.
+		 * So for those cases, we can just verbatim copy the airport
+		 * name directly without charset issues.
+		 */
+		strlcpy(arpt->name, name, sizeof (arpt->name));
+	}
+
 	arpt->refpt = pos;
 out:
 	free_strlist(comps, ncomps);
@@ -984,7 +1015,8 @@ out:
  * cache the airports contained in it.
  */
 static void
-read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok)
+read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
+    iconv_t *cd_p)
 {
 	FILE *apt_dat_f;
 	airport_t *arpt = NULL;
@@ -1019,7 +1051,7 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok)
 		}
 
 		if (strstr(line, "1 ") == line)
-			arpt = parse_apt_dat_1_line(db, line);
+			arpt = parse_apt_dat_1_line(db, line, cd_p);
 		if (arpt == NULL)
 			continue;
 
@@ -1863,6 +1895,8 @@ recreate_cache(airportdb_t *db)
 	bool_t is_xp11;
 	char *index_filename = NULL;
 	FILE *index_file = NULL;
+	iconv_t cd;
+	char *prev_locale = NULL, *saved_locale = NULL;
 
 	list_create(&apt_dat_files, sizeof (apt_dats_entry_t),
 	    offsetof(apt_dats_entry_t, node));
@@ -1870,10 +1904,21 @@ recreate_cache(airportdb_t *db)
 	if (cache_up_to_date(db, &apt_dat_files) && read_index_dat(db))
 		goto out;
 
+	/* This is needed to get iconv transliteration to work correctly */
+	prev_locale = setlocale(LC_CTYPE, NULL);
+	if (prev_locale != NULL)
+		saved_locale = safe_strdup(prev_locale);
+	setlocale(LC_CTYPE, "");
 	/* First scan all the provided apt.dat files */
+	cd = iconv_open("ASCII//TRANSLIT", "UTF-8");
 	for (apt_dats_entry_t *e = list_head(&apt_dat_files); e != NULL;
 	    e = list_next(&apt_dat_files, e))
-		read_apt_dat(db, e->fname, B_TRUE);
+		read_apt_dat(db, e->fname, B_TRUE, &cd);
+	iconv_close(cd);
+	if (saved_locale != NULL) {
+		setlocale(LC_CTYPE, saved_locale);
+		free(saved_locale);
+	}
 
 	/*
 	 * X-Plane 11 auto-detection. XP11 removed Airports.txt and switched
@@ -2320,7 +2365,7 @@ load_airports_in_tile(airportdb_t *db, geo_pos2_t tile_pos)
 	    tile_pos.lat, tile_pos.lon);
 	fname = mkpathname(cache_dir, lat_lon, NULL);
 	if (file_exists(fname, NULL))
-		read_apt_dat(db, fname, B_FALSE);
+		read_apt_dat(db, fname, B_FALSE, NULL);
 	free(cache_dir);
 	free(fname);
 }

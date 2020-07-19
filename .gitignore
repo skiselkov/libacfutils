@@ -125,3 +125,7 @@ libclipboard/libclipboard-linux-64
 ucpp/libucpp.a
 ucpp/sample
 
+libiconv/libiconv-1.16
+libiconv/libiconv-linux-64
+libiconv/libiconv-mac-64
+libiconv/libiconv-win-64

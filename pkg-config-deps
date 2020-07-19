@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2019 Saso Kiselkov. All rights reserved.
+# Copyright 2020 Saso Kiselkov. All rights reserved.
 
 # This file needs to be called from your makefile when using libacfutil.
 # It produces the necessary cflags and libs to include all the build-time
@@ -101,6 +101,7 @@ if [[ "$1" = "--cflags" ]]; then
 	if [[ "$ARCH" = "mac-64" ]]; then
 		GLEW_EXTRA="-DLACF_GLEW_USE_NATIVE_TLS=0"
 	fi
+	LIBICONV="-I$(pwd)/libiconv/libiconv-$ARCH/include"
 elif [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
 		# This must be appended AFTER --whole-archive, otherwise
@@ -112,13 +113,14 @@ elif [[ "$1" = "--libs" ]]; then
 		fi
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
+	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv -lcharset"
 
 	if [[ "$ARCH" != "mac-64" ]]; then
 		EXTRA="-static-libstdc++"
 	fi
 fi
 
-echo $WHOLE_ARCH_ON ${LZMA} \
+echo $WHOLE_ARCH_ON ${LZMA} ${LIBICONV} \
     $(pkg-config $@ $PACKAGES) \
     $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${PCRE2_EXTRA} ${OPENAL_EXTRA} \

@@ -145,6 +145,11 @@ API_EXPORT void airportdb_destroy(airportdb_t *db);
 API_EXPORT void airportdb_lock(airportdb_t *db);
 API_EXPORT void airportdb_unlock(airportdb_t *db);
 
+/*
+ * !!!! CAREFUL !!!!
+ * This function needs to use setlocale, which means it's not thread-safe.
+ * You should only call this on the main thread.
+ */
 #define	recreate_cache			ACFSYM(recreate_cache)
 API_EXPORT bool_t recreate_cache(airportdb_t *db);
 

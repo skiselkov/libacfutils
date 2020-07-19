@@ -11,7 +11,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2016 Saso Kiselkov. All rights reserved.
+# Copyright 2020 Saso Kiselkov. All rights reserved.
 
 # Shared library without any Qt functionality
 TEMPLATE = lib
