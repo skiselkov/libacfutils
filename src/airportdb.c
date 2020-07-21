@@ -641,6 +641,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	}
 
 	arpt->refpt = pos;
+	arpt->refpt_m = GEO3_FT2M(pos);
 out:
 	free_strlist(comps, ncomps);
 	return (arpt);
@@ -935,12 +936,14 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line, bool_t hard_surf_only)
 	copy_rwy_ID(comps[8 + 0], rwy->ends[0].id);
 	rwy->ends[0].thr = GEO_POS3(atof(comps[8 + 1]), atof(comps[8 + 2]),
 	    arpt->refpt.elev);
+	rwy->ends[0].thr_m = GEO3_FT2M(rwy->ends[0].thr);
 	rwy->ends[0].displ = atof(comps[8 + 3]);
 	rwy->ends[0].blast = atof(comps[8 + 4]);
 
 	copy_rwy_ID(comps[8 + 9 + 0], rwy->ends[1].id);
 	rwy->ends[1].thr = GEO_POS3(atof(comps[8 + 9 + 1]),
 	    atof(comps[8 + 9 + 2]), arpt->refpt.elev);
+	rwy->ends[1].thr_m = GEO3_FT2M(rwy->ends[1].thr);
 	rwy->ends[1].displ = atof(comps[8 + 9 + 3]);
 	rwy->ends[1].blast = atof(comps[8 + 9 + 4]);
 
@@ -975,6 +978,8 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line, bool_t hard_surf_only)
 		rwy->ends[1].tch = atof(&comps[25][5]);
 		rwy->ends[0].thr.elev = atof(&comps[26][7]);
 		rwy->ends[1].thr.elev = atof(&comps[27][7]);
+		rwy->ends[0].thr_m.elev = FEET2MET(rwy->ends[0].thr.elev);
+		rwy->ends[1].thr_m.elev = FEET2MET(rwy->ends[1].thr.elev);
 	}
 
 	/* Validate the runway ends individually. */
@@ -1086,12 +1091,16 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			 */
 			if (strcmp(comps[1], "transition_alt") == 0) {
 				int TA = atoi(comps[2]);
-				if (is_valid_elev(TA))
+				if (is_valid_elev(TA)) {
 					arpt->TA = TA;
+					arpt->TA_m = FEET2MET(TA);
+				}
 			} else if (strcmp(comps[1], "transition_level") == 0) {
 				int TL = atoi(comps[2]);
-				if (is_valid_elev(TL))
+				if (is_valid_elev(TL)) {
 					arpt->TL = TL;
+					arpt->TL_m = FEET2MET(TL);
+				}
 			} else if (strcmp(comps[1], "datum_lat") == 0) {
 				double newlat = atof(comps[2]);
 				if (is_valid_lat(newlat)) {
@@ -1256,6 +1265,7 @@ parse_airports_txt_A_line(airportdb_t *db, const char *line)
 		geo_unlink_airport(db, arpt);
 	arpt->refpt = GEO_POS3(atof(comps[3]), atof(comps[4]),
 	    arpt->refpt.elev);
+	arpt->refpt_m = GEO3_FT2M(arpt->refpt);
 	if (!is_valid_lat(arpt->refpt.lat)) {
 		avl_remove(&db->apt_dat, arpt);
 		free_airport(arpt);
@@ -1264,7 +1274,9 @@ parse_airports_txt_A_line(airportdb_t *db, const char *line)
 	}
 	geo_link_airport(db, arpt);
 	arpt->TA = atof(comps[6]);
+	arpt->TA_m = FEET2MET(arpt->TA);
 	arpt->TL = atof(comps[7]);
+	arpt->TL_m = FEET2MET(arpt->TL);
 	arpt->in_navdb = B_TRUE;
 out:
 	free_strlist(comps, ncomps);
@@ -1303,11 +1315,13 @@ parse_airports_txt_R_line(airport_t *arpt, const char *line,
 	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
 		if (rwy_fuzzy_match(rwy, 0, rwy_id, new_thr_pos)) {
 			rwy->ends[0].thr.elev = telev;
+			rwy->ends[0].thr_m.elev = FEET2MET(telev);
 			rwy->ends[0].gpa = gpa;
 			rwy->ends[0].tch = tch;
 			break;
 		} else if (rwy_fuzzy_match(rwy, 1, rwy_id, new_thr_pos)) {
 			rwy->ends[1].thr.elev = telev;
+			rwy->ends[1].thr_m.elev = FEET2MET(telev);
 			rwy->ends[1].gpa = gpa;
 			rwy->ends[1].tch = tch;
 			break;

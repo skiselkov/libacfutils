@@ -62,10 +62,12 @@ typedef enum {
 struct runway_end {
 	char		id[4];		/* runway ID, nul-terminated */
 	geo_pos3_t	thr;		/* threshold position (elev in FEET!) */
+	geo_pos3_t	thr_m;		/* same as thr, but elev in meters */
 	double		displ;		/* threshold displacement in meters */
 	double		blast;		/* stopway/blastpad length in meters */
 	double		gpa;		/* glidepath angle in degrees */
 	double		tch;		/* threshold clearing height in feet */
+	double		tch_m;		/* threshold clearing height in m */
 
 	/* computed on load_airport */
 	vect2_t		thr_v;		/* threshold vector coord */
@@ -122,9 +124,12 @@ struct airport {
 	char		name[24];	/* Airport name, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
 					/* (^^^ elev in FEET!) */
+	geo_pos3_t	refpt_m;	/* same as refpt, but elev in meters */
 	bool_t		geo_linked;	/* airport is in geo_table */
 	double		TA;		/* transition altitude in feet */
 	double		TL;		/* transition level in feet */
+	double		TA_m;		/* transition altitude in meters */
+	double		TL_m;		/* transition level in meters */
 	avl_tree_t	rwys;
 	list_t		freqs;
 
