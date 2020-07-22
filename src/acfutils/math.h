@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_MATH_H_
@@ -163,6 +163,21 @@ smoothstep_inv(double x)
 	ASSERT(!isnan(x));
 	return (0.5 - sin(asin(1 - 2 * x) / 3));
 }
+
+#define	HROUND2(oldval, newval, step, hyst_rng) \
+	do { \
+		double tmpval = round((newval) / (step)) * (step); \
+		if (isnan((oldval))) { \
+			(oldval) = tmpval; \
+		} else if ( \
+		    (oldval) > (newval) + (step) * (0.5 + (hyst_rng)) || \
+		    (oldval) < (newval) - (step) * (0.5 + (hyst_rng))) { \
+			(oldval) = tmpval; \
+		} \
+	} while (0)
+
+#define	HROUND(oldval, newval, step) \
+	HROUND2((oldval), (newval), (step), 0.2)
 
 #ifdef	__cplusplus
 }
