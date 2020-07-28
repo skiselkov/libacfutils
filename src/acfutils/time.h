@@ -21,14 +21,6 @@
 
 #include <stdint.h>
 #include <time.h>
-#if	IBM
-#include <windows.h>
-#else	/* !IBM */
-# include <unistd.h>
-# if	!defined(_POSIX_THREAD_CPUTIME)
-#  error	"Incompatible platform"
-# endif
-#endif	/* !IBM */
 
 #include "acfutils/assert.h"
 #include "acfutils/core.h"
@@ -42,21 +34,10 @@ extern "C" {
 #define	NSEC2SEC(usec)	((usec) / 1000000000.0)
 #define	SEC2NSEC(sec)	((sec) * 1000000000ll)
 
-static inline uint64_t
-microclock(void)
-{
-#if	IBM
-	LARGE_INTEGER val, freq;
-	QueryPerformanceFrequency(&freq);
-	QueryPerformanceCounter(&val);
-	return ((val.QuadPart * 1000000) / freq.QuadPart);
-#else	/* !IBM */
-	struct timespec ts;
-	VERIFY0(clock_gettime(CLOCK_MONOTONIC, &ts));
-	return ((ts.tv_sec * 1000000llu) + (ts.tv_nsec / 1000llu));
-#endif	/* !IBM */
-}
+#define	microclock	ACFSYM(microclock)
+API_EXPORT uint64_t microclock(void);
 
+/* Not portable */
 static inline uint64_t
 nanoclock(void)
 {
@@ -64,7 +45,8 @@ nanoclock(void)
 	return (microclock() * 1000);
 #else	/* !IBM */
 	struct timespec ts;
-	VERIFY0(clock_gettime(CLOCK_MONOTONIC, &ts));
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		return (microclock() * 1000);
 	return (ts.tv_sec * 1000000000llu + ts.tv_nsec);
 #endif	/* !IBM */
 }

@@ -27,6 +27,21 @@
 
 #include <acfutils/time.h>
 
+uint64_t
+microclock(void)
+{
+#if	IBM
+	LARGE_INTEGER val, freq;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&val);
+	return (((double)val.QuadPart / (double)freq.QuadPart) * 1000000.0);
+#else	/* !IBM */
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000000llu) + tv.tv_usec);
+#endif	/* !IBM */
+}
+
 static inline int32_t
 is_leap(int32_t year)
 {
