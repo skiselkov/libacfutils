@@ -34,19 +34,30 @@ extern "C" {
 #define	NSEC2SEC(usec)	((usec) / 1000000000.0)
 #define	SEC2NSEC(sec)	((sec) * 1000000000ll)
 
-#define	microclock	ACFSYM(microclock)
-API_EXPORT uint64_t microclock(void);
+static inline uint64_t
+microclock(void)
+{
+#if	IBM
+	LARGE_INTEGER val, freq;
+	QueryPerformanceFrequency(&freq);
+	QueryPerformanceCounter(&val);
+	return ((val.QuadPart * 1000000llu) / freq.QuadPart);
+#else	/* !IBM */
+	struct timespec ts;
+	VERIFY0(clock_gettime(CLOCK_REALTIME, &ts));
+	return ((ts.tv_sec * 1000000llu) + (ts.tv_nsec / 1000llu));
+#endif
+}
 
 /* Not portable */
 static inline uint64_t
 nanoclock(void)
 {
 #if	IBM
-	return (microclock() * 1000);
+	return (microclock() * 1000llu);
 #else	/* !IBM */
 	struct timespec ts;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		return (microclock() * 1000);
+	VERIFY0(clock_gettime(CLOCK_MONOTONIC, &ts));
 	return (ts.tv_sec * 1000000000llu + ts.tv_nsec);
 #endif	/* !IBM */
 }
