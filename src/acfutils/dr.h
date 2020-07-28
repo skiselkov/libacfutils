@@ -79,6 +79,18 @@ API_EXPORT void dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i) HOT_ATTR;
 API_EXPORT double dr_getf_impl(dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
 #define	dr_setf(__dr, __f)	dr_setf_impl((__dr), DR_DEBUG(#__dr), (__f))
 API_EXPORT void dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f) HOT_ATTR;
+#define	dr_getf_prot(__dr)	dr_getf_prot_impl((__dr), DR_DEBUG(#__dr))
+static inline double dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
+static inline double
+dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS)
+{
+	double x = dr_getf_impl(dr, filename, line, varname);
+	ASSERT_MSG(!isnan(x), "%s:%d: Dataref %s (varname %s) contains a "
+	    "garbage (NAN) value. We didn't write that, somebody else did! "
+	    "Remove extraneous plugins and try to isolate the cause.",
+	    filename, line, dr->name, varname);
+	return (x);
+}
 
 #define	dr_getvi(__dr, __i, __off, __num) \
 	dr_getvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
