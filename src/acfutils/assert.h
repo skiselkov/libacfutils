@@ -71,7 +71,13 @@ extern "C" {
 		} \
 	} while (0)
 #define	VERIFY3S(x, op, y)	VERIFY3_impl(x, op, y, long, "%lu")
-#define	VERIFY3U(x, op, y)	VERIFY3_impl(x, op, y, unsigned long, "0x%lx")
+#if	IBM
+#define	VERIFY3U(x, op, y)	\
+	VERIFY3_impl(x, op, y, unsigned long long, "0x%I64x")
+#else	/* !IBM */
+#define	VERIFY3U(x, op, y)	\
+	VERIFY3_impl(x, op, y, unsigned long long, "0x%llx")
+#endif	/* !IBM */
 #define	VERIFY3F(x, op, y)	VERIFY3_impl(x, op, y, double, "%f")
 #define	VERIFY3P(x, op, y)	VERIFY3_impl(x, op, y, void *, "%p")
 #define	VERIFY0(x)		VERIFY3S((x), ==, 0)
