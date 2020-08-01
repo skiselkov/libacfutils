@@ -149,7 +149,7 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = "EB", .cc = "BE", .lang = "fr" },	/* Belgium */
     { .icao = "ED", .cc = "DE", .lang = "de" },	/* Germany */
     { .icao = "EE", .cc = "EE", .lang = "et" },	/* Estonia */
-    { .icao = "EF", .cc = "FI", .lang = "sv" },	/* Finland */
+    { .icao = "EF", .cc = "FI", .lang = "fi" },	/* Finland */
     { .icao = "EG", .cc = "GB", .lang = "en" },	/* United Kingdom */
     { .icao = "EG", .cc = "GS", .lang = "XX" },	/* South Georgia and the */
 						/* South Sandwich Islands */
