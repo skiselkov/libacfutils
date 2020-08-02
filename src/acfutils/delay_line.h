@@ -89,6 +89,20 @@ delay_line_init_time_func(delay_line_t *line, uint64_t delay_us,
 	line->time_func_userinfo = time_func_userinfo;
 }
 
+static inline void
+delay_line_set_delay(delay_line_t *line, uint64_t delay_us)
+{
+	ASSERT(line != NULL);
+	line->delay_us = delay_us;
+}
+
+static inline uint64_t
+delay_line_get_delay(const delay_line_t *line)
+{
+	ASSERT(line != NULL);
+	return (line->delay_us);
+}
+
 /*
  * Functions to pull the current value from a delay line:
  *	delay_line_pull_i64	- reads the delay line as an int64_t
