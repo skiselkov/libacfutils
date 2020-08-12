@@ -384,7 +384,7 @@ read_int_cb(void *refcon)
 	dr_t *dr = refcon;
 	int value;
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_Int, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	value = *(int *)dr->value;
 	if (dr->read_cb != NULL)
@@ -397,7 +397,7 @@ write_int_cb(void *refcon, int value)
 {
 	dr_t *dr = refcon;
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_Int, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_Int, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	if (dr->write_cb != NULL)
@@ -410,7 +410,7 @@ read_float_cb(void *refcon)
 {
 	dr_t *dr = refcon;
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_Float, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	if (dr->wide_type) {
 		double value = *(double *)dr->value;
@@ -430,7 +430,7 @@ write_float_cb(void *refcon, float value)
 {
 	dr_t *dr = refcon;
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_Float, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_Float, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	if (dr->write_cb != NULL)
@@ -449,7 +449,7 @@ read_ ## typename ## _array_cb(void *refcon, typename *out_values, int off, \
 	dr_t *dr = refcon; \
  \
 	ASSERT(dr != NULL); \
-	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
+	ASSERT_MSG(dr->type & xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
  \
 	if (dr->read_array_cb != NULL) { \
@@ -486,7 +486,7 @@ write_ ## typename ## _array_cb(void *refcon, typename *in_values, int off, \
 	dr_t *dr = refcon; \
  \
 	ASSERT(dr != NULL); \
-	ASSERT_MSG(dr->type == xplmType_ ## xp_typename, "%s", dr->name); \
+	ASSERT_MSG(dr->type & xplmType_ ## xp_typename, "%s", dr->name); \
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name); \
 	ASSERT_MSG(dr->writable, "%s", dr->name); \
 	ASSERT_MSG(in_values != NULL || count == 0, "%s", dr->name); \
@@ -531,7 +531,7 @@ read_double_array_cb(void *refcon, float *out_values, int off, int count)
 	dr_t *dr = refcon;
 
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_FloatArray, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_FloatArray, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 
 	if (dr->read_array_cb != NULL) {
@@ -562,7 +562,7 @@ write_double_array_cb(void *refcon, float *in_values, int off, int count)
 	dr_t *dr = refcon;
 
 	ASSERT(dr != NULL);
-	ASSERT_MSG(dr->type == xplmType_FloatArray, "%s", dr->name);
+	ASSERT_MSG(dr->type & xplmType_FloatArray, "%s", dr->name);
 	ASSERT_MSG(dr->value != NULL, "%s", dr->name);
 	ASSERT_MSG(dr->writable, "%s", dr->name);
 	ASSERT_MSG(in_values != NULL || count == 0, "%s", dr->name);
@@ -680,8 +680,8 @@ dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_IntArray, value, n, writable,
-	    B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value, n,
+	    writable, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -691,8 +691,8 @@ dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_FloatArray, value, n, writable,
-	    B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value, n,
+	    writable, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -702,8 +702,8 @@ dr_create_vf64(dr_t *dr, double *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_FloatArray, value, n, writable,
-	    B_TRUE, fmt, ap);
+	dr_create_common(dr, xplmType_Double | xplmType_FloatArray, value, n,
+	    writable, B_TRUE, fmt, ap);
 	va_end(ap);
 }
 
