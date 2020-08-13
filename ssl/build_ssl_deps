@@ -17,6 +17,9 @@
 
 # OpenSSL uses a fairly custom build infrastructure, so we can't
 # use build_dep
+
+OPENSSL="openssl-1.1.1g"
+
 function build_ssl() {
 	PLATFORM="$1"
 	CONFOPTS="$2"
@@ -25,17 +28,17 @@ function build_ssl() {
 
 	(
 		if [[ "$do_clean" = 1 ]]; then
-			rm -rf "$OUTDIR" openssl-1.0.2n
+			rm -rf "$OUTDIR" "$OPENSSL"
 			return
 		fi
 		if [[ $(uname) = "Darwin" ]]; then
 			CONFOPTS="$CONFOPTS -mmacosx-version-min=10.9"
 		fi
 		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
-			rm -rf "$OUTDIR" openssl-1.0.2n
-			tar xzf openssl-1.0.2n.tar.gz
+			rm -rf "$OUTDIR" "$OPENSSL"
+			tar xzf "${OPENSSL}.tar.gz"
 			mkdir -p "$OUTDIR"
-			cd openssl-1.0.2n
+			cd "$OPENSSL"
 			./Configure no-shared no-dso --prefix="$OUTDIR" \
 			    $CONFOPTS && \
 			    make clean && \
