@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_WIDGET_H_
@@ -68,6 +68,8 @@ API_EXPORT void tooltip_fini(void);
 
 API_EXPORT tooltip_set_t *tooltip_set_new(XPWidgetID window);
 API_EXPORT tooltip_set_t *tooltip_set_new_native(XPLMWindowID window);
+API_EXPORT void tooltip_set_orig_win_size(tooltip_set_t *tts,
+    unsigned orig_w, unsigned orig_h);
 API_EXPORT void tooltip_set_delay(tooltip_set_t *set, double secs);
 API_EXPORT void tooltip_set_destroy(tooltip_set_t *tts);
 API_EXPORT void tooltip_set_opaque(tooltip_set_t *tts, bool_t opaque);

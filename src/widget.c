@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2020 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -219,6 +219,16 @@ tooltip_set_new_native(XPLMWindowID window)
 	tts->display_delay = DEFAULT_DISPLAY_DELAY;
 
 	return (tts);
+}
+
+void
+tooltip_set_orig_win_size(tooltip_set_t *tts, unsigned orig_w, unsigned orig_h)
+{
+	ASSERT(tts != NULL);
+	ASSERT(orig_w != 0);
+	ASSERT(orig_h != 0);
+	tts->orig_w = orig_w;
+	tts->orig_h = orig_h;
 }
 
 void
