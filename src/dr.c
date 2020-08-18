@@ -680,7 +680,7 @@ dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value, n,
+	dr_create_common(dr, xplmType_IntArray, value, n,
 	    writable, B_FALSE, fmt, ap);
 	va_end(ap);
 }
@@ -691,13 +691,46 @@ dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value, n,
+	dr_create_common(dr, xplmType_FloatArray, value, n,
 	    writable, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
 void
 dr_create_vf64(dr_t *dr, double *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_FloatArray, value, n,
+	    writable, B_TRUE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vi_autoscalar(dr_t *dr, int *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value, n,
+	    writable, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf_autoscalar(dr_t *dr, float *value, size_t n, bool_t writable,
+    const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value, n,
+	    writable, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf64_autoscalar(dr_t *dr, double *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
 	va_list ap;

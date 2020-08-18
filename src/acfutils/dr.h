@@ -94,8 +94,8 @@ dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS)
 
 #define	dr_getvi(__dr, __i, __off, __num) \
 	dr_getvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT int dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i,
-    unsigned off, unsigned num) HOT_ATTR;
+API_EXPORT int dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS,
+    int *i, unsigned off, unsigned num) HOT_ATTR;
 #define	dr_setvi(__dr, __i, __off, __num) \
 	dr_setvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
 API_EXPORT void dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i,
@@ -138,6 +138,12 @@ API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
 API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_vf64(dr_t *dr, double *value, size_t n,
+    bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+API_EXPORT void dr_create_vi_autoscalar(dr_t *dr, int *value, size_t n,
+    bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+API_EXPORT void dr_create_vf_autoscalar(dr_t *dr, float *value, size_t n,
+    bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+API_EXPORT void dr_create_vf64_autoscalar(dr_t *dr, double *value, size_t n,
     bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);

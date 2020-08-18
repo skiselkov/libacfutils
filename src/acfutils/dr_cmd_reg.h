@@ -66,6 +66,12 @@ XPLMCommandRef dcr_create_cmd(const char *cmdname, const char *cmddesc,
 #define	DCR_CREATE_VI(dr, ...)		DCR_CREATE_COMMON(vi, dr, __VA_ARGS__)
 #define	DCR_CREATE_VF(dr, ...)		DCR_CREATE_COMMON(vf, dr, __VA_ARGS__)
 #define	DCR_CREATE_VF64(dr, ...)	DCR_CREATE_COMMON(vf64, dr, __VA_ARGS__)
+#define	DCR_CREATE_VI_AUTOSCALAR(dr, ...) \
+	DCR_CREATE_COMMON(vi_autoscalar, dr, __VA_ARGS__)
+#define	DCR_CREATE_VF_AUTOSCALAR(dr, ...) \
+	DCR_CREATE_COMMON(vf_autoscalar, dr, __VA_ARGS__)
+#define	DCR_CREATE_VF64_AUTOSCALAR(dr, ...) \
+	DCR_CREATE_COMMON(vf64_autoscalar, dr, __VA_ARGS__)
 #define	DCR_CREATE_B(dr, ...)		DCR_CREATE_COMMON(b, dr, __VA_ARGS__)
 
 #ifdef	__cplusplus
