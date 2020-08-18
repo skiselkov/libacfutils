@@ -53,22 +53,28 @@ extern "C" {
 #endif	/* !IBM && !defined(_MSC_VER) */
 
 #ifdef	__cplusplus
-# if		defined(_MSC_VER)
-#  define	restrict	__restrict
-# else
-#  define	restrict	__restrict__
-# endif
+# ifndef	restrict
+#  if		defined(_MSC_VER)
+#   define	restrict	__restrict
+#  else
+#   define	restrict	__restrict__
+#  endif
+# endif		/* !defined(restrict) */
 #elif	__STDC_VERSION__ < 199901L
-# if	defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
-#  define	restrict	__restrict
-# else
-#  define	restrict
-# endif
-# if		defined(_MSC_VER)
-#  define	inline	__inline
-# else
-#  define	inline
-# endif
+# ifndef	restrict
+#  if	defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
+#   define	restrict	__restrict
+#  else
+#   define	restrict
+#  endif
+# endif		/* !defined(restrict) */
+# ifndef	inline
+#  if		defined(_MSC_VER)
+#   define	inline	__inline
+#  else
+#   define	inline
+#  endif
+# endif		/* !defined(inline) */
 #endif	/* __STDC_VERSION__ < 199901L */
 
 API_EXPORT extern const char *libacfutils_version;
