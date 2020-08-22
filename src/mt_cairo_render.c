@@ -506,12 +506,12 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 void
 mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps)
 {
-	mutex_enter(&mtcr->lock);
 	if (mtcr->fps != fps) {
+		mutex_enter(&mtcr->lock);
 		mtcr->fps = fps;
 		cv_broadcast(&mtcr->cv);
+		mutex_exit(&mtcr->lock);
 	}
-	mutex_exit(&mtcr->lock);
 }
 
 double
