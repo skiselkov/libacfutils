@@ -102,6 +102,7 @@ if [[ "$1" = "--cflags" ]]; then
 		GLEW_EXTRA="-DLACF_GLEW_USE_NATIVE_TLS=0"
 	fi
 	LIBICONV="-I$(pwd)/libiconv/libiconv-$ARCH/include"
+	ACFUTILS_EXTRA="-I$(pwd)/src"
 elif [[ "$1" = "--libs" ]]; then
 	if [[ "$ARCH" = "win-64" ]]; then
 		# This must be appended AFTER --whole-archive, otherwise
@@ -115,6 +116,14 @@ elif [[ "$1" = "--libs" ]]; then
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
 	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv -lcharset"
 
+	if [[ "$ARCH" == "win-64" ]]; then
+		ACFUTILS_EXTRA="-L$(pwd)/qmake/win64 -lacfutils"
+	elif [[ "$ARCH" == "mac-64" ]]; then
+		ACFUTILS_EXTRA="-L$(pwd)/qmake/mac64 -lacfutils"
+	else
+		ACFUTILS_EXTRA="-L$(pwd)/qmake/lin64 -lacfutils"
+	fi
+
 	if [[ "$ARCH" != "mac-64" ]]; then
 		EXTRA="-static-libstdc++"
 	fi
@@ -124,4 +133,4 @@ echo $WHOLE_ARCH_ON ${LZMA} ${LIBICONV} \
     $(pkg-config $@ $PACKAGES) \
     $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${PCRE2_EXTRA} ${OPENAL_EXTRA} \
-    ${GLEW_EXTRA}
+    ${GLEW_EXTRA} ${ACFUTILS_EXTRA}
