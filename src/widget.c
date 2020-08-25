@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <XPLMGraphics.h>
 #include <XPLMDisplay.h>
@@ -70,6 +71,7 @@ struct tooltip_set {
 #define	NUM_TOOLTIP_SUBWINDOWS	3
 
 static list_t tooltip_sets;
+static bool inited = false;
 static tooltip_t *cur_tt = NULL;
 static XPWidgetID cur_tt_subwin[NUM_TOOLTIP_SUBWINDOWS] = { NULL };
 static XPWidgetID cur_tt_win = NULL;
@@ -455,6 +457,9 @@ out:
 void
 tooltip_init(void)
 {
+	ASSERT(!inited);
+	inited = true;
+
 	list_create(&tooltip_sets, sizeof (tooltip_set_t),
 	    offsetof(tooltip_set_t, node));
 
@@ -465,6 +470,11 @@ void
 tooltip_fini(void)
 {
 	tooltip_set_t *tts;
+
+	if (!inited)
+		return;
+	inited = false;
+
 	while ((tts = list_head(&tooltip_sets)) != NULL)
 		tooltip_set_destroy(tts);
 	list_destroy(&tooltip_sets);
