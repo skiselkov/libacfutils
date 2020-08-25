@@ -129,8 +129,8 @@ elif [[ "$1" = "--libs" ]]; then
 	fi
 fi
 
-echo $WHOLE_ARCH_ON ${LZMA} ${LIBICONV} \
+echo $WHOLE_ARCH_ON ${ACFUTILS_EXTRA} ${LZMA} ${LIBICONV} \
     $(pkg-config $@ $PACKAGES) \
     $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${PCRE2_EXTRA} ${OPENAL_EXTRA} \
-    ${GLEW_EXTRA} ${ACFUTILS_EXTRA}
+    ${GLEW_EXTRA}
