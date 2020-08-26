@@ -6,7 +6,7 @@
  # else
 -    if (atexit(OPENSSL_cleanup) != 0)
 +//	Fucks with `atexit' being undefined
-+//    if (atexit(OPENSSL_cleanup) != 0)
++	return 1;
          return 0;
  # endif
  #endif
