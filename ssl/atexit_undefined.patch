@@ -1,0 +1,12 @@
+--- openssl-1.1.1g/crypto/init.c	2020-04-21 14:22:39.000000000 +0200
++++ openssl-1.1.1g-new/crypto/init.c	2020-08-26 03:10:07.838813421 +0200
+@@ -137,7 +137,8 @@
+     if (_onexit(win32atexit) == NULL)
+         return 0;
+ # else
+-    if (atexit(OPENSSL_cleanup) != 0)
++//	Fucks with `atexit' being undefined
++//    if (atexit(OPENSSL_cleanup) != 0)
+         return 0;
+ # endif
+ #endif
