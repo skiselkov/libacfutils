@@ -41,7 +41,7 @@ function build_ssl() {
 			    patch -p1 < ../atexit_undefined.patch ) || exit 1
 			mkdir -p "$OUTDIR"
 			cd "$OPENSSL"
-			./Configure no-shared no-dso no-devcryptoeng \
+			./Configure no-shared no-dso \
 			    --prefix="$OUTDIR" $CONFOPTS && \
 			    make clean && \
 			    make -j 8 && \
@@ -64,7 +64,7 @@ case `uname` in
 		fi
 		;;
 	Darwin)
-		build_ssl mac-64 "-fvisibility=hidden BSD-generic64"
+		build_ssl mac-64 "-fvisibility=hidden darwin64-x86_64-cc"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
