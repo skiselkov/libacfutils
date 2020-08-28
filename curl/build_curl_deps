@@ -40,8 +40,10 @@ case `uname` in
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
+		PATH="$(echo "$PATH" | sed 's|/opt/local[/_a-zA-Z0-9]*:||g')"
+		export PATH
 		build_dep "mac-64" "$CONFOPTS_COMMON \
-		    --with-ssl=$(pwd)/../ssl/openssl-mac-64" \
+		    --with-ssl=\"$(pwd)/../ssl/openssl-mac-64\"" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	*)
