@@ -41,8 +41,8 @@ function build_ssl() {
 			    patch -p1 < ../atexit_undefined.patch ) || exit 1
 			mkdir -p "$OUTDIR"
 			cd "$OPENSSL"
-			./Configure no-shared no-dso --prefix="$OUTDIR" \
-			    $CONFOPTS && \
+			./Configure no-shared no-dso no-devcryptoeng \
+			    --prefix="$OUTDIR" $CONFOPTS && \
 			    make clean && \
 			    make -j 8 && \
 			    make install
