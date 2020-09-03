@@ -71,18 +71,18 @@ API_EXPORT bool_t dr_writable(dr_t *dr);
 	const char *filename, int line, const char *varname
 
 #define	dr_geti(__dr)		dr_geti_impl((__dr), DR_DEBUG(#__dr))
-API_EXPORT int dr_geti_impl(dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
+API_EXPORT int dr_geti_impl(const dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
 #define	dr_seti(__dr, __i)	dr_seti_impl((__dr), DR_DEBUG(#__dr), (__i))
-API_EXPORT void dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i) HOT_ATTR;
+API_EXPORT void dr_seti_impl(const dr_t *dr, DR_DEBUG_VARS, int i) HOT_ATTR;
 
 #define	dr_getf(__dr)		dr_getf_impl((__dr), DR_DEBUG(#__dr))
-API_EXPORT double dr_getf_impl(dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
+API_EXPORT double dr_getf_impl(const dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
 #define	dr_setf(__dr, __f)	dr_setf_impl((__dr), DR_DEBUG(#__dr), (__f))
-API_EXPORT void dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f) HOT_ATTR;
+API_EXPORT void dr_setf_impl(const dr_t *dr, DR_DEBUG_VARS, double f) HOT_ATTR;
 #define	dr_getf_prot(__dr)	dr_getf_prot_impl((__dr), DR_DEBUG(#__dr))
-static inline double dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
+static inline double dr_getf_prot_impl(const dr_t *dr, DR_DEBUG_VARS) HOT_ATTR;
 static inline double
-dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS)
+dr_getf_prot_impl(const dr_t *dr, DR_DEBUG_VARS)
 {
 	double x = dr_getf_impl(dr, filename, line, varname);
 	ASSERT_MSG(!isnan(x), "%s:%d: Dataref %s (varname %s) contains a "
@@ -94,38 +94,38 @@ dr_getf_prot_impl(dr_t *dr, DR_DEBUG_VARS)
 
 #define	dr_getvi(__dr, __i, __off, __num) \
 	dr_getvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT int dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS,
+API_EXPORT int dr_getvi_impl(const dr_t *dr, DR_DEBUG_VARS,
     int *i, unsigned off, unsigned num) HOT_ATTR;
 #define	dr_setvi(__dr, __i, __off, __num) \
 	dr_setvi_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT void dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i,
+API_EXPORT void dr_setvi_impl(const dr_t *dr, DR_DEBUG_VARS, int *i,
     unsigned off, unsigned num) HOT_ATTR;
 
 #define	dr_getvf(__dr, __i, __off, __num) \
 	dr_getvf_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT int dr_getvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df,
+API_EXPORT int dr_getvf_impl(const dr_t *dr, DR_DEBUG_VARS, double *df,
     unsigned off, unsigned num) HOT_ATTR;
 #define	dr_setvf(__dr, __i, __off, __num) \
 	dr_setvf_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT void dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df,
+API_EXPORT void dr_setvf_impl(const dr_t *dr, DR_DEBUG_VARS, double *df,
     unsigned off, unsigned num) HOT_ATTR;
 
 #define	dr_getvf32(__dr, __i, __off, __num) \
 	dr_getvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT int dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
+API_EXPORT int dr_getvf32_impl(const dr_t *dr, DR_DEBUG_VARS, float *ff,
     unsigned off, unsigned num) HOT_ATTR;
 #define	dr_setvf32(__dr, __i, __off, __num) \
 	dr_setvf32_impl((__dr), DR_DEBUG(#__dr), (__i), (__off), (__num))
-API_EXPORT void dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff,
+API_EXPORT void dr_setvf32_impl(const dr_t *dr, DR_DEBUG_VARS, float *ff,
     unsigned off, unsigned num) HOT_ATTR;
 
 #define	dr_gets(__dr, __str, __cap) \
 	dr_gets_impl((__dr), DR_DEBUG(#__dr), (__str), (__cap))
-API_EXPORT int dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str,
+API_EXPORT int dr_gets_impl(const dr_t *dr, DR_DEBUG_VARS, char *str,
     size_t cap) HOT_ATTR;
 #define	dr_sets(__dr, __str) \
 	dr_sets_impl((__dr), DR_DEBUG(#__dr), (__str))
-API_EXPORT void dr_sets_impl(dr_t *dr, DR_DEBUG_VARS, char *str) HOT_ATTR;
+API_EXPORT void dr_sets_impl(const dr_t *dr, DR_DEBUG_VARS, char *str) HOT_ATTR;
 
 API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);

@@ -73,7 +73,7 @@ dr_writable(dr_t *dr)
 }
 
 int
-dr_geti_impl(dr_t *dr, DR_DEBUG_VARS)
+dr_geti_impl(const dr_t *dr, DR_DEBUG_VARS)
 {
 	if (dr->type & xplmType_Int)
 		return (XPLMGetDatai(dr->dr));
@@ -93,7 +93,7 @@ dr_geti_impl(dr_t *dr, DR_DEBUG_VARS)
 }
 
 void
-dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i)
+dr_seti_impl(const dr_t *dr, DR_DEBUG_VARS, int i)
 {
 	DR_WRITE_CHECK(VERIFY);
 	if (dr->type & xplmType_Int) {
@@ -112,7 +112,7 @@ dr_seti_impl(dr_t *dr, DR_DEBUG_VARS, int i)
 }
 
 double
-dr_getf_impl(dr_t *dr, DR_DEBUG_VARS)
+dr_getf_impl(const dr_t *dr, DR_DEBUG_VARS)
 {
 	if (dr->type & xplmType_Double)
 		return (XPLMGetDatad(dr->dr));
@@ -132,7 +132,7 @@ dr_getf_impl(dr_t *dr, DR_DEBUG_VARS)
 }
 
 void
-dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f)
+dr_setf_impl(const dr_t *dr, DR_DEBUG_VARS, double f)
 {
 	DR_WRITE_CHECK(VERIFY);
 	ASSERT_MSG(!isnan(f), "%s (%s%d: %s)", dr->name, filename, line,
@@ -152,7 +152,7 @@ dr_setf_impl(dr_t *dr, DR_DEBUG_VARS, double f)
 }
 
 int
-dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
+dr_getvi_impl(const dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 {
 	ASSERT(i != NULL || num == 0);
 
@@ -187,7 +187,7 @@ dr_getvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 }
 
 void
-dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
+dr_setvi_impl(const dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 {
 	ASSERT(i != NULL);
 	DR_WRITE_CHECK(VERIFY);
@@ -214,7 +214,7 @@ dr_setvi_impl(dr_t *dr, DR_DEBUG_VARS, int *i, unsigned off, unsigned num)
 }
 
 int
-dr_getvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
+dr_getvf_impl(const dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
     unsigned num)
 {
 	ASSERT(df != NULL || num == 0);
@@ -258,7 +258,7 @@ dr_getvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
 }
 
 int
-dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
+dr_getvf32_impl(const dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
     unsigned num)
 {
 	ASSERT(ff != NULL || num == 0);
@@ -296,7 +296,7 @@ dr_getvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
 }
 
 void
-dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
+dr_setvf_impl(const dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
     unsigned num)
 {
 	ASSERT(df != NULL);
@@ -330,7 +330,7 @@ dr_setvf_impl(dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
 }
 
 void
-dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
+dr_setvf32_impl(const dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
     unsigned num)
 {
 	ASSERT(ff != NULL);
@@ -358,7 +358,7 @@ dr_setvf32_impl(dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
 }
 
 int
-dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str, size_t cap)
+dr_gets_impl(const dr_t *dr, DR_DEBUG_VARS, char *str, size_t cap)
 {
 	int n;
 
@@ -371,7 +371,7 @@ dr_gets_impl(dr_t *dr, DR_DEBUG_VARS, char *str, size_t cap)
 }
 
 void
-dr_sets_impl(dr_t *dr, DR_DEBUG_VARS, char *str)
+dr_sets_impl(const dr_t *dr, DR_DEBUG_VARS, char *str)
 {
 	DR_TYPE_CHECK(VERIFY, xplmType_Data);
 	DR_WRITE_CHECK(VERIFY);
