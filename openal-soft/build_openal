@@ -15,7 +15,7 @@
 
 # Copyright 2020 Saso Kiselkov. All rights reserved.
 
-FILE="openal-soft-1.19.1.tar.bz2"
+FILE="openal-soft-1.20.1.tar.bz2"
 DIR="${FILE/%.tar.bz2/}"
 
 [ -d "$DIR" ] && rm -rf "$DIR"
@@ -52,16 +52,26 @@ case $(uname) in
 		if [[ "$do_clean" = "1" ]] || [[ "$minimal" =  "1" ]]; then
 			rm -rf "$DIR-win-64"
 		elif ! [ -f "$PRODUCT" ]; then
-			rm -fr "$DIR-win-64" && \
-			tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64" && \
+			rm -fr "$DIR-win-64"
+			tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64"
+			( cd "$DIR-win-64" && ln -s ../../mingw-std-threads \
+			    mingw_stdthreads )
+			( cd "$DIR-win-64" && \
+			    patch -p1 < ../mingw_stdthreads.patch )
 			sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
-			    "$DIR-win-64/XCompile.txt" && \
+			    "$DIR-win-64/XCompile.txt"
 			sed -i ' /dllexport/ d;' \
-			    "$DIR-win-64/CMakeLists.txt" && \
+			    "$DIR-win-64/CMakeLists.txt"
 			do_build "win-64" "-DHOST=x86_64-w64-mingw32 \
 			    -DCMAKE_TOOLCHAIN_FILE=../XCompile.txt \
 			    -DCMAKE_C_FLAGS=-fvisibility=hidden \
-			    $CONFOPTS_COMMON"
+			    -DALSOFT_INSTALL=OFF $CONFOPTS_COMMON"
+			cp -r "$DIR-win-64/include" "$DIR-win-64/build/install"
+			mkdir -p "$DIR-win-64/build/install/lib/pkgconfig"
+			cp -r "$DIR-win-64/build/libOpenAL32.a" \
+			    "$DIR-win-64/build/install/lib"
+			cp -r "$DIR-win-64/build/openal.pc" \
+			    "$DIR-win-64/build/install/lib/pkgconfig"
 		fi
 
 		PRODUCT="$DIR-linux-64/build/install/lib/libopenal.a"
