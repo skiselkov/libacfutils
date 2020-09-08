@@ -31,6 +31,12 @@ while getopts "cdm" opt; do
 	esac
 done
 
+if [[ "$do_clean" != 1 ]]; then
+	git submodule init mingw-std-threads && \
+	git submodule update --merge --recursive && \
+	( cd mingw-std-threads && git checkout master )
+fi
+
 ( cd zlib && ./build_zlib_deps ) && \
     ( cd libiconv && ./build_libiconv_deps ) && \
     ( cd libclipboard && ./build_libclipboard_deps ) && \
