@@ -2328,7 +2328,9 @@ tat2sat(double tat, double mach)
 }
 
 /*
- * Converts static air temperature to ISA deviation.
+ * Converts static air temperature to ISA deviation. This function makes
+ * no assumptions about a tropopause. To implement a tropopause, clamp
+ * the passed `fl' value at the tropopause level (ISA_TP_ALT).
  *
  * @param fl Flight level (barometric altitude at QNE in 100s of ft).
  * @param sat Static air temperature in degrees C.
