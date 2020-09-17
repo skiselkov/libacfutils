@@ -39,8 +39,6 @@ extern "C" {
 void dcr_init(void);
 void dcr_fini(void);
 
-void dcr_add_dr(dr_t *dr);
-
 XPLMCommandRef dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
     XPLMCommandCallback_f cb, bool before, void *refcon, ...)
     PRINTF_ATTR2(1, 5);
@@ -54,25 +52,39 @@ XPLMCommandRef f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb,
 XPLMCommandRef dcr_create_cmd(const char *cmdname, const char *cmddesc,
     XPLMCommandCallback_f cb, bool before, void *refcon);
 
-
-#define	DCR_CREATE_COMMON(type, dr, ...) \
+/* Internal, do not call, use the DCR_CREATE_ macros instead */
+void *dcr_alloc_rdr(void);
+dr_t *dcr_get_dr(void *token);
+void dcr_insert_rdr(void *token);
+#define	DCR_CREATE_COMMON(type, dr_ptr, ...) \
 	do { \
-		dr_create_ ## type((dr), __VA_ARGS__); \
-		dcr_add_dr((dr)); \
+		void *rdr = dcr_alloc_rdr(); \
+		dr_t *dr = dcr_get_dr(rdr); \
+		dr_create_ ## type(dr, __VA_ARGS__); \
+		dcr_insert_rdr(rdr); \
+		if ((dr_ptr) != NULL) \
+			*(dr_t **)(dr_ptr) = dr; \
 	} while (0)
-#define	DCR_CREATE_I(dr, ...)		DCR_CREATE_COMMON(i, dr, __VA_ARGS__)
-#define	DCR_CREATE_F(dr, ...)		DCR_CREATE_COMMON(f, dr, __VA_ARGS__)
-#define	DCR_CREATE_F64(dr, ...)		DCR_CREATE_COMMON(f64, dr, __VA_ARGS__)
-#define	DCR_CREATE_VI(dr, ...)		DCR_CREATE_COMMON(vi, dr, __VA_ARGS__)
-#define	DCR_CREATE_VF(dr, ...)		DCR_CREATE_COMMON(vf, dr, __VA_ARGS__)
-#define	DCR_CREATE_VF64(dr, ...)	DCR_CREATE_COMMON(vf64, dr, __VA_ARGS__)
-#define	DCR_CREATE_VI_AUTOSCALAR(dr, ...) \
-	DCR_CREATE_COMMON(vi_autoscalar, dr, __VA_ARGS__)
-#define	DCR_CREATE_VF_AUTOSCALAR(dr, ...) \
-	DCR_CREATE_COMMON(vf_autoscalar, dr, __VA_ARGS__)
-#define	DCR_CREATE_VF64_AUTOSCALAR(dr, ...) \
-	DCR_CREATE_COMMON(vf64_autoscalar, dr, __VA_ARGS__)
-#define	DCR_CREATE_B(dr, ...)		DCR_CREATE_COMMON(b, dr, __VA_ARGS__)
+#define	DCR_CREATE_I(dr_p, ...)		\
+	DCR_CREATE_COMMON(i, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_F(dr_p, ...)		\
+	DCR_CREATE_COMMON(f, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_F64(dr_p, ...)	\
+	DCR_CREATE_COMMON(f64, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VI(dr_p, ...)	\
+	DCR_CREATE_COMMON(vi, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VF(dr_p, ...)	\
+	DCR_CREATE_COMMON(vf, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VF64(dr_p, ...)	\
+	DCR_CREATE_COMMON(vf64, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VI_AUTOSCALAR(dr_p, ...) \
+	DCR_CREATE_COMMON(vi_autoscalar, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VF_AUTOSCALAR(dr_p, ...) \
+	DCR_CREATE_COMMON(vf_autoscalar, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_VF64_AUTOSCALAR(dr_p, ...) \
+	DCR_CREATE_COMMON(vf64_autoscalar, dr_p, __VA_ARGS__)
+#define	DCR_CREATE_B(dr_p, ...)		\
+	DCR_CREATE_COMMON(b, dr_p, __VA_ARGS__)
 
 #ifdef	__cplusplus
 }

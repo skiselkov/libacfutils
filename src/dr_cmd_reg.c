@@ -36,7 +36,7 @@ typedef struct {
 } reg_cmd_t;
 
 typedef struct {
-	dr_t				*dr;
+	dr_t				dr;
 	avl_node_t			node;
 } reg_dr_t;
 
@@ -44,12 +44,12 @@ static int
 reg_dr_compar(const void *a, const void *b)
 {
 	const reg_dr_t *ra = a, *rb = b;
+	int res = strcmp(ra->dr.name, rb->dr.name);
 
-	if (ra->dr < rb->dr)
+	if (res < 0)
 		return (-1);
-	if (ra->dr > rb->dr)
+	if (res > 0)
 		return (1);
-
 	return (0);
 }
 
@@ -81,7 +81,7 @@ dcr_init(void)
 void
 dcr_fini(void)
 {
-	reg_dr_t *dr;
+	reg_dr_t *rdr;
 	reg_cmd_t *cmd;
 	void *cookie;
 
@@ -90,9 +90,9 @@ dcr_fini(void)
 	inited = B_FALSE;
 
 	cookie = NULL;
-	while ((dr = avl_destroy_nodes(&drs, &cookie)) != NULL) {
-		dr_delete(dr->dr);
-		free(dr);
+	while ((rdr = avl_destroy_nodes(&drs, &cookie)) != NULL) {
+		dr_delete(&rdr->dr);
+		free(rdr);
 	}
 	avl_destroy(&drs);
 
@@ -105,20 +105,34 @@ dcr_fini(void)
 	avl_destroy(&cmds);
 }
 
+void *
+dcr_alloc_rdr(void)
+{
+	ASSERT(inited);
+	return (safe_calloc(1, sizeof (reg_dr_t)));
+}
+
+dr_t *
+dcr_get_dr(void *token)
+{
+	ASSERT(inited);
+	ASSERT(token != NULL);
+	return (&((reg_dr_t *)token)->dr);
+}
+
 void
-dcr_add_dr(dr_t *dr)
+dcr_insert_rdr(void *token)
 {
 	reg_dr_t *rdr;
 	avl_index_t where;
 
 	ASSERT(inited);
-	ASSERT(dr != NULL);
-
-	rdr = safe_calloc(1, sizeof (*rdr));
-	rdr->dr = dr;
+	ASSERT(token != NULL);
+	rdr = token;
+	ASSERT(rdr->dr.dr != NULL);
 
 	VERIFY_MSG(avl_find(&drs, rdr, &where) == NULL,
-	    "Duplicate dataref registration for dr %s (%p)\n", dr->name, dr);
+	    "Duplicate dataref registration for dr %s\n", rdr->dr.name);
 	avl_insert(&drs, rdr, where);
 }
 
