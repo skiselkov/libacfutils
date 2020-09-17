@@ -151,7 +151,8 @@ pid_ctl_update_dV(pid_ctl_t *pid, double e, double V, double d_t)
 		else
 			pid->integ = MIN(pid->integ, e);
 	}
-	FILTER_IN_NAN(pid->deriv, delta_V, d_t, pid->r_d);
+	if (!isnan(delta_V))
+		FILTER_IN_NAN(pid->deriv, delta_V, d_t, pid->r_d);
 	pid->e_prev = e;
 	pid->V_prev = V;
 }
