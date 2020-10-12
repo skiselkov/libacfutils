@@ -94,6 +94,7 @@ case $(uname) in
 			tar xjvf "$FILE" && mv "$DIR" "$DIR-mac-64" && \
 			do_build "mac-64" \
 			    "-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 \
+			    -DCMAKE_CXX_FLAGS=-mmacosx-version-min=10.9 \
 			    -DCMAKE_LDFLAGS=-mmacosx-version-min=10.9 \
 			    $CONFOPTS_COMMON"
 		fi
