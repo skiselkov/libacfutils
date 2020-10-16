@@ -1565,6 +1565,7 @@ fpp_init(geo_pos2_t center, double rot, double dist, const ellip_t *ellip,
 			fpp.inv_xlate = sph_xlate_init(center, rot, B_TRUE);
 	}
 	fpp.dist = dist;
+	fpp.scale = 1;
 
 	return (fpp);
 }
@@ -1632,7 +1633,7 @@ geo2fpp(geo_pos2_t pos, const fpp_t *fpp)
 		res_v = VECT2(pos_v.y, pos_v.z);
 	}
 
-	return (res_v);
+	return (vect2_scmul(res_v, fpp->scale));
 }
 
 /*
@@ -1657,6 +1658,7 @@ fpp2geo(vect2_t pos, const fpp_t *fpp)
 
 	ASSERT(fpp->allow_inv);
 
+	pos = vect2_scmul(pos, 1.0 / fpp->scale);
 	if (isfinite(fpp->dist)) {
 		v = VECT3(-fpp->dist, pos.x, pos.y);
 		o = VECT3(EARTH_MSL + fpp->dist, 0, 0);
@@ -1694,6 +1696,21 @@ fpp2geo(vect2_t pos, const fpp_t *fpp)
 		return (GEO3_TO_GEO2(ecef2geo(r, fpp->ellip)));
 	else
 		return (GEO3_TO_GEO2(ecef2sph(r)));
+}
+
+void
+fpp_set_scale(fpp_t *fpp, double scale)
+{
+	ASSERT(fpp != NULL);
+	ASSERT3F(scale, >, 0);
+	fpp->scale = scale;
+}
+
+double
+fpp_get_scale(const fpp_t *fpp)
+{
+	ASSERT(fpp != NULL);
+	return (fpp->scale);
 }
 
 /*
