@@ -365,7 +365,7 @@ typedef struct {
 	sph_xlate_t	inv_xlate;
 	bool_t		allow_inv;
 	double		dist;
-	double		scale;
+	vect2_t		scale;
 } fpp_t;
 
 API_EXPORT fpp_t fpp_init(geo_pos2_t center, double rot, double dist,
@@ -378,8 +378,8 @@ API_EXPORT fpp_t stereo_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
 API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp) PURE_ATTR;
 API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp) PURE_ATTR;
-API_EXPORT void fpp_set_scale(fpp_t *fpp, double scale);
-API_EXPORT double fpp_get_scale(const fpp_t *fpp);
+API_EXPORT void fpp_set_scale(fpp_t *fpp, vect2_t scale);
+API_EXPORT vect2_t fpp_get_scale(const fpp_t *fpp);
 
 /*
  * Lambert conformal conic projection
