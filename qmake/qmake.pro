@@ -118,20 +118,143 @@ macx-clang {
 	    --cflags")
 }
 
-HEADERS += ../src/*.h ../src/acfutils/*.h ../junzip/junzip.h \
-	../ucpp/nhash.h \
-	../ucpp/tune.h \
-	../ucpp/arith.h \
-	../ucpp/hash.h \
-	../ucpp/mem.h \
-	../ucpp/config.h \
-	../ucpp/ucppi.h
+# Core lib headers & sources
+HEADERS += \
+    ../src/acfutils/acf_file.h \
+    ../src/acfutils/airportdb.h \
+    ../src/acfutils/assert.h \
+    ../src/acfutils/avl.h \
+    ../src/acfutils/avl_impl.h \
+    ../src/acfutils/base64.h \
+    ../src/acfutils/cmd.h \
+    ../src/acfutils/compress.h \
+    ../src/acfutils/conf.h \
+    ../src/acfutils/core.h \
+    ../src/acfutils/crc64.h \
+    ../src/acfutils/delay_line.h \
+    ../src/acfutils/dr_cmd_reg.h \
+    ../src/acfutils/dr.h \
+    ../src/acfutils/dsf.h \
+    ../src/acfutils/except.h \
+    ../src/acfutils/geom.h \
+    ../src/acfutils/helpers.h \
+    ../src/acfutils/hexcode.h \
+    ../src/acfutils/hp_filter.h \
+    ../src/acfutils/htbl.h \
+    ../src/acfutils/icao2cc.h \
+    ../src/acfutils/intl.h \
+    ../src/acfutils/joystick.h \
+    ../src/acfutils/libconfig.h \
+    ../src/acfutils/list.h \
+    ../src/acfutils/list_impl.h \
+    ../src/acfutils/log.h \
+    ../src/acfutils/math_core.h \
+    ../src/acfutils/math.h \
+    ../src/acfutils/mslibs.h \
+    ../src/acfutils/osrand.h \
+    ../src/acfutils/perf.h \
+    ../src/acfutils/pid_ctl.h \
+    ../src/acfutils/pid_ctl_parsing.h \
+    ../src/acfutils/safe_alloc.h \
+    ../src/acfutils/sysmacros.h \
+    ../src/acfutils/thread.h \
+    ../src/acfutils/time.h \
+    ../src/acfutils/tls.h \
+    ../src/acfutils/tumbler.h \
+    ../src/acfutils/types.h \
+    ../src/acfutils/widget.h \
+    ../src/acfutils/wmm.h \
+    ../src/acfutils/worker.h \
+    ../src/acfutils/xpfail.h
 
-SOURCES += ../src/*.c ../junzip/junzip.c \
-	../ucpp/mem.c \
-	../ucpp/nhash.c \
-	../ucpp/cpp.c \
-	../ucpp/lexer.c \
-	../ucpp/assert.c \
-	../ucpp/macro.c \
-	../ucpp/eval.c
+SOURCES += \
+    ../src/acf_file.c \
+    ../src/airportdb.c \
+    ../src/avl.c \
+    ../src/base64.c \
+    ../src/cmd.c \
+    ../src/compress_7z.c \
+    ../src/compress_zip.c \
+    ../src/compress_zlib.c \
+    ../src/conf.c \
+    ../src/core.c \
+    ../src/crc64.c \
+    ../src/dr.c \
+    ../src/dr_cmd_reg.c \
+    ../src/dsf.c \
+    ../src/except.c \
+    ../src/GeomagnetismLibrary.c \
+    ../src/geom.c \
+    ../src/helpers.c \
+    ../src/hexcode.c \
+    ../src/htbl.c \
+    ../src/icao2cc.c \
+    ../src/intl.c \
+    ../src/list.c \
+    ../src/log.c \
+    ../src/math.c \
+    ../src/osrand.c \
+    ../src/perf.c \
+    ../src/time.c \
+    ../src/tumbler.c \
+    ../src/widget.c \
+    ../src/wmm.c \
+    ../src/worker.c
+
+# Dependency headers & sources
+HEADERS +=  \
+    ../junzip/junzip.h \
+    ../ucpp/nhash.h \
+    ../ucpp/tune.h \
+    ../ucpp/arith.h \
+    ../ucpp/hash.h \
+    ../ucpp/mem.h \
+    ../ucpp/config.h \
+    ../ucpp/ucppi.h
+
+SOURCES += \
+    ../junzip/junzip.c \
+    ../ucpp/mem.c \
+    ../ucpp/nhash.c \
+    ../ucpp/cpp.c \
+    ../ucpp/lexer.c \
+    ../ucpp/assert.c \
+    ../ucpp/macro.c \
+    ../ucpp/eval.c
+
+# Optional lib components when building a non-minimal library
+minimal=$$system("test -f ../.minimal-deps; echo $?")
+contains(minimal, 1) {
+	HEADERS += \
+	    ../src/acfutils/chartdb.h \
+	    ../src/acfutils/cursor.h \
+	    ../src/acfutils/glctx.h \
+	    ../src/acfutils/glew.h \
+	    ../src/acfutils/glew_os.h \
+	    ../src/acfutils/glutils.h \
+	    ../src/acfutils/mt_cairo_render.h \
+	    ../src/acfutils/odb.h \
+	    ../src/acfutils/paste.h \
+	    ../src/acfutils/png.h \
+	    ../src/acfutils/riff.h \
+	    ../src/acfutils/shader.h \
+	    ../src/acfutils/wav.h
+
+	SOURCES += \
+	    ../src/chartdb.c \
+	    ../src/chart_prov_autorouter.c \
+	    ../src/chart_prov_common.c \
+	    ../src/chart_prov_faa.c \
+	    ../src/glctx.c \
+	    ../src/glew.c \
+	    ../src/glew_os.c \
+	    ../src/glutils.c \
+	    ../src/minimp3.c \
+	    ../src/mt_cairo_render.c \
+	    ../src/odb.c \
+	    ../src/paste.c \
+	    ../src/png.c \
+	    ../src/riff.c \
+	    ../src/shader.c \
+	    ../src/wav.c
+}

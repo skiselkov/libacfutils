@@ -1,6 +1,7 @@
 .DS_Store
 *.o
 *.d
+.minimal-deps
 qmake/Makefile
 qmake/libacfutils.a
 mac32

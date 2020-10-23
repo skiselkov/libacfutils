@@ -27,14 +27,22 @@ while getopts "cdm" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
-	m) export minimal=1 ;;
+	m)
+		export minimal=1
+		touch .minimal-deps
+		;;
 	esac
 done
+
+if [[ "$minimal" == 0 ]];
+	rm -f .minimal-deps
+fi
 
 if [[ "$do_clean" != 1 ]]; then
 	git submodule init mingw-std-threads && \
 	git submodule update --merge --recursive && \
 	( cd mingw-std-threads && git checkout master )
+	rm .minimal-deps
 fi
 
 ( cd zlib && ./build_zlib_deps ) && \
