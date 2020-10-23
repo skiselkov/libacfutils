@@ -29,8 +29,7 @@
 # Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
-PACKAGES="cairo freetype2 pixman-1 opusfile opus ogg shapelib proj \
-    libcurl openssl libpng16 libxml-2.0 libpcre2-8 zlib glewmx"
+PACKAGES="libcurl openssl libpng16 libxml-2.0 libpcre2-8 zlib"
 STATIC_OPENAL=0
 
 cd "$(dirname "$0")"
@@ -59,6 +58,28 @@ fi
 
 if [ -f "ocr/tesseract-$ARCH/lib/libtesseract.a" ]; then
 	PACKAGES="$PACKAGES tesseract lept"
+fi
+
+if [ -f "cairo/cairo-$ARCH/lib/pkgconfig/cairo.pc" ]; then
+	PACKAGES="$PACKAGES cairo pixman-1"
+fi
+if [ -f "freetype/freetype-$ARCH/lib/pkgconfig/freetype2.pc" ]; then
+	PACKAGES="$PACKAGES freetype2"
+fi
+if [ -f "freetype/freetype-$ARCH/lib/pkgconfig/freetype2.pc" ]; then
+	PACKAGES="$PACKAGES freetype2"
+fi
+if [ -f "opus/libogg-$ARCH/install/lib/pkgconfig/ogg.pc" ]; then
+	PACKAGES="$PACKAGES opusfile opus ogg"
+fi
+if [ -f "shapelib/libshape-$ARCH/lib/pkgconfig/shapelib.pc" ]; then
+	PACKAGES="$PACKAGES shapelib proj"
+fi
+if [ -f "shapelib/libshape-$ARCH/lib/pkgconfig/shapelib.pc" ]; then
+	PACKAGES="$PACKAGES shapelib proj"
+fi
+if [ -f "glew/glew-1.13.0-$ARCH/install/lib64/pkgconfig/glewmx.pc" ]; then
+	PACKAGES="$PACKAGES glewmx"
 fi
 
 # The order of arguments we pass to pkg-config is important. We must list
