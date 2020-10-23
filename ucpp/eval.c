@@ -303,7 +303,7 @@ static ppval pp_strtoconst(char *refc)
 	ppval q;
 	char *c = refc, *d;
 	u_big ru;
-	s_big rs;
+	s_big rs = 0;
 	int sp, dec;
 
 	if (*c == '\'' || *c == 'L') {
