@@ -2568,7 +2568,7 @@ air_reynolds(double vel, double chord, double temp_K)
 double
 lacf_gamma_air(double T)
 {
-	static const vect2_t curve[] = {
+	const vect2_t curve[] = {
 	    VECT2(250,	1.401),
 	    VECT2(300,	1.4),
 	    VECT2(350,	1.398),
@@ -2610,7 +2610,7 @@ lacf_therm_cond_air(double T)
 double
 lacf_therm_cond_aluminum(double T)
 {
-	static const vect2_t curve[] = {
+	const vect2_t curve[] = {
 	    VECT2(C2KELVIN(200), 237),
 	    VECT2(C2KELVIN(273), 236),
 	    VECT2(C2KELVIN(400), 240),
@@ -2626,7 +2626,7 @@ double
 lacf_therm_cond_glass(double T)
 {
 	/* Based on Pyrex 7740, NBS, 1966 */
-	static const vect2_t curve[] = {
+	const vect2_t curve[] = {
 	    VECT2(100, 0.58),
 	    VECT2(200, 0.90),
 	    VECT2(300, 1.11),
