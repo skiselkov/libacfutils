@@ -1444,7 +1444,8 @@ static int handle_line(struct lexer_state *ls, unsigned long flags)
 	char *fname;
 	long l = ls->line;
 	struct token_fifo tf, tf2, *save_tf;
-	size_t nl, j;
+	size_t nl;
+	volatile size_t j;
 	unsigned long z;
 
 	tf.art = tf.nt = 0;
