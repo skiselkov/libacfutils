@@ -34,7 +34,7 @@ while getopts "cdm" opt; do
 	esac
 done
 
-if [[ "$minimal" == 0 ]];
+if [[ "$minimal" == 0 ]]; then
 	rm -f .minimal-deps
 fi
 
