@@ -29,7 +29,7 @@
 # Where 'ARCH' is should be one of: 'win-64', 'win-32', 'linux-64',
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
-PACKAGES="libcurl openssl libpng16 libxml-2.0 libpcre2-8 zlib"
+PACKAGES="libcurl openssl libxml-2.0 libpcre2-8 zlib"
 STATIC_OPENAL=0
 
 cd "$(dirname "$0")"
@@ -59,7 +59,9 @@ fi
 if [ -f "ocr/tesseract-$ARCH/lib/libtesseract.a" ]; then
 	PACKAGES="$PACKAGES tesseract lept"
 fi
-
+if [ -f "libpng/libpng-$ARCH/lib/pkgconfig/libpng16.pc" ]; then
+	PACKAGES="$PACKAGES libpng16"
+fi
 if [ -f "cairo/cairo-$ARCH/lib/pkgconfig/cairo.pc" ]; then
 	PACKAGES="$PACKAGES cairo pixman-1"
 fi
