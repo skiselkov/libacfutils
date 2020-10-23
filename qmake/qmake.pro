@@ -78,8 +78,6 @@ win32 {
 	QMAKE_CFLAGS += -Wno-misleading-indentation
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
-
-	SOURCES += ../src/platform/cursor-win.c
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
@@ -101,16 +99,12 @@ linux-g++-64 {
 	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --static-openal \
 	    --cflags")
 	QMAKE_CFLAGS += -Wno-misleading-indentation
-
-	SOURCES += ../src/platform/cursor-lin.c
 }
 
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
 	DEFINES += LACF_GLEW_USE_NATIVE_TLS=0
 	QMAKE_CFLAGS += -mmacosx-version-min=10.9
-
-	SOURCES += ../src/platform/cursor-mac.m
 }
 
 macx-clang {
@@ -257,4 +251,14 @@ contains(minimal, 1) {
 	    ../src/riff.c \
 	    ../src/shader.c \
 	    ../src/wav.c
+
+	win32 {
+		SOURCES += ../src/platform/cursor-win.c
+	}
+	linux-g++-64 {
+		SOURCES += ../src/platform/cursor-lin.c
+	}
+	macx {
+		SOURCES += ../src/platform/cursor-mac.m
+	}
 }
