@@ -47,8 +47,10 @@ else
 	WHOLE_ARCH_OFF=""
 fi
 if [[ "$1" = "--static-openal" ]]; then
-	PACKAGES="$PACKAGES openal"
-	STATIC_OPENAL=1
+	if [ -f "openal-soft/openal-soft-1.20.1-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
+		PACKAGES="$PACKAGES openal"
+		STATIC_OPENAL=1
+	fi
 	shift
 fi
 if [[ "$1" = "--glfw" ]]; then

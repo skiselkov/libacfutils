@@ -25,6 +25,7 @@ VERSION = 1.0.0
 
 debug = $$[DEBUG]
 noerrors = $$[NOERRORS]
+minimal=$$system("test -f ../.minimal-deps; echo $?")
 
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
@@ -50,8 +51,10 @@ DEFINES += GL_GLEXT_PROTOTYPES
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210 XPLM300 XPLM301
 
-# We want OpenAL soft extensions
-DEFINES += AL_ALEXT_PROTOTYPES
+contains(minimal, 1) {
+	# We want OpenAL soft extensions
+	DEFINES += AL_ALEXT_PROTOTYPES
+}
 
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 DEFINES += GLEW_STATIC
@@ -81,10 +84,16 @@ win32 {
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --static-openal \
-	    --cflags")
+	contains(minimal, 1) {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 \
+		    --static-openal --cflags")
+		LIBS += $$system("../pkg-config-deps win-64 \
+		    --static-openal --libs")
+	} else {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
+		LIBS += $$system("../pkg-config-deps win-64 --libs")
+	}
 
-	LIBS += $$system("../pkg-config-deps win-64 --static-openal --libs")
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
 	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
@@ -96,8 +105,12 @@ linux-g++-64 {
 	# The stack protector forces us to depend on libc,
 	# but we'd prefer to be static.
 	QMAKE_CFLAGS += -fno-stack-protector
-	QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --static-openal \
-	    --cflags")
+	contains(minimal, 1) {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 \
+		    --static-openal --cflags")
+	} else {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps linux-64 --cflags")
+	}
 	QMAKE_CFLAGS += -Wno-misleading-indentation
 }
 
@@ -108,8 +121,12 @@ macx {
 }
 
 macx-clang {
-	QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --static-openal \
-	    --cflags")
+	contains(minimal, 1) {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 \
+		    --static-openal --cflags")
+	} else {
+		QMAKE_CFLAGS += $$system("../pkg-config-deps mac-64 --cflags")
+	}
 }
 
 # Core lib headers & sources
@@ -217,7 +234,6 @@ SOURCES += \
     ../ucpp/eval.c
 
 # Optional lib components when building a non-minimal library
-minimal=$$system("test -f ../.minimal-deps; echo $?")
 contains(minimal, 1) {
 	HEADERS += \
 	    ../src/acfutils/chartdb.h \
