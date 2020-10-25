@@ -30,38 +30,70 @@
 # 'linux-32' 'mac-64' and 'mac-32' (depending on the target being built for).
 
 STATIC_OPENAL=0
+TESSERACT=1
+CAIRO=1
+OPUS=1
+SHAPELIB=1
+GLEWMX=1
+WHOLE_ARCH_ON=""
+WHOLE_ARCH_OFF=""
 
 cd "$(dirname "$0")"
 
 ARCH="$1"
 shift
-if [[ "$1" = "--whole-archive" ]]; then
-	if [[ "$(uname)" != Darwin ]]; then
-		WHOLE_ARCH_ON="-Wl,--whole-archive"
-		WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
-	fi
-	shift
-else
-	WHOLE_ARCH_ON=""
-	WHOLE_ARCH_OFF=""
-fi
 
 # The order of arguments we pass to pkg-config is important. We must list
 # dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
-if [[ "$1" = "--static-openal" ]]; then
-	if [ -f "openal-soft/openal-soft-1.20.1-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
-		PACKAGES="$PACKAGES openal"
-		STATIC_OPENAL=1
-	fi
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	--whole-archive)
+		if [[ "$(uname)" != Darwin ]]; then
+			WHOLE_ARCH_ON="-Wl,--whole-archive"
+			WHOLE_ARCH_OFF="-Wl,--no-whole-archive"
+		fi
+		;;
+	--static-openal)
+		if [ -f "openal-soft/openal-soft-1.20.1-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
+			PACKAGES="$PACKAGES opusfile opus ogg openal"
+			STATIC_OPENAL=1
+		fi
+		;;
+	--glfw)
+		PACKAGES="$PACKAGES glfw3"
+		;;
+	--no-tesseract)
+		TESSERACT=0
+		;;
+	--no-cairo)
+		CAIRO=0
+		;;
+	--no-shapelib)
+		SHAPELIB=0
+		;;
+	--no-glewmx)
+		GLEWMX=0
+		;;
+	*)
+		break
+		;;
+	esac
 	shift
-fi
-if [[ "$1" = "--glfw" ]]; then
-	PACKAGES="$PACKAGES glfw3"
-	shift
-fi
+done
+
 if ! [ -f .minimal-deps ]; then
-	PACKAGES="$PACKAGES tesseract lept cairo pixman-1 freetype2 \
-	    libpng16 opusfile opus ogg shapelib proj glewmx"
+	if [[ "$TESSERACT" -ne 0 ]]; then
+		PACKAGES="$PACKAGES tesseract lept"
+	fi
+	if [[ "$CAIRO" -ne 0 ]]; then
+		PACKAGES="$PACKAGES cairo pixman-1 freetype2 libpng16"
+	fi
+	if [[ "$SHAPELIB" -ne 0 ]]; then
+		PACKAGES="$PACKAGES shapelib proj"
+	fi
+	if [[ "$GLEWMX" -ne 0 ]]; then
+		PACKAGES="$PACKAGES glewmx"
+	fi
 fi
 
 PACKAGES="$PACKAGES libcurl openssl libxml-2.0 libpcre2-8 zlib"
