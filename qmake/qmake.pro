@@ -168,6 +168,7 @@ HEADERS += \
     ../src/acfutils/pid_ctl_parsing.h \
     ../src/acfutils/safe_alloc.h \
     ../src/acfutils/sysmacros.h \
+    ../src/acfutils/taskq.h \
     ../src/acfutils/thread.h \
     ../src/acfutils/time.h \
     ../src/acfutils/tls.h \
@@ -206,6 +207,7 @@ SOURCES += \
     ../src/math.c \
     ../src/osrand.c \
     ../src/perf.c \
+    ../src/taskq.c \
     ../src/time.c \
     ../src/tumbler.c \
     ../src/widget.c \
