@@ -678,7 +678,7 @@ rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
 		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-		/* Buffer specification will take place in upload_surface */
+		/* Buffer specification will take place in rs_upload */
 	}
 }
 
@@ -713,7 +713,7 @@ rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs)
  * upload is performed synchronously.
  */
 static void
-upload_surface(const mt_cairo_render_t *mtcr, render_surf_t *rs)
+rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	void *src, *dest;
 	size_t sz;
@@ -757,6 +757,34 @@ upload_surface(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 }
 
 /*
+ * After an MT-uploader async-uploads the new surface data, we still
+ * need to apply it to the texture itself. Otherwise, it will only
+ * sit in the orphaned buffer. This must be done from the thread
+ * which plans to use the texture in actual rendering (otherwise the
+ * drivers spaz out).
+ * Careful, any texture binding point used previously is unbound by
+ * this function. This is to facilitate interop with
+ * mt_cairo_render_get_tex to avoid leaving bound textures lying
+ * around.
+ */
+static void
+rs_tex_apply(const mt_cairo_render_t *mtcr, render_surf_t *rs)
+{
+	ASSERT(mtcr != NULL);
+	ASSERT(rs != NULL);
+
+	if (!rs->texed) {
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
+		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		rs->texed = B_TRUE;
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+}
+
+/*
  * Binds the current render_surf_t's texture to the current OpenGL context.
  * This is called from the foreground renderer to start drawing a finished
  * render frame.
@@ -780,21 +808,16 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	if (mtcr->mtul == NULL) {
 		if (rs->chg) {
 			rs_tex_alloc(mtcr, rs);
-			upload_surface(mtcr, rs);
+			rs_upload(mtcr, rs);
 			rs->chg = B_FALSE;
 		}
 	} else {
 		ASSERT0(rs->chg);
 	}
+	/* NOW we can safely update the texture */
+	rs_tex_apply(mtcr, rs);
+	/* We must bind the texture AFTER rs_tex_apply, since that unbinds it */
 	glBindTexture(GL_TEXTURE_2D, rs->tex);
-	if (!rs->texed) {
-		/* NOW we can safely update the texture */
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
-		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-		rs->texed = B_TRUE;
-	}
 
 	return (B_TRUE);
 }
@@ -1061,13 +1084,14 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 
 	if (mtcr->cur_rs != -1) {
 		render_surf_t *rs = &mtcr->rs[mtcr->cur_rs];
-		/* Upload the texture if it has changed */
 
+		/* Upload & apply the texture if it has changed */
 		if (rs->chg) {
 			rs_tex_alloc(mtcr, rs);
-			upload_surface(mtcr, rs);
+			rs_upload(mtcr, rs);
 			rs->chg = B_FALSE;
 		}
+		rs_tex_apply(mtcr, rs);
 		tex = rs->tex;
 	} else {
 		/* No texture ready yet */
@@ -1228,7 +1252,7 @@ mtul_upload(mt_cairo_render_t *mtcr)
 		rs = &mtcr->rs[!mtcr->cur_rs];
 	if (rs->chg) {
 		rs_tex_alloc(mtcr, rs);
-		upload_surface(mtcr, rs);
+		rs_upload(mtcr, rs);
 		rs->chg = B_FALSE;
 		if (rs == &mtcr->rs[0]) {
 			mtcr->cur_rs = 0;
