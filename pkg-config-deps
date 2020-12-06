@@ -151,10 +151,6 @@ elif [[ "$1" = "--libs" ]]; then
 		if [[ "$STATIC_OPENAL" = 1 ]]; then
 			OPENAL_EXTRA="-lstdc++"
 		fi
-	elif [[ "$ARCH" = "linux-64" ]]; then
-		if [[ "$STATIC_OPENAL" = 1 ]]; then
-			OPENAL_EXTRA="-lsndio"
-		fi
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
 	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv -lcharset"
