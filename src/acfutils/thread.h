@@ -153,8 +153,7 @@ extern "C" {
 #endif	/* APL */
 
 #define	thread_create(thrp, proc, arg) \
-	(pthread_create(thrp, NULL, (void *(*)(void *))proc, \
-	    arg) == 0)
+	(pthread_create(thrp, NULL, (void *(*)(void *))(void *)proc, arg) == 0)
 #define	thread_join(thrp)	pthread_join(*(thrp), NULL)
 
 #if	LIN
