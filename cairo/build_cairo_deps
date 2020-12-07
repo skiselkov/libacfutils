@@ -60,7 +60,7 @@ case `uname` in
 		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -g\\ -m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON" \
+		CFLAGS="$CAIRO_CFLAGS_COMMON" LIBS="-fstack-protector" \
 		    build_dep "win-64" "$CAIRO_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES"
