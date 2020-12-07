@@ -42,10 +42,11 @@
 #include <unistd.h>
 #endif	/* LIN */
 
-#include <acfutils/assert.h>
-#include <acfutils/helpers.h>
-#include <acfutils/time.h>
-#include <acfutils/tls.h>
+#include "assert.h"
+#include "helpers.h"
+#include "time.h"
+#include "tls.h"
+#include "safe_alloc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,6 +124,11 @@ extern "C" {
  *		mutex_exit(&my_lock);			-- release the lock
  */
 
+typedef struct {
+	void	(*proc)(void *);
+	void	*arg;
+} lacf_thread_info_t;
+
 #if	APL || LIN
 
 #define	thread_t		pthread_t
@@ -152,8 +158,29 @@ extern "C" {
 #define	VERIFY_MUTEX_NOT_HELD(mtx)	(void)1
 #endif	/* APL */
 
-#define	thread_create(thrp, proc, arg) \
-	(pthread_create(thrp, NULL, (void *(*)(void *))(void *)proc, arg) == 0)
+static void *_lacf_thread_start_routine(void *arg) UNUSED_ATTR;
+static void *
+_lacf_thread_start_routine(void *arg)
+{
+	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
+	ti->proc(ti->arg);
+	free(ti);
+	return (NULL);
+}
+
+static inline bool_t
+thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
+{
+	lacf_thread_info_t *ti =
+	    (lacf_thread_info_t *)safe_calloc(1, sizeof (*ti));
+	ti->proc = proc;
+	ti->arg = arg;
+	if (pthread_create(thrp, NULL, _lacf_thread_start_routine, ti) == 0)
+		return (B_TRUE);
+	free(ti);
+	return (B_FALSE);
+}
+
 #define	thread_join(thrp)	pthread_join(*(thrp), NULL)
 
 #if	LIN
@@ -210,9 +237,31 @@ typedef struct {
 #define	VERIFY_MUTEX_HELD(mtx)		(void)1
 #define	VERIFY_MUTEX_NOT_HELD(mtx)	(void)1
 
-#define	thread_create(thrp, proc, arg) \
-	((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, \
-	    0, NULL)) != NULL)
+static DWORD _lacf_thread_start_routine(void *arg) UNUSED_ATTR;
+static DWORD
+_lacf_thread_start_routine(void *arg)
+{
+	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
+	ti->proc(ti->arg);
+	free(ti);
+	return (0);
+}
+
+static inline bool_t
+thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
+{
+	lacf_thread_info_t *ti =
+	    (lacf_thread_info_t *)safe_calloc(1, sizeof (*ti));
+	ti->proc = proc;
+	ti->arg = arg;
+	if ((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg,
+	    0, NULL)) != NULL) {
+		return (B_TRUE);
+	}
+	free(ti);
+	return (B_FALSE);
+}
+
 #define	thread_join(thrp) \
 	VERIFY3S(WaitForSingleObject(*(thrp), INFINITE), ==, WAIT_OBJECT_0)
 #define	thread_set_name(name)		UNUSED(name)
