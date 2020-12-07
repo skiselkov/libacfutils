@@ -254,7 +254,7 @@ thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
 	    (lacf_thread_info_t *)safe_calloc(1, sizeof (*ti));
 	ti->proc = proc;
 	ti->arg = arg;
-	if ((*(thrp) = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg,
+	if ((*(thrp) = CreateThread(NULL, 0, _lacf_thread_start_routine, ti,
 	    0, NULL)) != NULL) {
 		return (B_TRUE);
 	}
