@@ -237,11 +237,15 @@ recalc_sleep_time(mt_cairo_render_t *mtcr)
  * making sure its output canvas looks right.
  */
 static void
-worker(mt_cairo_render_t *mtcr)
+worker(void *arg)
 {
+	mt_cairo_render_t *mtcr;
 	char name[32];
 	char shortname[7];
 	uint64_t next_time = 0;
+
+	ASSERT(arg != NULL);
+	mtcr = arg;
 
 	strlcpy(shortname, mtcr->init_filename, sizeof (shortname));
 	snprintf(name, sizeof (name), "mtcr:%s:%d", shortname, mtcr->init_line);
