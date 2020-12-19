@@ -26,6 +26,7 @@
 #ifndef	_ACFUTILS_HTBL_H_
 #define	_ACFUTILS_HTBL_H_
 
+#include <stdlib.h>
 #include <stdint.h>
 
 #include <acfutils/list.h>
@@ -79,6 +80,14 @@ void htbl_foreach(const htbl_t *htbl,
     void (*func)(const void *, void *, void *), void *arg);
 
 char *htbl_dump(const htbl_t *htbl, bool_t printable_keys);
+
+static void htbl_free(void *obj, void *unused) UNUSED_ATTR;
+static void
+htbl_free(void *obj, void *unused)
+{
+	UNUSED(unused);
+	free(obj);
+}
 
 #ifdef	__cplusplus
 }
