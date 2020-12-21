@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [[ "$(lsb_release -a 2> /dev/null | awk '/Distributor ID:/{print $3}')" \
+    != "Ubuntu" ]]; then
+	echo "This machine doesn't appear to be running Ubuntu." >&2
+	exit 1
+fi
+
+UBUNTU_RELEASE="$(lsb_release -a 2> /dev/null | awk '/Release:/{print $2}')"
+UBUNTU_MAJOR="$(echo "$UBUNTU_RELEASE" | cut -d . -f 1)"
+
+PACKAGES="build-essential cmake pkg-config automake autoconf libtool unzip"
+
+if [ "$UBUNTU_MAJOR" -lt 14 ]; then
+	echo "Your Ubuntu release ($UBUNTU_RELEASE) is too old." \
+	    "libacfutils requires at least Ubuntu 14.04." >&2
+	exit 1
+elif [ "$UBUNTU_MAJOR" -eq 14 ]; then
+	PACKAGES="$PACKAGES qt4-qmake qt4-dev-tools"
+else
+	PACKAGES="$PACKAGES qt5-qmake qt5-default"
+fi
+
+MINIMAL=0
+while getopts "m" o; do
+	case "${o}" in
+	m)
+		MINIMAL=1
+		;;
+	*)
+		echo "Unknown option $o." >&2
+		exit 1
+		;;
+	esac
+done
+
+if [ "$MINIMAL" -eq 0 ]; then
+	PACKAGES="$PACKAGES libxcursor-dev libglu1-mesa-dev \
+	    libpulse-dev libasound2-dev \
+	    mingw-w64-x86-64-dev gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
+fi
+
+echo sudo apt-get install $PACKAGES
