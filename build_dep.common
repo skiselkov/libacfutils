@@ -56,7 +56,9 @@ function build_dep() {
 		LDFLAGS_ADDTL="-mmacosx-version-min=10.9"
 		;;
 	esac
-
+	if [ -n "$BUILD_SINGLE_THREADED" ]; then
+		NCPUS=1
+	fi
 	export PKG_CONFIG_PATH=$(echo "$PKG_CONFIG_PATH_IN" | \
 	    sed "s/{PLATFORM}/$PLATFORM/g")
 
