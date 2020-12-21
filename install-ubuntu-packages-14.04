@@ -1,9 +1,16 @@
 #!/bin/sh
 
-# For Ubuntu 14.04, also upgrade to cmake 3.x from the following PPA:
-# sudo add-apt-repository ppa:george-edison55/cmake-3.x
-# sudo apt-get update
-# sudo apt-get install cmake
+cat << EOF
+For Ubuntu 14.04, also upgrade to cmake 3.x from the following PPA:
+
+sudo add-apt-repository ppa:george-edison55/cmake-3.x
+sudo apt-get update
+sudo apt-get install cmake
+
+Press [Enter] to continue...
+EOF
+
+read REPLY
 
 sudo apt-get install \
     build-essential \
