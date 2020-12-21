@@ -40,4 +40,4 @@ if [ "$MINIMAL" -eq 0 ]; then
 	    mingw-w64-x86-64-dev gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
 fi
 
-echo sudo apt-get install $PACKAGES
+sudo apt-get install $PACKAGES
