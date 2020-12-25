@@ -39,8 +39,6 @@ static bool_t dre_plug_lookup_done = B_FALSE;
 static XPLMPluginID dre_plug = XPLM_NO_PLUGIN_ID;	/* DataRefEditor */
 static XPLMPluginID drt_plug = XPLM_NO_PLUGIN_ID;	/* DataRefTool */
 
-dr_t lacf_uninit_dataref = { .value = NULL };
-
 bool_t
 dr_find(dr_t *dr, const char *fmt, ...)
 {
@@ -376,6 +374,23 @@ dr_sets_impl(const dr_t *dr, DR_DEBUG_VARS, char *str)
 	DR_TYPE_CHECK(VERIFY, xplmType_Data);
 	DR_WRITE_CHECK(VERIFY);
 	XPLMSetDatab(dr->dr, str, 0, strlen(str));
+}
+
+int
+dr_getbytes_impl(const dr_t *dr, DR_DEBUG_VARS, void *data, unsigned off,
+    unsigned num)
+{
+	DR_TYPE_CHECK(VERIFY, xplmType_Data);
+	return (XPLMGetDatab(dr->dr, data, off, num));
+}
+
+void
+dr_setbytes_impl(const dr_t *dr, DR_DEBUG_VARS, void *data, unsigned off,
+    unsigned num)
+{
+	DR_TYPE_CHECK(VERIFY, xplmType_Data);
+	DR_WRITE_CHECK(VERIFY);
+	XPLMSetDatab(dr->dr, data, off, num);
 }
 
 static int
