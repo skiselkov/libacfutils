@@ -77,7 +77,7 @@ draw_tumblers(const tumbler_t *tumblers, size_t n_tumblers,
 		 * will put the text it wants us to draw in here.
 		 */
 		char out_str[TUMBLER_LINES][TUMBLER_CAP];
-		int n = tumbler_solve(tape->tumblers, i, display_value,
+		int n = tumbler_solve(tumblers, i, display_value,
 		    i > 0 ? fract[i - 1] : 0, out_str, &fract[i]);
 		/*
 		 * If no digits were emitted, we can stop.
