@@ -56,16 +56,16 @@ static tumbler_t ias_tumblers[NUM_IAS_TUMBLERS] = {
  * @param display_value	The actual numerical value of the rolling display.
  * @param display_x	The X position of the right-most column of the display.
  * @param display_y	The Y position of the center of the display.
+ *
+ * Please note that COLUMN_WIDTH and LINE_HEIGHT below aren't defined.
+ * They are meant to represent the concept of moving between columns
+ * and line heights in the displays. You should adjust those to match
+ * your particular needs.
  */
 void
 draw_tumblers(const tumbler_t *tumblers, size_t n_tumblers,
     double display_value, double display_x, double display_y)
 {
-	/*
-	 * This is the X offset of where we start placing the digits,
-	 * from RIGHT-to-LEFT
-	 */
-	double draw_x = 0;
 	/*
 	 * This is used for storing fractional line offsets between columns.
 	 */
@@ -95,7 +95,7 @@ draw_tumblers(const tumbler_t *tumblers, size_t n_tumblers,
 			/*
 			 * Center horizontally on the column.
 			 */
-			text_x = column_x - te.width / 2;
+			text_x = display_x - te.width / 2;
 			/*
 			 * We apply a fractional line height offset (fract[i]),
 			 * and then draw lines one-by-one (j) on top of each
@@ -107,14 +107,17 @@ draw_tumblers(const tumbler_t *tumblers, size_t n_tumblers,
 			 * rounding for all lines is the same.
 			 * We also center vertically on the line.
 			 */
-			text_y = (fract[i] - j) * round(1.5 * LINE_HEIGHT) -
+			text_y = display_y +
+			    (fract[i] - j) * round(1.5 * LINE_HEIGHT) -
 			    te.height / 2 - te.y_bearing;
 			cairo_move_to(cr, text_x, text_y);
 			cairo_show_text(cr, out_str[j]);
 		}
 		/*
-		 * Draw the next column to the left.
+		 * Draw the next column to the left. If your columns are
+		 * of unequal width, you will want to use a more complex
+		 * algorithm.
 		 */
-		draw_x -= COLUMN_WIDTH;
+		display_x -= COLUMN_WIDTH;
 	}
 }
