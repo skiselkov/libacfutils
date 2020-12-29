@@ -108,8 +108,8 @@
  * *) '1' records identify airports. See parse_apt_dat_1_line.
  * *) '21' records identify runway-related lighting fixtures (PAPIs/VASIs).
  *	See parse_apt_dat_21_line.
- * *) '50' through '56' records identify frequency information.
- *	See parse_apt_dat_freq_line.
+ * *) '50' through '56' and '1050' through '1056' records identify frequency
+ *	information. See parse_apt_dat_freq_line.
  * *) '100' records identify runways. See parse_apt_dat_100_line.
  * *) '1302' records identify airport meta-information, such as TA, TL,
  *	reference point location, etc.
@@ -159,7 +159,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		9
+#define	ARPTDB_CACHE_VERSION		10
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -855,7 +855,7 @@ validate_rwy_end(const runway_end_t *re, char error_descr[128])
 }
 
 static void
-parse_apt_dat_freq_line(airport_t *arpt, char *line)
+parse_apt_dat_freq_line(airport_t *arpt, char *line, bool_t use833)
 {
 	char **comps;
 	size_t ncomps;
@@ -875,8 +875,13 @@ parse_apt_dat_freq_line(airport_t *arpt, char *line)
 	if (ncomps < 3)
 		goto out;
 	freq = calloc(1, sizeof (*freq));
-	freq->type = atoi(comps[0]) - 50;
-	freq->freq = ceil((atoll(comps[1]) * 10000) / 25000.0) * 25000.0;
+	/*
+	 * When `use833' is provided, the line types start at 1050 instead
+	 * of 50. Also, the frequencies are specified in thousands of Hertz,
+	 * not tens of thousands.
+	 */
+	freq->type = atoi(comps[0]) - (use833 ? 1050 : 50);
+	freq->freq = atoll(comps[1]) * (use833 ? 1000 : 10000);
 	for (size_t i = 2; i < ncomps; i++) {
 		strtoupper(comps[i]);
 		/*
@@ -1040,39 +1045,43 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 	}
 
 	while (!feof(apt_dat_f)) {
+		int row_code;
+
 		line_num++;
 		if (getline(&line, &linecap, apt_dat_f) <= 0)
 			continue;
 		strip_space(line);
 
+		if (sscanf(line, "%d", &row_code) != 1)
+			continue;
 		/*
 		 * Finish the current airport on an empty line or a new
 		 * airport line.
 		 */
-		if (strlen(line) == 0 || strstr(line, "1 ") == line) {
+		if (strlen(line) == 0 || row_code == 1) {
 			if (arpt != NULL)
 				read_apt_dat_insert(db, arpt);
 			arpt = NULL;
 		}
-
-		if (strstr(line, "1 ") == line)
+		if (row_code == 1)
 			arpt = parse_apt_dat_1_line(db, line, cd_p);
 		if (arpt == NULL)
 			continue;
 
-		if (strncmp(line, "100 ", 4) == 0) {
-			parse_apt_dat_100_line(arpt, line, db->ifr_only);
-		} else if (strncmp(line, "50 ", 3) == 0 ||
-		    strncmp(line, "51 ", 3) == 0 ||
-		    strncmp(line, "52 ", 3) == 0 ||
-		    strncmp(line, "53 ", 3) == 0 ||
-		    strncmp(line, "54 ", 3) == 0 ||
-		    strncmp(line, "55 ", 3) == 0 ||
-		    strncmp(line, "56 ", 3) == 0) {
-			parse_apt_dat_freq_line(arpt, line);
-		} else if (strncmp(line, "21 ", 3) == 0) {
+		switch (row_code) {
+		case 21:
 			parse_apt_dat_21_line(arpt, line);
-		} else if (strncmp(line, "1302 ", 5) == 0) {
+			break;
+		case 50 ... 56:
+			parse_apt_dat_freq_line(arpt, line, B_FALSE);
+			break;
+		case 100:
+			parse_apt_dat_100_line(arpt, line, db->ifr_only);
+			break;
+		case 1050 ... 1056:
+			parse_apt_dat_freq_line(arpt, line, B_TRUE);
+			break;
+		case 1302:
 			comps = strsplit(line, " ", B_TRUE, &ncomps);
 			/*
 			 * '1302' lines are meta-info lines introduced since
@@ -1118,6 +1127,7 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			}
 
 			free_strlist(comps, ncomps);
+			break;
 		}
 	}
 
@@ -1185,8 +1195,12 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	}
 	for (const freq_info_t *freq = list_head(&arpt->freqs); freq != NULL;
 	    freq = list_next(&arpt->freqs, freq)) {
-		fprintf(fp, "%d %ld %s\n", freq->type + 50,
-		    (unsigned long)floor(freq->freq / 10000), freq->name);
+		/*
+		 * We always emit the frequency info using the new
+		 * 8.33kHz-aware row code format.
+		 */
+		fprintf(fp, "%d %ld %s\n", freq->type + 1050,
+		    (unsigned long)floor(freq->freq / 1000), freq->name);
 	}
 	fprintf(fp, "\n");
 	fclose(fp);
