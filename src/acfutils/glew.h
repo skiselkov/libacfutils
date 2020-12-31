@@ -129,7 +129,7 @@ glewGetContext(void)
 
 #else	/* !APL && !LIN */
 
-API_EXPORT DWORD lacf_glew_ctx_key;
+API_EXPORT_DATA DWORD lacf_glew_ctx_key;
 
 API_EXPORT void lacf_glew_dllmain_hook(DWORD reason);
 API_EXPORT void lacf_glew_init(void);

@@ -49,6 +49,7 @@ QMAKE_CFLAGS += -Wunused-result
 # _USE_MATH_DEFINES - sometimes helps getting M_PI defined from system headers
 DEFINES += _GNU_SOURCE DEBUG _FILE_OFFSET_BITS=64
 DEFINES += GL_GLEXT_PROTOTYPES
+DEFINES += ACFUTILS_BUILD
 
 # Latest X-Plane APIs. No legacy support needed.
 DEFINES += XPLM200 XPLM210 XPLM300 XPLM301

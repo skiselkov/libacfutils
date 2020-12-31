@@ -45,7 +45,11 @@ extern "C" {
 
 #if	(IBM || defined(_MSC_VER)) && ACFUTILS_DLL
 #define	API_EXPORT	__declspec(dllexport)
+#ifdef	ACFUTILS_BUILD
 #define	API_EXPORT_DATA	__declspec(dllexport)
+#else
+#define	API_EXPORT_DATA	__declspec(dllimport)
+#endif
 #else	/* !IBM && !defined(_MSC_VER) */
 #define	API_EXPORT
 #define	API_EXPORT_DATA	extern
@@ -76,7 +80,7 @@ extern "C" {
 # endif		/* !defined(inline) */
 #endif	/* __STDC_VERSION__ < 199901L */
 
-API_EXPORT extern const char *libacfutils_version;
+API_EXPORT_DATA const char *libacfutils_version;
 
 API_EXPORT void *lacf_malloc(size_t n);
 #define	LACF_DESTROY(ptr) \
