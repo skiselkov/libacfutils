@@ -113,7 +113,7 @@ Linux)
 	)
 	LIBS_WIN64=(
 		"qmake/win64/acfutils${DLL_VERSION}.dll"
-		"qmake/win64/acfutils${DLL_VERSION}.lib"
+		"qmake/win64/libacfutils${DLL_VERSION}.a"
 	)
 	LIBS_MINGW64=(
 		'qmake/win64/libacfutils.a'
