@@ -58,7 +58,7 @@ done
 
 if [[ "$LINUXONLY" == 0 ]]; then
 	make distclean > /dev/null
-	qmake -set DLL $DLL
+	qmake -set ACFUTILS_DLL $DLL
 	qmake -set DEBUG $DEBUG
 	qmake -set WHOLE_ARCHIVE $WHOLE_ARCHIVE
 	qmake -set NOERRORS $NOERRORS
@@ -68,11 +68,13 @@ if [[ "$LINUXONLY" == 0 ]]; then
 		exit
 	fi
 	if [[ "$DLL" = 1 ]]; then
-		mv "$RELEASE/libacfutils1.a" "win64/libacfutils.a" || exit 1
-		mv "$RELEASE/acfutils1.dll" "win64/acfutils.dll" || exit 1
+		VERSION="$(git describe --abbrev=0 --tags | \
+		    sed 's/[[:alpha:].]//g; s/^0//g')"
+		mv "$RELEASE/acfutils$VERSION.dll" "win64" || exit 1
 		x86_64-w64-mingw32-dlltool -d acfutils.def \
-		    --dllname acfutils.dll --output-lib win64/acfutils.lib \
-		    "win64/acfutils.dll" || exit 1
+		    --dllname "acfutils${VERSION}.dll" \
+		    --output-lib "win64/acfutils${VERSION}.lib" \
+		    "win64/acfutils${VERSION}.dll" || exit 1
 	else
 		mv "$RELEASE/libacfutils.a" "win64/libacfutils.a" || exit 1
 	fi

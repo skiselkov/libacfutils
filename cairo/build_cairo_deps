@@ -36,7 +36,7 @@ CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --enable-egl=no --enable-glx=no --enable-wgl=no --enable-script=no \
     --enable-fc=no --enable-ps=no --enable-pdf=no --enable-svg=no \
     --enable-full-testing=no --enable-interpreter=no \
-    --enable-static-testprogs=yes"
+    --enable-static-testprogs=yes --enable-gobject=no --enable-interpreter=no"
 
 export PKG_CONFIG_PATH_IN="$(pwd)/../freetype/freetype-{PLATFORM}/lib/pkgconfig:\
 $(pwd)/../zlib/zlib-{PLATFORM}/lib/pkgconfig:\
@@ -60,7 +60,7 @@ case `uname` in
 		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -g\\ -m64" LDFLAGS="-m64" \
 		    build_dep "linux-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES" && \
-		CFLAGS="$CAIRO_CFLAGS_COMMON" LIBS="-fstack-protector" \
+		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -m64" LIBS="-fstack-protector" \
 		    build_dep "win-64" "$CAIRO_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" "$CAIRO" \
 		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES"

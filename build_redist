@@ -18,7 +18,7 @@
 OUTPUT=libacfutils-redist
 MINGWROOT="/usr/x86_64-w64-mingw32"
 
-ALL_LIBS=(
+STATIC_LIBS=(
 	'cairo/cairo-%PLATFORM%/lib/libcairo.a'
 	'freetype/freetype-%PLATFORM%/lib/libfreetype.a'
 	'cairo/pixman-%PLATFORM%/lib/libpixman-1.a'
@@ -65,20 +65,28 @@ function install_platform() {
 	SRCS="$4"
 
 	case "$PLATFORM" in
-	win64)	LONG_PLATFORM="win-64" ;;
-	lin64)	LONG_PLATFORM="linux-64" ;;
-	mac64)	LONG_PLATFORM="mac-64" ;;
+	mingw64|win64)
+		LONG_PLATFORM="win-64"
+		;;
+	lin64)
+		LONG_PLATFORM="linux-64"
+		;;
+	mac64)
+		LONG_PLATFORM="mac-64"
+		;;
 	esac
 
 	mkdir -p "$OUTPUT/$PLATFORM/include" "$OUTPUT/$PLATFORM/lib"
 
-	cp -r ${HDRS} "$OUTPUT/$PLATFORM"
+	cp -r ${HDRS} "$OUTPUT/$PLATFORM/include"
 	cp -r ${LIBS} "$OUTPUT/$PLATFORM/lib"
-	for FILE in ${ALL_LIBS[*]}; do
-		PLATFORM_FILE="$(echo "$FILE" | \
-		    sed "s/%PLATFORM%/$LONG_PLATFORM/g")"
-		cp "$PLATFORM_FILE" "$OUTPUT/$PLATFORM/lib"
-	done
+	if [ -z "$INSTALL_SHARED" ]; then
+		for FILE in ${STATIC_LIBS[*]}; do
+			PLATFORM_FILE="$(echo "$FILE" | \
+			    sed "s/%PLATFORM%/$LONG_PLATFORM/g")"
+			cp "$PLATFORM_FILE" "$OUTPUT/$PLATFORM/lib"
+		done
+	fi
 	if [ -n "$SRCS" ]; then
 		mkdir -p "$OUTPUT/$PLATFORM/src"
 		cp -r ${SRCS} "$OUTPUT/$PLATFORM/src"
@@ -93,47 +101,47 @@ cp README-redist.md "$OUTPUT/README.md"
 
 case $(uname) in
 Linux)
-	SRCS_WIN64=(
-		'msvc_compat/lacf_msvc_compat.cpp'
-	)
+	DLL_VERSION="$(git describe --abbrev=0 --tags | \
+	    sed 's/[[:alpha:].]//g; s/^0//g')"
 	HDRS_WIN64=(
-		'cairo/cairo-win-64/include'
-		'freetype/freetype-win-64/include'
-		glew/glew-*-win-64/install/include
+		cairo/cairo-win-64/include/cairo/*
+		freetype/freetype-win-64/include/freetype2/*
+		glew/glew-*-win-64/install/include/GL
 	)
 	LIBS_WIN64=(
+		"qmake/win64/acfutils${DLL_VERSION}.dll"
+		"qmake/win64/acfutils${DLL_VERSION}.lib"
+	)
+	LIBS_MINGW64=(
 		'qmake/win64/libacfutils.a'
 		glew/glew-*-win-64/install/lib/libglew32mx.a
-		"/tmp/libmingwex.a"
-		"/tmp/libmingw32.a"
 		$(x86_64-w64-mingw32-gcc -print-libgcc-file-name)
 		$(x86_64-w64-mingw32-gcc -print-file-name=libgcc_eh.a)
 	)
 	HDRS_LIN64=(
-		'cairo/cairo-linux-64/include'
-		'freetype/freetype-linux-64/include'
-		glew/glew-*-linux-64/install/include
+		cairo/cairo-linux-64/include/cairo/*
+		freetype/freetype-linux-64/include/freetype2/*
+		glew/glew-*-linux-64/install/include/GL
 	)
 	LIBS_LIN64=(
 		glew/glew-*-linux-64/install/lib64/libGLEWmx.a
 		'qmake/lin64/libacfutils.a'
 	)
 
-	repack_lib "$MINGWROOT/lib/libmingwex.a" "/tmp/libmingwex.a" \
-	    lib64_libmingwex_a-mingw_getsp.o
-	repack_lib "$MINGWROOT/lib/libmingw32.a" "/tmp/libmingw32.a" \
-	     lib64_libmingw32_a-atonexit.o
-
-	install_platform "win64" "${HDRS_WIN64[*]}" "${LIBS_WIN64[*]}" \
-	    "${SRCS_WIN64[*]}"
+	[ -f "qmake/win64/acfutils${DLL_VERSION}.dll" ] && \
+	    INSTALL_SHARED=1 install_platform "win64" "${HDRS_WIN64[*]}" \
+	    "${LIBS_WIN64[*]}"
+	[ -f "qmake/win64/libacfutils.a" ] && \
+	    install_platform "mingw64" "${HDRS_WIN64[*]}" \
+	    "${LIBS_MINGW64[*]}"
 	install_platform "lin64" "${HDRS_LIN64[*]}" "${LIBS_LIN64[*]}"
 
 	;;
 Darwin)
 	HDRS_MAC64=(
-		cairo/cairo-mac-64/include
-		freetype/freetype-mac-64/include
-		glew/glew-*-mac-64/install/include
+		cairo/cairo-mac-64/include/cairo/*
+		freetype/freetype-mac-64/include/freetype2/*
+		glew/glew-*-mac-64/install/include/GL
 	)
 	LIBS_MAC64=(
 		glew/glew-*-mac-64/install/lib/libGLEWmx.a

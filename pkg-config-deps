@@ -37,6 +37,7 @@ SHAPELIB=1
 GLEWMX=1
 WHOLE_ARCH_ON=""
 WHOLE_ARCH_OFF=""
+LINK_ACFUTILS=1
 
 cd "$(dirname "$0")"
 
@@ -73,6 +74,9 @@ while [[ $# -gt 0 ]]; do
 		;;
 	--no-glewmx)
 		GLEWMX=0
+		;;
+	--no-link-acfutils)
+		LINK_ACFUTILS=0
 		;;
 	*)
 		break
@@ -144,6 +148,7 @@ elif [[ "$1" = "--libs" ]]; then
 		# it produces linkage errors on Windows.
 		OPENSSL_EXTRA="-lcrypt32 -lws2_32 -lgdi32"
 		DBGEXTRA="-ldbghelp -lpsapi"
+		STACKPROT_EXTRA="-Wl,-Bstatic -lssp -Wl,-Bdynamic"
 		if [[ "$STATIC_OPENAL" = 1 ]]; then
 			OPENAL_EXTRA="-lole32 -lwinmm"
 		fi
@@ -153,14 +158,16 @@ elif [[ "$1" = "--libs" ]]; then
 		fi
 	fi
 	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
-	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv -lcharset"
+	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv"
 
-	if [[ "$ARCH" == "win-64" ]]; then
-		ACFUTILS_EXTRA="-L$(pwd)/qmake/win64 -lacfutils"
-	elif [[ "$ARCH" == "mac-64" ]]; then
-		ACFUTILS_EXTRA="-L$(pwd)/qmake/mac64 -lacfutils"
-	else
-		ACFUTILS_EXTRA="-L$(pwd)/qmake/lin64 -lacfutils"
+	if [ "$LINK_ACFUTILS" -ne 0 ]; then
+		if [[ "$ARCH" == "win-64" ]]; then
+			ACFUTILS_EXTRA="-L$(pwd)/qmake/win64 -lacfutils"
+		elif [[ "$ARCH" == "mac-64" ]]; then
+			ACFUTILS_EXTRA="-L$(pwd)/qmake/mac64 -lacfutils"
+		else
+			ACFUTILS_EXTRA="-L$(pwd)/qmake/lin64 -lacfutils"
+		fi
 	fi
 
 	if [[ "$ARCH" != "mac-64" ]]; then
@@ -172,4 +179,4 @@ echo $WHOLE_ARCH_ON ${ACFUTILS_EXTRA} ${LZMA} ${LIBICONV} \
     $(pkg-config $@ $PACKAGES) \
     $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${PCRE2_EXTRA} ${OPENAL_EXTRA} \
-    ${GLEW_EXTRA}
+    ${GLEW_EXTRA} ${STACKPROT_EXTRA}

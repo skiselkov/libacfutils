@@ -21,9 +21,11 @@ CONFIG += staticlib
 CONFIG += warn_on plugin debug
 CONFIG -= thread exceptions qt rtti release
 
-VERSION = 1.0.0
+VERSION = $$system("git describe --abbrev=0 --tags | \
+    sed 's/[[:alpha:].]//g; s/^0//g'")
 
 debug = $$[DEBUG]
+dll = $$[ACFUTILS_DLL]
 noerrors = $$[NOERRORS]
 minimal=$$system("test -f ../.minimal-deps; echo $?")
 
@@ -60,6 +62,15 @@ DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 DEFINES += GLEW_STATIC
 
 TARGET = acfutils
+QMAKE_TARGET_COMPANY = Saso Kiselkov
+QMAKE_TARGET_PRODUCT = libacfutils
+QMAKE_TARGET_DESCRIPTION = libacfutils is library of utility functions
+QMAKE_TARGET_DESCRIPTION += for X-Plane addon authors.
+QMAKE_TARGET_COPYRIGHT = Copyright (c) 2020 Saso Kiselkov. All rights reserved.
+
+contains(dll, 1) {
+	DEFINES += ACFUTILS_DLL=1
+}
 
 contains(debug, 0) {
 	QMAKE_CFLAGS += -O2
@@ -81,14 +92,27 @@ win32 {
 	QMAKE_CFLAGS += -Wno-misleading-indentation
 	QMAKE_DEL_FILE = rm -f
 	LIBS += -static-libgcc
+	contains(dll, 1) {
+		CONFIG -= staticlib
+		CONFIG += dll
+		LIBS += -Wl,--output-def,acfutils.def
+	}
 }
 
 win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 	contains(minimal, 1) {
 		QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 \
 		    --static-openal --cflags")
-		LIBS += $$system("../pkg-config-deps win-64 \
-		    --static-openal --libs")
+
+		contains(dll, 1) {
+			LIBS += $$system("../pkg-config-deps win-64 \
+			    --whole-archive --static-openal \
+			    --no-link-acfutils --libs")
+		}
+		contains(dll, 0) {
+			LIBS += $$system("../pkg-config-deps win-64 \
+			    --static-openal --libs")
+		}
 	} else {
 		QMAKE_CFLAGS += $$system("../pkg-config-deps win-64 --cflags")
 		LIBS += $$system("../pkg-config-deps win-64 --libs")
@@ -96,7 +120,7 @@ win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 
 	LIBS += -L../SDK/Libraries/Win -lXPLM_64
 	LIBS += -L../SDK/Libraries/Win -lXPWidgets_64
-	LIBS += -L../GL_for_Windows/lib -lglu32 -lopengl32
+	LIBS += -lglu32 -lopengl32
 	LIBS += -ldbghelp
 }
 
