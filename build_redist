@@ -96,6 +96,14 @@ function install_platform() {
 	fi
 }
 
+while getopts "d" opt; do
+	case "$opt" in
+	d)
+		dll="-d"
+		;;
+	esac
+done
+
 rm -rf "$OUTPUT"
 
 mkdir -p "$OUTPUT/include"
@@ -104,6 +112,8 @@ cp README-redist.md "$OUTPUT/README.md"
 
 case $(uname) in
 Linux)
+	( cd qmake && ./build-win-lin $dll ) || exit 1
+
 	DLL_VERSION="$(git describe --abbrev=0 --tags | \
 	    sed 's/[[:alpha:].]//g; s/^0//g')"
 	HDRS_WIN64=(
@@ -141,6 +151,8 @@ Linux)
 
 	;;
 Darwin)
+	( cd qmake && ./build-mac ) || exit 1
+
 	HDRS_MAC64=(
 		cairo/cairo-mac-64/include/cairo/*
 		freetype/freetype-mac-64/include/freetype2/*
