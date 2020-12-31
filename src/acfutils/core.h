@@ -29,7 +29,6 @@
 #include <stdlib.h>
 
 #include "libconfig.h"
-#include "mslibs.h"
 
 #ifdef	__cplusplus
 extern "C" {
