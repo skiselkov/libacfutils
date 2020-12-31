@@ -43,17 +43,17 @@ extern "C" {
 
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
 
-#if	(IBM || defined(_MSC_VER)) && ACFUTILS_DLL
+#if	IBM && (!defined(__MINGW32__) || defined(ACFUTILS_DLL))
 #define	API_EXPORT	__declspec(dllexport)
 #ifdef	ACFUTILS_BUILD
 #define	API_EXPORT_DATA	__declspec(dllexport)
 #else
 #define	API_EXPORT_DATA	__declspec(dllimport)
 #endif
-#else	/* !IBM && !defined(_MSC_VER) */
+#else	/* !IBM || (defined(__MINGW32__) && !defined(ACFUTILS_DLL)) */
 #define	API_EXPORT
 #define	API_EXPORT_DATA	extern
-#endif	/* !IBM && !defined(_MSC_VER) */
+#endif	/* !IBM || (defined(__MINGW32__) && !defined(ACFUTILS_DLL)) */
 
 #ifdef	__cplusplus
 # ifndef	restrict

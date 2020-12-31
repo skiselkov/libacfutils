@@ -46,15 +46,15 @@
  * We use static linking on Linux, Apple and MinGW. Everywhere else
  * (notably Windows & MSVC), we use dynamic linking.
  */
-#if	LIN || APL || defined(__MINGW32__)
+#if	LIN || APL || defined(__MINGW32__) || defined(ACFUTILS_DLL)
 # ifndef	GLEW_STATIC
 #  define	GLEW_STATIC
 # endif
-#else	/* !LIN && !APL && !defined(__MINGW32__) */
+#else	/* !LIN && !APL && !defined(__MINGW32__) && !defined(ACFUTILS_DLL) */
 # ifndef	GLEW_BUILD
 #  define	GLEW_BUILD
 # endif
-#endif	/* !LIN && !APL && !defined(__MINGW32__) */
+#endif	/* !LIN && !APL && !defined(__MINGW32__) && !defined(ACFUTILS_DLL) */
 #include <GL/glew.h>
 
 #include <acfutils/core.h>
