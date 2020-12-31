@@ -37,6 +37,9 @@ STATIC_LIBS=(
 	'libxml2/libxml2-%PLATFORM%/lib/libxml2.a'
 	'pcre2/pcre2-%PLATFORM%/lib/libpcre2-8.a'
 
+	'libiconv/libiconv-%PLATFORM%/lib/libcharset.a'
+	'libiconv/libiconv-%PLATFORM%/lib/libiconv.a'
+
 	'zlib/zlib-%PLATFORM%/lib/libz.a'
 	'lzma/qmake/%PLATFORM%/liblzma.a'
 )
