@@ -1,0 +1,20 @@
+--- glew-1.13.0-linux-64/Makefile	2020-12-31 01:50:42.226960651 +0100
++++ glew-1.13.0-win-64/Makefile	2020-12-31 13:45:36.508112497 +0100
+@@ -123,7 +123,7 @@
+ 
+ tmp/$(SYSTEM)/default/static/glew.o: src/glew.c include/GL/glew.h include/GL/wglew.h include/GL/glxew.h
+ 	@mkdir -p $(dir $@)
+-	$(CC) -DGLEW_NO_GLU -DGLEW_STATIC $(CFLAGS) $(CFLAGS.SO) -o $@ -c $<
++	$(CC) -DGLEW_NO_GLU -DGLEW_BUILD $(CFLAGS) $(CFLAGS.SO) -o $@ -c $<
+ 
+ tmp/$(SYSTEM)/default/shared/glew.o: src/glew.c include/GL/glew.h include/GL/wglew.h include/GL/glxew.h
+ 	@mkdir -p $(dir $@)
+@@ -168,7 +168,7 @@
+ 
+ tmp/$(SYSTEM)/mx/static/glew.o: src/glew.c include/GL/glew.h include/GL/wglew.h include/GL/glxew.h
+ 	@mkdir -p $(dir $@)
+-	$(CC) -DGLEW_NO_GLU -DGLEW_MX -DGLEW_STATIC $(CFLAGS) $(CFLAGS.SO) -o $@ -c $<
++	$(CC) -DGLEW_NO_GLU -DGLEW_MX -DGLEW_BUILD $(CFLAGS) $(CFLAGS.SO) -o $@ -c $<
+ 
+ tmp/$(SYSTEM)/mx/shared/glew.o: src/glew.c include/GL/glew.h include/GL/wglew.h include/GL/glxew.h
+ 	@mkdir -p $(dir $@)

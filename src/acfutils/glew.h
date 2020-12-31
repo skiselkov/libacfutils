@@ -42,9 +42,19 @@
 #ifndef	GLEW_MX
 #define	GLEW_MX
 #endif
-#ifndef	GLEW_STATIC
-#define	GLEW_STATIC
-#endif
+/*
+ * We use static linking on Linux, Apple and MinGW. Everywhere else
+ * (notably Windows & MSVC), we use dynamic linking.
+ */
+#if	LIN || APL || defined(__MINGW32__)
+# ifndef	GLEW_STATIC
+#  define	GLEW_STATIC
+# endif
+#else	/* !LIN && !APL && !defined(__MINGW32__) */
+# ifndef	GLEW_BUILD
+#  define	GLEW_BUILD
+# endif
+#endif	/* !LIN && !APL && !defined(__MINGW32__) */
 #include <GL/glew.h>
 
 #include <acfutils/core.h>
@@ -119,7 +129,7 @@ glewGetContext(void)
 
 #else	/* !APL && !LIN */
 
-extern DWORD lacf_glew_ctx_key;
+API_EXPORT DWORD lacf_glew_ctx_key;
 
 API_EXPORT void lacf_glew_dllmain_hook(DWORD reason);
 API_EXPORT void lacf_glew_init(void);

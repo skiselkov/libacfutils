@@ -81,9 +81,9 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID resvd)
 ## Linker setup
 
 * On Windows when using the dynamic build (DLL), add
-  ``libacfutils-redist/win64/lib/acfutils${VERSION}.lib`` to your linker
+  ``libacfutils-redist/win64/lib/libacfutils${VERSION}.a`` to your linker
   inputs. Here ``${VERSION}`` is the version number of the library (there
-  should only be a single ``.lib`` file, so you'll know which one to pick).
+  should only be a single ``.a`` file, so you'll know which one to pick).
   Also don't forget to include the DLL file together with your plugin in
   the final distribution package (just place it next to the XPL).
 

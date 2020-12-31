@@ -77,17 +77,22 @@ case `uname` in
 		    $MAKE_FLAGS_COMMON"
 		if ! [ -f "$GLEW-win-64/install/lib/libglew32mx.a" ] && \
 		    [ "$minimal" -ne 1 ]; then
-			rm -rf "$GLEW-win-64" && tar xJf "$GLEW_ARCHIVE" && \
-			    mv "$GLEW" "$GLEW-win-64" && \
-			    cp -r "auto" "$GLEW-win-64" && \
-			    ( cd "$GLEW-win-64" && \
-			    patch -p1 < ../opengl_4.6.patch && \
-			    patch -p1 < ../cmdline_flags.patch && \
-			    patch -p1 < ../ld.patch && \
-			    eval make $MAKE_FLAGS extensions && \
-			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
-			    eval make $MAKE_FLAGS install.mx && \
-			    rm install/lib/*.dll )
+			rm -rf "$GLEW-win-64" && tar xJf "$GLEW_ARCHIVE"
+			mv "$GLEW" "$GLEW-win-64"
+			cp -r "auto" "$GLEW-win-64"
+			(
+				cd "$GLEW-win-64"
+				patch -p1 < ../opengl_4.6.patch
+				patch -p1 < ../cmdline_flags.patch
+				patch -p1 < ../ld.patch
+				if [ -n "$do_dll" ]; then
+					patch -p1 < ../dll.patch
+				fi
+				eval make $MAKE_FLAGS extensions
+				eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx
+				eval make $MAKE_FLAGS install.mx
+				rm install/lib/*.dll
+			)
 		fi
 		;;
 	Darwin)
