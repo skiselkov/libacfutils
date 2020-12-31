@@ -33,33 +33,39 @@ all the required functionality:
 
 * To get `libacfutils` functionality, simply do (obviously replace
 `FILE.H` with the appropriate header file):
-```
+```c
 #include <acfutils/FILE.H>
 ```
 
 * To get Cairo functionality, do:
-```
+```c
 #include <cairo.h>
 #include <cairo-ft.h>
 ```
 
 * To get FreeType functionality, do:
-```
+```c
 #include <ft2build.h>
 #include FT_FREETYPE_H
 ```
 
-* To get OpenGL/GLEW functionality, do (also don't forget to do
-`glewInit()` in your loading routine):
-```
+* To get OpenGL/GLEW functionality, do (also don't forget to call
+`glewInit()` in ``XPluginStart``):
+```c
 #include <acfutils/glew.h>
+
+/* goes in XPluginStart */
+if (glewInit() != GLEW_OK) {
+	/* Couldn't initialize OpenGL interface, report error & return */
+	return (0);
+}
 ```
 
 * For static builds of the library on MinGW, you must also include the
 following code blurb somewhere in your plugin to get proper GLEW-MX
 multi-threading initialization working. This isn't necessary when using
 the dynamic (DLL) version under MSVC.
-```
+```c
 #if	IBM
 BOOL WINAPI
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID resvd)
@@ -69,14 +75,19 @@ DllMain(HINSTANCE hinst, DWORD reason, LPVOID resvd)
 	lacf_glew_dllmain_hook(reason);
 	return (TRUE);
 }
-#endif<>/* IBM */
+#endif	/* IBM */
 ```
 
 ## Linker setup
 
 * On Windows when using the dynamic build (DLL), add
-  libacfutils-redist/win64/lib/acfutils.lib to your linker inputs.
+  ``libacfutils-redist/win64/lib/acfutils${VERSION}.lib`` to your linker
+  inputs. Here ``${VERSION}`` is the version number of the library (there
+  should only be a single ``.lib`` file, so you'll know which one to pick).
+  Also don't forget to include the DLL file together with your plugin in
+  the final distribution package (just place it next to the XPL).
 
 * On Mac, Linux and MinGW, add libacfutils-redist/{mac64,lin64,mingw64}/lib
   to your library search and link all static libraries in the respective
-  directories.
+  directories. Since the build is static, it will get linked into your XPL
+  and no other files are needed for distribution.
