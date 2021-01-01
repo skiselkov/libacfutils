@@ -88,4 +88,17 @@ lacf_glew_fini(void)
 	lacf_glew_ctx_key = 0;
 }
 
+#ifdef	ACFUTILS_DLL
+
+BOOL WINAPI
+DllMain(HINSTANCE hinst, DWORD reason, LPVOID resvd)
+{
+	UNUSED(hinst);
+	UNUSED(resvd);
+	lacf_glew_dllmain_hook(reason);
+	return (TRUE);
+}
+
+#endif	/* defined(ACFUTILS_DLL) */
+
 #endif	/* !APL && !LIN */
