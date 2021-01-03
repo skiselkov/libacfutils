@@ -129,6 +129,19 @@ typedef struct {
 	void	*arg;
 } lacf_thread_info_t;
 
+/*
+ * !!!! CAUTION !!!!
+ * MacOS's kernel API contains a function named `thread_create' that'll
+ * clash with the naming below. To work around this, we declare the
+ * function name to be a macro to our own scoped version. The user must
+ * include /usr/include/mach/task.h before us, otherwise we could be
+ * rewriting the function name in the header too. The flip side is that
+ * the user will get calls to libacfutils' thread_create instead.
+ */
+#if	!APL || !defined(_task_user_)
+#define	thread_create	lacf_thread_create
+#endif
+
 #if	APL || LIN
 
 #define	thread_t		pthread_t
@@ -169,7 +182,7 @@ _lacf_thread_start_routine(void *arg)
 }
 
 static inline bool_t
-thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
+lacf_thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
 {
 	lacf_thread_info_t *ti =
 	    (lacf_thread_info_t *)safe_calloc(1, sizeof (*ti));
@@ -248,7 +261,7 @@ _lacf_thread_start_routine(void *arg)
 }
 
 static inline bool_t
-thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
+lacf_thread_create(thread_t *thrp, void (*proc)(void *), void *arg)
 {
 	lacf_thread_info_t *ti =
 	    (lacf_thread_info_t *)safe_calloc(1, sizeof (*ti));
