@@ -77,4 +77,10 @@ nl_vert_main(const mat4 pvm_in)
 	return (scr_pos + vec4(offset, 0.0, 0.0));
 }
 
+vec3
+nl_get_vtx_pos(void)
+{
+	return (_nl_seg_here);
+}
+
 #endif	/* _ACF_UTILS_NL_VERT_ */
