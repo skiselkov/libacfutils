@@ -140,7 +140,7 @@ API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
  *
  * TEXSZ_MK_TOKEN(efis_textures);
  *
- * Don't put strings into the token name, the name must be a valid C
+ * Don't put spaces into the token name, the name must be a valid C
  * identifier. You can subsequently track allocations to this token using
  * the TEXSZ_ALLOC and TEXSZ_FREE macros. These macros take 5 arguments:
  *	1) the token name
@@ -153,6 +153,16 @@ API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
  * offending token name(s) are printed in sequence, with the amount of
  * bytes leaked in them. In this mode, no filenames or line numbers are
  * printed.
+ *
+ * Please note that TEXSZ_MK_TOKEN creates a static (single-module) token
+ * that cannot be shared between multiple C files. If you plan on using a
+ * TEXSZ token from more than one C/C++ file, you must declare the token
+ * in a header file using the TEXSZ_DECL_TOKEN_GLOB macro instead. Then
+ * define the token in a single C file using TEXSZ_DEF_TOKEN_GLOB:
+ *
+ *	TEXSZ_DECL_TOKEN_GLOB(efis_textures);	<--- goes in a header file
+ *
+ *	TEXSZ_DEF_TOKEN_GLOB(efis_textures);	<--- goes in a single C file
  *
  * In case you are using a generic facility (e.g. a picture loader) to
  * provide texturing service to other parts of the code, a simple token
@@ -184,6 +194,10 @@ API_EXPORT void glutils_vp2pvm(GLfloat pvm[16]);
 
 #define	TEXSZ_MK_TOKEN(name) \
 	static const char *__texsz_token_ ## name = #name
+#define	TEXSZ_DECL_TOKEN_GLOB(name) \
+	extern const char *__texsz_token_ ## name
+#define	TEXSZ_DEF_TOKEN_GLOB(name) \
+	const char *__texsz_token_ ## name = #name
 #define	TEXSZ_ALLOC(__token_id, __format, __type, __w, __h) \
 	TEXSZ_ALLOC_INSTANCE(__token_id, NULL, NULL, -1, (__format), \
 	    (__type), (__w), (__h))
