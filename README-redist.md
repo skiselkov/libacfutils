@@ -24,8 +24,6 @@ following subfolders to the include path of your IDE of choice:
 
 * `libacfutils-redist/include`
 * `libacfutils-redist/${PLATFORM}/include`
-* `libacfutils-redist/${PLATFORM}/include/cairo`
-* `libacfutils-redist/${PLATFORM}/include/freetype`
 
 Where ``${PLATFORM}`` is one of ``win64``, ``mac64``, ``lin64`` or
 ``mingw64``. Then you can use the following include statements to grab
