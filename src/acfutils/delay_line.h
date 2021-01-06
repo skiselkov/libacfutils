@@ -59,7 +59,12 @@ typedef struct {
 	};
 	uint64_t		changed_t;
 	uint64_t		delay_us;
+#ifndef	_MSC_VER
 	int			__serialize_marker[0];
+#else
+	/* MSVC really hates a zero-length array */
+	int			__serialize_marker[1];
+#endif
 	delay_line_time_func_t	time_func;
 	void			*time_func_userinfo;
 } delay_line_t;
