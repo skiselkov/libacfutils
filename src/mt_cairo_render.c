@@ -78,6 +78,9 @@ typedef	struct {
 	GLuint		pbo;
 	cairo_surface_t	*surf;
 	cairo_t		*cr;
+	GLsync		sync;
+	list_node_t	ul_inprog_node;
+	mt_cairo_render_t *owner;
 } render_surf_t;
 
 struct mt_cairo_render_s {
@@ -429,6 +432,7 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	for (int i = 0; i < 2; i++) {
 		render_surf_t *rs = &mtcr->rs[i];
 
+		rs->owner = mtcr;
 		rs->surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 		    mtcr->w, mtcr->h);
 		rs->cr = cairo_create(rs->surf);
@@ -1242,11 +1246,12 @@ mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
 }
 
 static void
-mtul_upload(mt_cairo_render_t *mtcr)
+mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 {
 	render_surf_t *rs;
 
 	ASSERT(mtcr != NULL);
+	ASSERT(ul_inprog_list != NULL);
 
 	mutex_enter(&mtcr->lock);
 
@@ -1257,17 +1262,91 @@ mtul_upload(mt_cairo_render_t *mtcr)
 	if (rs->chg) {
 		rs_tex_alloc(mtcr, rs);
 		rs_upload(mtcr, rs);
-		rs->chg = B_FALSE;
-		if (rs == &mtcr->rs[0]) {
-			mtcr->cur_rs = 0;
-		} else {
-			ASSERT3P(rs, ==, &mtcr->rs[1]);
-			mtcr->cur_rs = 1;
-		}
-		cv_broadcast(&mtcr->render_done_cv);
+		rs->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		ASSERT(!list_link_active(&rs->ul_inprog_node));
+		list_insert_tail(ul_inprog_list, rs);
 	}
 
 	mutex_exit(&mtcr->lock);
+}
+
+static bool_t
+mtul_try_complete_ul(render_surf_t *rs)
+{
+	mt_cairo_render_t *mtcr;
+
+	enum { UL_TIMEOUT = 500000 /* ns */ };
+
+	ASSERT(rs != NULL);
+	ASSERT(rs->sync != NULL);
+
+	if (glClientWaitSync(rs->sync, GL_SYNC_FLUSH_COMMANDS_BIT,
+	    UL_TIMEOUT) == GL_TIMEOUT_EXPIRED) {
+		return (B_FALSE);
+	}
+	mtcr = rs->owner;
+	ASSERT(mtcr != NULL);
+
+	mutex_enter(&mtcr->lock);
+
+	rs->sync = NULL;
+	ASSERT(rs->chg);
+	rs->chg = B_FALSE;
+	if (rs == &mtcr->rs[0]) {
+		mtcr->cur_rs = 0;
+	} else {
+		ASSERT3P(rs, ==, &mtcr->rs[1]);
+		mtcr->cur_rs = 1;
+	}
+	cv_broadcast(&mtcr->render_done_cv);
+	mutex_exit(&mtcr->lock);
+
+	return (B_TRUE);
+}
+
+static void
+mtul_drain_queue(mt_cairo_uploader_t *mtul)
+{
+	list_t ul_inprog_list;
+
+	ASSERT(mtul != NULL);
+	ASSERT_MUTEX_HELD(&mtul->lock);
+
+	list_create(&ul_inprog_list, sizeof (render_surf_t),
+	    offsetof(render_surf_t, ul_inprog_node));
+
+	do {
+		mt_cairo_render_t *mtcr;
+		render_surf_t *rs;
+		/*
+		 * Dequeue new work assignments and start the upload.
+		 */
+		while ((mtcr = list_remove_head(&mtul->queue)) != NULL) {
+			mutex_exit(&mtul->lock);
+			mtul_upload(mtcr, &ul_inprog_list);
+			mutex_enter(&mtul->lock);
+			GLUTILS_ASSERT_NO_ERROR();
+		}
+		/*
+		 * No more uploads pending for start. Now see if we can
+		 * complete an upload.
+		 */
+		rs = list_head(&ul_inprog_list);
+		if (rs != NULL) {
+			bool_t ul_done;
+
+			mutex_exit(&mtul->lock);
+			ul_done = mtul_try_complete_ul(rs);
+			mutex_enter(&mtul->lock);
+			if (ul_done) {
+				list_remove(&ul_inprog_list, rs);
+				cv_broadcast(&mtul->cv_done);
+			}
+			GLUTILS_ASSERT_NO_ERROR();
+		}
+	} while (list_count(&ul_inprog_list) != 0);
+
+	list_destroy(&ul_inprog_list);
 }
 
 /*
@@ -1299,20 +1378,8 @@ mtul_worker(void *arg)
 	mutex_enter(&mtul->lock);
 
 	while (!mtul->shutdown) {
-		mt_cairo_render_t *mtcr;
-		/*
-		 * Dequeue new work assignments and do the upload.
-		 */
-		while ((mtcr = list_remove_head(&mtul->queue)) != NULL) {
-			mutex_exit(&mtul->lock);
-			mtul_upload(mtcr);
-			mutex_enter(&mtul->lock);
-			cv_broadcast(&mtul->cv_done);
-		}
-		GLUTILS_ASSERT_NO_ERROR();
-		/*
-		 * Pause for more work.
-		 */
+		mtul_drain_queue(mtul);
+		/* pause for more work */
 		cv_wait(&mtul->cv_queue, &mtul->lock);
 	}
 
