@@ -142,7 +142,7 @@ linux-g++-64 {
 macx {
 	DEFINES += APL=1 IBM=0 LIN=0
 	DEFINES += LACF_GLEW_USE_NATIVE_TLS=0
-	QMAKE_CFLAGS += -mmacosx-version-min=10.9
+	QMAKE_MACOSX_DEPLOYMENT_TARGET=10.13
 }
 
 macx-clang {
