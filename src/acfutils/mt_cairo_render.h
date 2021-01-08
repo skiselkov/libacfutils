@@ -31,9 +31,9 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <acfutils/geom.h>
-#include <acfutils/glew.h>
-#include <acfutils/log.h>
+#include "geom.h"
+#include "glew.h"
+#include "log.h"
 
 #ifdef	__cplusplus
 extern "C" {

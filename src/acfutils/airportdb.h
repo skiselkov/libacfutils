@@ -18,11 +18,11 @@
 #ifndef	_AIRPORTDB_H_
 #define	_AIRPORTDB_H_
 
-#include <acfutils/avl.h>
-#include <acfutils/geom.h>
-#include <acfutils/list.h>
-#include <acfutils/helpers.h>
-#include <acfutils/thread.h>
+#include "avl.h"
+#include "geom.h"
+#include "list.h"
+#include "helpers.h"
+#include "thread.h"
 
 #ifdef	__cplusplus
 extern "C" {

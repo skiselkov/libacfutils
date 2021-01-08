@@ -28,7 +28,7 @@
 
 #include <stdarg.h>
 
-#include <acfutils/glew.h>
+#include "glew.h"
 
 #ifdef	__cplusplus
 extern "C" {

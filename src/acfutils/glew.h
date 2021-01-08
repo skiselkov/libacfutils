@@ -57,9 +57,9 @@
 #endif	/* !LIN && !APL && !defined(__MINGW32__) && !defined(ACFUTILS_DLL) */
 #include <GL/glew.h>
 
-#include <acfutils/core.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/tls.h>
+#include "core.h"
+#include "safe_alloc.h"
+#include "tls.h"
 
 #ifdef	__cplusplus
 extern "C" {

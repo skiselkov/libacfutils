@@ -30,7 +30,7 @@
 
 #include <cairo.h>
 
-#include <acfutils/types.h>
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {

@@ -29,9 +29,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/core.h>
-#include <acfutils/time.h>
+#include "assert.h"
+#include "core.h"
+#include "time.h"
 
 #ifdef	__cplusplus
 extern "C" {

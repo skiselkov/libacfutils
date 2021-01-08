@@ -40,21 +40,22 @@ typedef void (*taskq_fini_thr_t)(void *userinfo, void *thr_info);
 typedef void (*taskq_proc_task_t)(void *userinfo, void *thr_info, void *task);
 typedef void (*taskq_discard_task_t)(void *userinfo, void *task);
 
-taskq_t *taskq_alloc(unsigned num_threads_min, unsigned num_threads_max,
-    uint64_t thr_stop_delay_us, taskq_init_thr_t init_func,
-    taskq_fini_thr_t fini_func, taskq_proc_task_t proc_func,
-    taskq_discard_task_t discard_func, void *userinfo);
-void taskq_free(taskq_t *tq);
+API_EXPORT taskq_t *taskq_alloc(unsigned num_threads_min,
+    unsigned num_threads_max, uint64_t thr_stop_delay_us,
+    taskq_init_thr_t init_func,taskq_fini_thr_t fini_func,
+    taskq_proc_task_t proc_func, taskq_discard_task_t discard_func,
+    void *userinfo);
+API_EXPORT void taskq_free(taskq_t *tq);
 
-void taskq_submit(taskq_t *tq, void *task);
-bool taskq_wants_shutdown(taskq_t *tq);
+API_EXPORT void taskq_submit(taskq_t *tq, void *task);
+API_EXPORT bool taskq_wants_shutdown(taskq_t *tq);
 
-void taskq_set_num_threads_min(taskq_t *tq, unsigned num_threads_min);
-unsigned taskq_get_num_threads_min(const taskq_t *tq);
-void taskq_set_num_threads_max(taskq_t *tq, unsigned num_threads_max);
-unsigned taskq_get_num_threads_max(const taskq_t *tq);
-void taskq_set_thr_stop_delay(taskq_t *tq, uint64_t thr_stop_delay_us);
-uint64_t taskq_get_thr_stop_delay(const taskq_t *tq);
+API_EXPORT void taskq_set_num_threads_min(taskq_t *tq, unsigned n_threads_min);
+API_EXPORT unsigned taskq_get_num_threads_min(const taskq_t *tq);
+API_EXPORT void taskq_set_num_threads_max(taskq_t *tq, unsigned n_threads_max);
+API_EXPORT unsigned taskq_get_num_threads_max(const taskq_t *tq);
+API_EXPORT void taskq_set_thr_stop_delay(taskq_t *tq, uint64_t stop_delay_us);
+API_EXPORT uint64_t taskq_get_thr_stop_delay(const taskq_t *tq);
 
 #ifdef	__cplusplus
 }

@@ -26,7 +26,7 @@
 #ifndef	_ACF_UTILS_CURSOR_H_
 #define	_ACF_UTILS_CURSOR_H_
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -50,19 +50,19 @@ typedef struct cursor_s cursor_t;
  * is automatically replaced by '.cur', so you need to provide both a
  * PNG and CUR version of your cursor.
  */
-cursor_t *cursor_read_from_file(const char *filename_png);
+API_EXPORT cursor_t *cursor_read_from_file(const char *filename_png);
 
 /*
  * Frees a cursor previously created using cursor_read_from_file.
  */
-void cursor_free(cursor_t *cursor);
+API_EXPORT void cursor_free(cursor_t *cursor);
 
 /*
  * Sets the cursor to be the current cursor. Be sure to ask X-Plane not
  * to draw its own cursor. This function should be called in the window
  * mouse cursor handler callback.
  */
-void cursor_make_current(cursor_t *cursor);
+API_EXPORT void cursor_make_current(cursor_t *cursor);
 
 #ifdef	__cplusplus
 }

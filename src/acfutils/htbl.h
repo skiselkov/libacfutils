@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <acfutils/list.h>
+#include "list.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -63,23 +63,26 @@ typedef struct {
 	int		multi_value;
 } htbl_t;
 
-void htbl_create(htbl_t *htbl, size_t tbl_sz, size_t key_sz, int multi_value);
+API_EXPORT void htbl_create(htbl_t *htbl, size_t tbl_sz, size_t key_sz,
+    int multi_value);
 void htbl_destroy(htbl_t *htbl);
-void htbl_empty(htbl_t *htbl, void (*func)(void *, void *), void *arg);
-size_t htbl_count(const htbl_t *htbl);
+API_EXPORT void htbl_empty(htbl_t *htbl, void (*func)(void *, void *),
+    void *arg);
+API_EXPORT size_t htbl_count(const htbl_t *htbl);
 
-void htbl_set(htbl_t *htbl, const void *key, void *value);
-void htbl_remove(htbl_t *htbl, const void *key, int nil_ok);
-void htbl_remove_multi(htbl_t *htbl, const void *key, void *list_item);
+API_EXPORT void htbl_set(htbl_t *htbl, const void *key, void *value);
+API_EXPORT void htbl_remove(htbl_t *htbl, const void *key, int nil_ok);
+API_EXPORT void htbl_remove_multi(htbl_t *htbl, const void *key,
+    void *list_item);
 
-void *htbl_lookup(const htbl_t *htbl, const void *key);
+API_EXPORT void *htbl_lookup(const htbl_t *htbl, const void *key);
 #define	HTBL_VALUE_MULTI(x)	(((htbl_multi_value_t *)(x))->value)
-const list_t *htbl_lookup_multi(const htbl_t *htbl, const void *key);
+API_EXPORT const list_t *htbl_lookup_multi(const htbl_t *htbl, const void *key);
 
-void htbl_foreach(const htbl_t *htbl,
+API_EXPORT void htbl_foreach(const htbl_t *htbl,
     void (*func)(const void *, void *, void *), void *arg);
 
-char *htbl_dump(const htbl_t *htbl, bool_t printable_keys);
+API_EXPORT char *htbl_dump(const htbl_t *htbl, bool_t printable_keys);
 
 static void htbl_free(void *obj, void *unused) UNUSED_ATTR;
 static void

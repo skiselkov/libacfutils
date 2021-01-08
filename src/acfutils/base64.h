@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "core.h"
+
 /**
  * Provides a precise computation of how much base64 data will be
  * generated when __raw_size__ many binary bytes a base64-encoded.
@@ -37,13 +39,13 @@
  */
 #define BASE64_DEC_SIZE(__enc_size__) (((__enc_size__) / 4) * 3)
 
-size_t lacf_base64_encode(const uint8_t *raw, size_t raw_size,
+API_EXPORT size_t lacf_base64_encode(const uint8_t *raw, size_t raw_size,
     uint8_t *encoded);
-size_t lacf_base64_encode2(const uint8_t *raw, size_t raw_size,
+API_EXPORT size_t lacf_base64_encode2(const uint8_t *raw, size_t raw_size,
     uint8_t *encoded, int mod);
-ssize_t lacf_base64_decode(const uint8_t *encoded, size_t encoded_size,
-    uint8_t *raw);
-ssize_t lacf_base64_decode2(const uint8_t *encoded, size_t encoded_size,
-    uint8_t *raw, int mod);
+API_EXPORT ssize_t lacf_base64_decode(const uint8_t *encoded,
+    size_t encoded_size, uint8_t *raw);
+API_EXPORT ssize_t lacf_base64_decode2(const uint8_t *encoded,
+    size_t encoded_size, uint8_t *raw, int mod);
 
 #endif /* _ACFUTILS_BASE64_H_ */

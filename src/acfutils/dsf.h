@@ -29,8 +29,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <acfutils/avl.h>
-#include <acfutils/list.h>
+#include "avl.h"
+#include "list.h"
 
 #ifdef	__cplusplus
 extern "C" {

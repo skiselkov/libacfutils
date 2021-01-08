@@ -29,8 +29,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include <acfutils/cmd.h>
-#include <acfutils/dr.h>
+#include "cmd.h"
+#include "dr.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -39,23 +39,23 @@ extern "C" {
 void dcr_init(void);
 void dcr_fini(void);
 
-XPLMCommandRef dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
+API_EXPORT XPLMCommandRef dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
     XPLMCommandCallback_f cb, bool before, void *refcon, ...)
     PRINTF_ATTR2(1, 5);
-XPLMCommandRef dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb,
-    bool before, void *refcon, va_list ap);
-XPLMCommandRef f_dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
+API_EXPORT XPLMCommandRef dcr_find_cmd_v(const char *fmt,
+    XPLMCommandCallback_f cb, bool before, void *refcon, va_list ap);
+API_EXPORT XPLMCommandRef f_dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
     XPLMCommandCallback_f cb, bool before, void *refcon, ...)
     PRINTF_ATTR2(1, 5);
-XPLMCommandRef f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb,
-    bool before, void *refcon, va_list ap);
-XPLMCommandRef dcr_create_cmd(const char *cmdname, const char *cmddesc,
-    XPLMCommandCallback_f cb, bool before, void *refcon);
+API_EXPORT XPLMCommandRef f_dcr_find_cmd_v(const char *fmt,
+    XPLMCommandCallback_f cb, bool before, void *refcon, va_list ap);
+API_EXPORT XPLMCommandRef dcr_create_cmd(const char *cmdname,
+    const char *cmddesc, XPLMCommandCallback_f cb, bool before, void *refcon);
 
 /* Internal, do not call, use the DCR_CREATE_ macros instead */
-void *dcr_alloc_rdr(void);
-dr_t *dcr_get_dr(void *token);
-void dcr_insert_rdr(void *token);
+API_EXPORT void *dcr_alloc_rdr(void);
+API_EXPORT dr_t *dcr_get_dr(void *token);
+API_EXPORT void dcr_insert_rdr(void *token);
 #define	DCR_CREATE_COMMON(type, dr_ptr, ...) \
 	do { \
 		void *rdr = dcr_alloc_rdr(); \

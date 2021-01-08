@@ -23,7 +23,7 @@
 
 #include <XPLMUtilities.h>
 
-#include <acfutils/sysmacros.h>
+#include "sysmacros.h"
 
 #ifdef	__cplusplus
 extern "C" {

@@ -27,7 +27,8 @@
 #define	_ACFUTILS_XPFAIL_H_
 
 #include <stdbool.h>
-#include <acfutils/dr.h>
+
+#include "dr.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -19,7 +19,7 @@
 #ifndef	_ICAO2CC_H_
 #define	_ICAO2CC_H_
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {

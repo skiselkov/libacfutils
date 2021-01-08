@@ -43,7 +43,7 @@ API_EXPORT double fx_lin(double x, double x1, double y1, double x2, double y2)
 API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
     bool_t extrapolate) PURE_ATTR;
 #define	fx_lin_multi_inv	ACFSYM(fx_lin_multi_inv)
-double *fx_lin_multi_inv(double y, const struct vect2_s *points,
+API_EXPORT double *fx_lin_multi_inv(double y, const struct vect2_s *points,
     size_t *num_out);
 
 /*
@@ -118,7 +118,8 @@ typedef struct {
  * @param points Input points that the interpolator needs to pass through.
  * @param npts Number points in `points'. This must be GREATER than 0.
  */
-void pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned npts);
+API_EXPORT void pn_interp_init(pn_interp_t *interp, const vect2_t *points,
+    unsigned npts);
 
 /*
  * Given an initialized pn_interp_t (see above), calculates the Y value

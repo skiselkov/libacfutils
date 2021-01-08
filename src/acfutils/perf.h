@@ -201,49 +201,50 @@ typedef enum {
 	ACCEL_TAKEOFF	/* Accel to target speed first without needing lift */
 } accelclb_t;
 
-acft_perf_t *acft_perf_parse(const char *filename);
-void acft_perf_destroy(acft_perf_t *perf);
+API_EXPORT acft_perf_t *acft_perf_parse(const char *filename);
+API_EXPORT void acft_perf_destroy(acft_perf_t *perf);
 
-flt_perf_t *flt_perf_new(const acft_perf_t *acft);
-void flt_perf_destroy(flt_perf_t *flt);
+API_EXPORT flt_perf_t *flt_perf_new(const acft_perf_t *acft);
+API_EXPORT void flt_perf_destroy(flt_perf_t *flt);
 
-double eng_max_thr_avg(const flt_perf_t *flt,
+API_EXPORT double eng_max_thr_avg(const flt_perf_t *flt,
     const acft_perf_t *acft, double alt1, double alt2, double ktas,
     double qnh, double isadev, double tp_alt);
 
-double accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
+API_EXPORT double accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double tp_alt, double accel_alt,
     double fuel, vect2_t dir,
     double alt1, double kcas1, vect2_t wind1,
     double alt2, double kcas2, vect2_t wind2,
     double flap_ratio, double mach_lim, accelclb_t type, double *burnp,
     double *kcas_out);
-double dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
+API_EXPORT double dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double tp_alt, double accel_alt,
     double fuel, vect2_t dir,
     double flap_ratio, double *alt, double *kcas, vect2_t wind,
     double alt_tgt, double kcas_tgt, double mach_lim, double dist_tgt,
     accelclb_t type, double *burnp);
-double decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
+API_EXPORT double decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double tp_alt, double fuel,
     double alt, double kcas1, double kcas2, double dist_tgt,
     double *kcas_out, double *burn_out);
-double perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
-    double spd, bool_t is_mach, double hdg, vect2_t wind1, vect2_t wind2,
-    double fuel, double dist_nm, const acft_perf_t *acft,
+API_EXPORT double perf_crz2burn(double isadev, double tp_alt, double qnh,
+    double alt_ft, double spd, bool_t is_mach, double hdg, vect2_t wind1,
+    vect2_t wind2, double fuel, double dist_nm, const acft_perf_t *acft,
     const flt_perf_t *flt);
-double perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
+API_EXPORT double perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double fuel, double hdgt, double dist_m,
     double mach_lim,
     double alt1, double kcas1, vect2_t wind1,
     double alt2, double kcas2, vect2_t wind2);
 
-double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
+API_EXPORT double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
 
-double acft_get_sfc(const flt_perf_t *flt, const acft_perf_t *acft, double thr,
-    double alt, double ktas, double qnh, double isadev, double tp_alt);
+API_EXPORT double acft_get_sfc(const flt_perf_t *flt, const acft_perf_t *acft,
+    double thr, double alt, double ktas, double qnh, double isadev,
+    double tp_alt);
 
-double perf_get_turn_rate(double bank_ratio, double gs_kts,
+API_EXPORT double perf_get_turn_rate(double bank_ratio, double gs_kts,
     const flt_perf_t *flt, const acft_perf_t *acft);
 
 #define	alt2press	ACFSYM(alt2press)
@@ -344,25 +345,25 @@ API_EXPORT double air_reynolds(double vel, double chord, double temp_K);
  * Returns the ratio of specific heats for dry air.
  * @param T Absolute temperature of the air in Kelvin.
  */
-double lacf_gamma_air(double T);
+API_EXPORT double lacf_gamma_air(double T);
 
 /*
  * Returns the thermal conductivity of dry air (in W/(m.K)).
  * @param T Absolute temperature of the air in Kelvin.
  */
-double lacf_therm_cond_air(double T);
+API_EXPORT double lacf_therm_cond_air(double T);
 
 /*
  * Returns the thermal conductivity of aluminum (in W/(m.K)).
  * @param T Absolute temperature of the air in Kelvin.
  */
-double lacf_therm_cond_aluminum(double T);
+API_EXPORT double lacf_therm_cond_aluminum(double T);
 
 /*
  * Returns the thermal conductivity of Pyrex 7740 glass (in W/(m.K)).
  * @param T Absolute temperature of the air in Kelvin.
  */
-double lacf_therm_cond_glass(double T);
+API_EXPORT double lacf_therm_cond_glass(double T);
 
 /*
  * Returns very accurate Earth gravitational acceleration at a specific
@@ -372,7 +373,7 @@ double lacf_therm_cond_glass(double T);
  * @param alt Altitude in meters.
  * @return Gravitational acceleration at the chosen point, in m/s^2.
  */
-double earth_gravity_accurate(double lat, double alt);
+API_EXPORT double earth_gravity_accurate(double lat, double alt);
 
 #ifdef	__cplusplus
 }

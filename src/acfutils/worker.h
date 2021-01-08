@@ -19,7 +19,7 @@
 #ifndef	_ACFUTILS_WORKER_H_
 #define	_ACFUTILS_WORKER_H_
 
-#include <acfutils/thread.h>
+#include "thread.h"
 
 #ifdef	__cplusplus
 extern "C" {

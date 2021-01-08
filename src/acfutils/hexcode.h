@@ -20,8 +20,8 @@
 #define	_ACF_UTILS_HEXCODE_H_
 
 #include <stdlib.h>
-#include <acfutils/core.h>
-#include <acfutils/types.h>
+#include "core.h"
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {

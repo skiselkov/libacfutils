@@ -26,7 +26,7 @@
 #ifndef	_ACFUTILS_EXCEPT_H_
 #define	_ACFUTILS_EXCEPT_H_
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef __cplusplus
 extern "C" {

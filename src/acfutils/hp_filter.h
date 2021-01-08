@@ -26,7 +26,7 @@
 #ifndef	_ACF_UTILS_HP_FILTER_H_
 #define	_ACF_UTILS_HP_FILTER_H_
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {

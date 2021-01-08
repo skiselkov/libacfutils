@@ -26,7 +26,7 @@
 #ifndef	_ACF_UTILS_TUMBLER_H_
 #define	_ACF_UTILS_TUMBLER_H_
 
-#include <acfutils/core.h>
+#include "core.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -42,7 +42,7 @@ typedef struct {
 #define	TUMBLER_CAP	8
 #define	TUMBLER_LINES	5
 
-int tumbler_solve(const tumbler_t *tumblers, int idx, double value,
+API_EXPORT int tumbler_solve(const tumbler_t *tumblers, int idx, double value,
     double prev_fract, char out_str[TUMBLER_LINES][TUMBLER_CAP], double *fract);
 
 #ifdef	__cplusplus

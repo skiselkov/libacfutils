@@ -21,7 +21,7 @@
 
 #include <time.h>
 
-#include <acfutils/geom.h>
+#include "geom.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -54,14 +54,14 @@ typedef struct odb_s odb_t;
 typedef void (*add_obst_cb_t)(obst_type_t type, geo_pos3_t pos,
     float agl, obst_light_t light, unsigned quant, void *userinfo);
 
-odb_t *odb_init(const char *xpdir, const char *cainfo);
-void odb_fini(odb_t *odb);
+API_EXPORT odb_t *odb_init(const char *xpdir, const char *cainfo);
+API_EXPORT void odb_fini(odb_t *odb);
 
-void odb_set_unload_delay(odb_t *odb, unsigned seconds);
-time_t odb_get_cc_refresh_date(odb_t *odb, const char *cc);
-bool_t odb_refresh_cc(odb_t *odb, const char *cc);
-bool_t odb_get_obstacles(odb_t *odb, int lat, int lon, add_obst_cb_t cb,
-    void *userinfo);
+API_EXPORT void odb_set_unload_delay(odb_t *odb, unsigned seconds);
+API_EXPORT time_t odb_get_cc_refresh_date(odb_t *odb, const char *cc);
+API_EXPORT bool_t odb_refresh_cc(odb_t *odb, const char *cc);
+API_EXPORT bool_t odb_get_obstacles(odb_t *odb, int lat, int lon,
+    add_obst_cb_t cb, void *userinfo);
 
 #ifdef	__cplusplus
 }

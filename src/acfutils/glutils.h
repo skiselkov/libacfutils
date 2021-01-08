@@ -28,12 +28,12 @@
 
 #include <stdio.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/geom.h>
-#include <acfutils/glew.h>
-#include <acfutils/log.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/sysmacros.h>
+#include "assert.h"
+#include "geom.h"
+#include "glew.h"
+#include "log.h"
+#include "safe_alloc.h"
+#include "sysmacros.h"
 
 #include <cglm/cglm.h>
 
@@ -329,10 +329,10 @@ glutils_debug_pop(void)
 
 typedef struct glutils_nl_s glutils_nl_t;
 
-glutils_nl_t *glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts);
-glutils_nl_t *glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts);
-void glutils_nl_free(glutils_nl_t *nl);
-void glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog);
+API_EXPORT glutils_nl_t *glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts);
+API_EXPORT glutils_nl_t *glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts);
+API_EXPORT void glutils_nl_free(glutils_nl_t *nl);
+API_EXPORT void glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog);
 
 static inline void
 glutils_enable_vtx_attr_ptr(GLint index, GLint size, GLenum type,

@@ -19,7 +19,7 @@
 #ifndef	_ACF_UTILS_COMPRESS_H_
 #define	_ACF_UTILS_COMPRESS_H_
 
-#include <acfutils/types.h>
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {

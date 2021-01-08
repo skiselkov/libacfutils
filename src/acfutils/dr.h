@@ -24,9 +24,9 @@
 
 #include <XPLMDataAccess.h>
 
-#include <acfutils/helpers.h>
-#include <acfutils/log.h>
-#include <acfutils/types.h>
+#include "helpers.h"
+#include "log.h"
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {

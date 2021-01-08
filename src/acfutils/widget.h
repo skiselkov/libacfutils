@@ -29,8 +29,8 @@
 #include <XPLMDisplay.h>
 #include <XPWidgets.h>
 
-#include "acfutils/delay_line.h"
-#include "acfutils/types.h"
+#include "delay_line.h"
+#include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {

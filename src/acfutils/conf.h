@@ -33,9 +33,9 @@
 #include <stdbool.h>
 #endif
 
-#include <acfutils/helpers.h>
-#include <acfutils/types.h>
-#include <acfutils/avl.h>
+#include "helpers.h"
+#include "types.h"
+#include "avl.h"
 
 #ifdef	__cplusplus
 extern "C" {
