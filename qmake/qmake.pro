@@ -11,7 +11,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2020 Saso Kiselkov. All rights reserved.
+# Copyright 2021 Saso Kiselkov. All rights reserved.
 
 # Shared library without any Qt functionality
 TEMPLATE = lib
@@ -234,6 +234,7 @@ SOURCES += \
     ../src/perf.c \
     ../src/taskq.c \
     ../src/time.c \
+    ../src/thread.c \
     ../src/tumbler.c \
     ../src/widget.c \
     ../src/wmm.c \
