@@ -74,6 +74,7 @@ typedef struct {
 typedef	struct {
 	bool_t		chg;	/* renderer has changed the surface, reupload */
 	bool_t		texed;	/* has glTexImage2D been applied? */
+	bool_t		monochrome;	/* uses 8-bit alpha-only texture? */
 	GLuint		tex;
 	GLuint		pbo;
 	cairo_surface_t	*surf;
@@ -87,6 +88,7 @@ struct mt_cairo_render_s {
 	char			*init_filename;
 	int			init_line;
 	bool_t			debug;
+	vect3_t			monochrome;
 
 	mt_cairo_uploader_t	*mtul;
 	list_node_t		mtul_queue_node;
@@ -95,6 +97,7 @@ struct mt_cairo_render_s {
 	unsigned		w, h;
 	double			fps;
 	mt_cairo_render_cb_t	render_cb;
+	mt_cairo_init_cb_t	init_cb;
 	mt_cairo_fini_cb_t	fini_cb;
 	void			*userinfo;
 
@@ -125,6 +128,7 @@ struct mt_cairo_render_s {
 	GLint			shader_loc_tex;
 	GLint			shader_loc_vtx_pos;
 	GLint			shader_loc_vtx_tex0;
+	GLint			shader_loc_color_in;
 
 	bool_t			ctx_checking;
 	glctx_t			*create_ctx;
@@ -160,6 +164,15 @@ static const char *frag_shader =
     "	gl_FragColor = texture2D(tex, tex_coord);\n"
     "}\n";
 
+static const char *frag_shader_mono =
+    "#version 120\n"
+    "uniform sampler2D	tex;\n"
+    "uniform vec3	color_in;\n"
+    "varying vec2	tex_coord;\n"
+    "void main() {\n"
+    "	gl_FragColor = vec4(color_in, texture2D(tex, tex_coord).r);\n"
+    "}\n";
+
 static const char *vert_shader410 =
     "#version 410\n"
     "uniform mat4			pvm;\n"
@@ -178,6 +191,16 @@ static const char *frag_shader410 =
     "layout(location = 0) out vec4	color_out;\n"
     "void main() {\n"
     "	color_out = texture(tex, tex_coord);\n"
+    "}\n";
+
+static const char *frag_shader410_mono =
+    "#version 410\n"
+    "uniform sampler2D			tex;\n"
+    "uniform vec3			color_in;\n"
+    "layout(location = 0) in vec2	tex_coord;\n"
+    "layout(location = 0) out vec4	color_out;\n"
+    "void main() {\n"
+    "	color_out = vec4(color_in, texture(tex, tex_coord).r);\n"
     "}\n";
 
 /*
@@ -394,7 +417,9 @@ setup_vao(mt_cairo_render_t *mtcr)
  * @param init_cb An optional initialization callback that can be
  *	used to initialize private resources needed during rendering.
  *	Called once for every cairo_t instance (two instances for
- *	every mt_cairo_render_t, due to double-buffering).
+ *	every mt_cairo_render_t, due to double-buffering). Please note that
+ *	this can be called even after calling mt_cairo_render_init, since
+ *	mt_cairo_render_set_monochrome will re-allocate the cairo instances.
  * @param render_cb A mandatory rendering callback. This is called for
  *	each rendered frame.
  * @param fini_cb An optional finalization callback that can be used
@@ -420,10 +445,12 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	mtcr->h = h;
 	mtcr->cur_rs = -1;
 	mtcr->render_cb = render_cb;
+	mtcr->init_cb = init_cb;
 	mtcr->fini_cb = fini_cb;
 	mtcr->userinfo = userinfo;
 	mtcr->fps = fps;
 	mtcr->tex_filter = GL_LINEAR;
+	mtcr->monochrome = NULL_VECT3;
 
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
@@ -563,11 +590,15 @@ mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
 	mtcr->tex_filter = gl_filter_enum;
 }
 
-void
-mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
+static void
+set_shader_impl(mt_cairo_render_t *mtcr, unsigned prog, bool_t force)
 {
-	ASSERT(mtcr != NULL);
-
+	/* Forcibly reload our own shader */
+	if (force && !mtcr->shader_is_custom && mtcr->shader != 0) {
+		ASSERT0(prog);
+		glDeleteProgram(mtcr->shader);
+		mtcr->shader = 0;
+	}
 	if (prog != 0) {
 		if (!mtcr->shader_is_custom && mtcr->shader != 0)
 			glDeleteProgram(mtcr->shader);
@@ -579,23 +610,132 @@ mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 		if (GLEW_VERSION_4_1) {
 			char *vert_shader_text = sprintf_alloc(vert_shader410,
 			    VTX_ATTRIB_POS, VTX_ATTRIB_TEX0);
+			const char *frag_shader_text = (IS_NULL_VECT(
+			    mtcr->monochrome) ? frag_shader410 :
+			    frag_shader410_mono);
+
 			mtcr->shader = shader_prog_from_text(
 			    "mt_cairo_render_shader",
-			    vert_shader_text, frag_shader410, NULL);
+			    vert_shader_text, frag_shader_text, NULL);
 			free(vert_shader_text);
 		} else {
+			const char *frag_shader_text = (IS_NULL_VECT(
+			    mtcr->monochrome) ? frag_shader :
+			    frag_shader_mono);
+
 			mtcr->shader = shader_prog_from_text(
-			    "mt_cairo_render_shader", vert_shader, frag_shader,
+			    "mt_cairo_render_shader",
+			    vert_shader, frag_shader_text,
 			    "vtx_pos", VTX_ATTRIB_POS,
 			    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
 		}
 	}
 	VERIFY(mtcr->shader != 0);
-	mtcr->shader_loc_vtx_pos = glGetAttribLocation(mtcr->shader, "vtx_pos");
-	mtcr->shader_loc_vtx_tex0 = glGetAttribLocation(mtcr->shader,
-	    "vtx_tex0");
+	mtcr->shader_loc_vtx_pos =
+	    glGetAttribLocation(mtcr->shader, "vtx_pos");
+	mtcr->shader_loc_vtx_tex0 =
+	    glGetAttribLocation(mtcr->shader, "vtx_tex0");
 	mtcr->shader_loc_pvm = glGetUniformLocation(mtcr->shader, "pvm");
 	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
+	mtcr->shader_loc_color_in =
+	    glGetUniformLocation(mtcr->shader, "color_in");
+}
+
+void
+mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
+{
+	ASSERT(mtcr != NULL);
+	set_shader_impl(mtcr, prog, B_FALSE);
+}
+
+/*
+ * Enables or disables monochrome rendering mode. The default is disabled
+ * (i.e. the image is rendered in RGBA mode). Monochrome rendering in
+ * Cairo is controlled using the alpha channel. If you are using the
+ * default mt_cairo_render compositing shader, the `color' vector
+ * argument to this function sets what RGB color is used in the final
+ * render. Passing any non-NULL vector here enables monochrome mode. Pass
+ * a NULL_VECT3 to disable monochrome mode.
+ * Switching rendering modes stops & restarts the worker thread (when not
+ * in FG mode) and calls any surface fini and init callbacks you passed
+ * mt_cairo_render_init.
+ */
+void
+mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
+{
+	ASSERT(mtcr != NULL);
+
+	if (VECT3_EQ(mtcr->monochrome, color))
+		return;
+
+	mtcr->monochrome = color;
+	/*
+	 * Stop the worker thread.
+	 */
+	if (mtcr->started) {
+		mutex_enter(&mtcr->lock);
+		mtcr->shutdown = B_TRUE;
+		cv_broadcast(&mtcr->cv);
+		mutex_exit(&mtcr->lock);
+		thread_join(&mtcr->thr);
+	}
+	/*
+	 * Reconstruct the Cairo surfaces in the new format.
+	 */
+	for (int i = 0; i < 2; i++) {
+		render_surf_t *rs = &mtcr->rs[i];
+
+		if (mtcr->fini_cb != NULL)
+			mtcr->fini_cb(rs->cr, mtcr->userinfo);
+		cairo_destroy(rs->cr);
+		cairo_surface_destroy(rs->surf);
+		/*
+		 * Free the texture data, it will be reallocated with the
+		 * proper format later.
+		 */
+		rs_tex_free(mtcr, rs);
+
+		rs->monochrome = !IS_NULL_VECT(mtcr->monochrome);
+		rs->surf = cairo_image_surface_create(rs->monochrome ?
+		    CAIRO_FORMAT_A8 : CAIRO_FORMAT_ARGB32, mtcr->w, mtcr->h);
+		rs->cr = cairo_create(rs->surf);
+		/*
+		 * The init_cb call MUST succeed here.
+		 */
+		if (mtcr->init_cb != NULL)
+			VERIFY(mtcr->init_cb(rs->cr, mtcr->userinfo));
+		/*
+		 * Empty both surfaces to assure their data is populated.
+		 */
+		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_CLEAR);
+		cairo_paint(mtcr->rs[i].cr);
+		cairo_set_operator(mtcr->rs[i].cr, CAIRO_OPERATOR_OVER);
+	}
+	/*
+	 * If we were set up to use our own shader, reload it to switch
+	 * to the monochrome version.
+	 */
+	if (!mtcr->shader_is_custom)
+		set_shader_impl(mtcr, 0, B_TRUE);
+	/*
+	 * Restart the worker if not in FG mode.
+	 */
+	if (!mtcr->fg_mode) {
+		mtcr->shutdown = B_FALSE;
+		VERIFY(thread_create(&mtcr->thr, worker, mtcr));
+		mtcr->started = B_TRUE;
+	}
+}
+
+/*
+ * Returns the color used for monochrome rendering and compositing. If
+ * monochrome rendering is not in use (the default), returns NULL_VECT3.
+ */
+vect3_t
+mt_cairo_render_get_monochrome(const mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (mtcr->monochrome);
 }
 
 /*
@@ -659,6 +799,22 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 	}
 }
 
+static void
+rs_gl_formats(const render_surf_t *rs, GLint *intfmt, GLint *format)
+{
+	ASSERT(rs != NULL);
+	ASSERT(intfmt != NULL);
+	ASSERT(format != NULL);
+
+	if (rs->monochrome) {
+		*intfmt = GL_R8;
+		*format = GL_RED;
+	} else {
+		*intfmt = GL_RGBA;
+		*format = GL_BGRA;
+	}
+}
+
 /*
  * Allocates a texture & PBO needed to upload a finished cairo rendering.
  * The texture & PBO IDs are placed in `tex' and `pbo' respectively.
@@ -666,8 +822,12 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 static void
 rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
+	GLint intfmt, format;
+
 	ASSERT(mtcr != NULL);
 	ASSERT(rs != NULL);
+
+	rs_gl_formats(rs, &intfmt, &format);
 
 	if (rs->tex == 0) {
 		glGenTextures(1, &rs->tex);
@@ -677,14 +837,14 @@ rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
 		    mtcr->tex_filter);
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
-		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
+		    mtcr->init_filename, mtcr->init_line, format,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 		/* Texture data assignment will be done in bind_cur_tex */
 	}
 	if (rs->pbo == 0) {
 		glGenBuffers(1, &rs->pbo);
 		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
-		    mtcr->init_filename, mtcr->init_line, GL_BGRA,
+		    mtcr->init_filename, mtcr->init_line, format,
 		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 		/* Buffer specification will take place in rs_upload */
 	}
@@ -698,20 +858,23 @@ rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 static void
 rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
+	GLint intfmt, format;
+
 	ASSERT(mtcr != NULL);
 	ASSERT(rs != NULL);
 
+	rs_gl_formats(rs, &intfmt, &format);
 	if (rs->tex != 0) {
 		glDeleteTextures(1, &rs->tex);
 		rs->tex = 0;
 		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
-		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
 	if (rs->pbo != 0) {
 		glDeleteBuffers(1, &rs->pbo);
 		rs->pbo = 0;
 		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
-		    GL_BGRA, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 	}
 }
 
@@ -739,7 +902,10 @@ rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 	src = cairo_image_surface_get_data(rs->surf);
 	dest = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 	if (dest != NULL) {
-		memcpy(dest, src, mtcr->w * mtcr->h * 4);
+		if (rs->monochrome)
+			memcpy(dest, src, mtcr->w * mtcr->h);
+		else
+			memcpy(dest, src, mtcr->w * mtcr->h * 4);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 		/*
 		 * We MUSTN'T call glTexImage2D yet, because if we're running
@@ -752,12 +918,15 @@ rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 		 */
 		rs->texed = B_FALSE;
 	} else {
+		GLint intfmt, format;
+
+		rs_gl_formats(rs, &intfmt, &format);
 		logMsg("Error asynchronously updating mt_cairo_render "
 		    "surface %p(%s:%d): glMapBuffer returned NULL",
 		    mtcr, mtcr->init_filename, mtcr->init_line);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
-		    GL_BGRA, GL_UNSIGNED_BYTE, src);
+		glTexImage2D(GL_TEXTURE_2D, 0, intfmt, mtcr->w, mtcr->h, 0,
+		    format, GL_UNSIGNED_BYTE, src);
 		rs->texed = B_TRUE;
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -782,10 +951,13 @@ rs_tex_apply(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 	ASSERT(rs != NULL);
 
 	if (!rs->texed) {
+		GLint intfmt, format;
+
+		rs_gl_formats(rs, &intfmt, &format);
 		glBindTexture(GL_TEXTURE_2D, rs->tex);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mtcr->w, mtcr->h, 0,
-		    GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, intfmt, mtcr->w, mtcr->h, 0,
+		    format, GL_UNSIGNED_BYTE, NULL);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		rs->texed = B_TRUE;
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -984,7 +1156,10 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	glUniformMatrix4fv(mtcr->shader_loc_pvm,
 	    1, GL_FALSE, (const GLfloat *)pvm);
 	glUniform1i(mtcr->shader_loc_tex, 0);
-
+	if (!IS_NULL_VECT(mtcr->monochrome)) {
+		glUniform3f(mtcr->shader_loc_color_in, mtcr->monochrome.x,
+		    mtcr->monochrome.y, mtcr->monochrome.z);
+	}
 	if ((size.x < 0 && size.y >= 0) || (size.x >= 0 && size.y < 0)) {
 		glCullFace(GL_FRONT);
 		cull_front = true;
