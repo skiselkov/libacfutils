@@ -135,7 +135,7 @@ fi
 export PKG_CONFIG_PATH
 
 if [[ "$1" = "--cflags" ]]; then
-	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.4.1/include"
+	CGLM_EXTRA="-I$(pwd)/cglm/cglm-0.7.9/include"
 	PCRE2_EXTRA="-DPCRE2_CODE_UNIT_WIDTH=8"
 	if [[ "$ARCH" = "mac-64" ]]; then
 		GLEW_EXTRA="-DLACF_GLEW_USE_NATIVE_TLS=0"

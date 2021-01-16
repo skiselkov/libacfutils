@@ -107,7 +107,7 @@ done
 rm -rf "$OUTPUT"
 
 mkdir -p "$OUTPUT/include"
-cp -r src/acfutils cglm/cglm-0.4.1/include/cglm "$OUTPUT/include"
+cp -r src/acfutils cglm/cglm-0.7.9/include/cglm "$OUTPUT/include"
 cp README-redist.md "$OUTPUT/README.md"
 
 case $(uname) in
