@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
 		fi
 		;;
 	--static-openal)
-		if [ -f "openal-soft/openal-soft-1.20.1-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
+		if [ -f "openal-soft/openal-soft-1.21.0-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
 			PACKAGES="$PACKAGES opusfile opus ogg openal"
 			STATIC_OPENAL=1
 		fi
@@ -118,7 +118,7 @@ $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\
-$(pwd)/openal-soft/openal-soft-1.20.1-$ARCH/build/install/lib/pkgconfig:\
+$(pwd)/openal-soft/openal-soft-1.21.0-$ARCH/build/install/lib/pkgconfig:\
 $(pwd)/pcre2/pcre2-$ARCH/lib/pkgconfig:\
 $(pwd)/glfw/glfw-$ARCH/install/lib/pkgconfig"
 
