@@ -142,7 +142,7 @@ find_first_monitor(int idx, int left, int top, int right, int bottom,
 static monitor_t
 get_first_monitor_bounds(void)
 {
-	monitor_t mon;
+	monitor_t mon = {};
 
 	memset(&mon, 0, sizeof (mon));
 
@@ -150,20 +150,6 @@ get_first_monitor_bounds(void)
 	if (mon.left == 0 && mon.right == 0 && mon.top == 0 &&
 	    mon.bottom == 0) {
 		XPLMGetScreenSize(&mon.right, &mon.top);
-	} else {
-		/*
-		 * The modern coordinate system uses the top left corner
-		 * as the origin, instead of the bottom left. So we need
-		 * to flip the coordinates around.
-		 */
-		int glob_left, glob_top, glob_right, glob_bottom;
-		int glob_height;
-
-		XPLMGetScreenBoundsGlobal(&glob_left, &glob_top,
-		    &glob_right, &glob_bottom);
-		glob_height = glob_top - glob_bottom;
-		mon.top = glob_height - mon.top;
-		mon.bottom = glob_height - mon.bottom;
 	}
 
 	return (mon);
