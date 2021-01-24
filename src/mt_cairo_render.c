@@ -1446,7 +1446,7 @@ mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 }
 
 static bool_t
-mtul_try_complete_ul(render_surf_t *rs)
+mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 {
 	mt_cairo_render_t *mtcr;
 
@@ -1454,11 +1454,19 @@ mtul_try_complete_ul(render_surf_t *rs)
 
 	ASSERT(rs != NULL);
 	ASSERT(rs->sync != NULL);
+	ASSERT(ul_inpro_list != NULL);
 
 	if (glClientWaitSync(rs->sync, GL_SYNC_FLUSH_COMMANDS_BIT,
 	    UL_TIMEOUT) == GL_TIMEOUT_EXPIRED) {
 		return (B_FALSE);
 	}
+	/*
+	 * We need to remove the surface from the ul_inprog_list BEFORE
+	 * resetting rs->chg, otherwise the mtcr could attempt to emit
+	 * another frame. This could try to double-add the surface while
+	 * it's still active on the ul_inprog_list.
+	 */
+	list_remove(ul_inprog_list, rs);
 	mtcr = rs->owner;
 	ASSERT(mtcr != NULL);
 
@@ -1511,10 +1519,13 @@ mtul_drain_queue(mt_cairo_uploader_t *mtul)
 			bool_t ul_done;
 
 			mutex_exit(&mtul->lock);
-			ul_done = mtul_try_complete_ul(rs);
+			ul_done = mtul_try_complete_ul(rs, &ul_inprog_list);
 			mutex_enter(&mtul->lock);
 			if (ul_done) {
-				list_remove(&ul_inprog_list, rs);
+				/*
+				 * The rs has already been removed from
+				 * the ul_inprog_list.
+				 */
 				cv_broadcast(&mtul->cv_done);
 			}
 			GLUTILS_ASSERT_NO_ERROR();
