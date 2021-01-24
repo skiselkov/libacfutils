@@ -1454,7 +1454,7 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 
 	ASSERT(rs != NULL);
 	ASSERT(rs->sync != NULL);
-	ASSERT(ul_inpro_list != NULL);
+	ASSERT(ul_inprog_list != NULL);
 
 	if (glClientWaitSync(rs->sync, GL_SYNC_FLUSH_COMMANDS_BIT,
 	    UL_TIMEOUT) == GL_TIMEOUT_EXPIRED) {
