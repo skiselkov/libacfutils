@@ -205,7 +205,8 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
 
 	VERIFY(!shared || !thread_local);
 	/* Clear error state */
-	alGetError();
+	if (shared)
+		alGetError();
 
 	memset(&sav, 0, sizeof (sav));
 	if (!thread_local && !ctx_save(NULL, &sav))
