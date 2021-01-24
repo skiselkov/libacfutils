@@ -1554,6 +1554,8 @@ mtul_worker(void *arg)
 {
 	mt_cairo_uploader_t *mtul;
 
+	thread_set_name("mtul_worker");
+
 	ASSERT(arg != NULL);
 	mtul = arg;
 
