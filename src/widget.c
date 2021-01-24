@@ -149,7 +149,8 @@ get_first_monitor_bounds(void)
 	XPLMGetAllMonitorBoundsGlobal(find_first_monitor, &mon);
 	if (mon.left == 0 && mon.right == 0 && mon.top == 0 &&
 	    mon.bottom == 0) {
-		XPLMGetScreenSize(&mon.right, &mon.top);
+		XPLMGetScreenBoundsGlobal(&mon.left, &mon.top, &mon.right,
+		    &mon.bottom);
 	}
 
 	return (mon);
