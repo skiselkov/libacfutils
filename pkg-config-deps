@@ -45,6 +45,11 @@ cd "$(dirname "$0")"
 ARCH="$1"
 shift
 
+if ! [ -f "openal-soft/openal-soft-$OPENAL_VERSION-$ARCH/build/install/lib/pkgconfig/openal.pc" ] &&
+    [ -f "openal-soft/openal-soft-1.19.1-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
+	OPENAL_VERSION="1.19.1"
+fi
+
 # The order of arguments we pass to pkg-config is important. We must list
 # dependencies FOLLOWING the dependents (so e.g. zlib AFTER libpng).
 while [[ $# -gt 0 ]]; do

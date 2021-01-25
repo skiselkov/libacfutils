@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2019 Saso Kiselkov. All rights reserved.
+# Copyright 2021 Saso Kiselkov. All rights reserved.
 
 # Prior to building the included dependencies, make sure the following
 # packages are installed (tested on Ubuntu 18.04):
