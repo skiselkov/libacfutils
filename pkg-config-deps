@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2020 Saso Kiselkov. All rights reserved.
+# Copyright 2021 Saso Kiselkov. All rights reserved.
 
 # This file needs to be called from your makefile when using libacfutil.
 # It produces the necessary cflags and libs to include all the build-time
@@ -38,6 +38,7 @@ GLEWMX=1
 WHOLE_ARCH_ON=""
 WHOLE_ARCH_OFF=""
 LINK_ACFUTILS=1
+OPENAL_VERSION="1.21.0"
 
 cd "$(dirname "$0")"
 
@@ -55,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 		fi
 		;;
 	--static-openal)
-		if [ -f "openal-soft/openal-soft-1.21.0-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
+		if [ -f "openal-soft/openal-soft-$OPENAL_VERSION-$ARCH/build/install/lib/pkgconfig/openal.pc" ]; then
 			PACKAGES="$PACKAGES opusfile opus ogg openal"
 			STATIC_OPENAL=1
 		fi
@@ -77,6 +78,9 @@ while [[ $# -gt 0 ]]; do
 		;;
 	--no-link-acfutils)
 		LINK_ACFUTILS=0
+		;;
+	--openal-version=1.19.1)
+		OPENAL_VERSION="1.19.1"
 		;;
 	*)
 		break
@@ -118,7 +122,7 @@ $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\
-$(pwd)/openal-soft/openal-soft-1.21.0-$ARCH/build/install/lib/pkgconfig:\
+$(pwd)/openal-soft/openal-soft-$OPENAL_VERSION-$ARCH/build/install/lib/pkgconfig:\
 $(pwd)/pcre2/pcre2-$ARCH/lib/pkgconfig:\
 $(pwd)/glfw/glfw-$ARCH/install/lib/pkgconfig"
 

@@ -13,9 +13,13 @@
 #
 # CDDL HEADER END
 
-# Copyright 2020 Saso Kiselkov. All rights reserved.
+# Copyright 2021 Saso Kiselkov. All rights reserved.
 
 FILE="openal-soft-1.21.0.tar.bz2"
+if [[ "$1" = "--openal-version=1.19.1" ]]; then
+	shift
+	FILE="openal-soft-1.19.1.tar.bz2"
+fi
 DIR="${FILE/%.tar.bz2/}"
 
 [ -d "$DIR" ] && rm -rf "$DIR"

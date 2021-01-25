@@ -255,8 +255,7 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
 			alc->ctx = ctx;
 		}
 		if (thread_local) {
-			alcSetThreadContext(ctx);
-			VERIFY3U(alGetError(), ==, AL_NO_ERROR);
+			VERIFY3U(alcSetThreadContext(ctx), ==, ALC_TRUE);
 		}
 	}
 
