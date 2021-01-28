@@ -664,10 +664,14 @@ void
 mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
 {
 	ASSERT(mtcr != NULL);
-
-	if (VECT3_EQ(mtcr->monochrome, color))
+	/*
+	 * If the monochrome status hasn't changed, there's no need to
+	 * rebuild the surface. Just store the potentially new color.
+	 */
+	if (IS_NULL_VECT(mtcr->monochrome) == IS_NULL_VECT(color)) {
+		mtcr->monochrome = color;
 		return;
-
+	}
 	mtcr->monochrome = color;
 	/*
 	 * Stop the worker thread.
