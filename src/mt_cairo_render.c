@@ -1572,7 +1572,8 @@ mtul_worker(void *arg)
 	while (!mtul->shutdown) {
 		mtul_drain_queue(mtul);
 		/* pause for more work */
-		cv_wait(&mtul->cv_queue, &mtul->lock);
+		if (list_head(&mtul->queue) == NULL)
+			cv_wait(&mtul->cv_queue, &mtul->lock);
 	}
 
 	mutex_exit(&mtul->lock);
