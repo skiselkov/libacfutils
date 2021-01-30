@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_WIDGET_H_
@@ -82,6 +82,9 @@ API_EXPORT void window_follow_VR(XPLMWindowID win);
 
 #define	widget_follow_VR	ACFSYM(widget_follow_VR)
 API_EXPORT void widget_follow_VR(XPWidgetID win);
+
+#define	window_is_on_screen	ACFSYM(window_is_on_screen)
+API_EXPORT bool_t window_is_on_screen(XPLMWindowID win);
 
 /*
  * These define an automatic window resizing controller that keeps the

@@ -270,6 +270,7 @@ contains(minimal, 1) {
 	    ../src/acfutils/glew.h \
 	    ../src/acfutils/glew_os.h \
 	    ../src/acfutils/glutils.h \
+	    ../src/acfutils/lacf_gl_pic.h \
 	    ../src/acfutils/mt_cairo_render.h \
 	    ../src/acfutils/odb.h \
 	    ../src/acfutils/paste.h \
@@ -287,6 +288,7 @@ contains(minimal, 1) {
 	    ../src/glew.c \
 	    ../src/glew_os.c \
 	    ../src/glutils.c \
+	    ../src/lacf_gl_pic.c \
 	    ../src/minimp3.c \
 	    ../src/mt_cairo_render.c \
 	    ../src/odb.c \

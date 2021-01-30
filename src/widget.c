@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -501,7 +501,56 @@ widget_follow_VR(XPWidgetID win)
 	window_follow_VR(XPGetWidgetUnderlyingWindow(win));
 }
 
-void win_resize_ctl_init(win_resize_ctl_t *ctl, XPLMWindowID win,
+typedef struct {
+	int	left, top, right, bottom;
+	bool	on_screen;
+} find_window_t;
+
+static void
+find_window(int idx, int left, int top, int right, int bottom, void *refcon)
+{
+	enum { MARGIN = 50 };
+	find_window_t *info;
+
+	UNUSED(idx);
+	ASSERT(refcon != NULL);
+	info = refcon;
+
+	if (info->right > left + MARGIN && info->left < right - MARGIN &&
+	    info->top > bottom + MARGIN && info->bottom < top - MARGIN) {
+		info->on_screen = B_TRUE;
+	}
+}
+
+bool_t
+window_is_on_screen(XPLMWindowID win)
+{
+	int left, top, right, bottom;
+	find_window_t info = {};
+	ASSERT(win != NULL);
+
+	XPLMGetWindowGeometry(win, &info.left, &info.top, &info.right,
+	    &info.bottom);
+	XPLMGetAllMonitorBoundsGlobal(find_window, &info);
+	/*
+	 * Fallback - maybe we don't have any fullscreen windows at all,
+	 * so try the global X-Plane desktop space.
+	 */
+	if (!info.on_screen) {
+		enum { MARGIN = 50 };
+		XPLMGetScreenBoundsGlobal(&left, &top, &right, &bottom);
+
+		return (info.right > left + MARGIN &&
+		    info.left < right - MARGIN &&
+		    info.top > bottom + MARGIN &&
+		    info.bottom < top - MARGIN);
+	} else {
+		return (B_TRUE);
+	}
+}
+
+void
+win_resize_ctl_init(win_resize_ctl_t *ctl, XPLMWindowID win,
     unsigned norm_w, unsigned norm_h)
 {
 	ASSERT(ctl != NULL);
