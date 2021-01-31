@@ -1,0 +1,11 @@
+--- pixman-0.36.0/pixman/pixman-compiler.h	2018-04-11 14:07:58.000000000 +0200
++++ pixman-0.36.0-new/pixman/pixman-compiler.h	2021-01-31 04:14:51.000000000 +0100
+@@ -91,7 +91,7 @@
+ 
+ /* GCC visibility */
+ #if defined(__GNUC__) && __GNUC__ >= 4 && !defined(_WIN32)
+-#   define PIXMAN_EXPORT __attribute__ ((visibility("default")))
++#   define PIXMAN_EXPORT __attribute__ ((visibility("hidden")))
+ /* Sun Studio 8 visibility */
+ #elif defined(__SUNPRO_C) && (__SUNPRO_C >= 0x550)
+ #   define PIXMAN_EXPORT __global
