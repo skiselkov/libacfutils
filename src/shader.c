@@ -191,6 +191,18 @@ have_shader_binary_format(GLint fmt)
 	return (found);
 }
 
+static bool_t
+force_spv(void)
+{
+	for (int i = 0; environ[i] != NULL; i++) {
+		if (strncmp(environ[i], "_LACF_SHADERS_FORCE_SPV", 23) == 0) {
+			logMsg("SPIR-V force load");
+			return (B_TRUE);
+		}
+	}
+	return (B_FALSE);
+}
+
 /*
  * Attemps to load a SPIR-V shader. If SPIR-V is not supported, calls
  * shader_from_spirv_fallback to attempt to load a backup alternate shader.
@@ -220,14 +232,13 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 	 * When running under Nvidia Nsight, avoid loading binary shaders.
 	 * That way, we can see the source in the source explorer.
 	 */
-	if (!GLEW_ARB_gl_spirv || !GLEW_ARB_spirv_extensions ||
+	if (!GLEW_ARB_gl_spirv ||
 	    !have_shader_binary_format(GL_SHADER_BINARY_FORMAT_SPIR_V) ||
-	    is_amd() || glutils_nsight_debugger_present()) {
+	    is_amd() || (glutils_nsight_debugger_present() && !force_spv())) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename,
 		    spec_const));
 	}
-
 	for (n_spec = 0; spec_const != NULL && !spec_const[n_spec].is_last;
 	    n_spec++)
 		;
