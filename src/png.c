@@ -46,7 +46,7 @@ typedef struct {
  */
 uint8_t *
 png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
-    int req_color_type, int req_bit_depth)
+    int *color_type, int *bit_depth)
 {
 	FILE *volatile fp = NULL;
 	size_t rowbytes;
@@ -57,6 +57,9 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 	uint8_t *volatile pixels = NULL;
 	volatile int w, h;
 	const char *volatile filename;
+
+	ASSERT(color_type != NULL);
+	ASSERT(bit_depth != NULL);
 
 	if (readfunc == NULL) {
 		filename = arg;
@@ -101,14 +104,18 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 	w = png_get_image_width(pngp, infop);
 	h = png_get_image_height(pngp, infop);
 
-	if (png_get_color_type(pngp, infop) != req_color_type) {
+	if (*color_type == -1) {
+		*color_type = png_get_color_type(pngp, infop);
+	} else if (png_get_color_type(pngp, infop) != *color_type) {
 		logMsg("Bad image file %s: need color type %d, got %d",
-		    filename, req_color_type, png_get_color_type(pngp, infop));
+		    filename, *color_type, png_get_color_type(pngp, infop));
 		goto out;
 	}
-	if (png_get_bit_depth(pngp, infop) != req_bit_depth) {
+	if (*bit_depth == -1) {
+		*bit_depth = png_get_bit_depth(pngp, infop);
+	} else if (png_get_bit_depth(pngp, infop) != *bit_depth) {
 		logMsg("Bad image file %s: need %d-bit depth", filename,
-		    req_bit_depth);
+		    *bit_depth);
 		goto out;
 	}
 	rowbytes = png_get_rowbytes(pngp, infop);
@@ -149,24 +156,42 @@ out:
 }
 
 uint8_t *
+png_load_from_file_any(const char *filename, int *width, int *height,
+    int *color_type, int *bit_depth)
+{
+	ASSERT(color_type != NULL);
+	ASSERT(bit_depth != NULL);
+	*color_type = -1;
+	*bit_depth = -1;
+	return (png_load_impl(NULL, (void *)filename, width, height,
+	    color_type, bit_depth));
+}
+
+uint8_t *
 png_load_from_file_rgba(const char *filename, int *width, int *height)
 {
+	int color_type = PNG_COLOR_TYPE_RGBA;
+	int bit_depth = 8;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    PNG_COLOR_TYPE_RGBA, 8));
+	    &color_type, &bit_depth));
 }
 
 uint8_t *
 png_load_from_file_grey(const char *filename, int *width, int *height)
 {
+	int color_type = PNG_COLOR_TYPE_GRAY;
+	int bit_depth = 8;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    PNG_COLOR_TYPE_GRAY, 8));
+	    &color_type, &bit_depth));
 }
 
 uint8_t *
 png_load_from_file_grey16(const char *filename, int *width, int *height)
 {
+	int color_type = PNG_COLOR_TYPE_GRAY;
+	int bit_depth = 16;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    PNG_COLOR_TYPE_GRAY, 16));
+	    &color_type, &bit_depth));
 }
 
 static void
@@ -183,8 +208,10 @@ uint8_t *
 png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
 {
 	bufread_t br = { .bufp = buf, .len = len, .cur = 0 };
+	int color_type = PNG_COLOR_TYPE_RGBA;
+	int bit_depth = 8;
 	return (png_load_impl(bufread, &br, width, height,
-	    PNG_COLOR_TYPE_RGBA, 8));
+	    &color_type, &bit_depth));
 }
 
 static bool_t

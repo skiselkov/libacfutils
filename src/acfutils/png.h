@@ -32,6 +32,8 @@
 extern "C" {
 #endif
 
+API_EXPORT uint8_t *png_load_from_file_any(const char *filename,
+    int *width, int *height, int *color_type, int *bit_depth);
 API_EXPORT uint8_t *png_load_from_file_rgba(const char *filename,
     int *width, int *height);
 API_EXPORT uint8_t *png_load_from_file_grey(const char *filename,

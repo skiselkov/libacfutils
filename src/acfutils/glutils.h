@@ -26,6 +26,7 @@
 #ifndef	_ACF_UTILS_GLUTILS_H_
 #define	_ACF_UTILS_GLUTILS_H_
 
+#include <png.h>
 #include <stdio.h>
 
 #include "assert.h"
@@ -350,6 +351,33 @@ glutils_disable_vtx_attr_ptr(GLint index)
 {
 	if (index != -1)
 		glDisableVertexAttribArray(index);
+}
+
+static inline bool_t
+png2gltexfmt(int png_color_type, int png_bit_depth,
+    GLint *int_fmt, GLint *fmt, GLint *type)
+{
+	ASSERT(int_fmt != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(type != NULL);
+
+	if (png_bit_depth != 8)
+		return (B_FALSE);
+	switch (png_color_type) {
+	case PNG_COLOR_TYPE_RGB:
+		*int_fmt = GL_RGB;
+		*fmt = GL_RGB;
+		*type = GL_UNSIGNED_BYTE;
+		return (B_TRUE);
+	case PNG_COLOR_TYPE_RGB_ALPHA:
+		*int_fmt = GL_RGBA;
+		*fmt = GL_RGBA;
+		*type = GL_UNSIGNED_BYTE;
+		return (B_TRUE);
+	default:
+		/* Other formats are really not representable trivially */
+		return (B_FALSE);
+	}
 }
 
 #ifdef	__cplusplus
