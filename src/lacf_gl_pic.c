@@ -216,7 +216,7 @@ lacf_gl_pic_draw_custom(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
 	quads = glutils_cache_get_2D_quads(pic->cache, p, t, 4);
 
 	XPLMBindTexture2d(pic->tex, 0);
-	glUniform1i(glGetUniformLocation(prog, "tex0"), 0);
+	glUniform1i(glGetUniformLocation(prog, "tex"), 0);
 	glUniformMatrix4fv(glGetUniformLocation(prog, "pvm"),
 	    1, GL_FALSE, (const GLfloat *)pvm);
 	glutils_draw_quads(quads, prog);
