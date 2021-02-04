@@ -749,3 +749,78 @@ shaders2prog(const char *progname, GLuint vert_shader, GLuint frag_shader,
 
 	return (prog);
 }
+
+static void
+shader_obj_refresh_loc(shader_obj_t *obj)
+{
+	ASSERT(obj != NULL);
+	ASSERT(obj->prog != 0);
+	ASSERT(obj->attr_names != NULL || obj->num_attrs == 0);
+	ASSERT(obj->uniform_names != NULL || obj->num_uniforms == 0);
+
+	for (unsigned i = 0; i < obj->num_attrs; i++) {
+		ASSERT(obj->attr_names[i] != NULL);
+		obj->attr_loc[i] = glGetAttribLocation(obj->prog,
+		    obj->attr_names[i]);
+	}
+	for (unsigned i = 0; i < obj->num_uniforms; i++) {
+		ASSERT(obj->uniform_names[i] != NULL);
+		obj->uniform_loc[i] = glGetUniformLocation(obj->prog,
+		    obj->uniform_names[i]);
+	}
+}
+
+bool_t
+shader_obj_init(shader_obj_t *obj,
+    const char *dirpath, const shader_prog_info_t *info,
+    const char **attr_names, unsigned num_attrs,
+    const char **uniform_names, unsigned num_uniforms)
+{
+	ASSERT(obj != NULL);
+	ASSERT(dirpath != NULL);
+	ASSERT(info != NULL);
+	ASSERT3U(num_attrs, <, ARRAY_NUM_ELEM(obj->attr_loc));
+	ASSERT3U(num_uniforms, <, ARRAY_NUM_ELEM(obj->uniform_loc));
+
+	obj->prog = shader_prog_from_info(dirpath, info);
+	if (obj->prog == 0)
+		return (B_FALSE);
+	obj->info = info;
+	obj->dirpath = safe_strdup(dirpath);
+	obj->attr_names = attr_names;
+	obj->num_attrs = num_attrs;
+	obj->uniform_names = uniform_names;
+	obj->num_uniforms = num_uniforms;
+	shader_obj_refresh_loc(obj);
+
+	return (B_TRUE);
+}
+
+void
+shader_obj_fini(shader_obj_t *obj)
+{
+	ASSERT(obj != NULL);
+	if (obj->prog != 0)
+		glDeleteProgram(obj->prog);
+	free(obj->dirpath);
+	memset(obj, 0, sizeof (*obj));
+}
+
+bool_t
+shader_obj_reload(shader_obj_t *obj)
+{
+	GLuint prog;
+
+	ASSERT(obj != NULL);
+	ASSERT(obj->dirpath != NULL);
+	ASSERT(obj->info != NULL);
+	prog = shader_prog_from_info(obj->dirpath, obj->info);
+	if (prog == 0)
+		return (B_FALSE);
+	if (obj->prog != 0)
+		glDeleteProgram(obj->prog);
+	obj->prog = prog;
+	shader_obj_refresh_loc(obj);
+
+	return (B_TRUE);
+}

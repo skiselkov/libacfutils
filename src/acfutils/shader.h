@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_SHADER_H_
@@ -129,19 +129,19 @@ typedef struct {
 
 /*
  * Apparently these are the standard vertex attribute indices:
- * gl_Vertex            0
- * gl_Normal            2
- * gl_Color             3
- * gl_SecondaryColor    4
- * gl_FogCoord          5
- * gl_MultiTexCoord0    8
- * gl_MultiTexCoord1    9
- * gl_MultiTexCoord2    10
- * gl_MultiTexCoord3    11
- * gl_MultiTexCoord4    12
- * gl_MultiTexCoord5    13
- * gl_MultiTexCoord6    14
- * gl_MultiTexCoord7    15
+ * gl_Vertex		0
+ * gl_Normal		2
+ * gl_Color		3
+ * gl_SecondaryColor	4
+ * gl_FogCoord		5
+ * gl_MultiTexCoord0	8
+ * gl_MultiTexCoord1	9
+ * gl_MultiTexCoord2	10
+ * gl_MultiTexCoord3	11
+ * gl_MultiTexCoord4	12
+ * gl_MultiTexCoord5	13
+ * gl_MultiTexCoord6	14
+ * gl_MultiTexCoord7	15
  */
 enum {
 	VTX_ATTRIB_POS =	0,
@@ -176,6 +176,201 @@ API_EXPORT GLuint shader_prog_from_text(const char *progname,
 #define	shader_prog_from_info	ACFSYM(shader_prog_from_info)
 API_EXPORT GLuint shader_prog_from_info(const char *dirpath,
     const shader_prog_info_t *info);
+
+/*
+ * Shader Objects
+ *
+ * A shader object (shader_obj_t) is a convenient shader control mechanism
+ * that can be used to efficiently perform attribute and uniform location
+ * lookups. Rather than having to store each location in your own code
+ * and work with a raw GLuint shader program, a shader_obj_t takes care
+ * of loading the shader from disk from a shader_prog_info_t and also
+ * performs all attribute and uniform lookups ahead of time. You then
+ * simply refer to attributes and uniforms by an enum value, rather than
+ * by name, removing the costly name lookup in the driver. This facility
+ * is generic, so it allows for a single code path of utilizing a shader
+ * in your code, while allowing for substituting the shader as needed
+ * based on rendering needs.
+ *
+ * To initialize a shader object, use `shader_obj_init' and then destroy
+ * the object using `shader_obj_fini'. On allocation, make sure the
+ * shader_obj_t is set to all zeros (e.g. using safe_calloc). This way,
+ * you can call `shader_obj_fini' even if `shader_obj_init' was never
+ * called.
+ *
+ * Once initialized, you can then bind the shader program using
+ * `shader_obj_bind_prog', which is equivalent to calling `glUseProgram'
+ * with the shader's program number. To fetch attribute and uniform
+ * locations, you use `shader_obj_get_a' and `shader_obj_get_u' with
+ * the enum describing the attribute or uniform you want the location of.
+ * Please note that the enum list must be contiguous. For efficiency
+ * reasons, the getter functions simply use the enum value as an index
+ * into the array of cached locations.
+ *
+ * CODE SAMPLE
+ *
+ *	-- Static shader info --
+ * static const shader_info_t foo_vert_info = { .filename = "foo.vert.spv" };
+ * static const shader_info_t foo_frag_info = { .filename = "foo.frag.spv" };
+ * static const shader_prog_info_t foo_prog_info = {
+ *	.progname = "foo_prog",
+ *	.vert = &foo_vert_info,
+ *	.frag = &foo_frag_info
+ * };
+ *	-- Attribute definitions --
+ * enum {
+ *	A_VTX_POS,
+ *	A_VTX_NORM,
+ *	A_VTX_TEX0
+ *	NUM_ATTRS
+ * };
+ * static const char *attr_names[NUM_ATTRS] = {
+ *	[A_VTX_POS] = "vtx_pos",
+ *	[A_VTX_NORM] = "vtx_norm",
+ *	[A_VTX_TEX0] = "vtx_tex0"
+ * };
+ *	-- Uniform definitions --
+ * enum {
+ *	U_PROJ_MATRIX,
+ *	U_MV_MATRIX,
+ *	NUM_UNIFORMS
+ * };
+ * static const char *uniform_names[NUM_UNIFORMS] = {
+ *	[U_PROJ_MATRIX] = "proj_matrix",
+ *	[U_MV_MATRIX] = "mv_matrix"
+ * };
+ *
+ *	-- Initializing a shader_obj_t
+ * static shader_obj_t foo_so;
+ * if (!shader_obj_init(&foo_so, "/foo/shader/dir", &foo_prog_info,
+ *	attr_names, NUM_ATTRS, uniform_names, NUM_UNIFORMS)) {
+ *	logMsg("shader %s load error", foo_prog_info.progname);
+ * }
+ *
+ *	-- Utilizing a shader_obj_t during rendering
+ * shader_obj_bind(&foo_so);
+ * glUniformMatrix4fv(shader_obj_get_u(&foo_so, U_PROJ_MATRIX),
+ *	1, GL_FALSE, proj_matrix);
+ * glUniformMatrix4fv(shader_obj_get_u(&foo_so, U_MV_MATRIX),
+ *	1, GL_FALSE, mv_matrix);
+ *
+ *	-- Destroying a shader_obj_t
+ * shader_obj_fini(&foo_so);
+ */
+#define	SHADER_OBJ_MAX_ATTRS		128
+#define	SHADER_OBJ_MAX_UNIFORMS		128
+typedef struct {
+	const shader_prog_info_t	*info;
+	char				*dirpath;
+	GLuint				prog;
+	const char			**attr_names;
+	unsigned			num_attrs;
+	GLint				attr_loc[SHADER_OBJ_MAX_ATTRS];
+	const char			**uniform_names;
+	unsigned			num_uniforms;
+	GLint				uniform_loc[SHADER_OBJ_MAX_UNIFORMS];
+} shader_obj_t;
+
+/*
+ * Initializes a shader_obj_t.
+ *
+ * @param obj The shader object to be initialized.
+ * @param dirpath The directory path containing the files of the shader.
+ *	You can free this after calling shader_obj_init. The shader object
+ *	copies it.
+ * @param info The shader_prog_info_t structure describing how the shader
+ *	is to be constructed. You must NOT free this structure until calling
+ *	`shader_obj_fini', the shader_obj_t doesn't copy it. Ideally this
+ *	should be a `static const' object in the program.
+ * @param attr_names An optional array of attribute names. This parameter
+ *	can be NULL, provided `num_attrs' is zero. You must NOT free this
+ *	array until calling `shader_obj_fini', the shader_obj_t doesn't copy
+ *	it. Ideally this should be a `static const' array in the program.
+ *	ALL the elements of this name array must be valid strings (not NULL).
+ * @param num_attrs Number of elements in `attr_names'. This must be
+ *	less than SHADER_OBJ_MAX_ATTRS (128).
+ * @param uniform_names An optional array of uniform names. This parameter
+ *	can be NULL, provided `num_uniforms' is zero. You must NOT free this
+ *	array until calling `shader_obj_fini', the shader_obj_t doesn't copy
+ *	it. Ideally this should be a `static const' array in the program.
+ *	ALL the elements of this name array must be valid strings (not NULL).
+ * @param num_uniforms Number of elements in `uniform_names'. This must be
+ *	less than SHADER_OBJ_MAX_UNIFORMS (128).
+ */
+API_EXPORT bool_t shader_obj_init(shader_obj_t *obj,
+    const char *dirpath, const shader_prog_info_t *info,
+    const char **attr_names, unsigned num_attrs,
+    const char **uniform_names, unsigned num_uniforms);
+/*
+ * Destroys a shader_obj_t. If you allocated the the shader_obj_t so that its
+ * storage is zero-initialized, you can safely call this function even if you
+ * didn't call `shader_obj_init'. The `obj' argument must NOT be NULL.
+ */
+API_EXPORT void shader_obj_fini(shader_obj_t *obj);
+/*
+ * Performs a reload of a shader_obj_t from disk and refreshes all attribute
+ * and uniform locations. Use this if you have altered the shader on disk
+ * and want to start using the new version for rendering.
+ * This function returns B_TRUE if the reload was successful, B_FALSE if not.
+ * The old shader program is automatically destroyed only if the reload was
+ * successful.
+ */
+API_EXPORT bool_t shader_obj_reload(shader_obj_t *obj);
+
+/*
+ * Binds the shader object's program to the current OpenGL context. This
+ * is equivalent to calling `glUseProgram(shader_obj_get_prog(&shader_obj))'.
+ * The shader_obj_t must have previous been successfully initialized using
+ * shader_obj_init, otherwise this function trips an assertion.
+ */
+static inline void
+shader_obj_bind(const shader_obj_t *obj)
+{
+	ASSERT(obj != NULL);
+	ASSERT(obj->prog != 0);
+	glUseProgram(obj->prog);
+}
+
+/*
+ * Returns the OpenGL shader program number in a shader_obj_t. The
+ * shader_obj_t must have previous been successfully initialized using
+ * shader_obj_init, otherwise this function trips an assertion.
+ */
+static inline GLuint
+shader_obj_get_prog(const shader_obj_t *obj)
+{
+	ASSERT(obj != NULL);
+	ASSERT(obj->prog != 0);
+	return (obj->prog);
+}
+
+/*
+ * Returns an attribute location in the shader_obj_t. The shader_obj_t must
+ * have previously been successfully initialized using shader_obj_init. The
+ * attr_ID must be an index into the attr_names array previously used in
+ * `shader_obj_init'.
+ */
+static inline GLint
+shader_obj_get_a(shader_obj_t *obj, unsigned attr_ID)
+{
+	ASSERT(obj != NULL);
+	ASSERT3U(attr_ID, <, obj->num_attrs);
+	return (obj->attr_loc[attr_ID]);
+}
+
+/*
+ * Returns a uniform location in the shader_obj_t. The shader_obj_t must
+ * must have previously been successfully initialized using shader_obj_init.
+ * The uniform_ID must be a valid index into the uniform_names array
+ * previously used in `shader_obj_init'.
+ */
+static inline GLint
+shader_obj_get_u(shader_obj_t *obj, unsigned uniform_ID)
+{
+	ASSERT(obj != NULL);
+	ASSERT3U(uniform_ID, <, obj->num_uniforms);
+	return (obj->uniform_loc[uniform_ID]);
+}
 
 #ifdef	__cplusplus
 }
