@@ -26,6 +26,7 @@
 #ifndef	_ACF_UTILS_HELPERS_H_
 #define	_ACF_UTILS_HELPERS_H_
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -206,6 +207,14 @@ API_EXPORT void append_format(char **str, size_t *sz,
 #define	append_format_buf		ACFSYM(append_format_buf)
 API_EXPORT void append_format_buf(char *str, size_t cap,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(3);
+static inline void
+normalize_whitespace(char *str)
+{
+	for (int i = 0, n = strlen(str); i < n; i++) {
+		if (isspace(str[i]))
+			str[i] = ' ';
+	}
+}
 
 /* string processing helpers */
 #define	strsplit			ACFSYM(strsplit)
