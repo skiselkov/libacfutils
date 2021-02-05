@@ -194,12 +194,14 @@ have_shader_binary_format(GLint fmt)
 static bool_t
 force_spv(void)
 {
+#if	!APL
 	for (int i = 0; environ[i] != NULL; i++) {
 		if (strncmp(environ[i], "_LACF_SHADERS_FORCE_SPV", 23) == 0) {
 			logMsg("SPIR-V force load");
 			return (B_TRUE);
 		}
 	}
+#endif	/* !defined(APL) */
 	return (B_FALSE);
 }
 
