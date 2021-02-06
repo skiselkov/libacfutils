@@ -12,7 +12,7 @@
  *
  * CDDL HEADER END
  *
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -570,14 +570,18 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
 static airport_t *
 parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 {
-	char name[48] = {};
+	/*
+	 * pre-allocate the buffer to be large enough that most names are
+	 * already gonna fit in there without too much reallocation.
+	 */
+	char *name = safe_calloc(32, 1);
+	size_t name_len = 0;
 	const char *new_icao;
 	geo_pos3_t pos = NULL_GEO_POS3;
-	char **comps;
 	size_t ncomps;
+	char **comps = strsplit(line, " ", B_TRUE, &ncomps);
 	airport_t *arpt = NULL;
 
-	comps = strsplit(line, " ", B_TRUE, &ncomps);
 	ASSERT(strcmp(comps[0], "1") == 0);
 	if (ncomps < 5)
 		goto out;
@@ -589,7 +593,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 		goto out;
 	for (size_t i = 5; i < ncomps; i++) {
 		strip_space(comps[i]);
-		append_format_buf(name, sizeof (name), "%s%s",
+		append_format(&name, &name_len, "%s%s",
 		    comps[i], i + 1 < ncomps ? " " : "");
 	}
 	arpt = apt_dat_lookup(db, new_icao);
@@ -616,11 +620,12 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	 * to hopefully transliterate that junk away as much as possible.
 	 */
 	if (cd_p != NULL) {
-		char name_conv[48] = {};
+		char name_conv[strlen(name) + 1];
 		char *conv_in = name, *conv_out = name_conv;
 		size_t conv_in_sz = strlen(name);
 		size_t conv_out_sz = sizeof (name_conv);
 
+		memset(name_conv, 0, sizeof (name_conv));
 		iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
 		for (size_t i = 0, j = 0; name_conv[i] != '\0' &&
 		    j + 1 < sizeof (arpt->name); i++) {
@@ -644,6 +649,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	arpt->refpt_m = GEO3_FT2M(pos);
 out:
 	free_strlist(comps, ncomps);
+	free(name);
 	return (arpt);
 }
 
