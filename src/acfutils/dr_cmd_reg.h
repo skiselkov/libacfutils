@@ -36,8 +36,8 @@
 extern "C" {
 #endif
 
-void dcr_init(void);
-void dcr_fini(void);
+API_EXPORT void dcr_init(void);
+API_EXPORT void dcr_fini(void);
 
 API_EXPORT XPLMCommandRef dcr_find_cmd(PRINTF_FORMAT(const char *fmt),
     XPLMCommandCallback_f cb, bool before, void *refcon, ...)
