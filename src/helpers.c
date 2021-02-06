@@ -607,7 +607,7 @@ parser_get_next_quoted_str2(FILE *fp, int *linep)
 				}
 			}
 			if (len == cap) {
-				str = realloc(str, cap + 1 + 128);
+				str = safe_realloc(str, cap + 1 + 128);
 				cap += 128;
 			}
 			str[len++] = c;
@@ -769,7 +769,7 @@ append_format(char **str, size_t *sz, const char *format, ...)
 	va_end(ap);
 
 	va_start(ap, format);
-	*str = realloc(*str, *sz + needed + 1);
+	*str = safe_realloc(*str, *sz + needed + 1);
 	(void) vsnprintf(*str + *sz, *sz + needed + 1, format, ap);
 	*sz += needed;
 	va_end(ap);
@@ -844,7 +844,7 @@ lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 
 		if (n + 1 >= cap) {
 			cap += 256;
-			line = realloc(line, cap);
+			line = safe_realloc(line, cap);
 		}
 		ASSERT(n < cap);
 		p = (compressed ? gzgets(fp, &line[n], cap - n) :
@@ -1462,7 +1462,7 @@ lacf_dirname(const char *filename)
 	p1 = MAX(p1, p2);
 	if (p1 == NULL)
 		return (strdup(""));
-	str = malloc((p1 - filename) + 1);
+	str = safe_malloc((p1 - filename) + 1);
 	lacf_strlcpy(str, filename, (p1 - filename) + 1);
 
 	return (str);
