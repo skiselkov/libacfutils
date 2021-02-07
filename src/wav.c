@@ -96,7 +96,7 @@
 struct alc {
 	ALCdevice	*dev;
 	ALCcontext	*ctx;
-	bool_t		thread_local;
+	bool_t		thr_local;
 };
 
 /*
@@ -112,7 +112,7 @@ ctx_save(alc_t *alc, alc_t *sav)
 	ASSERT(sav != NULL);
 
 	/* Thread-local contexts do not switch */
-	if (alc != NULL && alc->thread_local)
+	if (alc != NULL && alc->thr_local)
 		return (B_TRUE);
 
 	(void) alGetError(); /* cleanup after other OpenAL users */
@@ -153,7 +153,7 @@ ctx_restore(alc_t *alc, alc_t *sav)
 	ASSERT(sav != NULL);
 
 	/* Thread-local contexts do not switch, or nothing to restore */
-	if (alc != NULL && (alc->thread_local || alc->ctx == NULL))
+	if (alc != NULL && (alc->thr_local || alc->ctx == NULL))
 		return (B_TRUE);
 
 	/* Avoid ctx_restore recursion */
@@ -198,22 +198,22 @@ openal_init(const char *devname, bool_t shared)
 
 alc_t *
 openal_init2(const char *devname, bool_t shared, const int *attrs,
-    bool_t thread_local)
+    bool_t thr_local)
 {
 	alc_t	*alc;
 	alc_t	sav;
 
-	VERIFY(!shared || !thread_local);
+	VERIFY(!shared || !thr_local);
 	/* Clear error state */
 	if (shared)
 		alGetError();
 
 	memset(&sav, 0, sizeof (sav));
-	if (!thread_local && !ctx_save(NULL, &sav))
+	if (!thr_local && !ctx_save(NULL, &sav))
 		return (NULL);
 
 	alc = safe_calloc(1, sizeof (*alc));
-	alc->thread_local = thread_local;
+	alc->thr_local = thr_local;
 
 	if (!shared || sav.ctx == NULL) {
 		ALCdevice *dev = NULL;
@@ -224,7 +224,7 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
 		if (dev == NULL) {
 			logMsg("Cannot init audio system: device open failed.");
 			free(alc);
-			if (!thread_local)
+			if (!thr_local)
 				(void) ctx_restore(NULL, &sav);
 			return (B_FALSE);
 		}
@@ -239,7 +239,7 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
 		}
 		VERIFY(ctx != NULL);
 		/* No current context, install our own */
-		if (!thread_local && shared && sav.ctx == NULL) {
+		if (!thr_local && shared && sav.ctx == NULL) {
 			sav.ctx = ctx;
 			sav.dev = dev;
 			alcMakeContextCurrent(sav.ctx);
@@ -254,12 +254,12 @@ openal_init2(const char *devname, bool_t shared, const int *attrs,
 			alc->dev = dev;
 			alc->ctx = ctx;
 		}
-		if (thread_local) {
+		if (thr_local) {
 			VERIFY3U(alcSetThreadContext(ctx), ==, ALC_TRUE);
 		}
 	}
 
-	if (!thread_local && !ctx_restore(alc, &sav)) {
+	if (!thr_local && !ctx_restore(alc, &sav)) {
 		if (!shared) {
 			alcDestroyContext(alc->ctx);
 			alcCloseDevice(alc->dev);
@@ -276,7 +276,7 @@ openal_fini(alc_t *alc)
 {
 	ASSERT(alc != NULL);
 
-	if (alc->thread_local)
+	if (alc->thr_local)
 		alcSetThreadContext(NULL);
 	if (alc->dev != NULL) {
 		alcDestroyContext(alc->ctx);

@@ -76,7 +76,7 @@ typedef struct wav_s {
 API_EXPORT char **openal_list_output_devs(size_t *num_p);
 API_EXPORT alc_t *openal_init(const char *devname, bool_t shared);
 API_EXPORT alc_t *openal_init2(const char *devname, bool_t shared,
-    const int *attrs, bool_t thread_local);
+    const int *attrs, bool_t thr_local);
 API_EXPORT void openal_fini(alc_t *alc);
 
 API_EXPORT wav_t *wav_load(const char *filename, const char *descr_name,
