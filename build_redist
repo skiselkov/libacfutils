@@ -94,6 +94,12 @@ function install_platform() {
 		mkdir -p "$OUTPUT/$PLATFORM/src"
 		cp -r ${SRCS} "$OUTPUT/$PLATFORM/src"
 	fi
+
+	if [[ "$PLATFORM" = "win64" ]]; then
+		# We need to patch zlib to avoid depending on unistd.h
+		( cd libacfutils-redist && patch -p1 < ../zconf-win64.patch ) \
+		    || exit 1
+	fi
 }
 
 while getopts "d" opt; do
