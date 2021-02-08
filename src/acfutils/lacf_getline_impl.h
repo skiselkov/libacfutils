@@ -52,7 +52,7 @@ lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 #if	APL || LIN
 	/* On POSIX we can use the libc version when uncompressed */
 	if (!compressed)
-		return (getline(line_p, cap_p, fp));
+		return (getline(line_p, cap_p, (FILE *)fp));
 #endif	/* APL || LIN */
 
 	do {
@@ -63,8 +63,8 @@ lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 			line = (char *)safe_realloc(line, cap);
 		}
 		ASSERT(n < cap);
-		p = (compressed ? gzgets(fp, &line[n], cap - n) :
-		    fgets(&line[n], cap - n, fp));
+		p = (compressed ? gzgets((gzFile)fp, &line[n], cap - n) :
+		    fgets(&line[n], cap - n, (FILE *)fp));
 		if (p == NULL) {
 			if (n != 0) {
 				break;
