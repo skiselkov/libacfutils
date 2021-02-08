@@ -20,11 +20,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #include <stddef.h>
 #include <string.h>
+
+#include <png.h>
 
 #include <acfutils/avl.h>
 #include <acfutils/assert.h>
@@ -1078,4 +1080,31 @@ glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
 	}
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+bool_t
+glutils_png2gltexfmt(int png_color_type, int png_bit_depth,
+    GLint *int_fmt, GLint *fmt, GLint *type)
+{
+	ASSERT(int_fmt != NULL);
+	ASSERT(fmt != NULL);
+	ASSERT(type != NULL);
+
+	if (png_bit_depth != 8)
+		return (B_FALSE);
+	switch (png_color_type) {
+	case PNG_COLOR_TYPE_RGB:
+		*int_fmt = GL_RGB;
+		*fmt = GL_RGB;
+		*type = GL_UNSIGNED_BYTE;
+		return (B_TRUE);
+	case PNG_COLOR_TYPE_RGB_ALPHA:
+		*int_fmt = GL_RGBA;
+		*fmt = GL_RGBA;
+		*type = GL_UNSIGNED_BYTE;
+		return (B_TRUE);
+	default:
+		/* Other formats are really not representable trivially */
+		return (B_FALSE);
+	}
 }
