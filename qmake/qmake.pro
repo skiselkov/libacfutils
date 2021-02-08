@@ -174,6 +174,8 @@ HEADERS += \
     ../src/acfutils/except.h \
     ../src/acfutils/geom.h \
     ../src/acfutils/helpers.h \
+    ../src/acfutils/lacf_getline.h \
+    ../src/acfutils/parser_funcs.h \
     ../src/acfutils/hexcode.h \
     ../src/acfutils/hp_filter.h \
     ../src/acfutils/htbl.h \

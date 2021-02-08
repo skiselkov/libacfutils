@@ -184,9 +184,6 @@ static struct {
     { .cycle = -1 }
 };
 
-static ssize_t lacf_getline_impl(char **line_p, size_t *cap_p, void *fp,
-    bool_t compressed);
-
 /*
  * How to turn to get from hdg1 to hdg2 with positive being right and negative
  * being left. Always turns the shortest way around (<= 180 degrees).
@@ -477,150 +474,6 @@ airac_time2cycle(time_t t)
 	return (-1);
 }
 
-static ssize_t
-parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
-    unsigned *linenum, bool_t compressed)
-{
-	ASSERT(fp != NULL);
-	ASSERT(linenum != NULL);
-
-	for (;;) {
-		ssize_t len = lacf_getline_impl(linep, linecap, fp, compressed);
-		char *hash;
-		if (len == -1)
-			return (-1);
-		(*linenum)++;
-		hash = strchr(*linep, '#');
-		if (hash != NULL)
-		    *hash = '\0';
-		strip_space(*linep);
-		if (**linep == 0)
-			continue;
-		len = strlen(*linep);
-		/* substitute spaces for tabs */
-		for (ssize_t i = 0; i < len; i++) {
-			if ((*linep)[i] == '\t')
-				(*linep)[i] = ' ';
-		}
-		return (len);
-	}
-}
-
-/*
- * Grabs the next non-empty, non-comment line from a file, having stripped
- * away all leading and trailing whitespace. Any tab characters are also
- * replaced with spaces.
- *
- * @param fp File from which to retrieve the line.
- * @param linep Line buffer which will hold the new line. If the buffer pointer
- *	is set to NULL, it will be allocated. If it is not long enough, it
- *	will be expanded.
- * @param linecap The capacity of *linep. If set to zero a new buffer is
- *	allocated.
- * @param linenum The current line number. Will be advanced by 1 for each
- *	new line read.
- *
- * @return The number of characters in the line (after stripping whitespace)
- *	without the terminating NUL.
- */
-ssize_t
-parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
-{
-	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
-	    B_FALSE));
-}
-
-ssize_t
-parser_get_next_gzline(void *gz_fp, char **linep, size_t *linecap,
-    unsigned *linenum)
-{
-	return (parser_get_next_line_impl(gz_fp, linep, linecap, linenum,
-	    B_TRUE));
-}
-
-char *
-parser_get_next_quoted_str(FILE *fp)
-{
-	return (parser_get_next_quoted_str2(fp, NULL));
-}
-
-char *
-parser_get_next_quoted_str2(FILE *fp, int *linep)
-{
-	char c;
-	char *str = safe_calloc(1, 1);
-	size_t len = 0, cap = 0;
-
-	for (;;) {
-		do {
-			c = fgetc(fp);
-			if (c == '\n' && linep != NULL)
-				(*linep)++;
-		} while (isspace(c));
-		if (c == EOF)
-			break;
-		if (c != '"') {
-			ungetc(c, fp);
-			break;
-		}
-		while ((c = fgetc(fp)) != EOF) {
-			if (c == '"')
-				break;
-			if (c == '\\') {
-				c = fgetc(fp);
-				if (c == 'n') {
-					c = '\n';
-				} else if (c == 'r') {
-					c = '\r';
-				} else if (c == 't') {
-					c = '\t';
-				} else if (c == '\r') {
-					/* skip the next LF char as well */
-					c = fgetc(fp);
-					if (c != '\n' && c != EOF)
-						ungetc(c, fp);
-					if (linep != NULL)
-						(*linep)++;
-					continue;
-				} else if (c == '\n') {
-					/* skip LF char */
-					if (linep != NULL)
-						(*linep)++;
-					continue;
-				} else if (c >= '0' && c <= '7') {
-					/* 1-3 letter octal codes */
-					char num[4];
-					int val = 0;
-
-					memset(num, 0, sizeof (num));
-					num[0] = c;
-					for (int i = 1; i < 3; i++) {
-						c = fgetc(fp);
-						if (c < '0' || c > '7') {
-							ungetc(c, fp);
-							break;
-						}
-						num[i] = c;
-					}
-					VERIFY(sscanf(num, "%o", &val) == 1);
-					c = val;
-				}
-			}
-			if (len == cap) {
-				str = safe_realloc(str, cap + 1 + 128);
-				cap += 128;
-			}
-			str[len++] = c;
-		}
-		if (c == EOF)
-			break;
-	}
-
-	str[len] = 0;
-
-	return (str);
-}
-
 /*
  * Breaks up a line into components delimited by a character.
  *
@@ -659,28 +512,6 @@ explode_line(char *line, char delim, char **comps, size_t capacity)
 	}
 
 	return (toomany ? -i : i);
-}
-
-/*
- * Removes all leading & trailing whitespace from a line.
- */
-void
-strip_space(char *line)
-{
-	char	*p;
-	size_t	len = strlen(line);
-
-	/* strip leading whitespace */
-	for (p = line; *p != 0 && isspace(*p); p++)
-		;
-	if (p != line) {
-		memmove(line, p, (len + 1) - (p - line));
-		len -= (p - line);
-	}
-
-	for (p = line + len - 1; p >= line && isspace(*p); p--)
-		;
-	p[1] = 0;
 }
 
 /*
@@ -821,59 +652,6 @@ unescape_percent(char *str)
 			n -= 2;
 		}
 	}
-}
-
-static ssize_t
-lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
-{
-	ASSERT(line_p != NULL);
-	ASSERT(cap_p != NULL);
-	ASSERT(fp != NULL);
-
-	char *line = *line_p;
-	size_t cap = *cap_p, n = 0;
-
-#if	APL || LIN
-	/* No POSIX we can use the libc version when uncompressed */
-	if (!compressed)
-		return (getline(line_p, cap_p, fp));
-#endif	/* APL || LIN */
-
-	do {
-		char *p;
-
-		if (n + 1 >= cap) {
-			cap += 256;
-			line = safe_realloc(line, cap);
-		}
-		ASSERT(n < cap);
-		p = (compressed ? gzgets(fp, &line[n], cap - n) :
-		    fgets(&line[n], cap - n, fp));
-		if (p == NULL) {
-			if (n != 0) {
-				break;
-			} else {
-				*line_p = line;
-				*cap_p = cap;
-				return (-1);
-			}
-		}
-		n = strlen(line);
-	} while (n > 0 && line[n - 1] != '\n');
-
-	*line_p = line;
-	*cap_p = cap;
-
-	return (n);
-}
-
-/*
- * C getline is a POSIX function, so on Windows, we need to roll our own.
- */
-ssize_t
-lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
-{
-	return (lacf_getline_impl(line_p, cap_p, fp, B_FALSE));
 }
 
 API_EXPORT void

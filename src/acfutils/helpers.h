@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_HELPERS_H_
@@ -42,6 +42,10 @@
 #include <windows.h>
 #endif	/* IBM */
 
+#define	_LACF_GETLINE_INCLUDED
+#include "lacf_getline_impl.h"
+#define	_LACF_PARSER_FUNCS_INCLUDED
+#include "parser_funcs.h"
 #include "math_core.h"
 #include "sysmacros.h"
 #include "safe_alloc.h"
@@ -186,21 +190,50 @@ API_EXPORT bool_t airac_cycle2exp_date(int cycle, char buf[16],
 API_EXPORT int airac_time2cycle(time_t t);
 
 /* CSV file & string processing helpers */
-#define	parser_get_next_line		ACFSYM(parser_get_next_line)
-API_EXPORT ssize_t parser_get_next_line(FILE *fp, char **linep,
-    size_t *linecap, unsigned *linenum);
-#define	parser_get_next_gzline		ACFSYM(parser_get_next_gzline)
-API_EXPORT ssize_t parser_get_next_gzline(void *gz_fp, char **linep,
-    size_t *linecap, unsigned *linenum);
-#define	parser_get_next_quoted_str	ACFSYM(parser_get_next_quoted_str)
-API_EXPORT char *parser_get_next_quoted_str(FILE *fp);
-#define	parser_get_next_quoted_str2	ACFSYM(parser_get_next_quoted_str2)
-API_EXPORT char *parser_get_next_quoted_str2(FILE *fp, int *linep);
+/*
+ * Grabs the next non-empty, non-comment line from a file, having stripped
+ * away all leading and trailing whitespace. Any tab characters are also
+ * replaced with spaces.
+ *
+ * @param fp File from which to retrieve the line.
+ * @param linep Line buffer which will hold the new line. If the buffer pointer
+ *	is set to NULL, it will be allocated. If it is not long enough, it
+ *	will be expanded.
+ * @param linecap The capacity of *linep. If set to zero a new buffer is
+ *	allocated.
+ * @param linenum The current line number. Will be advanced by 1 for each
+ *	new line read.
+ *
+ * @return The number of characters in the line (after stripping whitespace)
+ *	without the terminating NUL.
+ */
+UNUSED_ATTR static ssize_t
+parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
+{
+	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
+	    B_FALSE));
+}
+
+/*
+ * Same as parser_get_next_line, but for gzip-compressed files.
+ */
+UNUSED_ATTR static ssize_t
+parser_get_next_gzline(void *gz_fp, char **linep, size_t *linecap,
+    unsigned *linenum)
+{
+	return (parser_get_next_line_impl(gz_fp, linep, linecap, linenum,
+	    B_TRUE));
+}
+
+UNUSED_ATTR static char *
+parser_get_next_quoted_str(FILE *fp)
+{
+	return (parser_get_next_quoted_str2(fp, NULL));
+}
+
 #define	explode_line			ACFSYM(explode_line)
 API_EXPORT ssize_t explode_line(char *line, char delim, char **comps,
     size_t capacity);
-#define	strip_space			ACFSYM(strip_space)
-API_EXPORT void strip_space(char *line);
 #define	append_format			ACFSYM(append_format)
 API_EXPORT void append_format(char **str, size_t *sz,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(3);
@@ -302,7 +335,15 @@ lacf_basename(const char *str)
 	return (&sep[1]);
 }
 
-API_EXPORT ssize_t lacf_getline(char **lineptr, size_t *n, FILE *stream);
+/*
+ * C getline is a POSIX function, so on Windows, we need to roll our own.
+ */
+UNUSED_ATTR static ssize_t
+lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
+{
+	return (lacf_getline_impl(line_p, cap_p, fp, B_FALSE));
+}
+
 #if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
 #define	getline				lacf_getline
 #endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
