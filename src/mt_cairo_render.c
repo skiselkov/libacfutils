@@ -1142,6 +1142,13 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glBindVertexArray(mtcr->vao);
 		glEnable(GL_BLEND);
 	} else {
+#if	APL
+		/*
+		 * Leaving this on on MacOS breaks glDrawElements
+		 * and makes it perform horribly.
+		 */
+		glDisableClientState(GL_VERTEX_ARRAY);
+#endif	/* !APL */
 		XPLMSetGraphicsState(1, 1, 1, 1, 1, 1, 1);
 		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
