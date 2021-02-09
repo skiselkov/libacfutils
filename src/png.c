@@ -94,13 +94,45 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 	} else {
 		png_set_read_fn(pngp, arg, readfunc);
 	}
-
 	if (setjmp(png_jmpbuf(pngp))) {
 		logMsg("Cannot open file %s: libpng read info failed",
 		    filename);
 		goto out;
 	}
+	/*
+	 * Initialize info struct and get some basic color & bit depth info.
+	 */
 	png_read_info(pngp, infop);
+	/*
+	 * Apply transforms.
+	 */
+	if (*color_type == -1 && *bit_depth == -1) {
+		int ct = png_get_color_type(pngp, infop);
+		int depth = png_get_bit_depth(pngp, infop);
+		/*
+		 * Convert paletted images to RGB.
+		 */
+		if (ct == PNG_COLOR_TYPE_PALETTE)
+			png_set_palette_to_rgb(pngp);
+		/*
+		 * Expand sub-8-bit grayscale to full 8-bpp.
+		 */
+		if (ct == PNG_COLOR_TYPE_GRAY && depth < 8)
+			png_set_expand_gray_1_2_4_to_8(pngp);
+		/*
+		 * Transform paletted alpha to full 8-bit alpha.
+		 */
+		if (png_get_valid(pngp, infop, PNG_INFO_tRNS))
+			png_set_tRNS_to_alpha(pngp);
+		/*
+		 * Convert grayscale to RGB
+		 */
+		if (ct == PNG_COLOR_TYPE_GRAY ||
+		    ct == PNG_COLOR_TYPE_GRAY_ALPHA) {
+			png_set_gray_to_rgb(pngp);
+		}
+		png_read_update_info(pngp, infop);
+	}
 	w = png_get_image_width(pngp, infop);
 	h = png_get_image_height(pngp, infop);
 
@@ -126,7 +158,6 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 		rowp[i] = safe_malloc(rowbytes);
 		VERIFY(rowp[i] != NULL);
 	}
-
 	if (setjmp(png_jmpbuf(pngp))) {
 		logMsg("Bad icon file %s: error reading image file", filename);
 		goto out;
@@ -135,7 +166,7 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 	pixels = safe_malloc(h * rowbytes);
 	for (int i = 0; i < h; i++)
 		memcpy(&pixels[i * rowbytes], rowp[i], rowbytes);
-
+	png_read_end(pngp, NULL);
 out:
 	if (pngp != NULL)
 		png_destroy_read_struct(&pngp, &infop, NULL);
@@ -156,7 +187,7 @@ out:
 }
 
 uint8_t *
-png_load_from_file_any(const char *filename, int *width, int *height,
+png_load_from_file_rgb_auto(const char *filename, int *width, int *height,
     int *color_type, int *bit_depth)
 {
 	ASSERT(color_type != NULL);
