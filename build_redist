@@ -94,12 +94,6 @@ function install_platform() {
 		mkdir -p "$OUTPUT/$PLATFORM/src"
 		cp -r ${SRCS} "$OUTPUT/$PLATFORM/src"
 	fi
-
-	if [[ "$PLATFORM" = "win64" ]]; then
-		# We need to patch zlib to avoid depending on unistd.h
-		( cd libacfutils-redist && patch -p1 < ../zconf-win64.patch ) \
-		    || exit 1
-	fi
 }
 
 while getopts "d" opt; do
@@ -126,7 +120,6 @@ Linux)
 		cairo/cairo-win-64/include/cairo/*
 		freetype/freetype-win-64/include/freetype2/*
 		glew/glew-*-win-64/install/include/GL
-		zlib/zlib-win-64/include/*.h
 	)
 	LIBS_WIN64=(
 		"qmake/win64/acfutils${DLL_VERSION}.dll"
@@ -142,7 +135,6 @@ Linux)
 		cairo/cairo-linux-64/include/cairo/*
 		freetype/freetype-linux-64/include/freetype2/*
 		glew/glew-*-linux-64/install/include/GL
-		zlib/zlib-linux-64/include/*.h
 	)
 	LIBS_LIN64=(
 		glew/glew-*-linux-64/install/lib64/libGLEWmx.a
@@ -165,7 +157,6 @@ Darwin)
 		cairo/cairo-mac-64/include/cairo/*
 		freetype/freetype-mac-64/include/freetype2/*
 		glew/glew-*-mac-64/install/include/GL
-		zlib/zlib-mac-64/include/*.h
 	)
 	LIBS_MAC64=(
 		glew/glew-*-mac-64/install/lib/libGLEWmx.a

@@ -26,7 +26,9 @@
 #ifndef	_ACF_UTILS_LACF_GETLINE_IMPL_H_
 #define	_ACF_UTILS_LACF_GETLINE_IMPL_H_
 
+#ifdef	ACFUTILS_BUILD
 #include <zlib.h>
+#endif
 
 #include "core.h"
 #include "safe_alloc.h"
@@ -39,8 +41,13 @@
 extern "C" {
 #endif
 
+#ifdef	ACFUTILS_BUILD
 UNUSED_ATTR static ssize_t
 lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
+#else	/* !defined(ACFUTILS_BUILD) */
+UNUSED_ATTR static ssize_t
+lacf_getline_impl(char **line_p, size_t *cap_p, void *fp)
+#endif	/* !defined(ACFUTILS_BUILD) */
 {
 	ASSERT(line_p != NULL);
 	ASSERT(cap_p != NULL);
@@ -49,12 +56,11 @@ lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 	char *line = *line_p;
 	size_t cap = *cap_p, n = 0;
 
-#if	APL || LIN
+#if	defined(ACFUTILS_BUILD) && (APL || LIN)
 	/* On POSIX we can use the libc version when uncompressed */
 	if (!compressed)
 		return (getline(line_p, cap_p, (FILE *)fp));
-#endif	/* APL || LIN */
-
+#endif	/* defined(ACFUTILS_BUILD) && (APL || LIN) */
 	do {
 		char *p;
 
@@ -63,8 +69,12 @@ lacf_getline_impl(char **line_p, size_t *cap_p, void *fp, bool_t compressed)
 			line = (char *)safe_realloc(line, cap);
 		}
 		ASSERT(n < cap);
+#ifdef	ACFUTILS_BUILD
 		p = (compressed ? gzgets((gzFile)fp, &line[n], cap - n) :
 		    fgets(&line[n], cap - n, (FILE *)fp));
+#else	/* !defined(ACFUTILS_BUILD) */
+		p = fgets(&line[n], cap - n, (FILE *)fp);
+#endif	/* !defined(ACFUTILS_BUILD) */
 		if (p == NULL) {
 			if (n != 0) {
 				break;

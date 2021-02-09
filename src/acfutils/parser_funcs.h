@@ -62,15 +62,25 @@ strip_space(char *line)
 	p[1] = 0;
 }
 
+#ifdef	ACFUTILS_BUILD
 UNUSED_ATTR static ssize_t
 parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
     unsigned *linenum, bool_t compressed)
+#else	/* !defined(ACFUTILS_BUILD) */
+UNUSED_ATTR static ssize_t
+parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
+    unsigned *linenum)
+#endif	/* !defined(ACFUTILS_BUILD) */
 {
 	ASSERT(fp != NULL);
 	ASSERT(linenum != NULL);
 
 	for (;;) {
+#ifdef	ACFUTILS_BUILD
 		ssize_t len = lacf_getline_impl(linep, linecap, fp, compressed);
+#else
+		ssize_t len = lacf_getline_impl(linep, linecap, fp);
+#endif
 		char *hash;
 		if (len == -1)
 			return (-1);
