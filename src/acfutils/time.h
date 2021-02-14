@@ -67,15 +67,6 @@ nanoclock(void)
  * This only considers the following fields from the tm structure, tm_year,
  * tm_yday, tm_hour, tm_min and tm_sec. Any other fields are ignored.
  */
-static inline time_t
-tmutc2unix(const struct tm *tm)
-{
-	ASSERT(tm != NULL);
-	return ((tm->tm_year - 70) * 365.24 * 86400 +
-	    tm->tm_yday * 86400 + tm->tm_hour * 3600 + tm->tm_min * 60 +
-	    tm->tm_sec);
-}
-
 time_t lacf_timegm(const struct tm *tm);
 
 #if	IBM
