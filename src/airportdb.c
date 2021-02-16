@@ -1064,7 +1064,8 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 		 * Finish the current airport on an empty line or a new
 		 * airport line.
 		 */
-		if (strlen(line) == 0 || row_code == 1) {
+		if (strlen(line) == 0 || row_code == 1 || row_code == 16 ||
+		    row_code == 17) {
 			if (arpt != NULL)
 				read_apt_dat_insert(db, arpt);
 			arpt = NULL;
