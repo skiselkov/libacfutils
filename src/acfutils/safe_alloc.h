@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_SAFE_ALLOC_H_
@@ -84,6 +84,23 @@ safe_append_realloc(char *buf, const char *str)
 	memcpy(&newbuf[strlen(newbuf)], str, strlen(str) + 1);
 	return (newbuf);
 }
+
+#define	ZERO_FREE(ptr) \
+	do { \
+		NOT_TYPE_ASSERT(ptr, void *); \
+		NOT_TYPE_ASSERT(ptr, char *); \
+		if ((ptr) != NULL) \
+			memset((ptr), 0, sizeof (*(ptr))); \
+		free(ptr); \
+	} while (0)
+
+#define	ZERO_FREE_N(ptr, num) \
+	do { \
+		NOT_TYPE_ASSERT(ptr, void *); \
+		if ((ptr) != NULL) \
+			memset((ptr), 0, sizeof (*(ptr)) * (num)); \
+		free(ptr); \
+	} while (0)
 
 #ifdef	__cplusplus
 }

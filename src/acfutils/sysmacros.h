@@ -166,6 +166,8 @@ extern "C" {
 #define	CTASSERT(x) _Static_assert((x), #x)
 #define	TYPE_ASSERT(x, type) \
 	CTASSERT(_Generic((x), type: 1, default: 0) != 0)
+#define	NOT_TYPE_ASSERT(x, type) \
+	CTASSERT(_Generic((x), type: 0, default: 1) != 0)
 #else	/* __STDC_VERSION__ < 201112L */
 #define	TYPE_ASSERT(x, type)
 #if	defined(__GNUC__) || defined(__clang__)
