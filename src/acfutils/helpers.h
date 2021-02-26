@@ -148,6 +148,8 @@ is_valid_bool(bool_t b)
 
 #define	is_valid_icao_code		ACFSYM(is_valid_icao_code)
 API_EXPORT bool_t is_valid_icao_code(const char *icao);
+#define	is_valid_iata_code		ACFSYM(is_valid_iata_code)
+API_EXPORT bool_t is_valid_iata_code(const char *iata);
 #define	extract_icao_country_code	ACFSYM(extract_icao_country_code)
 API_EXPORT const char *extract_icao_country_code(const char *icao);
 

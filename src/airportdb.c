@@ -35,23 +35,23 @@
 #include <dirent.h>
 #endif	/* !IBM */
 
-#include <acfutils/airportdb.h>
-#include <acfutils/assert.h>
-#include <acfutils/avl.h>
-#include <acfutils/geom.h>
-#include <acfutils/helpers.h>
-#include <acfutils/list.h>
-#include <acfutils/math.h>
-#include <acfutils/perf.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/types.h>
+#include "acfutils/airportdb.h"
+#include "acfutils/assert.h"
+#include "acfutils/avl.h"
+#include "acfutils/geom.h"
+#include "acfutils/helpers.h"
+#include "acfutils/list.h"
+#include "acfutils/math.h"
+#include "acfutils/perf.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/types.h"
 
 /*
  * The airport database is the primary repository of knowledge about airports,
  * runways and bounding boxes. It is composed of two data structures:
  *
- * *) a global icao -> airport_t AVL tree (apt_dat). This allows us to quickly
- *	locate an airport based on its identifier.
+ * *) a global ident -> airport_t AVL tree (apt_dat). This allows us to
+ *	quickly locate an airport based on its identifier.
  * *) a geo-referenced AVL tree from approximate airport reference point
  *	position (in 1-degree accuracy) to the airport_t (geo_table). This
  *	allows us to quickly sift through the airport database to locate any
@@ -60,38 +60,37 @@
  * Of these, apt_dat is the primary repository of knowledge - once an airport
  * is gone from apt_dat, it is freed. An airport may or may not be
  * geo-referenced in the geo_table. Once all loading of an airport is
- * complete, it WILL be geo-referenced. The geo-referencing is internal to
- * airportdb.c and is NOT exposed to the rest of X-RAAS.
+ * complete, it WILL be geo-referenced.
  *
  * The geo_table is actually comprised of tile_t data structures. A tile_t
  * refers to a 1x1 degree geographical tile at specific coordinates and
  * contains its own private airport_t tree, which is again organized by
- * ICAO identifier, allowing us to step through all the airports in a tile
- * or quickly locate one based on identifier.
+ * abstract identifier, allowing us to step through all the airports in a
+ * tile or quickly locate one based on identifier.
  *
- * During normal operation of X-RAAS, not all airports from all over the
- * world are loaded into memory, as that would use quite a bit of memory
- * and delay startup. Instead, only the closets 9 tiles around the aircraft
- * are present. New tiles are loaded as the aircraft repositions and the
- * old ones are released. Loading a tile first populates the global apt_dat
+ * During normal operation, not all airports from all over the world are
+ * loaded into memory, as that would use quite a bit of memory and delay
+ * startup. Instead, only the closets 9 tiles around the aircraft are
+ * present. New tiles are loaded as the aircraft repositions and the old
+ * ones are released. Loading a tile first populates the global apt_dat
  * with all its airports, which are then geo-referenced in the newly
- * created tile. Releasing a tile is the converse, ultimately ending in the
- * airports being purged from apt_dat and freed.
+ * created tile. Releasing a tile is the converse, ultimately ending in
+ * the airports being purged from apt_dat and freed.
  *
  * The 9-tile rule can result in strange behavior close to the poles, where
  * the code might think of close by airports as being very far away and
  * thus not load them. Luckily, there are only about 4 airports beyond 80
  * degrees latitude (north or south), all of which are very special
- * non-regular airports, so we just ignore those. At 80 degrees latitude,
- * 1 degree of longitude still works out to a 19308 meters, which is more
- * than our airport load limit distance (8nm or 14816 meters).
+ * non-regular airports, so we just ignore those.
  *
  *
  * AIRPORT DATA CONSTRUCTION METHOD
  *
  * For each airport, we need to obtain the following pieces of information:
  *
- * 1) The airport ICAO identifier.
+ * 1) The abstract airport identifier.
+ *	1a) Optional ICAO identifier, on a 1302 icao_code line.
+ *	1b) Optional IATA identifier, on a 1302 iata_code line.
  * 2) The airport reference point latitude, longitude and elevation.
  * 3) The airport's transition altitude and transition level (if published).
  * 4) For each runway:
@@ -111,8 +110,8 @@
  * *) '50' through '56' and '1050' through '1056' records identify frequency
  *	information. See parse_apt_dat_freq_line.
  * *) '100' records identify runways. See parse_apt_dat_100_line.
- * *) '1302' records identify airport meta-information, such as TA, TL,
- *	reference point location, etc.
+ * *) '1302' records identify airport meta-information, such as ICAO code,
+ *	TA, TL, reference point location, etc.
  *
  * Prior to X-Plane 11, apt.dat's didn't necessarily contain the '1302'
  * records, so we had to pull those from the Airports.txt in the navdata
@@ -140,15 +139,6 @@
  * look for a VGSI close to the runway's centerline and that is aligned with
  * the runway, compute the longitudinal displacement of this indicator from
  * the runway threshold and using the indicator's GPA compute the optimal TCH.
- *
- * Sometimes, broken scenery doesn't have the visual glideslope indicators
- * either properly placed or even present at all (e.g. RWY09 at KSAN in
- * some stock versions doesn't have a PAPI even though in the real world
- * it does). For those cases, we trawl earth_nav.dat, the global index of
- * navaids, picking out ILS glideslope navaids. These are always associated
- * with an airport (by ICAO code) and runway (by the runway ID), so if
- * that runway doesn't have a GPA/TCH set yet, we apply the same
- * computation trick that we used for the VASIs/PAPIs to the GS antenna.
  */
 
 #define	RWY_PROXIMITY_LAT_FRACT		3
@@ -159,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		10
+#define	ARPTDB_CACHE_VERSION		11
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -202,12 +192,30 @@ typedef struct {
 	char		*fname;
 } apt_dats_entry_t;
 
-static airport_t *apt_dat_lookup(airportdb_t *db, const char *icao);
+static airport_t *apt_dat_lookup(airportdb_t *db, const char *ident);
 static void apt_dat_insert(airportdb_t *db, airport_t *arpt);
 static void free_airport(airport_t *arpt);
 
 static bool_t load_airport(airport_t *arpt);
 static void load_rwy_info(runway_t *rwy);
+
+static arpt_index_t *create_arpt_index(airportdb_t *db, const airport_t *arpt);
+
+static void
+recreate_icao_iata_tables(airportdb_t *db, unsigned cap)
+{
+	ASSERT(db != NULL);
+
+	htbl_empty(&db->icao_index, NULL, NULL);
+	htbl_destroy(&db->icao_index);
+	htbl_empty(&db->iata_index, NULL, NULL);
+	htbl_destroy(&db->iata_index);
+
+	htbl_create(&db->icao_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_ICAO_LEN, B_TRUE);
+	htbl_create(&db->iata_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_IATA_LEN, B_TRUE);
+}
 
 /*
  * Given an arbitrary geographical position, returns the geo_table tile
@@ -226,19 +234,18 @@ geo_pos2tile_pos(geo_pos2_t pos, bool_t div_by_10)
 }
 
 /*
- * AVL tree comparator for airports based on their ICAO code.
+ * AVL tree comparator for airports based on their unique ident code.
  */
 static int
 airport_compar(const void *a, const void *b)
 {
 	const airport_t *aa = a, *ab = b;
-	int res = strcmp(aa->icao, ab->icao);
+	int res = strcmp(aa->ident, ab->ident);
 	if (res < 0)
 		return (-1);
-	else if (res == 0)
-		return (0);
-	else
+	if (res > 0)
 		return (1);
+	return (0);
 }
 
 /*
@@ -280,6 +287,18 @@ runway_compar(const void *a, const void *b)
 		return (0);
 	else
 		return (1);
+}
+
+static int
+ramp_start_compar(const void *a, const void *b)
+{
+	const ramp_start_t *rs_a = a, *rs_b = b;
+	int res = strcmp(rs_a->name, rs_b->name);
+	if (res < 0)
+		return (-1);
+	if (res > 0)
+		return (1);
+	return (0);
 }
 
 /*
@@ -361,16 +380,13 @@ make_rwy_bbox(vect2_t thresh_v, vect2_t dir_v, double width, double len,
 }
 
 /*
- * Checks if the numerical runway type `t' is a hard-surface runway. From
- * the X-Plane v850 apt.dat spec:
- *	t=1: asphalt
- *	t=2: concrete
- *	t=15: unspecified hard surface (transparent)
+ * Checks if the numerical runway type `t' is a hard-surface runway.
  */
 static bool_t
-rwy_is_hard(int t)
+rwy_is_hard(rwy_surf_t surf)
 {
-	return (t == 1 || t == 2 || t == 15);
+	return (surf == RWY_SURF_ASPHALT || surf == RWY_SURF_CONCRETE ||
+	    surf == RWY_SURF_TRANSPARENT);
 }
 
 /*
@@ -379,14 +395,13 @@ rwy_is_hard(int t)
  * provided ICAO identifiers in lowercase.
  */
 static airport_t *
-apt_dat_lookup(airportdb_t *db, const char *icao)
+apt_dat_lookup(airportdb_t *db, const char *ident)
 {
 	airport_t search, *result;
 
-	lacf_strlcpy(search.icao, icao, sizeof (search.icao));
-	strtoupper(search.icao);
+	lacf_strlcpy(search.ident, ident, sizeof (search.ident));
+	strtoupper(search.ident);
 	result = avl_find(&db->apt_dat, &search, NULL);
-	ASSERT(result == NULL || is_valid_icao_code(result->icao));
 	if (result != NULL)
 		load_airport(result);
 
@@ -397,8 +412,6 @@ static void
 apt_dat_insert(airportdb_t *db, airport_t *arpt)
 {
 	avl_index_t where;
-	/* Only allow airports with proper ICAO codes */
-	ASSERT(is_valid_icao_code(arpt->icao));
 	VERIFY(avl_find(&db->apt_dat, arpt, &where) == NULL);
 	avl_insert(&db->apt_dat, arpt, where);
 }
@@ -542,15 +555,7 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
 {
 	if (arpt == NULL)
 		return;
-	/*
-	 * Ignore airports with:
-	 * 1) No runways. Kinda defeats the point of the 'R' in RAAS.
-	 * 2) Airports without full ICAO identifiers. These tend to be
-	 *    small GA fields without TA/TL published and mess with
-	 *    the altimeter setting monitor.
-	 */
 	if (avl_numnodes(&arpt->rwys) != 0) {
-		ASSERT(is_valid_icao_code(arpt->icao));
 		ASSERT(!isnan(arpt->refpt.lat) && !isnan(arpt->refpt.lon));
 		apt_dat_insert(db, arpt);
 		geo_link_airport(db, arpt);
@@ -561,7 +566,7 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
 
 /*
  * Parses an airport line in apt.dat. The default apt.dat spec only supplies
- * the ICAO code and field elevation on this line. Our extended format which
+ * the identifier and field elevation on this line. Our extended format which
  * we use in the data cache also adds the TA, TL and reference point LAT &
  * LON to this. If the apt.dat being parsed is a standard (non-extended) one,
  * the additional info is inferred later on from other sources during the
@@ -576,7 +581,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	 */
 	char *name = safe_calloc(32, 1);
 	size_t name_len = 0;
-	const char *new_icao;
+	const char *new_ident;
 	geo_pos3_t pos = NULL_GEO_POS3;
 	size_t ncomps;
 	char **comps = strsplit(line, " ", B_TRUE, &ncomps);
@@ -586,9 +591,9 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	if (ncomps < 5)
 		goto out;
 
-	new_icao = comps[4];
+	new_ident = comps[4];
 	pos.elev = atof(comps[1]);
-	if (!is_valid_icao_code(new_icao) || !is_valid_elev(pos.elev))
+	if (!is_valid_elev(pos.elev))
 		/* Small GA fields might not have valid identifiers. */
 		goto out;
 	for (size_t i = 5; i < ncomps; i++) {
@@ -596,7 +601,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 		append_format(&name, &name_len, "%s%s",
 		    comps[i], i + 1 < ncomps ? " " : "");
 	}
-	arpt = apt_dat_lookup(db, new_icao);
+	arpt = apt_dat_lookup(db, new_ident);
 	if (arpt != NULL) {
 		/*
 		 * This airport was already known from a previously loaded
@@ -605,14 +610,16 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 		arpt = NULL;
 		goto out;
 	}
-	/* Parse our optional extended format parameters. */
 	arpt = safe_calloc(1, sizeof (*arpt));
 	avl_create(&arpt->rwys, runway_compar, sizeof (runway_t),
 	    offsetof(runway_t, node));
 	list_create(&arpt->freqs, sizeof (freq_info_t),
 	    offsetof(freq_info_t, node));
-	lacf_strlcpy(arpt->icao, new_icao, sizeof (arpt->icao));
-	strtoupper(arpt->icao);
+	lacf_strlcpy(arpt->ident, new_ident, sizeof (arpt->ident));
+	strtoupper(arpt->ident);
+
+	avl_create(&arpt->ramp_starts, ramp_start_compar,
+	    sizeof (ramp_start_t), offsetof(ramp_start_t, node));
 
 	/*
 	 * Unfortunately, X-Plane's scenery authors put all kinds of
@@ -642,7 +649,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 		 * So for those cases, we can just verbatim copy the airport
 		 * name directly without charset issues.
 		 */
-		strlcpy(arpt->name, name, sizeof (arpt->name));
+		lacf_strlcpy(arpt->name, name, sizeof (arpt->name));
 	}
 
 	arpt->refpt = pos;
@@ -1026,6 +1033,77 @@ out:
 	free_strlist(comps, ncomps);
 }
 
+static bool_t
+is_normal_gate_name(const char *str)
+{
+	ASSERT(str != NULL);
+	for (size_t i = 0, n = strlen(str); i < n; i++) {
+		if ((str[i] < 'A' || str[i] > 'Z') &&
+		    (str[i] < '0' || str[i] > '9')) {
+			return (B_FALSE);
+		}
+	}
+	return (B_TRUE);
+}
+
+static void
+parse_apt_dat_1300_line(airport_t *arpt, const char *line,
+    bool_t normalize_name)
+{
+	char **comps;
+	size_t n_comps;
+	ramp_start_t srch = {};
+	ramp_start_t *rs = NULL;
+	avl_index_t where;
+
+	ASSERT(arpt != NULL);
+	ASSERT(line != NULL);
+
+	comps = strsplit(line, " ", B_TRUE, &n_comps);
+	if (n_comps < 7)
+		goto out;
+	if (!normalize_name) {
+		for (size_t i = 6; i < n_comps; i++) {
+			append_format_buf(srch.name, sizeof (srch.name),
+			    "%s%s", comps[i], i + 1 < n_comps ? " " : "");
+		}
+	} else {
+		for (size_t i = 6; i < n_comps; i++) {
+			if (is_normal_gate_name(comps[i])) {
+				strlcpy(srch.name, comps[i],
+				    sizeof (srch.name));
+				break;
+			}
+		}
+		if (srch.name[0] == '\0')
+			goto out;
+	}
+	rs = avl_find(&arpt->ramp_starts, &srch, &where);
+	if (rs != NULL)
+		goto out;
+	rs = safe_calloc(1, sizeof (*rs));
+	lacf_strlcpy(rs->name, srch.name, sizeof (rs->name));
+	rs->pos = GEO_POS2(atof(comps[1]), atof(comps[2]));
+	rs->hdgt = atof(comps[3]);
+	if (!is_valid_lat(rs->pos.lat) || !is_valid_lon(rs->pos.lon) ||
+	    !is_valid_hdg(rs->hdgt)) {
+		free(rs);
+		goto out;
+	}
+	if (strcmp(comps[4], "gate") == 0)
+		rs->type = RAMP_START_GATE;
+	else if (strcmp(comps[4], "hangar") == 0)
+		rs->type = RAMP_START_HANGAR;
+	else if (strcmp(comps[4], "tie-down") == 0)
+		rs->type = RAMP_START_TIEDOWN;
+	else
+		rs->type = RAMP_START_MISC;
+
+	avl_insert(&arpt->ramp_starts, rs, where);
+out:
+	free_strlist(comps, n_comps);
+}
+
 /*
  * Parses an apt.dat (either from regular scenery or from CACHE_DIR) to
  * cache the airports contained in it.
@@ -1088,6 +1166,10 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 		case 1050 ... 1056:
 			parse_apt_dat_freq_line(arpt, line, B_TRUE);
 			break;
+		case 1300:
+			parse_apt_dat_1300_line(arpt, line,
+			    db->normalize_gate_names);
+			break;
 		case 1302:
 			comps = strsplit(line, " ", B_TRUE, &ncomps);
 			/*
@@ -1105,7 +1187,15 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			 * X-Plane 11 introduced these to remove the need
 			 * for an Airports.txt.
 			 */
-			if (strcmp(comps[1], "transition_alt") == 0) {
+			if (strcmp(comps[1], "icao_code") == 0 &&
+			    is_valid_icao_code(comps[2])) {
+				lacf_strlcpy(arpt->icao, comps[2],
+				    sizeof (arpt->icao));
+			} else if (strcmp(comps[1], "iata_code") == 0 &&
+			    is_valid_iata_code(comps[2])) {
+				lacf_strlcpy(arpt->iata, comps[2],
+				    sizeof (arpt->iata));
+			} else if (strcmp(comps[1], "transition_alt") == 0) {
 				int TA = atoi(comps[2]);
 				if (is_valid_elev(TA)) {
 					arpt->TA = TA;
@@ -1113,6 +1203,13 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				}
 			} else if (strcmp(comps[1], "transition_level") == 0) {
 				int TL = atoi(comps[2]);
+				/*
+				 * Some "intelligent" people put in a flight
+				 * level here, instead of a number in feet.
+				 * Detect that flip over to feet.
+				 */
+				if (TL < 600)
+					TL *= 100;
 				if (is_valid_elev(TL)) {
 					arpt->TL = TL;
 					arpt->TL_m = FEET2MET(TL);
@@ -1129,8 +1226,10 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				double lon = atof(comps[2]);
 				if (is_valid_lon(lon))
 					arpt->refpt.lon = lon;
-			} else if (strcmp(comps[1], "region_code") == 0) {
-				strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
+			} else if (strcmp(comps[1], "region_code") == 0 &&
+			    strcmp(comps[1], "-") != 0) {
+				lacf_strlcpy(arpt->cc, comps[2],
+				    sizeof (arpt->cc));
 			}
 
 			free_strlist(comps, ncomps);
@@ -1168,8 +1267,12 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	fprintf(fp, "1 %.0f 0 0 %s %s\n"
 	    "1302 datum_lat %f\n"
 	    "1302 datum_lon %f\n",
-	    arpt->refpt.elev, arpt->icao, arpt->name, arpt->refpt.lat,
+	    arpt->refpt.elev, arpt->ident, arpt->name, arpt->refpt.lat,
 	    arpt->refpt.lon);
+	if (arpt->icao[0] != '\0')
+		fprintf(fp, "1302 icao_code %s\n", arpt->icao);
+	if (arpt->iata[0] != '\0')
+		fprintf(fp, "1302 iata_code %s\n", arpt->iata);
 	if (arpt->TA != 0)
 		fprintf(fp, "1302 transition_alt %.0f\n", arpt->TA);
 	if (arpt->TL != 0)
@@ -1200,6 +1303,18 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 		    rwy->ends[0].tch, rwy->ends[1].tch,
 		    rwy->ends[0].thr.elev, rwy->ends[1].thr.elev);
 	}
+	for (const ramp_start_t *rs = avl_first(&arpt->ramp_starts);
+	    rs != NULL; rs = AVL_NEXT(&arpt->ramp_starts, rs)) {
+		static const char *type2name[] = {
+		    [RAMP_START_GATE] = "gate",
+		    [RAMP_START_HANGAR] = "hangar",
+		    [RAMP_START_TIEDOWN] = "tie-down",
+		    [RAMP_START_MISC] = "misc",
+		};
+		fprintf(fp, "1300 %f %f %.2f %s all %s\n",
+		    rs->pos.lat, rs->pos.lon, rs->hdgt,
+		    type2name[rs->type], rs->name);
+	}
 	for (const freq_info_t *freq = list_head(&arpt->freqs); freq != NULL;
 	    freq = list_next(&arpt->freqs, freq)) {
 		/*
@@ -1216,200 +1331,8 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	return (B_TRUE);
 }
 
-/*
- * Sometimes the apt.dat scenery can be fairly out of date relative to our
- * Airports.txt and runways can be renumbered due to magnetic drift (e.g.
- * KSNA's 19L/R becoming 20L/R) or new parallel runways being constructed
- * (e.g. EDDF's 25R becoming 25C). In those cases a direct ID comparison
- * won't find the correct match between the runways in apt.dat and
- * Airports.txt, so we instead allow for a slightly fuzzy match. We make
- * sure that the runways match in:
- *	1) In numeric identifier to a maximum delta of 1 (i.e. 10 will
- *	   match 09 or 11, but won't match 08 or 12, etc.)
- *	2) The threshold positions need to be within a radius of the
- *	   runway's width.
- */
 static bool_t
-rwy_fuzzy_match(const runway_t *rwy, int endpt, const char *orwy_id,
-    geo_pos2_t orwy_thr)
-{
-	const airport_t *arpt = rwy->arpt;
-	const runway_end_t *rwy_end = &rwy->ends[endpt];
-	double rhdg = rel_hdg(atoi(rwy_end->id) * 10, atoi(orwy_id) * 10);
-
-	if (fabs(rhdg) <= 10) {
-		/*
-		 * We can't simply compare ECEF coordinates, because apt_dat
-		 * coordinates are for the displaced threshold, but
-		 * Airports.txt coordinates are for the normal threshold.
-		 * So we need to do some projection and vector math to tease
-		 * out the actual threshold position.
-		 */
-		fpp_t fpp = ortho_fpp_init(GEO3_TO_GEO2(arpt->refpt), 0,
-		    &wgs84, B_FALSE);
-		vect2_t
-		    dthr1_v = geo2fpp(GEO3_TO_GEO2(rwy->ends[endpt].thr), &fpp),
-		    thr2_v = geo2fpp(GEO3_TO_GEO2(rwy->ends[!endpt].thr), &fpp),
-		    thr1_v = vect2_add(vect2_set_abs(vect2_sub(thr2_v, dthr1_v),
-		    rwy_end->displ), dthr1_v),
-		    othr_v = geo2fpp(orwy_thr, &fpp),
-		    thr1_to_othr_v = vect2_sub(othr_v, thr1_v);
-		double displ = vect2_abs(thr1_to_othr_v);
-
-		return (displ <= rwy->width);
-	} else {
-		return (B_FALSE);
-	}
-}
-
-static airport_t *
-parse_airports_txt_A_line(airportdb_t *db, const char *line)
-{
-	char *icao;
-	airport_t *arpt = NULL;
-	char **comps;
-	size_t ncomps;
-
-	comps = strsplit(line, ",", B_FALSE, &ncomps);
-	if (ncomps < 8)
-		goto out;
-	icao = comps[1];
-	arpt = apt_dat_lookup(db, icao);
-	if (arpt == NULL)
-		goto out;
-
-	/* airport already seen in previous version of the database, skip */
-	if (arpt->in_navdb)
-		goto out;
-
-	if (arpt->geo_linked)
-		geo_unlink_airport(db, arpt);
-	arpt->refpt = GEO_POS3(atof(comps[3]), atof(comps[4]),
-	    arpt->refpt.elev);
-	arpt->refpt_m = GEO3_FT2M(arpt->refpt);
-	if (!is_valid_lat(arpt->refpt.lat)) {
-		avl_remove(&db->apt_dat, arpt);
-		free_airport(arpt);
-		arpt = NULL;
-		goto out;
-	}
-	geo_link_airport(db, arpt);
-	arpt->TA = atof(comps[6]);
-	arpt->TA_m = FEET2MET(arpt->TA);
-	arpt->TL = atof(comps[7]);
-	arpt->TL_m = FEET2MET(arpt->TL);
-	arpt->in_navdb = B_TRUE;
-out:
-	free_strlist(comps, ncomps);
-	return (arpt);
-}
-
-static void
-parse_airports_txt_R_line(airport_t *arpt, const char *line,
-    const char *filename, int line_num)
-{
-	char **comps;
-	size_t ncomps;
-	char *rwy_id;
-	double telev, gpa, tch;
-	geo_pos2_t new_thr_pos;
-
-	comps = strsplit(line, ",", B_FALSE, &ncomps);
-	if (ncomps < 13)
-		goto out;
-
-	rwy_id = comps[1];
-	new_thr_pos = GEO_POS2(atof(comps[8]), atof(comps[9]));
-	telev = atof(comps[10]);
-	gpa = atof(comps[11]);
-	tch = atof(comps[12]);
-
-	if (!is_valid_rwy_ID(rwy_id) || !is_valid_elev(telev) ||
-	    isnan(gpa) || gpa < 0 || gpa >= RWY_GPA_LIMIT ||
-	    isnan(tch) || tch < 0 || tch >= RWY_TCH_LIMIT) {
-		logMsg("%s:%d: WARNING malformed runway line: \"%s\"",
-		    filename, line_num, line);
-		goto out;
-	}
-
-	for (runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
-	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
-		if (rwy_fuzzy_match(rwy, 0, rwy_id, new_thr_pos)) {
-			rwy->ends[0].thr.elev = telev;
-			rwy->ends[0].thr_m.elev = FEET2MET(telev);
-			rwy->ends[0].gpa = gpa;
-			rwy->ends[0].tch = tch;
-			break;
-		} else if (rwy_fuzzy_match(rwy, 1, rwy_id, new_thr_pos)) {
-			rwy->ends[1].thr.elev = telev;
-			rwy->ends[1].thr_m.elev = FEET2MET(telev);
-			rwy->ends[1].gpa = gpa;
-			rwy->ends[1].tch = tch;
-			break;
-		}
-	}
-out:
-	free_strlist(comps, ncomps);
-}
-
-/*
- * Reloads ~/GNS430/navdata/Airports.txt and populates our apt_dat airports
- * with the latest info in it, notably:
- * *) transition altitudes & transition levels for the airports
- * *) runway threshold elevation, glide path angle & threshold crossing height
- */
-static bool_t
-load_airports_txt(airportdb_t *db)
-{
-	char *fname;
-	FILE *fp;
-	char *line = NULL;
-	size_t linecap = 0;
-	int line_num = 0;
-	airport_t *arpt = NULL;
-
-	/* We first try the Custom Data version, as that's more up to date */
-	fname = mkpathname(db->xpdir, "Custom Data", "GNS430", "navdata",
-	    "Airports.txt", NULL);
-	fp = fopen(fname, "r");
-
-	if (fp == NULL) {
-		/* Try the Airports.txt shipped with X-Plane. */
-		free(fname);
-		fname = mkpathname(db->xpdir, "Resources", "GNS430", "navdata",
-		    "Airports.txt", NULL);
-		fp = fopen(fname, "r");
-
-		if (fp == NULL) {
-			free(fname);
-			logMsg("navdata error: your Airports.txt is missing "
-			    "or unreadable. Please correct this and recreate "
-			    "the cache.");
-			return (B_FALSE);
-		}
-	}
-
-	while (!feof(fp)) {
-		line_num++;
-		if (getline(&line, &linecap, fp) <= 0)
-			continue;
-		strip_space(line);
-		if (strstr(line, "A,") == line) {
-			arpt = parse_airports_txt_A_line(db, line);
-		} else if (strstr(line, "R,") == line && arpt != NULL) {
-			parse_airports_txt_R_line(arpt, line, fname, line_num);
-		}
-	}
-
-	fclose(fp);
-	free(fname);
-	free(line);
-
-	return (B_TRUE);
-}
-
-static bool_t
-load_arinc42418_arpt_data(const char *filename, airport_t *arpt)
+load_arinc424_arpt_data(const char *filename, airport_t *arpt)
 {
 	char *line = NULL;
 	size_t linecap = 0;
@@ -1527,25 +1450,28 @@ load_CIFP_file(airportdb_t *db, const char *dirpath, const char *filename)
 {
 	airport_t *arpt;
 	char *filepath;
-	char icao[5];
+	char ident[8];
 	bool_t res;
 
-	/* the filename must be "XXXX.dat" */
-	if (strlen(filename) != 8 || strcmp(&filename[4], ".dat"))
+	/* the filename must end in ".dat" */
+	if (strlen(filename) < 4 ||
+	    strcmp(&filename[strlen(filename) - 4], ".dat") != 0) {
 		return (B_FALSE);
-	lacf_strlcpy(icao, filename, sizeof (icao));
-	arpt = apt_dat_lookup(db, icao);
+	}
+	lacf_strlcpy(ident, filename, sizeof (ident));
+	ident[strlen(filename) - 4] = '\0';
+	arpt = apt_dat_lookup(db, ident);
 	if (arpt == NULL)
 		return (B_FALSE);
 	filepath = mkpathname(dirpath, filename, NULL);
-	res = load_arinc42418_arpt_data(filepath, arpt);
+	res = load_arinc424_arpt_data(filepath, arpt);
 	free(filepath);
 
 	return (res);
 }
 
 /*
- * Loads all ARINC424.18-formatted procedures files from a CIFP directory
+ * Loads all ARINC424-formatted procedures files from a CIFP directory
  * in the new X-Plane 11 navdata. This has to be OS-specific, because
  * directory enumeration isn't portable.
  */
@@ -1823,12 +1749,44 @@ cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats)
 	return (result);
 }
 
-static bool_t
-write_index_dat(const airport_t *arpt, FILE *index_file)
+static arpt_index_t *
+create_arpt_index(airportdb_t *db, const airport_t *arpt)
 {
-	fprintf(index_file, "%s %f %f\n", arpt->icao, arpt->refpt.lat,
-	    arpt->refpt.lon);
-	return (B_TRUE);
+	arpt_index_t *idx = safe_calloc(1, sizeof (*idx));
+
+	ASSERT(db != NULL);
+	ASSERT(arpt != NULL);
+
+	lacf_strlcpy(idx->ident, arpt->ident, sizeof (idx->ident));
+	lacf_strlcpy(idx->icao, arpt->icao, sizeof (idx->icao));
+	if (arpt->iata[0] != '\0')
+		lacf_strlcpy(idx->iata, arpt->iata, sizeof (idx->iata));
+	else
+		lacf_strlcpy(idx->iata, "-", sizeof (idx->iata));
+	if (arpt->cc[0] != '\0')
+		lacf_strlcpy(idx->cc, arpt->cc, sizeof (idx->cc));
+	else
+		lacf_strlcpy(idx->cc, "-", sizeof (idx->cc));
+	idx->pos = TO_GEO3_32(arpt->refpt);
+	for (const runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
+	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
+		if (rwy_is_hard(rwy->surf)) {
+			idx->max_rwy_len = MAX(idx->max_rwy_len,
+			    MET2FEET(rwy->ends[0].land_len));
+			idx->max_rwy_len = MAX(idx->max_rwy_len,
+			    MET2FEET(rwy->ends[1].land_len));
+		}
+	}
+	idx->TA = arpt->TA;
+	idx->TL = arpt->TL;
+
+	avl_add(&db->arpt_index, idx);
+	if (idx->icao[0] != '\0')
+		htbl_set(&db->icao_index, idx->icao, idx);
+	if (idx->iata[0] != '\0')
+		htbl_set(&db->iata_index, idx->iata, idx);
+
+	return (idx);
 }
 
 static bool_t
@@ -1838,25 +1796,59 @@ read_index_dat(airportdb_t *db)
 	FILE *index_file = fopen(index_filename, "r");
 	char *line = NULL;
 	size_t line_cap = 0;
+	size_t num_lines = 0;
 
 	if (index_file == NULL)
 		return (B_FALSE);
 
-	while (getline(&line, &line_cap, index_file) > 0) {
-		arpt_index_t *idx = safe_calloc(1, sizeof (*idx));
+	while (lacf_getline(&line, &line_cap, index_file) > 0)
+		num_lines++;
+	rewind(index_file);
 
-		if (sscanf(line, "%4s %lf %lf", idx->icao,
-		    &idx->pos.lat, &idx->pos.lon) != 3) {
+	recreate_icao_iata_tables(db, num_lines);
+
+	while (lacf_getline(&line, &line_cap, index_file) > 0) {
+		arpt_index_t *idx = safe_calloc(1, sizeof (*idx));
+		avl_index_t where;
+
+		if (sscanf(line, "%7s %7s %3s %2s %f %f %f %hu %hu %hu",
+		    idx->ident, idx->icao, idx->iata, idx->cc,
+		    &idx->pos.lat, &idx->pos.lon, &idx->pos.elev,
+		    &idx->max_rwy_len, &idx->TA, &idx->TL) != 10) {
 			free(idx);
 			continue;
 		}
-		avl_add(&db->arpt_index, idx);
+		if (avl_find(&db->arpt_index, idx, &where) == NULL) {
+			avl_insert(&db->arpt_index, idx, where);
+			htbl_set(&db->icao_index, idx->icao, idx);
+			if (strcmp(idx->iata, "-") != 0)
+				htbl_set(&db->iata_index, idx->iata, idx);
+		} else {
+			logMsg("WARNING: found duplicate airport ident %s "
+			    "in index. Skipping it. This shouldn't happen "
+			    "unless the index is damaged.", idx->ident);
+			free(idx);
+		}
 	}
 	free(line);
 	fclose(index_file);
 	free(index_filename);
 
 	return (B_TRUE);
+}
+
+static bool_t
+write_index_dat(const arpt_index_t *idx, FILE *index_file)
+{
+	ASSERT(idx != NULL);
+	ASSERT(index_file != NULL);
+	return (fprintf(index_file, "%s\t%s\t%s\t%s\t%f\t%f\t%.0f\t"
+	    "%hu\t%hu\t%hu\n",
+	    idx->ident, idx->icao[0] != '\0' ? idx->icao : "-",
+	    idx->iata[0] != '\0' ? idx->iata : "-",
+	    idx->cc[0] != '\0' ? idx->cc : "-",
+	    idx->pos.lat, idx->pos.lon, idx->pos.elev,
+	    idx->max_rwy_len, idx->TA, idx->TL) > 0);
 }
 
 static bool_t
@@ -1926,8 +1918,6 @@ recreate_cache(airportdb_t *db)
 {
 	list_t apt_dat_files;
 	bool_t success = B_TRUE;
-	char *filename;
-	bool_t is_xp11;
 	char *index_filename = NULL;
 	FILE *index_file = NULL;
 	iconv_t cd;
@@ -1954,40 +1944,9 @@ recreate_cache(airportdb_t *db)
 		setlocale(LC_CTYPE, saved_locale);
 		free(saved_locale);
 	}
-
-	/*
-	 * X-Plane 11 auto-detection. XP11 removed Airports.txt and switched
-	 * to a complete different navdata layout, so we need to use a
-	 * different approach to grabbing the data we need (GPA, TCH, TELEV).
-	 */
-	filename = mkpathname(db->xpdir, "Resources", "default data",
-	    "CIFP", NULL);
-	is_xp11 = file_exists(filename, NULL);
-	free(filename);
-	if (is_xp11) {
-		if (!load_xp11_navdata(db)) {
-			success = B_FALSE;
-			goto out;
-		}
-	} else if (!load_airports_txt(db)) {
+	if (!load_xp11_navdata(db)) {
 		success = B_FALSE;
 		goto out;
-	}
-
-	for (airport_t *arpt = avl_first(&db->apt_dat), *next_arpt;
-	    arpt != NULL; arpt = next_arpt) {
-		next_arpt = AVL_NEXT(&db->apt_dat, arpt);
-		ASSERT(arpt->geo_linked);
-		/*
-		 * If the airport isn't in Airports.txt, we want to dump the
-		 * airport, because we don't have TA/TL info on them. But if
-		 * we are in ifr_only=B_FALSE mode, then accept it anyway.
-		 */
-		if (!arpt->in_navdb && db->ifr_only) {
-			geo_unlink_airport(db, arpt);
-			avl_remove(&db->apt_dat, arpt);
-			free_airport(arpt);
-		}
 	}
 	if (avl_numnodes(&db->apt_dat) == 0) {
 		logMsg("navdata error: it appears your simulator's "
@@ -2010,27 +1969,39 @@ recreate_cache(airportdb_t *db)
 		success = B_FALSE;
 		goto out;
 	}
-
+	recreate_icao_iata_tables(db, avl_numnodes(&db->apt_dat));
+	for (airport_t *arpt = avl_first(&db->apt_dat), *next_arpt;
+	    arpt != NULL; arpt = next_arpt) {
+		next_arpt = AVL_NEXT(&db->apt_dat, arpt);
+		ASSERT(arpt->geo_linked);
+		/*
+		 * If the airport isn't in Airports.txt, we want to dump the
+		 * airport, because we don't have TA/TL info on them. But if
+		 * we are in ifr_only=B_FALSE mode, then accept it anyway.
+		 */
+		if (!arpt->in_navdb && db->ifr_only) {
+			geo_unlink_airport(db, arpt);
+			avl_remove(&db->apt_dat, arpt);
+			free_airport(arpt);
+		} else {
+			arpt_index_t *idx = create_arpt_index(db, arpt);
+			write_index_dat(idx, index_file);
+		}
+	}
 	for (airport_t *arpt = avl_first(&db->apt_dat); arpt != NULL;
 	    arpt = AVL_NEXT(&db->apt_dat, arpt)) {
 		char *dirname;
-		arpt_index_t *idx;
 
 		ASSERT(arpt->geo_linked);
 		ASSERT(avl_numnodes(&arpt->rwys) != 0);
 
 		dirname = apt_dat_cache_dir(db, GEO3_TO_GEO2(arpt->refpt),
 		    NULL);
-		if (!create_directory(dirname) || !write_apt_dat(db, arpt) ||
-		    !write_index_dat(arpt, index_file)) {
+		if (!create_directory(dirname) || !write_apt_dat(db, arpt)) {
 			free(dirname);
 			success = B_FALSE;
 			goto out;
 		}
-		idx = safe_calloc(1, sizeof (*idx));
-		strlcpy(idx->icao, arpt->icao, sizeof (idx->icao));
-		idx->pos = GEO3_TO_GEO2(arpt->refpt);
-		avl_add(&db->arpt_index, idx);
 		free(dirname);
 	}
 out:
@@ -2314,16 +2285,24 @@ unload_airport(airport_t *arpt)
 static void
 free_airport(airport_t *arpt)
 {
-	void *cookie = NULL;
+	void *cookie;
 	runway_t *rwy;
 	freq_info_t *freq;
+	ramp_start_t *rs;
 
 	if (arpt->load_complete)
 		unload_airport(arpt);
 
+	cookie = NULL;
+	while ((rs = avl_destroy_nodes(&arpt->ramp_starts, &cookie)) != NULL)
+		free(rs);
+	avl_destroy(&arpt->ramp_starts);
+
+	cookie = NULL;
 	while ((rwy = avl_destroy_nodes(&arpt->rwys, &cookie)) != NULL)
 		free(rwy);
 	avl_destroy(&arpt->rwys);
+
 	while ((freq = list_remove_head(&arpt->freqs)) != NULL)
 		free(freq);
 	list_destroy(&arpt->freqs);
@@ -2478,7 +2457,7 @@ static int
 arpt_index_compar(const void *a, const void *b)
 {
 	const arpt_index_t *ia = a, *ib = b;
-	int res = strcmp(ia->icao, ib->icao);
+	int res = strcmp(ia->ident, ib->ident);
 
 	if (res < 0)
 		return (-1);
@@ -2508,6 +2487,12 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	    offsetof(tile_t, node));
 	avl_create(&db->arpt_index, arpt_index_compar,
 	    sizeof (arpt_index_t), offsetof(arpt_index_t, node));
+	/*
+	 * Just some defaults - we'll resize the tables later when
+	 * we actually read the index file.
+	 */
+	htbl_create(&db->icao_index, 16, AIRPORTDB_ICAO_LEN, B_TRUE);
+	htbl_create(&db->iata_index, 16, AIRPORTDB_IATA_LEN, B_TRUE);
 }
 
 void
@@ -2533,6 +2518,11 @@ airportdb_destroy(airportdb_t *db)
 	avl_destroy(&db->geo_table);
 	avl_destroy(&db->apt_dat);
 
+	htbl_empty(&db->icao_index, NULL, NULL);
+	htbl_destroy(&db->icao_index);
+	htbl_empty(&db->iata_index, NULL, NULL);
+	htbl_destroy(&db->iata_index);
+
 	mutex_destroy(&db->lock);
 
 	free(db->xpdir);
@@ -2552,28 +2542,122 @@ airportdb_unlock(airportdb_t *db)
 	mutex_exit(&db->lock);
 }
 
+API_EXPORT airport_t *
+airport_lookup_by_ident(airportdb_t *db, const char *ident)
+{
+	arpt_index_t *idx;
+	arpt_index_t srch = {};
+
+	ASSERT(db != NULL);
+	ASSERT(ident != NULL);
+
+	lacf_strlcpy(srch.ident, ident, sizeof (srch.ident));
+	idx = avl_find(&db->arpt_index, &srch, NULL);
+	if (idx == NULL)
+		return (NULL);
+	return (airport_lookup(db, ident, TO_GEO2(idx->pos)));
+}
+
+static void
+airport_lookup_htbl_multi(airportdb_t *db, const list_t *list,
+    void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo)
+{
+	ASSERT(db != NULL);
+	ASSERT(list != NULL);
+
+	for (void *mv = list_head(list); mv != NULL;
+	    mv = list_next(list, mv)) {
+		arpt_index_t *idx = HTBL_VALUE_MULTI(mv);
+
+		if (found_cb != NULL) {
+			airport_t *apt = airport_lookup(db, idx->ident,
+			    TO_GEO2(idx->pos));
+			ASSERT(apt != NULL);
+			found_cb(apt, userinfo);
+		}
+	}
+}
+
+size_t
+airport_lookup_by_icao(airportdb_t *db, const char *icao,
+    void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo)
+{
+	const list_t *list;
+	char icao_srch[AIRPORTDB_ICAO_LEN] = {};
+
+	ASSERT(db != NULL);
+	ASSERT(icao != NULL);
+
+	strlcpy(icao_srch, icao, sizeof (icao_srch));
+	list = htbl_lookup_multi(&db->icao_index, icao_srch);
+	if (list != NULL) {
+		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
+		return (list_count(list));
+	} else {
+		return (0);
+	}
+}
+
+size_t
+airport_lookup_by_iata(airportdb_t *db, const char *iata,
+    void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo)
+{
+	const list_t *list;
+	char iata_srch[AIRPORTDB_IATA_LEN] = {};
+
+	ASSERT(db != NULL);
+	ASSERT(iata != NULL);
+
+	strlcpy(iata_srch, iata, sizeof (iata_srch));
+	list = htbl_lookup_multi(&db->iata_index, iata_srch);
+	if (list != NULL) {
+		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
+		return (list_count(list));
+	} else {
+		return (0);
+	}
+}
+
 airport_t *
-airport_lookup(airportdb_t *db, const char *icao, geo_pos2_t pos)
+airport_lookup(airportdb_t *db, const char *ident, geo_pos2_t pos)
 {
 	load_airports_in_tile(db, pos);
-	return (apt_dat_lookup(db, icao));
+	return (apt_dat_lookup(db, ident));
+}
+
+static void
+save_arpt_cb(airport_t *airport, void *userinfo)
+{
+	airport_t **out_arpt = userinfo;
+	*out_arpt = airport;
 }
 
 /*
- * Performs an airport lookup without having to know its approximate location
- * first.
+ * Performs an airport lookup without having to know its approximate
+ * location first.
  */
 API_EXPORT airport_t *
 airport_lookup_global(airportdb_t *db, const char *icao)
 {
-	arpt_index_t *idx;
-	arpt_index_t srch;
+	airport_t *found = NULL;
+	(void)airport_lookup_by_icao(db, icao, save_arpt_cb, &found);
+	return (found);
+}
 
-	strlcpy(srch.icao, icao, sizeof (srch.icao));
-	idx = avl_find(&db->arpt_index, &srch, NULL);
-	if (idx == NULL)
-		return (NULL);
-	return (airport_lookup(db, icao, idx->pos));
+size_t
+airport_index_walk(airportdb_t *db,
+    void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo)
+{
+	ASSERT(db != NULL);
+
+	if (found_cb != NULL) {
+		for (const arpt_index_t *idx = avl_first(&db->arpt_index);
+		    idx != NULL; idx = AVL_NEXT(&db->arpt_index, idx)) {
+			found_cb(idx, userinfo);
+		}
+	}
+
+	return (avl_numnodes(&db->arpt_index));
 }
 
 bool_t

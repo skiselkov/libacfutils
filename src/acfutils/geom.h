@@ -47,6 +47,20 @@ typedef struct {
 } geo_pos2_t;
 
 /*
+ * More compact versions of the geo_pos*_t types. These use single
+ * precision floating point to save a bit on memory.
+ */
+typedef struct {
+	float	lat;
+	float	lon;
+	float	elev;
+} geo_pos3_32_t;
+typedef struct {
+	float	lat;
+	float	lon;
+} geo_pos2_32_t;
+
+/*
  * Generic 3-space vector. Looking down onto a plane embedded in euclidian
  * 3-space, the axes are:
  * x: left-to-right (increasing right)
@@ -119,6 +133,16 @@ typedef struct {
  */
 #define	GEO_POS2(lat, lon)		((geo_pos2_t){(lat), (lon)})
 #define	GEO_POS3(lat, lon, elev)	((geo_pos3_t){(lat), (lon), (elev)})
+#define	GEO_POS3_F32(lat, lon, elev)	((geo_pos3_f32_t){(lat), (lon), (elev)})
+#define	GEO_POS2_F32(lat, lon)		((geo_pos2_f32_t){(lat), (lon)})
+#define	TO_GEO3(geo3)		\
+	((geo_pos3_t){(geo3).lat, (geo3).lon, (geo3).elev})
+#define	TO_GEO2(geo2)		\
+	((geo_pos2_t){(geo2).lat, (geo2).lon})
+#define	TO_GEO3_32(geo3)	\
+	((geo_pos3_32_t){(geo3).lat, (geo3).lon, (geo3).elev})
+#define	TO_GEO2_32(geo2)	\
+	((geo_pos3_32_t){(geo3).lat, (geo3).lon})
 #define	VECT2(x, y)			((vect2_t){(x), (y)})
 #define	VECT3(x, y, z)			((vect3_t){(x), (y), (z)})
 #define	VECT3L(x, y, z)			((vect3l_t){(x), (y), (z)})

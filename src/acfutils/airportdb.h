@@ -22,6 +22,7 @@
 #include "geom.h"
 #include "list.h"
 #include "helpers.h"
+#include "htbl.h"
 #include "thread.h"
 
 #ifdef	__cplusplus
@@ -31,6 +32,7 @@ extern "C" {
 typedef struct airportdb {
 	bool_t		inited;
 	bool_t		ifr_only;
+	bool_t		normalize_gate_names;
 	char		*xpdir;
 	char		*cachedir;
 	int		xp_airac_cycle;
@@ -41,11 +43,14 @@ typedef struct airportdb {
 	avl_tree_t	apt_dat;
 	avl_tree_t	geo_table;
 	avl_tree_t	arpt_index;
+	htbl_t		icao_index;
+	htbl_t		iata_index;
 } airportdb_t;
 
 typedef struct airport airport_t;
 typedef struct runway runway_t;
 typedef struct runway_end runway_end_t;
+typedef struct ramp_start ramp_start_t;
 
 typedef enum {
 	RWY_SURF_ASPHALT = 1,
@@ -96,6 +101,21 @@ struct runway {
 };
 
 typedef enum {
+	RAMP_START_GATE,
+	RAMP_START_HANGAR,
+	RAMP_START_TIEDOWN,
+	RAMP_START_MISC
+} ramp_start_type_t;
+
+struct ramp_start {
+	char			name[32];
+	geo_pos2_t		pos;
+	float			hdgt;	/* true heading, deg */
+	ramp_start_type_t	type;
+	avl_node_t		node;
+};
+
+typedef enum {
 	FREQ_TYPE_REC,	/* pre-recorded message ATIS, AWOS or ASOS */
 	FREQ_TYPE_CTAF,
 	FREQ_TYPE_CLNC,
@@ -112,15 +132,20 @@ typedef struct {
 	list_node_t	node;
 } freq_info_t;
 
-typedef struct {
-	char		icao[8];
-	geo_pos2_t	pos;
-	avl_node_t	node;
-} arpt_index_t;
+#define	AIRPORTDB_IDENT_LEN	8
+#define	AIRPORTDB_ICAO_LEN	8
+#define	AIRPORTDB_IATA_LEN	4
+#define	AIRPORTDB_CC_LEN	4
 
 struct airport {
-	char		icao[5];	/* 4-letter ID, nul terminated */
-	char		cc[4];		/* 2-letter ICAO country/region code */
+	/* abstract identifier - only this is guaranteed to be unique */
+	char		ident[AIRPORTDB_IDENT_LEN];
+	/* 4-letter ICAO code, nul terminated (may not be unique or exist) */
+	char		icao[AIRPORTDB_ICAO_LEN];
+	/* 3-letter IATA code, nul terminated (may not be unique or exist) */
+	char		iata[AIRPORTDB_IATA_LEN];
+	/* 2-letter ICAO country/region code, nul terminated */
+	char		cc[AIRPORTDB_CC_LEN];
 	char		name[24];	/* Airport name, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
 					/* (^^^ elev in FEET!) */
@@ -130,7 +155,8 @@ struct airport {
 	double		TL;		/* transition level in feet */
 	double		TA_m;		/* transition altitude in meters */
 	double		TL_m;		/* transition level in meters */
-	avl_tree_t	rwys;
+	avl_tree_t	rwys;		/* see runway_t above */
+	avl_tree_t	ramp_starts;	/* see ramp_start_t above */
 	list_t		freqs;
 
 	bool_t		load_complete;	/* true if we've done load_airport */
@@ -142,6 +168,29 @@ struct airport {
 	list_node_t	cur_arpts_node;	/* cur_arpts list */
 	avl_node_t	tile_node;	/* tiles in the airport_geo_tree */
 };
+
+/*
+ * This structure is used in the fast-global-lookup index of airportdb_t.
+ * This index is stored entirely in memory and thus doesn't incur any
+ * disk time access penalty, but it's also not as fully-featured.
+ *
+ * This attempts to replicate the most useful fields of ARINC 424 "PA"
+ * records in a compact-enough manner that we can hold the entire world-wide
+ * database in memory at all times. For more information, lookup the
+ * airport using airport_lookup_ident by using the ident field. The other
+ * identifier fields may be empty, if the airport lacks this information.
+ */
+typedef struct {
+	char		ident[AIRPORTDB_IDENT_LEN];	/* globally unique */
+	char		icao[AIRPORTDB_ICAO_LEN];	/* may be empty */
+	char		iata[AIRPORTDB_IATA_LEN];	/* may be empty */
+	char		cc[AIRPORTDB_CC_LEN];		/* may be empty */
+	geo_pos3_32_t	pos;				/* elev in ft */
+	uint16_t	max_rwy_len;			/* ft */
+	uint16_t	TA;				/* ft */
+	uint16_t	TL;				/* ft */
+	avl_node_t	node;
+} arpt_index_t;
 
 API_EXPORT void airportdb_create(airportdb_t *db, const char *xpdir,
     const char *cachedir);
@@ -170,17 +219,71 @@ API_EXPORT void set_airport_load_limit(airportdb_t *db, double limit);
 #define	load_nearest_airport_tiles	ACFSYM(load_nearest_airport_tiles)
 API_EXPORT void load_nearest_airport_tiles(airportdb_t *db, geo_pos2_t my_pos);
 
+/*
+ * Query functions to look for airports
+ */
 #define	unload_distant_airport_tiles	ACFSYM(unload_distant_airport_tiles)
 API_EXPORT void unload_distant_airport_tiles(airportdb_t *db,
     geo_pos2_t my_pos);
-
+/*
+ * Legacy lookup function by ICAO ID. Airports without valid ICAO IDs
+ * won't show up here. The search is also restricted to a narrow zone
+ * around `pos' (within a 3x3 degree square). Use airport_lookup_global
+ * for a search at any arbitrary location.
+ */
 #define	airport_lookup	ACFSYM(airport_lookup)
 API_EXPORT airport_t *airport_lookup(airportdb_t *db, const char *icao,
     geo_pos2_t pos);
-
+/*
+ * Legacy lookup function by ICAO ID. Airports without valid ICAO IDs
+ * won't show up here.
+ */
 #define	airport_lookup_global	ACFSYM(airport_lookup_global)
 API_EXPORT airport_t *airport_lookup_global(airportdb_t *db, const char *icao);
-
+/*
+ * Lookup by non-structured airport ID. This is *usually* the ICAO ID,
+ * but many small fields only have a regional ID assigned here.
+ */
+#define	airport_lookup_by_ident	ACFSYM(airport_lookup_by_ident)
+API_EXPORT airport_t *airport_lookup_by_ident(airportdb_t *db,
+    const char *ident);
+/*
+ * Lookup by ICAO ID, with support for duplicates. Rather than returning
+ * a pointer to an airport_t, this function returns the number of elements
+ * found. If you provide a callback in `found_cb', it is called with the
+ * airport_t and the userinfo pointer you provided. Use this for a complex
+ * search that is capable of handling duplicates.
+ */
+#define	airport_lookup_by_icao	ACFSYM(airport_lookup_by_icao)
+API_EXPORT size_t airport_lookup_by_icao(airportdb_t *db, const char *icao,
+    void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo);
+/*
+ * Lookup by IATA ID, with support for duplicates. Rather than returning
+ * a pointer to an airport_t, this function returns the number of elements
+ * found. If you provide a callback in `found_cb', it is called with the
+ * airport_t and the userinfo pointer you provided. Use this for a complex
+ * search that is capable of handling duplicates.
+ */
+#define	airport_lookup_by_iata	ACFSYM(airport_lookup_by_iata)
+API_EXPORT size_t airport_lookup_by_iata(airportdb_t *db, const char *iata,
+    void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo);
+/*
+ * This performs a complete database index walk. The return value is the
+ * total number of entries in the database index. If you provide a callback
+ * function, it is called with every arpt_index_t that is in the database,
+ * and your userinfo pointer. Although the arpt_index_t structure isn't as
+ * fully-featured as a full airport_t, it is kept in memory at all times
+ * and thus doesn't incur any disk access penalty. Use this for a fast
+ * search to figure out if you're interested in a particular airport
+ * (e.g. it's somewhere within a radius of interest for you), then
+ * actually load its info using airport_lookup_by_ident.
+ */
+#define	airport_index_walk	ACFSYM(airport_index_walk)
+API_EXPORT size_t airport_index_walk(airportdb_t *db,
+    void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo);
+/*
+ * Querying information about a particular airport.
+ */
 #define	airport_find_runway	ACFSYM(airport_find_runway)
 API_EXPORT bool_t airport_find_runway(airport_t *arpt, const char *rwy_id,
     runway_t **rwy_p, unsigned *end_p);

@@ -285,11 +285,33 @@ is_valid_icao_code(const char *icao)
 {
 	if (strlen(icao) != 4)
 		return (B_FALSE);
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++) {
 		if (icao[i] < 'A' || icao[i] > 'Z')
 			return (B_FALSE);
+	}
 	if (icao[0] == 'I' || icao[0] == 'J' || icao[0] == 'Q' ||
 	    icao[0] == 'X')
+		return (B_FALSE);
+	return (B_TRUE);
+}
+
+/*
+ * Checks if a string is a valid IATA airport code. ICAO airport codes always:
+ * 1) are 3 characters long
+ * 2) are all upper case
+ * 3) contain only the letters A-Z
+ * 4) may not start with Q
+ */
+bool_t
+is_valid_iata_code(const char *iata)
+{
+	if (strlen(iata) != 3)
+		return (B_FALSE);
+	for (int i = 0; i < 3; i++) {
+		if (iata[i] < 'A' || iata[i] > 'Z')
+			return (B_FALSE);
+	}
+	if (iata[0] == 'Q')
 		return (B_FALSE);
 	return (B_TRUE);
 }
