@@ -214,7 +214,7 @@ highbit64(unsigned long long x)
 #define	MAX(x, y)	((x) > (y) ? (x) : (y))
 #endif
 #ifndef	AVG
-#define	AVG(x, y)	(((x) + (y)) / 2)
+#define	AVG(x, y)	(((x) + (y)) / 2.0)
 #endif
 /*
  * Provides a gradual method of integrating an old value until it approaches
