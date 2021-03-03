@@ -245,9 +245,6 @@ API_EXPORT ssize_t explode_line(char *line, char delim, char **comps,
 #define	append_format			ACFSYM(append_format)
 API_EXPORT void append_format(char **str, size_t *sz,
     PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(3);
-#define	append_format_buf		ACFSYM(append_format_buf)
-API_EXPORT void append_format_buf(char *str, size_t cap,
-    PRINTF_FORMAT(const char *format), ...) PRINTF_ATTR(3);
 static inline void
 normalize_whitespace(char *str)
 {

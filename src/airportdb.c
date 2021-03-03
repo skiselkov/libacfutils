@@ -1063,9 +1063,16 @@ parse_apt_dat_1300_line(airport_t *arpt, const char *line,
 	if (n_comps < 7)
 		goto out;
 	if (!normalize_name) {
+		unsigned l = 0;
 		for (size_t i = 6; i < n_comps; i++) {
-			append_format_buf(srch.name, sizeof (srch.name),
-			    "%s%s", comps[i], i + 1 < n_comps ? " " : "");
+			lacf_strlcpy(&srch.name[l], comps[i],
+			    sizeof (srch.name) - l);
+			l = MIN(l + strlen(comps[i]), sizeof (srch.name) - 1);
+			if (i + 1 < n_comps) {
+				lacf_strlcpy(&srch.name[l], " ",
+				    sizeof (srch.name) - l);
+				l = MIN(l + 1, sizeof (srch.name) - 1);
+			}
 		}
 	} else {
 		for (size_t i = 6; i < n_comps; i++) {
