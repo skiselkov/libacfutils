@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		11
+#define	ARPTDB_CACHE_VERSION		12
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -617,6 +617,12 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	    offsetof(freq_info_t, node));
 	lacf_strlcpy(arpt->ident, new_ident, sizeof (arpt->ident));
 	strtoupper(arpt->ident);
+	/*
+	 * Legacy scenery doesn't include '1302' metainfo lines with
+	 * the ICAO code listed separately, so for those we just assume
+	 * that the code listed in the ident here is the ICAO code.
+	 */
+	strlcpy(arpt->icao, arpt->ident, sizeof (arpt->icao));
 
 	avl_create(&arpt->ramp_starts, ramp_start_compar,
 	    sizeof (ramp_start_t), offsetof(ramp_start_t, node));
