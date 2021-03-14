@@ -399,7 +399,7 @@ vsprintf_alloc(const char *fmt, va_list ap)
 
 	ASSERT(l >= 0);
 	str = (char *)safe_malloc(l + 1);
-	VERIFY3S(vsnprintf(str, l + 1, fmt, ap), ==, l);
+	(void)vsnprintf(str, l + 1, fmt, ap);
 
 	return (str);
 }
