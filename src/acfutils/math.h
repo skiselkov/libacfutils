@@ -171,14 +171,14 @@ smoothstep_inv(double x)
 		if (isnan((oldval))) { \
 			(oldval) = tmpval; \
 		} else if ( \
-		    (oldval) > (newval) + (step) * (0.5 + (hyst_rng)) || \
-		    (oldval) < (newval) - (step) * (0.5 + (hyst_rng))) { \
+		    (newval) > (oldval) + (step) * (0.5 + (hyst_rng)) || \
+		    (newval) < (oldval) - (step) * (0.5 + (hyst_rng))) { \
 			(oldval) = tmpval; \
 		} \
 	} while (0)
 
 #define	HROUND(oldval, newval, step) \
-	HROUND2((oldval), (newval), (step), 0.2)
+	HROUND2((oldval), (newval), (step), 0.35)
 
 #ifdef	__cplusplus
 }
