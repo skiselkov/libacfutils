@@ -850,8 +850,6 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("REFACCELHT", acft->ref.accel_hgt)
 		else PARSE_SCALAR("REFSPDLIM", acft->ref.spd_lim)
 		else PARSE_SCALAR("REFSPDLIMALT", acft->ref.spd_lim_alt)
-		else PARSE_SCALAR("MAXFUEL", acft->max_fuel)
-		else PARSE_SCALAR("MAXGW", acft->max_gw)
 		else PARSE_SCALAR("WINGAREA", acft->wing_area)
 		else PARSE_SCALAR("CLMAX", acft->cl_max_aoa)
 		else PARSE_SCALAR("CLFLAPMAX", acft->cl_flap_max_aoa)
@@ -876,9 +874,6 @@ acft_perf_parse(const char *filename)
 	}
 
 	if (acft->acft_type == NULL ||
-	    acft->ref.zfw <= 0 ||
-	    acft->ref.fuel <= 0 ||
-	    acft->ref.crz_lvl <= 0 ||
 	    acft->ref.clb_ias <= 0 ||
 	    acft->ref.clb_ias_init <= 0 ||
 	    acft->ref.clb_mach <= 0 ||
@@ -886,12 +881,6 @@ acft_perf_parse(const char *filename)
 	    acft->ref.crz_mach <= 0 ||
 	    acft->ref.des_ias <= 0 ||
 	    acft->ref.des_mach <= 0 ||
-	    acft->ref.to_flap <= 0 ||
-	    acft->ref.accel_hgt <= 0 ||
-	    acft->ref.spd_lim <= 0 ||
-	    acft->ref.spd_lim_alt <= 0 ||
-	    acft->max_fuel <= 0 ||
-	    acft->max_gw <= 0 ||
 	    acft->eng_type == NULL ||
 	    acft->eng_max_thr <= 0 ||
 	    acft->eng_min_thr <= 0 ||

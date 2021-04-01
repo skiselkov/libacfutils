@@ -118,25 +118,27 @@ typedef struct {
 	int	spd;
 	double	Cd;
 } drag_coeff_t;
-
+/*
+ * Serializable in its entirety.
+ */
 typedef struct {
-	double		zfw;		/* kg */
-	double		fuel;		/* kg */
-	double		clb_ias;	/* knots */
-	double		clb_ias_init;	/* knots */
-	double		clb_mach;	/* fraction */
-	double		crz_ias;	/* knots */
-	double		crz_mach;	/* fraction */
-	double		crz_lvl;	/* flight level */
-	double		des_ias;	/* knots */
-	double		des_mach;	/* fraction */
-	double		to_flap;	/* ratio */
-	double		accel_hgt;	/* feet AGL */
-	double		spd_lim;	/* knots IAS */
-	double		spd_lim_alt;	/* feet AMSL */
+	float		zfw;		/* kg */
+	float		fuel;		/* kg */
+	float		clb_ias;	/* knots */
+	float		clb_ias_init;	/* knots */
+	float		clb_mach;	/* fraction */
+	float		crz_ias;	/* knots */
+	float		crz_mach;	/* fraction */
+	float		crz_lvl;	/* feet */
+	float		des_ias;	/* knots */
+	float		des_mach;	/* fraction */
+	float		to_flap;	/* ratio */
+	float		accel_hgt;	/* feet AGL */
+	float		spd_lim;	/* knots IAS */
+	float		spd_lim_alt;	/* feet AMSL */
 
-	double		thr_derate;
-	double		bank_ratio;
+	float		thr_derate;
+	float		bank_ratio;
 	unsigned	num_eng;
 } flt_perf_t;
 
@@ -146,9 +148,6 @@ typedef struct {
 	char		*acft_type;
 
 	flt_perf_t	ref;	/* Reference performance values */
-
-	double		max_fuel;
-	double		max_gw;
 
 	char		*eng_type;
 	unsigned	num_eng;
