@@ -113,7 +113,8 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 }
 
 double *
-fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
+fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
+    size_t *num_out)
 {
 	double *out = NULL;
 	size_t cap = 0, num = 0;
@@ -131,6 +132,8 @@ fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
 		if (min_val <= y && y <= max_val)
 			cap++;
 	}
+	if (extrapolate)
+		cap += 2;
 	if (cap == 0) {
 		*num_out = 0;
 		return (NULL);
@@ -142,14 +145,35 @@ fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
 		double min_val = MIN(p1.y, p2.y);
 		double max_val = MAX(p1.y, p2.y);
 
+		if (extrapolate) {
+			bool_t first = (i == 0);
+			bool_t up_slope = (p1.y <= p2.y);
+			if (first && ((up_slope && y < p1.y) ||
+			    (!up_slope && y > p1.y))) {
+				out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
+			}
+		}
 		if (min_val <= y && y <= max_val)
 			out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
+		if (extrapolate) {
+			bool_t last = IS_NULL_VECT(points[i + 2]);
+			bool_t up_slope = (p1.y <= p2.y);
+			if (last && ((up_slope && y > p2.y) ||
+			    (!up_slope && y < p2.y))) {
+				out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
+			}
+		}
 	}
-	ASSERT3U(cap, ==, num);
-
+	/* We might have slightly over-accounted here if extrapolate was set */
 	*num_out = num;
 
 	return (out);
+}
+
+double *
+fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
+{
+	return (fx_lin_multi_inv2(y, points, B_FALSE, num_out));
 }
 
 /*

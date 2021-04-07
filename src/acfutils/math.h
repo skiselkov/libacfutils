@@ -45,6 +45,9 @@ API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
 #define	fx_lin_multi_inv	ACFSYM(fx_lin_multi_inv)
 API_EXPORT double *fx_lin_multi_inv(double y, const struct vect2_s *points,
     size_t *num_out);
+#define	fx_lin_multi_inv2	ACFSYM(fx_lin_multi_inv2)
+API_EXPORT double *fx_lin_multi_inv2(double y, const struct vect2_s *points,
+    bool_t extrapolate, size_t *num_out);
 
 /*
  * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.
