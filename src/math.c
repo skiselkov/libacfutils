@@ -149,7 +149,7 @@ fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
 			bool_t first = (i == 0);
 			bool_t up_slope = (p1.y <= p2.y);
 			if (first && ((up_slope && y < p1.y) ||
-			    (!up_slope && y > p1.y))) {
+			    (!up_slope && y > p1.y)) && p1.y != p2.y) {
 				out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
 			}
 		}
@@ -159,7 +159,7 @@ fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
 			bool_t last = IS_NULL_VECT(points[i + 2]);
 			bool_t up_slope = (p1.y <= p2.y);
 			if (last && ((up_slope && y > p2.y) ||
-			    (!up_slope && y < p2.y))) {
+			    (!up_slope && y < p2.y)) && p1.y != p2.y) {
 				out[num++] = fx_lin(y, p1.y, p1.x, p2.y, p2.x);
 			}
 		}
