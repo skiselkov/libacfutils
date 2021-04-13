@@ -157,15 +157,27 @@ API_EXPORT const char *extract_icao_country_code(const char *icao);
 API_EXPORT bool_t is_valid_xpdr_code(int code);
 #define	is_valid_vor_freq	ACFSYM(is_valid_vor_freq)
 API_EXPORT bool_t is_valid_vor_freq(double freq_mhz);
-static inline bool_t is_valid_vor_freq_hz(uint32_t freq_hz)
+static inline bool_t
+is_valid_vor_freq_hz(uint32_t freq_hz)
 {
 	return (is_valid_vor_freq(freq_hz / 1000000.0));
 }
+static inline bool_t
+is_valid_vor_freq_khz(uint32_t freq_khz)
+{
+	return (is_valid_vor_freq(freq_khz / 1000.0));
+}
 #define	is_valid_loc_freq	ACFSYM(is_valid_loc_freq)
 API_EXPORT bool_t is_valid_loc_freq(double freq_mhz);
-static inline bool_t is_valid_loc_freq_hz(uint32_t freq_hz)
+static inline bool_t
+is_valid_loc_freq_hz(uint32_t freq_hz)
 {
 	return (is_valid_loc_freq(freq_hz / 1000000.0));
+}
+static inline bool_t
+is_valid_loc_freq_khz(uint32_t freq_khz)
+{
+	return (is_valid_loc_freq(freq_khz / 1000.0));
 }
 #define	is_valid_ndb_freq	ACFSYM(is_valid_ndb_freq)
 API_EXPORT bool_t is_valid_ndb_freq(double freq_khz);
