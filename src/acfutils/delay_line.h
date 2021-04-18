@@ -31,6 +31,7 @@
 
 #include "assert.h"
 #include "core.h"
+#include "crc64.h"
 #include "time.h"
 
 #ifdef	__cplusplus
@@ -59,6 +60,8 @@ typedef struct {
 	};
 	uint64_t		changed_t;
 	uint64_t		delay_us;
+	uint64_t		delay_base_us;
+	double			delay_rand_fract;
 #ifndef	_MSC_VER
 	int			__serialize_marker[0];
 #else
@@ -81,6 +84,8 @@ delay_line_init(delay_line_t *line, uint64_t delay_us)
 	ASSERT(line != NULL);
 	memset(line, 0, sizeof (*line));
 	line->delay_us = delay_us;
+	line->delay_base_us = delay_us;
+	line->delay_rand_fract = 0;
 }
 
 static inline void
@@ -90,22 +95,54 @@ delay_line_init_time_func(delay_line_t *line, uint64_t delay_us,
 	ASSERT(line != NULL);
 	memset(line, 0, sizeof (*line));
 	line->delay_us = delay_us;
+	line->delay_base_us = delay_us;
+	line->delay_rand_fract = 0;
 	line->time_func = time_func;
 	line->time_func_userinfo = time_func_userinfo;
+}
+
+static inline void
+delay_line_refresh_delay(delay_line_t *line)
+{
+	ASSERT(line != NULL);
+	if (line->delay_rand_fract == 0) {
+		line->delay_us = line->delay_base_us;
+	} else {
+		uint64_t rand_us = line->delay_rand_fract * line->delay_base_us;
+		line->delay_us = line->delay_base_us +
+		    (uint64_t)((crc64_rand_fract() - 0.5) * rand_us);
+	}
 }
 
 static inline void
 delay_line_set_delay(delay_line_t *line, uint64_t delay_us)
 {
 	ASSERT(line != NULL);
-	line->delay_us = delay_us;
+	line->delay_base_us = delay_us;
+	delay_line_refresh_delay(line);
 }
 
 static inline uint64_t
 delay_line_get_delay(const delay_line_t *line)
 {
 	ASSERT(line != NULL);
-	return (line->delay_us);
+	return (line->delay_base_us);
+}
+
+static inline void
+delay_line_set_rand(delay_line_t *line, double rand_fract)
+{
+	ASSERT(line != NULL);
+	ASSERT3F(rand_fract, >=, 0);
+	ASSERT3F(rand_fract, <=, 1);
+	line->delay_rand_fract = rand_fract;
+	delay_line_refresh_delay(line);
+}
+
+static inline double
+delay_line_get_rand(const delay_line_t *line)
+{
+	return (line->delay_rand_fract);
 }
 
 /*
@@ -128,6 +165,7 @@ delay_line_pull_ ## abbrev_type(delay_line_t *line) \
 	if (line->abbrev_type ## _new != line->abbrev_type && \
 	    now - line->changed_t >= line->delay_us) { \
 		line->abbrev_type = line->abbrev_type ## _new; \
+		delay_line_refresh_delay(line); \
 	} \
 	return (line->abbrev_type); \
 }
