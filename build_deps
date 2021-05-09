@@ -61,6 +61,7 @@ fi
     ( [ $minimal -eq 1 ] || ( cd glew && ./build_glew_deps ) ) && \
     ( [ $minimal -eq 1 ] || ( cd openal-soft && ./build_openal ) ) && \
     ( [ $minimal -eq 1 ] || ( cd cglm && ./build_cglm ) ) && \
+    ( [ $minimal -eq 1 ] || ( cd geographiclib && ./build_geographiclib ) ) && \
     ( cd lzma/qmake && \
 	if [ $(uname) = Darwin ]; then \
 		if ! [ -f mac-64/liblzma.a ]; then

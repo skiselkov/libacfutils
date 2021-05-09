@@ -129,3 +129,8 @@ libiconv/libiconv-1.16
 libiconv/libiconv-linux-64
 libiconv/libiconv-mac-64
 libiconv/libiconv-win-64
+
+geographiclib/GeographicLib-1.51/
+geographiclib/geographiclib-linux-64
+geographiclib/geographiclib-mac-64
+geographiclib/geographiclib-win-64

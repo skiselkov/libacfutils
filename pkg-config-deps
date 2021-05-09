@@ -95,6 +95,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! [ -f .minimal-deps ]; then
+	PACKAGES="$PACKAGES geographiclib"
 	if [[ "$TESSERACT" -ne 0 ]]; then
 		PACKAGES="$PACKAGES tesseract lept"
 	fi
@@ -129,7 +130,8 @@ $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\
 $(pwd)/openal-soft/openal-soft-$OPENAL_VERSION-$ARCH/build/install/lib/pkgconfig:\
 $(pwd)/pcre2/pcre2-$ARCH/lib/pkgconfig:\
-$(pwd)/glfw/glfw-$ARCH/install/lib/pkgconfig"
+$(pwd)/glfw/glfw-$ARCH/install/lib/pkgconfig:\
+$(pwd)/geographiclib/geographiclib-$ARCH/cmake"
 
 if [[ "$ARCH" == "linux-64" ]]; then
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
