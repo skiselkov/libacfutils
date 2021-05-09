@@ -245,6 +245,19 @@ png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
 	    &color_type, &bit_depth));
 }
 
+uint8_t *
+png_load_from_buffer_rgb_auto(const void *buf, size_t len, int *width,
+    int *height, int *color_type, int *bit_depth)
+{
+	bufread_t br = { .bufp = buf, .len = len, .cur = 0 };
+	ASSERT(color_type != NULL);
+	ASSERT(bit_depth != NULL);
+	*color_type = -1;
+	*bit_depth = -1;
+	return (png_load_impl(bufread, &br, width, height,
+	    color_type, bit_depth));
+}
+
 static bool_t
 png_write_to_file_common(const char *filename, int width, int height,
     const uint8_t *data, int color_type, int bpp, int bit_depth)
