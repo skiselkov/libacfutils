@@ -99,9 +99,9 @@ extern "C" {
 #define	EARTH_GRAVITY	9.80665		/* Earth surface grav. acceleration */
 #define	EARTH_SID_DAY	86164.0905	/* Sidereal day on Earth in seconds */
 #define	EARTH_ROT_RATE	(360.0 / EARTH_SID_DAY)	/* deg/sec */
-#define	DRY_AIR_MOL	0.0289644	/* Molar mass of dry air */
+#define	DRY_AIR_MOL	0.02896968	/* Molar mass of dry air */
 #define	GAMMA		1.4		/* Specific heat ratio of dry air */
-#define	R_univ		8.31447		/* Universal gas constant */
+#define	R_univ		8.314462618	/* Universal gas constant */
 #define	R_spec		287.058		/* Specific gas constant of dry air */
 #define	BOLTZMANN_CONST	5.67E-8		/* Stefan-Boltzmann constant */
 
@@ -245,13 +245,22 @@ API_EXPORT double acft_get_sfc(const flt_perf_t *flt, const acft_perf_t *acft,
 
 API_EXPORT double perf_get_turn_rate(double bank_ratio, double gs_kts,
     const flt_perf_t *flt, const acft_perf_t *acft);
-
+/*
+ * Aviation versions, assuming ISA conditions. Altitude in feet!
+ */
 #define	alt2press	ACFSYM(alt2press)
-API_EXPORT double alt2press(double alt, double qnh);
+API_EXPORT double alt2press(double alt_ft, double qnh_Pa);
 #define	press2alt	ACFSYM(press2alt)
-API_EXPORT double press2alt(double press, double qnh);
-#define	press2alt_noaa	ACFSYM(press2alt_noaa)
-API_EXPORT double press2alt_noaa(double press, double qnh);
+API_EXPORT double press2alt(double press_Pa, double qnh_Pa);
+/*
+ * Generic barometric versions - altitudes in meters!
+ */
+#define	alt2press_baro	ACFSYM(alt2press_baro)
+API_EXPORT double alt2press_baro(double alt_m, double p0_Pa, double T0_K,
+    double g_mss);
+#define	press2alt_baro	ACFSYM(press2alt_baro)
+API_EXPORT double press2alt_baro(double p_Pa, double p0_Pa, double T0_K,
+    double g_mss);
 
 #define	alt2fl		ACFSYM(alt2fl)
 API_EXPORT double alt2fl(double alt, double qnh);

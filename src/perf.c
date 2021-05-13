@@ -2214,7 +2214,7 @@ keas2mach(double keas, double press)
 }
 
 /*
- * Calculates static air pressure from pressure altitude.
+ * Calculates static air pressure from pressure altitude under ISA conditions.
  *
  * @param alt Pressure altitude in feet.
  * @param qnh Local QNH in Pa.
@@ -2222,15 +2222,14 @@ keas2mach(double keas, double press)
  * @return Air pressure in Pa.
  */
 double
-alt2press(double alt, double qnh)
+alt2press(double alt_ft, double qnh_Pa)
 {
-	return (qnh * pow(1 - (ISA_TLR_PER_1M * FEET2MET(alt)) /
-	    ISA_SL_TEMP_K, (EARTH_GRAVITY * DRY_AIR_MOL) /
-	    (R_univ * ISA_TLR_PER_1M)));
+	return (alt2press_baro(FEET2MET(alt_ft), qnh_Pa, ISA_SL_TEMP_K,
+	    EARTH_GRAVITY));
 }
 
 /*
- * Calculates pressure altitude from static air pressure.
+ * Calculates pressure altitude from static air pressure under ISA conditions.
  *
  * @param press Static air pressure in Pa.
  * @param qnh Local QNH in Pa.
@@ -2238,26 +2237,64 @@ alt2press(double alt, double qnh)
  * @return Pressure altitude in feet.
  */
 double
-press2alt(double press, double qnh)
+press2alt(double press_Pa, double qnh_Pa)
 {
-	return (MET2FEET((ISA_SL_TEMP_K * (1 - pow(press / qnh,
-	    (R_univ * ISA_TLR_PER_1M) / (EARTH_GRAVITY * DRY_AIR_MOL)))) /
-	    ISA_TLR_PER_1M));
+	return (MET2FEET(press2alt_baro(press_Pa, qnh_Pa, ISA_SL_TEMP_K,
+	    EARTH_GRAVITY)));
 }
 
-/*
- * Same as press2alt, but uses the NOAA pressure altitude algorithm
- * listed here: https://www.weather.gov/media/epz/wxcalc/pressureAltitude.pdf
- *
- * @param press Static air pressure in Pa.
- * @param qnh Local QNH in Pa.
- *
- * @return Pressure altitude in feet.
- */
 double
-press2alt_noaa(double press, double qnh)
+alt2press_baro(double alt_m, double p0_Pa, double T0_K, double g_mss)
 {
-	return (145366.45 * (1 - pow(press / qnh, 0.190284)));
+	ASSERT3F(p0_Pa, >, 0);
+	ASSERT3F(T0_K, >, 0);
+	ASSERT3F(g_mss, >, 0);
+	/*
+	 * Standard barometric formula:
+	 *                       g.M
+	 *           /    L.h \^ ----
+	 * p = p0 * ( 1 - ---  ) R0.L
+	 *           \     T0 /
+	 * Where:
+	 * p	current outside pressure [Pa]
+	 * p0	reference sea level pressure [Pa] (NOT QNH!)
+	 * L	temperature lapse rate [K/m]
+	 * h	height above mean sea level [m]
+	 * T0	reference sea level temperature [K]
+	 * g	gravitational acceleration [m/s^2]
+	 * M	molar mass of dry air [kg/mol]
+	 * R0	universal gas constant [J/(mol.K)]
+	 */
+	return (p0_Pa * pow(1 - ((ISA_TLR_PER_1M * alt_m) / T0_K),
+	    (g_mss * DRY_AIR_MOL) / (R_univ * ISA_TLR_PER_1M)));
+}
+
+double
+press2alt_baro(double p_Pa, double p0_Pa, double T0_K, double g_mss)
+{
+	ASSERT3F(p0_Pa, >, 0);
+	ASSERT3F(T0_K, >, 0);
+	ASSERT3F(g_mss, >, 0);
+	/*
+	 * This is the barometric formula, solved for 'h':
+	 *                          R0.L
+	 *           /      / p  \^ ---- \
+	 *     T0 * (  1 - ( ---- ) g.M   )
+	 *           \      \ p0 /       /
+	 * h = ----------------------------
+	 *                 L
+	 * Where:
+	 * h	height above mean sea level [m]
+	 * p	current outside pressure [Pa]
+	 * p0	reference sea level pressure [Pa] (NOT QNH!)
+	 * R0	universal gas constant [J/(mol.K)]
+	 * L	temperature lapse rate [K/m]
+	 * g	gravitational acceleration [m/s^2]
+	 * M	molar mass of dry air [kg/mol]
+	 * T0	reference sea level temperature [K]
+	 */
+	return ((T0_K * (1 - pow(p_Pa / p0_Pa, (R_univ * ISA_TLR_PER_1M) /
+	    (g_mss * DRY_AIR_MOL)))) / ISA_TLR_PER_1M);
 }
 
 /*
