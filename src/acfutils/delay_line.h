@@ -277,6 +277,16 @@ DEF_DELAY_LINE_PUSH_IMM(double, f64)
 	DELAY_LINE_PUSH_IMM_macro_requires_C11_or_greater
 #endif	/* __STDC_VERSION__ < 201112L */
 
+static inline uint64_t
+delay_line_get_time_since_change(const delay_line_t *line)
+{
+	uint64_t now;
+	ASSERT(line != NULL);
+	now = (line->time_func != NULL ?
+	    line->time_func(line->time_func_userinfo) : microclock());
+	return (now - line->changed_t);
+}
+
 #ifdef	__cplusplus
 }
 #endif
