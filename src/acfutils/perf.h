@@ -118,6 +118,10 @@ typedef struct {
 	int	spd;
 	double	Cd;
 } drag_coeff_t;
+typedef struct {
+	float	kias;	/* knots */
+	float	alt_ft;	/* feet */
+} flt_spd_lim_t;
 /*
  * Serializable in its entirety.
  */
@@ -134,8 +138,9 @@ typedef struct {
 	float		des_mach;	/* fraction */
 	float		to_flap;	/* ratio */
 	float		accel_hgt;	/* feet AGL */
-	float		spd_lim;	/* knots IAS */
-	float		spd_lim_alt;	/* feet AMSL */
+#define	FLT_PERF_NUM_SPD_LIMS	2
+	flt_spd_lim_t	clb_spd_lim[FLT_PERF_NUM_SPD_LIMS];
+	flt_spd_lim_t	des_spd_lim[FLT_PERF_NUM_SPD_LIMS];
 
 	float		thr_derate;
 	float		bank_ratio;
@@ -222,7 +227,7 @@ API_EXPORT double dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
     double fuel, vect2_t dir,
     double flap_ratio, double *alt, double *kcas, vect2_t wind,
     double alt_tgt, double kcas_tgt, double mach_lim, double dist_tgt,
-    accelclb_t type, double *burnp);
+    accelclb_t type, double *burnp, double *ttg_out);
 API_EXPORT double decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double tp_alt, double fuel,
     double alt, double kcas1, double kcas2, double dist_tgt,
@@ -230,12 +235,13 @@ API_EXPORT double decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
 API_EXPORT double perf_crz2burn(double isadev, double tp_alt, double qnh,
     double alt_ft, double spd, bool_t is_mach, double hdg, vect2_t wind1,
     vect2_t wind2, double fuel, double dist_nm, const acft_perf_t *acft,
-    const flt_perf_t *flt);
+    const flt_perf_t *flt, double *ttg_out);
 API_EXPORT double perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
-    double isadev, double qnh, double fuel, double hdgt, double dist_m,
+    double isadev, double qnh, double fuel, double hdgt, double dist_nm,
     double mach_lim,
-    double alt1, double kcas1, vect2_t wind1,
-    double alt2, double kcas2, vect2_t wind2);
+    double alt1_ft, double kcas1, vect2_t wind1,
+    double alt2_ft, double kcas2, vect2_t wind2,
+    double *ttg_out);
 
 API_EXPORT double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
 

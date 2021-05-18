@@ -277,6 +277,12 @@ DEF_DELAY_LINE_PUSH_IMM(double, f64)
 	DELAY_LINE_PUSH_IMM_macro_requires_C11_or_greater
 #endif	/* __STDC_VERSION__ < 201112L */
 
+/*
+ * CAUTION: do NOT use this for precise interval timing. Delay lines can be
+ * used as simple timed triggers, but they don't keep time accurately, or
+ * account for triggering-overshoot. If you try this, your clock will end
+ * up slipping and running too slow!
+ */
 static inline uint64_t
 delay_line_get_time_since_change(const delay_line_t *line)
 {
