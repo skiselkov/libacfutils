@@ -1511,8 +1511,9 @@ des_burn_step(double isadev, double alt_m, double vs_act_mps,
 	double ff_crz = table_lookup_common(acft->crz_tables, isadev, mass,
 	    tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
 	double vs_des_mps = table_lookup_common(acft->des_tables, isadev,
-	    mass, tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
+	    mass, tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, vs));
 	double burn = fx_lin(vs_act_mps, 0, ff_crz, vs_des_mps, ff_des) * d_t;
+	burn = clamp(burn, ff_des, ff_crz);
 	ASSERT3F(burn, >=, 0);
 	return (burn);
 }
@@ -1934,6 +1935,7 @@ perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
 	ASSERT3F(dist_nm, <, 1e6);
 	ASSERT(acft != NULL);
 	ASSERT(flt != NULL);
+	ASSERT3F(flt->zfw, >, 0);
 
 	fltdir = hdg2dir(hdg);
 
@@ -1964,6 +1966,7 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 	double burn = 0;
 
 	ASSERT(flt != NULL);
+	ASSERT3F(flt->zfw, >, 0);
 	ASSERT(acft != NULL);
 	ASSERT(!isnan(isadev));
 	ASSERT(!isnan(qnh));
