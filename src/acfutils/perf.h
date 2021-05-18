@@ -134,8 +134,11 @@ typedef struct {
 	float		des_mach;	/* fraction */
 	float		to_flap;	/* ratio */
 	float		accel_hgt;	/* feet AGL */
-	float		spd_lim;	/* knots IAS */
-	float		spd_lim_alt;	/* feet AMSL */
+#define	FLT_PERF_NUM_SPD_LIMS	2
+	float		clb_spd_lim[FLT_PERF_NUM_SPD_LIMS];	/* knots IAS */
+	float		clb_spd_lim_alt[FLT_PERF_NUM_SPD_LIMS];	/* feet AMSL */
+	float		des_spd_lim[FLT_PERF_NUM_SPD_LIMS];	/* knots IAS */
+	float		des_spd_lim_alt[FLT_PERF_NUM_SPD_LIMS];	/* feet AMSL */
 
 	float		thr_derate;
 	float		bank_ratio;
@@ -232,10 +235,10 @@ API_EXPORT double perf_crz2burn(double isadev, double tp_alt, double qnh,
     vect2_t wind2, double fuel, double dist_nm, const acft_perf_t *acft,
     const flt_perf_t *flt);
 API_EXPORT double perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
-    double isadev, double qnh, double fuel, double hdgt, double dist_m,
+    double isadev, double qnh, double fuel, double hdgt, double dist_nm,
     double mach_lim,
-    double alt1, double kcas1, vect2_t wind1,
-    double alt2, double kcas2, vect2_t wind2);
+    double alt1_ft, double kcas1, vect2_t wind1,
+    double alt2_ft, double kcas2, vect2_t wind2);
 
 API_EXPORT double perf_TO_spd(const flt_perf_t *flt, const acft_perf_t *acft);
 
