@@ -379,6 +379,12 @@ perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
 				fused_t = cell->fused_t - subcell->fused_t;
 				cell->ff = fused / fused_t;
 			}
+			ASSERT_MSG(cell->ff >= 0, "Malformed table with "
+			    "negative fuel flow: ISA=%.0f KIAS=%.0f Mach=%.2f "
+			    "ALT=%.0fft WT=%.0flbs", table->isa,
+			    MPS2KT(table->ias), table->mach,
+			    MET2FEET(table->alts[i_alt]),
+			    KG2LBS(table->wts[i_wt]));
 		}
 	}
 
@@ -612,6 +618,7 @@ perf_table_lookup_row(perf_table_t *table, perf_table_cell_t *row,
 		v = fx_lin(mass, table->wts[col1], v1, table->wts[col2], v2);
 	else
 		v = v1;
+	ASSERT(!isnan(v));
 
 	return (v);
 }
@@ -656,13 +663,14 @@ perf_table_lookup(perf_table_t *table, double mass, double alt,
 	    field_offset);
 	value = fx_lin(alt, table->alts[row1], row1_val, table->alts[row2],
 	    row2_val);
+	ASSERT(!isnan(value));
 
 	return (value);
 }
 
 static double
 table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
-    double spd, bool_t is_mach, double alt, size_t offset)
+    double spd_mps_or_mach, bool_t is_mach, double alt, size_t offset)
 {
 	perf_table_t *isa0_min = NULL, *isa0_max = NULL;
 	perf_table_t *isa1_min = NULL, *isa1_max = NULL;
@@ -670,18 +678,19 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 	double isa0_param, isa1_param, param;
 
 	ASSERT(ts != NULL);
-	ASSERT3U(offset, <, sizeof (perf_table_cell_t));
+	ASSERT3U(offset + sizeof (double), <=, sizeof (perf_table_cell_t));
 
-	perf_tables_find(ts, isadev, spd, is_mach, &isa0_min, &isa0_max,
-	    &isa1_min, &isa1_max);
+	perf_tables_find(ts, isadev, spd_mps_or_mach, is_mach,
+	    &isa0_min, &isa0_max, &isa1_min, &isa1_max);
 
 	if (isa0_min != isa0_max) {
 		double x0 = (is_mach ? isa0_min->mach : isa0_min->ias);
 		double x1 = (is_mach ? isa0_max->mach : isa0_max->ias);
 		isa0_min_param = perf_table_lookup(isa0_min, mass, alt, offset);
 		isa0_max_param = perf_table_lookup(isa0_max, mass, alt, offset);
-		isa0_param = fx_lin(spd, x0, isa0_min_param,
+		isa0_param = fx_lin(spd_mps_or_mach, x0, isa0_min_param,
 		    x1, isa0_max_param);
+		ASSERT(!isnan(isa0_param));
 	} else {
 		isa0_param = perf_table_lookup(isa0_min, mass, alt, offset);
 	}
@@ -690,8 +699,9 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 		double x1 = (is_mach ? isa1_max->mach : isa1_max->ias);
 		isa1_min_param = perf_table_lookup(isa1_min, mass, alt, offset);
 		isa1_max_param = perf_table_lookup(isa1_max, mass, alt, offset);
-		isa1_param = fx_lin(spd, x0, isa1_min_param,
+		isa1_param = fx_lin(spd_mps_or_mach, x0, isa1_min_param,
 		    x1, isa1_max_param);
+		ASSERT(!isnan(isa1_param));
 	} else {
 		isa1_param = perf_table_lookup(isa1_min, mass, alt, offset);
 	}
@@ -1356,9 +1366,10 @@ clb_table_step(const acft_perf_t *acft, double isadev, double qnh, double alt,
 }
 
 static bool_t
-crz_step(double isadev, double tp_alt, double qnh, double alt_ft, double spd,
-    bool_t is_mach, double wind_mps, double mass, const acft_perf_t *acft,
-    const flt_perf_t *flt, double d_t, double *distp, double *burnp)
+crz_step(double isadev, double tp_alt, double qnh, double alt_ft,
+    double spd_mps_or_mach, bool_t is_mach, double wind_mps, double mass,
+    const acft_perf_t *acft, const flt_perf_t *flt, double d_t,
+    double *distp, double *burnp)
 {
 	double burn, kcas, ktas_now, tas_now;
 	double fl = alt2fl(alt_ft, qnh);
@@ -1369,20 +1380,21 @@ crz_step(double isadev, double tp_alt, double qnh, double alt_ft, double spd,
 	ASSERT(flt != NULL);
 	ASSERT(distp != NULL);
 	ASSERT(burnp != NULL);
+	ASSERT3F(mass, >, 0);
 	burn = *burnp;
 
 	if (is_mach) {
-		ktas_now = mach2ktas(spd, oat);
+		ktas_now = mach2ktas(spd_mps_or_mach, oat);
 		kcas = ktas2kcas(ktas_now, Ps, oat);
 	} else {
-		kcas = spd;
+		kcas = MPS2KT(spd_mps_or_mach);
 		ktas_now = kcas2ktas(kcas, Ps, oat);
 	}
 	tas_now = KT2MPS(ktas_now);
 
 	if (acft->crz_tables != NULL) {
 		double ff = table_lookup_common(acft->crz_tables, isadev, mass,
-		    spd, is_mach, FEET2MET(alt_ft),
+		    spd_mps_or_mach, is_mach, FEET2MET(alt_ft),
 		    offsetof(perf_table_cell_t, ff));
 		burn += ff * d_t;
 #ifdef	STEP_DEBUG
@@ -1503,15 +1515,15 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 
 static double
 des_burn_step(double isadev, double alt_m, double vs_act_mps,
-    double tgt_spd, bool_t is_mach, double mass,
+    double spd_mps_or_mach, bool_t is_mach, double mass,
     const acft_perf_t *acft, double d_t)
 {
 	double ff_des = table_lookup_common(acft->des_tables, isadev, mass,
-	    tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
+	    spd_mps_or_mach, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
 	double ff_crz = table_lookup_common(acft->crz_tables, isadev, mass,
-	    tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
-	double vs_des_mps = table_lookup_common(acft->des_tables, isadev,
-	    mass, tgt_spd, is_mach, alt_m, offsetof(perf_table_cell_t, vs));
+	    spd_mps_or_mach, is_mach, alt_m, offsetof(perf_table_cell_t, ff));
+	double vs_des_mps = table_lookup_common(acft->des_tables, isadev, mass,
+	    spd_mps_or_mach, is_mach, alt_m, offsetof(perf_table_cell_t, vs));
 	double burn = fx_lin(vs_act_mps, 0, ff_crz, vs_des_mps, ff_des) * d_t;
 	burn = clamp(burn, ff_des, ff_crz);
 	ASSERT3F(burn, >=, 0);
@@ -1757,8 +1769,8 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 	int iter_counter = 0;
 	double vs = 0;
 
-	ASSERT(*alt <= alt_tgt);
-	ASSERT(*kcas <= kcas_tgt);
+	ASSERT3F(*alt, <=, alt_tgt);
+	ASSERT3F(*kcas, <=, kcas_tgt);
 	ASSERT(!isnan(accel_alt) || type != ACCEL_TAKEOFF);
 
 	while (dist < dist_tgt && alt_tgt - (*alt) > ALT_THRESH) {
@@ -1816,6 +1828,8 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 			clb_t = step - accel_t;
 			if (is_mach)
 				*kcas = kcas_lim_mach;
+			else
+				*kcas = kcas_lim;
 #ifdef	STEP_DEBUG
 			table = B_TRUE;
 #endif
@@ -1938,6 +1952,8 @@ perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
 	ASSERT3F(flt->zfw, >, 0);
 
 	fltdir = hdg2dir(hdg);
+	if (!is_mach)
+		spd = KT2MPS(spd);
 
 	for (double dist_done = 0; dist_done < dist_nm;) {
 		double rat = dist_done / dist_nm;
@@ -1998,6 +2014,7 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 		double kcas_lim_mach = mach2kcas(mach_lim, alt_ft, qnh, oat);
 		bool_t is_mach;
 		double tgt_spd, tas_mps, gs_mps, vs_mps, burn_step;
+		double spd_mps_or_mach;
 
 		for (int i = 0; i < FLT_PERF_NUM_SPD_LIMS; i++) {
 			if (alt_ft <= flt->des_spd_lim_alt[i])
@@ -2015,9 +2032,10 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 		gs_mps = tas_mps + wind_mps;
 		vs_mps = (FEET2MET(alt2_ft) - FEET2MET(alt1_ft)) /
 		    (NM2MET(dist_nm) / gs_mps);
+		spd_mps_or_mach = (is_mach ? tgt_spd : KT2MPS(tgt_spd));
 
 		burn_step = des_burn_step(isadev, FEET2MET(alt_ft), vs_mps,
-		    tgt_spd, is_mach, mass, acft, SECS_PER_STEP);
+		    spd_mps_or_mach, is_mach, mass, acft, SECS_PER_STEP);
 		ASSERT3F(burn_step, >=, 0);
 		burn += burn_step;
 		dist_done += gs_mps * SECS_PER_STEP;
