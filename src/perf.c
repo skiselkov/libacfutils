@@ -120,7 +120,7 @@ perf_isas_compar(const void *a, const void *b)
 	if (ia->isa < ib->isa)
 		return (-1);
 	if (ia->isa > ib->isa)
-		return (-1);
+		return (1);
 
 	return (0);
 }
@@ -714,8 +714,9 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 	}
 
 	if (isa0_param != isa1_param) {
-		param = fx_lin(isadev, isa0_min->isa, isa0_param,
-		    isa1_min->isa, isa1_param);
+		double rat = clamp(iter_fract(isadev, isa0_min->isa,
+		    isa1_min->isa, B_FALSE), -1, 2);
+		param = wavg2(isa0_param, isa1_param, rat);
 	} else {
 		param = isa0_param;
 	}
