@@ -109,7 +109,7 @@ typedef struct {
 } perf_table_isa_t;
 
 static bool_t perf_table_parse(FILE *fp, perf_table_set_t *set,
-    unsigned num_eng, unsigned *line_num);
+    unsigned num_eng, double ff_corr, unsigned *line_num);
 static void perf_table_free(perf_table_t *table);
 
 static int
@@ -272,7 +272,7 @@ perf_table_cells_populate(char ** comps, size_t n_comps, perf_table_t *table,
 
 static bool_t
 perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
-    unsigned *line_num)
+    double ff_corr, unsigned *line_num)
 {
 	perf_table_isa_t *isa, srch_isa;
 	perf_table_t *table = safe_calloc(1, sizeof (*table));
@@ -332,11 +332,12 @@ perf_table_parse(FILE *fp, perf_table_set_t *ts, unsigned num_eng,
 			    offsetof(perf_table_cell_t, fused_t), 60);
 		} else if (strcmp(comps[0], "FULB") == 0) {
 			perf_table_cells_populate(comps, n_comps, table,
-			    offsetof(perf_table_cell_t, fused), LBS2KG(1));
+			    offsetof(perf_table_cell_t, fused),
+			    LBS2KG(1) * ff_corr);
 		} else if (strcmp(comps[0], "FFLB/ENG") == 0) {
 			perf_table_cells_populate(comps, n_comps, table,
 			    offsetof(perf_table_cell_t, ff),
-			    (LBS2KG(1) / SECS_PER_HR) * num_eng);
+			    (LBS2KG(1) / SECS_PER_HR) * num_eng * ff_corr);
 		} else if (strcmp(comps[0], "ENDTABLE") == 0) {
 			free_strlist(comps, n_comps);
 			break;
@@ -766,7 +767,7 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 		if ((table_set) == NULL) \
 			(table_set) = perf_table_set_alloc(); \
 		if (!perf_table_parse(fp, (table_set), acft->num_eng, \
-		    &line_num)) { \
+		    table_ff_corr, &line_num)) { \
 			logMsg("Error parsing acft perf file %s:%d: " \
 			    "malformed or missing lines.", filename, \
 			    line_num); \
@@ -785,6 +786,7 @@ acft_perf_parse(const char *filename)
 	ssize_t		line_len = 0;
 	char		*comps[MAX_LINE_COMPS];
 	bool_t		version_check_completed = B_FALSE;
+	double		table_ff_corr = 1;
 
 	if (fp == NULL)
 		goto errout;
@@ -890,6 +892,7 @@ acft_perf_parse(const char *filename)
 		else PARSE_SCALAR("WINGAREA", acft->wing_area)
 		else PARSE_SCALAR("CLMAX", acft->cl_max_aoa)
 		else PARSE_SCALAR("CLFLAPMAX", acft->cl_flap_max_aoa)
+		else PARSE_SCALAR("TABLEFFCORR", table_ff_corr)
 		else PARSE_CURVE("THRDENS", acft->thr_dens_curve)
 		else PARSE_CURVE("THRMACH", acft->thr_mach_curve)
 		else PARSE_CURVE("SFCTHRO", acft->sfc_thro_curve)
@@ -2046,10 +2049,12 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 	ASSERT3F(dist_nm, >=, 0);
 	ASSERT3F(mach_lim, >=, 0);
 	ASSERT(is_valid_alt(alt1_ft));
-	ASSERT3F(kcas1, >=, 0);
+	ASSERT3F(kcas1, >, 0);
+	ASSERT3F(kcas1, <, 600);
 	ASSERT(!IS_NULL_VECT(wind1));
 	ASSERT(is_valid_alt(alt2_ft));
-	ASSERT3F(kcas2, >=, 0);
+	ASSERT3F(kcas2, >, 0);
+	ASSERT3F(kcas2, <, 600);
 	ASSERT(!IS_NULL_VECT(wind2));
 	ASSERT3F(alt1_ft, >=, alt2_ft);
 	/* ttg_out can be NULL */
