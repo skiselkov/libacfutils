@@ -308,33 +308,14 @@ API_EXPORT ssize_t filesz(const char *filename);
 
 /*
  * strlcpy is a BSD function not available on Windows, so we roll a simple
- * version of it ourselves. Also, on BSD it's SLOOOOW. Inline for max perf.
+ * version of it ourselves. Can't inline this function, because GCC's fucked
+ * up array bounds checker will squawk endlessly when this is used to copy
+ * strings to a fixed-size array.
  */
 #if	IBM || LIN
 #define	strlcpy				lacf_strlcpy
 #endif
-static inline void
-lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap)
-{
-	size_t l;
-
-	ASSERT(cap != 0);
-	/*
-	 * We MUSTN'T use strlen here, because src may be SIGNIFICANTLY
-	 * larger than dest and we don't want to measure the ENTIRE body
-	 * of src. We only care for length UP TO the destination capacity.
-	 */
-	for (l = 0; l + 1 < cap && src[l] != '\0'; l++)
-		;
-	/*
-	 * Due to a bug in GCC, we can't use strncpy, as it sometimes throws
-	 * "call to __builtin___strncpy_chk will always overflow destination
-	 * buffer", even when it's absolutely NOT the case.
-	 */
-	memcpy(dest, src, MIN(cap - 1, l + 1));
-	/* Insure the string is ALWAYS terminated */
-	dest[cap - 1] = '\0';
-}
+void lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap);
 
 static inline const char *
 lacf_basename(const char *str)
