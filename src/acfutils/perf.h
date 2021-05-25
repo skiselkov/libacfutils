@@ -205,6 +205,9 @@ typedef enum {
 	ACCEL_TAKEOFF	/* Accel to target speed first without needing lift */
 } accelclb_t;
 
+API_EXPORT void lacf_set_perf_step_debug(bool_t flag);
+API_EXPORT bool_t lacf_get_perf_step_debug(void);
+
 API_EXPORT acft_perf_t *acft_perf_parse(const char *filename);
 API_EXPORT void acft_perf_destroy(acft_perf_t *perf);
 

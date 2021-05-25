@@ -41,8 +41,6 @@
 
 #define	SECS_PER_HR	3600		/* Number of seconds in an hour */
 
-/* #define	STEP_DEBUG */
-
 #define	ACFT_PERF_MIN_VERSION	1
 #define	ACFT_PERF_MAX_VERSION	1
 #define	MAX_LINE_COMPS		2
@@ -108,9 +106,23 @@ typedef struct {
 	avl_node_t	ts_node;
 } perf_table_isa_t;
 
+static bool_t step_debug = B_FALSE;
+
 static bool_t perf_table_parse(FILE *fp, perf_table_set_t *set,
     unsigned num_eng, double ff_corr, unsigned *line_num);
 static void perf_table_free(perf_table_t *table);
+
+void
+lacf_set_perf_step_debug(bool_t flag)
+{
+	step_debug = flag;
+}
+
+bool_t
+lacf_get_perf_step_debug(void)
+{
+	return (step_debug);
+}
 
 static int
 perf_isas_compar(const void *a, const void *b)
@@ -1411,11 +1423,14 @@ crz_step(double isadev, double tp_alt, double qnh, double alt_ft,
 		    spd_mps_or_mach, is_mach, FEET2MET(alt_ft),
 		    offsetof(perf_table_cell_t, ff));
 		burn_step = ff * d_t;
-#ifdef	STEP_DEBUG
-		printf("CRZ:%5.0f ft m:%5.0f lb ff:%4.0f lb/hr/eng\n",
-		    alt_ft, KG2LBS(mass),
-		    KG2LBS(ff) * SECS_PER_HR / get_num_eng(flt, acft));
-#endif	/* STEP_DEBUG */
+		if (step_debug) {
+			double spd_kias_or_mach = (is_mach ? spd_mps_or_mach :
+			    MPS2KT(spd_mps_or_mach));
+			printf("CRZ:%5.0f ft m:%5.0f spd:%.*f lb ff:%4.0f "
+			    "lb/hr/eng\n", alt_ft, KG2LBS(mass),
+			    is_mach ? 3 : 0, spd_kias_or_mach,
+			    KG2LBS(ff) * SECS_PER_HR / get_num_eng(flt, acft));
+		}
 	} else {
 		double aoa, drag, thr, sfc, Pd;
 
@@ -1552,12 +1567,13 @@ des_burn_step(double isadev, double alt_m, double vs_act_mps,
 	    spd_mps_or_mach, is_mach, alt_m, offsetof(perf_table_cell_t, vs));
 	double rat = iter_fract(vs_act_mps, 0, vs_des_mps, B_TRUE);
 	double burn = wavg(ff_crz, ff_des, rat) * d_t;
-#ifdef	STEP_DEBUG
-	printf("DES:%-5.0f ft m:%-5.0f lb vs:%-5.0f fpm "
-	    "ff_crz:%-4.0f lbs/hr ff_des:%-4.0f rat:%.3f\n", MET2FEET(alt_m),
-	    KG2LBS(mass), MPS2FPM(vs_des_mps),
-	    KG2LBS(ff_crz) * SECS_PER_HR, KG2LBS(ff_des) * SECS_PER_HR, rat);
-#endif	/* STEP_DEBUG */
+	if (step_debug) {
+		printf("DES:%-5.0f ft m:%-5.0f lb vs:%-5.0f fpm "
+		    "ff_crz:%-4.0f lbs/hr ff_des:%-4.0f rat:%.3f\n",
+		    MET2FEET(alt_m), KG2LBS(mass), MPS2FPM(vs_des_mps),
+		    KG2LBS(ff_crz) * SECS_PER_HR, KG2LBS(ff_des) * SECS_PER_HR,
+		    rat);
+	}
 	ASSERT3F(burn, >=, 0);
 	return (burn);
 }
@@ -1679,6 +1695,10 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		    kcas_lim_mach, oat, kcas_lim;
 		double Ps;
 		vect2_t wind;
+		/* debugging support */
+		double old_alt = alt;
+		double old_kcas = kcas;
+		bool_t table = B_FALSE;
 
 		ASSERT3S(iter_counter, <, MAX_ITER_STEPS);
 
@@ -1713,11 +1733,6 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		 */
 		if (type == ACCEL_TAKEOFF && alt > accel_alt + 1000)
 			type = ACCEL_AND_CLB;
-#ifdef	STEP_DEBUG
-		double old_alt = alt;
-		double old_kcas = kcas;
-		bool_t table = B_FALSE;
-#endif	/* STEP_DEBUG */
 
 		accel_t = accel_time_split(type, kcas, flt->clb_ias_init,
 		    alt, accel_alt, step, flap_ratio, flt->to_flap,
@@ -1748,9 +1763,8 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 			clb_t = step - accel_t;
 			if (is_mach)
 				kcas = kcas_lim_mach;
-#ifdef	STEP_DEBUG
-			table = B_TRUE;
-#endif
+			if (step_debug)
+				table = B_TRUE;
 		} else {
 			if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt,
 			    qnh, type == ACCEL_TAKEOFF && alt == alt1_ft, alt,
@@ -1770,19 +1784,19 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 			}
 		}
 
-#ifdef	STEP_DEBUG
-		double total_t;
+		if (step_debug) {
+			double total_t;
 
-		total_t = accel_t + clb_t;
-		oat = isadev2sat(alt2fl(alt, qnh), isadev);
+			total_t = accel_t + clb_t;
+			oat = isadev2sat(alt2fl(alt, qnh), isadev);
 
-		printf("V:%3.0f KT  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
-		    "s:%6.0lf  M:%5.03lf  tab:%d\n", kcas,
-		    (kcas - old_kcas) / total_t, alt,
-		    ((alt - old_alt) / total_t) * 60, NM2MET(dist),
-		    ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat), oat),
-		    table);
-#endif	/* STEP_DEBUG */
+			printf("V:%3.0f KT  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
+			    "s:%6.0lf  M:%5.03lf  tab:%d\n", kcas,
+			    (kcas - old_kcas) / total_t, alt,
+			    ((alt - old_alt) / total_t) * 60, NM2MET(dist),
+			    ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat),
+			    oat), table);
+		}
 
 		iter_counter++;
 	}
@@ -1824,6 +1838,10 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		double t_rmng = MIN(rmng / tas_mps, step);
 		double accel_t, clb_t, oat, Ps, ktas_lim_mach, kcas_lim_mach,
 		    kcas_lim;
+		/* step debug support */
+		double old_alt = *alt;
+		double old_kcas = *kcas;
+		bool_t table = B_FALSE;
 
 		ASSERT3S(iter_counter, <, MAX_ITER_STEPS);
 
@@ -1843,12 +1861,6 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 			kcas_lim = kcas_lim_mach;
 		if (alt_tgt - (*alt) < ALT_THRESH && kcas_lim < kcas_tgt)
 			kcas_tgt = kcas_lim;
-
-#ifdef	STEP_DEBUG
-		double old_alt = *alt;
-		double old_kcas = *kcas;
-		bool_t table = B_FALSE;
-#endif	/* STEP_DEBUG */
 		/*
 		 * Swap to accel-and-climb tabulated profiles when we're
 		 * 1000ft above the acceleration altitude.
@@ -1881,9 +1893,8 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 				*kcas = kcas_lim_mach;
 			else
 				*kcas = kcas_lim;
-#ifdef	STEP_DEBUG
-			table = B_TRUE;
-#endif
+			if (step_debug)
+				table = B_TRUE;
 		} else {
 			if (accel_t > 0 && !spd_chg_step(B_TRUE, isadev, tp_alt,
 			    qnh, type == ACCEL_TAKEOFF && (*alt) == alt1_ft,
@@ -1902,19 +1913,19 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 			}
 		}
 
-#ifdef	STEP_DEBUG
-		double total_t;
+		if (step_debug) {
+			double total_t;
 
-		total_t = accel_t + clb_t;
-		oat = isadev2sat(alt2fl(*alt, qnh), isadev);
+			total_t = accel_t + clb_t;
+			oat = isadev2sat(alt2fl(*alt, qnh), isadev);
 
-		printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
-		    "s:%6.0lf  M:%5.03lf  tab:%d\n", *kcas,
-		    ((*kcas) - old_kcas) / total_t, *alt,
-		    (((*alt) - old_alt) / total_t) * 60,
-		    NM2MET(dist), ktas2mach(kcas2ktas(*kcas, alt2press(*alt,
-		    qnh), oat), oat), table);
-#endif	/* STEP_DEBUG */
+			printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
+			    "s:%6.0lf  M:%5.03lf  tab:%d\n", *kcas,
+			    ((*kcas) - old_kcas) / total_t, *alt,
+			    (((*alt) - old_alt) / total_t) * 60,
+			    NM2MET(dist), ktas2mach(kcas2ktas(*kcas,
+			    alt2press(*alt, qnh), oat), oat), table);
+		}
 		iter_counter++;
 		if (ttg_out != NULL)
 			(*ttg_out) += step;
@@ -1934,26 +1945,25 @@ decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
 	double dist = 0, burn = 0;
 	double step = SECS_PER_STEP_DECEL;
 	double kcas = kcas1;
-#ifdef	STEP_DEBUG
 	double oat = isadev2sat(alt2fl(alt, qnh), isadev);
-#endif
 
 	while (dist < dist_tgt && kcas + KCAS_THRESH > kcas2) {
 		double t = step;
-#ifdef	STEP_DEBUG
 		double old_kcas = kcas;
 		double mach;
-#endif	/* STEP_DEBUG */
+
 		if (!spd_chg_step(B_FALSE, isadev, tp_alt, qnh, B_FALSE,
 		    alt, &kcas, kcas2, 0, flt->zfw + fuel - burn,
 		    0, acft, flt, &dist, &t, &burn))
 			break;
-#ifdef	STEP_DEBUG
-		mach = ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh), oat),
-		    oat);
-		printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  s:%6.0lf  M:%5.03lf\n",
-		    kcas, (kcas - old_kcas) / t, alt, NM2MET(dist), mach);
-#endif	/* STEP_DEBUG */
+
+		if (step_debug) {
+			mach = ktas2mach(kcas2ktas(kcas, alt2press(alt, qnh),
+			    oat), oat);
+			printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  s:%6.0lf  "
+			    "M:%5.03lf\n", kcas, (kcas - old_kcas) / t, alt,
+			    NM2MET(dist), mach);
+		}
 	}
 
 	if (kcas_out != NULL)
