@@ -52,7 +52,7 @@
  * compromise between performance and accuracy (~1% error vs running
  * 1-second steps, but 5x faster).
  */
-#define	SECS_PER_STEP		5
+#define	SECS_PER_STEP		10
 /*
  * Higher accuracy in the departure segment.
  */
@@ -1554,9 +1554,9 @@ des_burn_step(double isadev, double alt_m, double vs_act_mps,
 	double burn = wavg(ff_crz, ff_des, rat) * d_t;
 #ifdef	STEP_DEBUG
 	printf("DES:%-5.0f ft m:%-5.0f lb vs:%-5.0f fpm "
-	    "ff_crz:%-4.0f lbs/hr ff_des:%-4.0f\n", MET2FEET(alt_m),
+	    "ff_crz:%-4.0f lbs/hr ff_des:%-4.0f rat:%.3f\n", MET2FEET(alt_m),
 	    KG2LBS(mass), MPS2FPM(vs_des_mps),
-	    KG2LBS(ff_crz) * SECS_PER_HR, KG2LBS(ff_des) * SECS_PER_HR);
+	    KG2LBS(ff_crz) * SECS_PER_HR, KG2LBS(ff_des) * SECS_PER_HR, rat);
 #endif	/* STEP_DEBUG */
 	ASSERT3F(burn, >=, 0);
 	return (burn);
