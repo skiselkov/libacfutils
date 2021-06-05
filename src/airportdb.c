@@ -473,6 +473,8 @@ airport_auto_refpt(airport_t *arpt)
 	ASSERT(fabs(p1.lon - p2.lon) < 90);
 	arpt->refpt.lat = (p1.lat + p2.lat) / 2;
 	arpt->refpt.lon = (p1.lon + p2.lon) / 2;
+	arpt->refpt_m.lat = arpt->refpt.lat;
+	arpt->refpt_m.lon = arpt->refpt.lon;
 	ASSERT(is_valid_lat(arpt->refpt.lat) && is_valid_lon(arpt->refpt.lon));
 }
 
@@ -1033,6 +1035,8 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line, bool_t hard_surf_only)
 	} else if (isnan(arpt->refpt.lat) || isnan(arpt->refpt.lon)) {
 		arpt->refpt.lat = NAN;
 		arpt->refpt.lon = NAN;
+		arpt->refpt_m.lat = NAN;
+		arpt->refpt_m.lon = NAN;
 		airport_auto_refpt(arpt);
 	}
 out:
@@ -1228,17 +1232,20 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 					arpt->TL_m = FEET2MET(TL);
 				}
 			} else if (strcmp(comps[1], "datum_lat") == 0) {
-				double newlat = atof(comps[2]);
-				if (is_valid_lat(newlat)) {
-					arpt->refpt.lat = newlat;
+				double lat = atof(comps[2]);
+				if (is_valid_lat(lat)) {
+					arpt->refpt.lat = lat;
+					arpt->refpt_m.lat = lat;
 				} else {
 					free_airport(arpt);
 					arpt = NULL;
 				}
 			} else if (strcmp(comps[1], "datum_lon") == 0) {
 				double lon = atof(comps[2]);
-				if (is_valid_lon(lon))
+				if (is_valid_lon(lon)) {
 					arpt->refpt.lon = lon;
+					arpt->refpt_m.lon = lon;
+				}
 			} else if (strcmp(comps[1], "region_code") == 0 &&
 			    strcmp(comps[1], "-") != 0) {
 				lacf_strlcpy(arpt->cc, comps[2],
