@@ -1497,7 +1497,7 @@ gc_distance(geo_pos2_t start, geo_pos2_t end)
 	vect3_t	end_v = geo2ecef_mtr(GEO2_TO_GEO3(end, 0), &wgs84);
 	vect3_t	s2e = vect3_sub(end_v, start_v);
 	double	s2e_abs = vect3_abs(s2e);
-	double	alpha = asin(s2e_abs / 2 / EARTH_MSL);
+	double	alpha = asin(MIN(s2e_abs / 2 / EARTH_MSL, 1.0));
 	return	(2 * alpha * EARTH_MSL);
 }
 
