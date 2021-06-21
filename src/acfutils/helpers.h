@@ -224,15 +224,15 @@ API_EXPORT int airac_time2cycle(time_t t);
 UNUSED_ATTR static ssize_t
 parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)
 {
-#ifdef	ACFUTILS_BUILD
+#if	defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER)
 	return (parser_get_next_line_impl(fp, linep, linecap, linenum,
 	    B_FALSE));
-#else	/* !defined(ACFUTILS_BUILD) */
+#else	/* !defined(ACFUTILS_BUILD) && !defined(ACFUTILS_GZIP_PARSER) */
 	return (parser_get_next_line_impl(fp, linep, linecap, linenum));
-#endif	/* !defined(ACFUTILS_BUILD) */
+#endif	/* !defined(ACFUTILS_BUILD) && !defined(ACFUTILS_GZIP_PARSER) */
 }
 
-#ifdef	ACFUTILS_BUILD
+#if	defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER)
 /*
  * Same as parser_get_next_line, but for gzip-compressed files.
  */
@@ -243,7 +243,7 @@ parser_get_next_gzline(void *gz_fp, char **linep, size_t *linecap,
 	return (parser_get_next_line_impl(gz_fp, linep, linecap, linenum,
 	    B_TRUE));
 }
-#endif	/* defined(ACFUTILS_BUILD) */
+#endif	/* defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER) */
 
 UNUSED_ATTR static char *
 parser_get_next_quoted_str(FILE *fp)
@@ -339,7 +339,7 @@ lacf_basename(const char *str)
 UNUSED_ATTR static ssize_t
 lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
 {
-#ifdef	ACFUTILS_BUILD
+#if	defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER)
 	return (lacf_getline_impl(line_p, cap_p, fp, B_FALSE));
 #else
 	return (lacf_getline_impl(line_p, cap_p, fp));

@@ -62,21 +62,21 @@ strip_space(char *line)
 	p[1] = 0;
 }
 
-#ifdef	ACFUTILS_BUILD
+#if	defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER)
 UNUSED_ATTR static ssize_t
 parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
     unsigned *linenum, bool_t compressed)
-#else	/* !defined(ACFUTILS_BUILD) */
+#else	/* !defined(ACFUTILS_BUILD) && defined(ACFUTILS_GZIP_PARSER) */
 UNUSED_ATTR static ssize_t
 parser_get_next_line_impl(void *fp, char **linep, size_t *linecap,
     unsigned *linenum)
-#endif	/* !defined(ACFUTILS_BUILD) */
+#endif	/* !defined(ACFUTILS_BUILD) && defined(ACFUTILS_GZIP_PARSER) */
 {
 	ASSERT(fp != NULL);
 	ASSERT(linenum != NULL);
 
 	for (;;) {
-#ifdef	ACFUTILS_BUILD
+#if	defined(ACFUTILS_BUILD) || defined(ACFUTILS_GZIP_PARSER)
 		ssize_t len = lacf_getline_impl(linep, linecap, fp, compressed);
 #else
 		ssize_t len = lacf_getline_impl(linep, linecap, fp);
