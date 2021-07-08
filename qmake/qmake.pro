@@ -266,6 +266,7 @@ SOURCES += \
 # Optional lib components when building a non-minimal library
 contains(minimal, 1) {
 	HEADERS += \
+	    ../src/acfutils/apps.h \
 	    ../src/acfutils/chartdb.h \
 	    ../src/acfutils/cursor.h \
 	    ../src/acfutils/glctx.h \
@@ -282,6 +283,7 @@ contains(minimal, 1) {
 	    ../src/acfutils/wav.h
 
 	SOURCES += \
+	    ../src/apps.c \
 	    ../src/chartdb.c \
 	    ../src/chart_prov_autorouter.c \
 	    ../src/chart_prov_common.c \
