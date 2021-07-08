@@ -69,9 +69,28 @@ nanoclock(void)
  */
 time_t lacf_timegm(const struct tm *tm);
 
+/*
+ * Returns time in the system's real time clock as the number of microseconds
+ * since UTC 1970-01-01 (unixtime). In essence, this is a microsecond-
+ * accurate time_t.
+ */
+static inline uint64_t
+lacf_microtime(void)
+{
 #if	IBM
-#define	timegm lacf_timegm
-#endif
+	/*
+	 * On windows, we emulate this by simply adding the millisecond
+	 * portion onto the whole Unixtime seconds provided by time().
+	 */
+	uint64_t time_micro = ((uint64_t)time(NULL)) * 1000000llu;
+	SYSTEMTIME st;
+	GetSystemTime(&st);
+	return (time_micro + (uint64_t)st.wMilliseconds * 1000llu);
+#else	/* !IBM */
+	/* On Mac & Linux, microclock already does this */
+	return (microclock());
+#endif	/* !IBM */
+}
 
 #ifdef	__cplusplus
 }
