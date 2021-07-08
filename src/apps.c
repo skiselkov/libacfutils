@@ -16,11 +16,26 @@
  * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
+#if	IBM
+#include <windows.h>
+#endif
 #include <errno.h>
 #include <string.h>
 
 #include "acfutils/apps.h"
 #include "acfutils/helpers.h"
+
+#if	IBM
+
+bool_t
+lacf_open_URL(const char *url)
+{
+	ASSERT(url != NULL);
+	ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL);
+	return (B_TRUE);
+}
+
+#elif	APL || LIN
 
 bool_t
 lacf_open_URL(const char *url)
@@ -28,11 +43,12 @@ lacf_open_URL(const char *url)
 	char *cmd;
 	bool_t result = B_TRUE;
 
-#if	IBM || APL
+	ASSERT(url != NULL);
+#if	APL
 	cmd = sprintf_alloc("open \"%s\"", url);
 #else	/* LIN */
 	cmd = sprintf_alloc("xdg-open \"%s\"", url);
-#endif	/* LIN */
+#endif
 	if (system(cmd) < 0) {
 		logMsg("Can't open URL %s: cannot run open command: %s", url,
 		    strerror(errno));
@@ -42,3 +58,5 @@ lacf_open_URL(const char *url)
 
 	return (result);
 }
+
+#endif	/* APL || LIN */
