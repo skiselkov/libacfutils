@@ -69,7 +69,7 @@ lacf_timegm(const struct tm *t)
 	int year = t->tm_year + 1900;
 	int month = t->tm_mon;
 	time_t seconds_in_day, result;
-	int day, day_of_year, days_since_epoch;
+	int day_of_year, days_since_epoch;
 
 	if (month > 11) {
 		year += month / 12;
@@ -80,8 +80,12 @@ lacf_timegm(const struct tm *t)
 		month += 12 * years_diff;
 	}
 	month++;
-	day = t->tm_mday;
-	day_of_year = days_from_1jan(year, month, day);
+	if (t->tm_mday != 0) {
+		int day = t->tm_mday;
+		day_of_year = days_from_1jan(year, month, day);
+	} else {
+		day_of_year = t->tm_yday;
+	}
 	days_since_epoch = days_from_1970(year) + day_of_year;
 
 	seconds_in_day = 3600 * 24;
