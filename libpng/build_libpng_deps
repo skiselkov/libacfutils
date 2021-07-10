@@ -37,9 +37,14 @@ case `uname` in
 		    "$LIBPNG" "libpng" "lib/libpng16.a"
 		;;
 	Darwin)
+        # This feels stupid, but libpng checks what architecture the *host* platform is running,
+        # not what the target architecture is when deciding which optimisations to pick. And even
+        # if we were building for arm64, the neon code doesn't compile
+        #
+        # --disable-arm-neon
 		CFLAGS="$CFLAGS_COMMON\\ -mmacosx-version-min=10.6" \
 		    LDFLAGS="$LDFLAGS_COMMON\\ -mmacosx-version-min=10.6" \
-		    build_dep "mac-64" "--enable-static --disable-shared" \
+		    ARCH=x86_64 build_dep "mac-64" "--enable-static --disable-shared --disable-hardware-optimizations --disable-arm-neon" \
 		    "$LIBPNG" "libpng" "lib/libpng16.a"
 		;;
 	*)

@@ -21,6 +21,8 @@ CONFIG += staticlib
 CONFIG += warn_on plugin release
 CONFIG -= thread exceptions qt rtti debug
 
+QMAKE_APPLE_DEVICE_ARCHS = x86_64
+
 VERSION = 1.0.0
 
 INCLUDEPATH += ../C
