@@ -23,11 +23,11 @@
 
 export minimal=0
 
-while getopts "cdm" opt; do
+while getopts "cdmn" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
-    n) export no_tesseract=1 ;;
+	n) export no_tesseract=1 ;;
 	m)
 		export minimal=1
 		touch .minimal-deps
