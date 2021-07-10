@@ -96,7 +96,7 @@ done
 
 if ! [ -f .minimal-deps ]; then
 	PACKAGES="$PACKAGES geographiclib"
-	if [[ "$TESSERACT" -ne 0 ]]; then
+	if [[ "$TESSERACT" -ne 0 ]] &&  [ -f "cr/tesseract-$ARCH/lib/pkgconfig/tesseract.pc" ]; then
 		PACKAGES="$PACKAGES tesseract lept"
 	fi
 	if [[ "$CAIRO" -ne 0 ]]; then
