@@ -70,10 +70,43 @@ update_index(chartdb_t *cdb)
 	return (result);
 }
 
+static bool_t
+parse_proc_name(const char *faanfd18, chart_type_t type, char proc_name[8])
+{
+	const char *period;
+
+	ASSERT(faanfd18 != NULL);
+	ASSERT(proc_name != NULL);
+
+	if (faanfd18[0] == '\0')
+		return (B_FALSE);
+	switch (type) {
+	case CHART_TYPE_DP:
+		period = strchr(faanfd18, '.');
+		if (period != NULL) {
+			strlcpy(proc_name, faanfd18, MIN(8,
+			    (period - faanfd18) + 1));
+		} else {
+			strlcpy(proc_name, faanfd18, 8);
+		}
+		return (B_TRUE);
+	case CHART_TYPE_STAR:
+	case CHART_TYPE_IAP:
+		period = strchr(faanfd18, '.');
+		if (period != NULL)
+			strlcpy(proc_name, period + 1, 8);
+		else
+			strlcpy(proc_name, faanfd18, 8);
+		return (B_TRUE);
+	default:
+		return (B_FALSE);
+	}
+}
+
 static void
 load_record(chart_arpt_t *arpt, const xmlNode *rec)
 {
-	chart_t *chart = calloc(1, sizeof (*chart));
+	chart_t *chart = safe_calloc(1, sizeof (*chart));
 
 	for (const xmlNode *node = rec->children; node != NULL;
 	    node = node->next) {
@@ -84,10 +117,10 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 		content = (char *)node->children[0].content;
 		if (strcmp((char *)node->name, "chart_name") == 0) {
 			free(chart->name);
-			chart->name = strdup(content);
+			chart->name = safe_strdup(content);
 		} else if (strcmp((char *)node->name, "faanfd18") == 0) {
 			free(chart->codename);
-			chart->codename = strdup(content);
+			chart->codename = safe_strdup(content);
 		} else if (strcmp((char *)node->name, "pdf_name") == 0) {
 			/*
 			 * "DELETED_JOB.PDF" in the PDF filename means that
@@ -98,7 +131,7 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 				break;
 			}
 			free(chart->filename);
-			chart->filename = strdup(content);
+			chart->filename = safe_strdup(content);
 		} else if (strcmp((char *)node->name, "chart_code") == 0) {
 			if (strcmp(content, "APD") == 0)
 				chart->type = CHART_TYPE_APD;
@@ -116,13 +149,20 @@ load_record(chart_arpt_t *arpt, const xmlNode *rec)
 				chart->type = CHART_TYPE_UNKNOWN;
 		}
 	}
-
 	if (chart->name[0] == '\0' || chart->type == CHART_TYPE_UNKNOWN ||
 	    !chartdb_add_chart(arpt, chart)) {
 		free(chart->name);
 		free(chart->codename);
 		free(chart->filename);
 		free(chart);
+	} else {
+		/*
+		 * Extract the procedure name from the faanfd18 field.
+		 */
+		if (chart->codename != NULL && parse_proc_name(chart->codename,
+		    chart->type, chart->procs.procs[0])) {
+			chart->procs.n_procs++;
+		}
 	}
 }
 

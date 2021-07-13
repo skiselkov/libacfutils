@@ -32,9 +32,6 @@
 extern "C" {
 #endif
 
-#define	MAX_CHART_NAME		64
-#define	MAX_CHART_FILENAME	64
-
 typedef struct chart_arpt_s chart_arpt_t;
 typedef struct chart_s chart_t;
 
@@ -43,6 +40,7 @@ typedef cairo_surface_t *(*chart_load_cb_t)(chart_t *chart);
 typedef enum {
 	PROV_AERONAV_FAA_GOV,
 	PROV_AUTOROUTER_AERO,
+	PROV_NAVIGRAPH,
 	NUM_PROVIDERS
 } chart_prov_id_t;
 
@@ -53,6 +51,10 @@ struct chart_s {
 	char		*codename;
 	chart_type_t	type;
 	char		*filename;
+	char		*filename_night;
+	chart_procs_t	procs;
+
+	chart_georef_t	georef;
 
 	chart_load_cb_t	load_cb;
 
@@ -64,7 +66,11 @@ struct chart_s {
 	int		num_pages;
 	bool_t		load_error;
 	bool_t		night;
+	bool_t		night_prev;
 	bool_t		refreshed;
+	/* Only present when `disallow_caching' is set in chartdb_t */
+	void		*png_data;
+	size_t		png_data_len;
 
 	avl_node_t	node;
 	list_node_t	loader_node;
@@ -93,6 +99,7 @@ struct chart_arpt_s {
 struct chartdb_s {
 	mutex_t		lock;
 	worker_t	loader;
+	bool_t		loader_stop;	/* set only once on exit */
 
 	/* immutable once created */
 	unsigned	airac;
@@ -105,10 +112,12 @@ struct chartdb_s {
 
 	/* immutable after provider init */
 	bool_t		flat_db;
+	bool_t		disallow_caching;
 
 	/* private to chart provider */
 	void		*prov_info;
 	void		*prov_priv;
+	bool_t		init_complete;
 
 	/* protected by `lock' */
 	list_t		loader_queue;
@@ -126,6 +135,9 @@ typedef struct {
 	bool_t		(*init)(chartdb_t *cdb);
 	void		(*fini)(chartdb_t *cdb);
 	bool_t		(*get_chart)(chart_t *chart);
+	void		(*watermark_chart)(chart_t *chart,
+	    cairo_surface_t *surf);
+	chart_arpt_t 	*(*arpt_lazy_discover)(chartdb_t *cdb, const char *icao);
 	void		(*arpt_lazyload)(chart_arpt_t *arpt);
 	bool_t		(*test_conn)(const chart_prov_info_login_t *creds);
 } chart_prov_t;

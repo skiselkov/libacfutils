@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include "assert.h"
+#include "sysmacros.h"
 
 #ifdef	__cplusplus
 extern "C" {
