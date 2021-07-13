@@ -30,11 +30,15 @@
 
 #include <cairo.h>
 
+#include "geom.h"
 #include "types.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+#define	MAX_CHART_INSETS	16
+#define	MAX_CHART_PROCS		24
 
 typedef struct chartdb_s chartdb_t;
 
@@ -46,6 +50,7 @@ typedef enum {
 	CHART_TYPE_ODP = 1 << 3,	/* Obstacle Departure Procedure */
 	CHART_TYPE_STAR = 1 << 4,	/* Standard Terminal Arrival */
 	CHART_TYPE_MIN = 1 << 5,	/* Takeoff Minimums */
+	CHART_TYPE_INFO = 1 << 6,	/* Airport Information */
 	CHART_TYPE_ALL = 0xffffffffu
 } chart_type_t;
 
@@ -54,6 +59,23 @@ typedef struct {
 	char	*password;
 	char	*cainfo;
 } chart_prov_info_login_t;
+
+typedef struct {
+	vect2_t		pts[2];
+} chart_bbox_t;
+
+typedef struct {
+	bool_t		present;
+	vect2_t		pixels[2];
+	geo_pos2_t	pos[2];
+	size_t		n_insets;
+	chart_bbox_t	insets[MAX_CHART_INSETS];
+} chart_georef_t;
+
+typedef struct {
+	size_t		n_procs;
+	char		procs[MAX_CHART_PROCS][8];
+} chart_procs_t;
 
 API_EXPORT chartdb_t *chartdb_init(const char *cache_path,
     const char *pdftoppm_path, const char *pdfinfo_path,
@@ -69,10 +91,20 @@ API_EXPORT char **chartdb_get_chart_names(chartdb_t *cdb, const char *icao,
     chart_type_t type, size_t *num_charts);
 API_EXPORT void chartdb_free_str_list(char **l, size_t num);
 
+API_EXPORT char *chartdb_get_chart_codename(chartdb_t *cdb,
+    const char *icao, const char *chart_name);
+API_EXPORT chart_type_t chartdb_get_chart_type(chartdb_t *cdb,
+    const char *icao, const char *chart_name);
+API_EXPORT chart_georef_t chartdb_get_chart_georef(chartdb_t *cdb,
+    const char *icao, const char *chart_name);
+API_EXPORT chart_procs_t chartdb_get_chart_procs(chartdb_t *cdb,
+    const char *icao, const char *chart_name);
+
 API_EXPORT bool_t chartdb_get_chart_surface(chartdb_t *cdb,
     const char *icao, const char *chart_name, int page, double zoom,
     bool_t night, cairo_surface_t **surf, int *num_pages);
 
+API_EXPORT bool_t chartdb_is_ready(chartdb_t *cdb);
 API_EXPORT bool_t chartdb_is_arpt_known(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_name(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_city(chartdb_t *cdb, const char *icao);

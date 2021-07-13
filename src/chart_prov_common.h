@@ -53,6 +53,18 @@ bool_t chart_download(chartdb_t *cdb, const char *url, const char *filepath,
     chart_dl_info_t *raw_output);
 void chart_setup_curl(CURL *curl, const char *cainfo);
 void word_subst(char *name, const char **subst);
+bool_t chartdb_want_to_stop(chartdb_t *cdb);
+
+/*
+ * writefunction for curl that uses a chart_dl_info_t
+ */
+void chart_dl_info_init(chart_dl_info_t *info, chartdb_t *cdb, const char *url);
+void chart_dl_info_fini(chart_dl_info_t *info);
+size_t chart_dl_info_write(char *ptr, size_t size, size_t nmemb,
+    void *userdata);
+
+void *chart_get_prov_info(const chart_t *chart, chartdb_t **cdb_p,
+    chart_arpt_t **arpt_p);
 
 #ifdef	__cplusplus
 }
