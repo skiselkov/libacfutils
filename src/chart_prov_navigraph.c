@@ -38,11 +38,11 @@
 #include "jsmn/jsmn_path.h"
 #include "sha2.h"
 
-#define	DEBUG_NAVIGRAPH
+/* #define	DEBUG_NAVIGRAPH */
 #ifdef	DEBUG_NAVIGRAPH
 #define	NAV_DBG_LOG(...)	logMsg(__VA_ARGS__)
 #else
-#define	NAV_DBG_LOG(...)
+#define	NAV_DBG_LOG(...)	do {} while (0)
 #endif
 
 #define	DEV_AUTH_ENDPT	\
