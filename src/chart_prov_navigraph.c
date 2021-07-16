@@ -344,7 +344,7 @@ get_tokens(chartdb_t *cdb, navigraph_t *nav)
 
 	while (time(NULL) <= nav->next_check_t) {
 		NAV_DBG_LOG("waiting for next token check (in %ld secs)",
-		    nav->next_check_t - time(NULL));
+		    (long)(nav->next_check_t - time(NULL)));
 		usleep(1000000);
 		/* Early termination request from outside? */
 		if (!cdb->loader.run) {

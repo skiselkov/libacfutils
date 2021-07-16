@@ -57,7 +57,7 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 	uint8_t *volatile pixels = NULL;
 	volatile int w, h;
 	const char *volatile filename;
-	bool_t added_alpha = B_FALSE;
+	volatile bool_t added_alpha = B_FALSE;
 
 	ASSERT(color_type != NULL);
 	ASSERT(bit_depth != NULL);
