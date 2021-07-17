@@ -27,23 +27,26 @@ CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-ntlm-wb --disable-crypto-auth --disable-sspi \
     --without-winidn --without-libssh2 --without-librtmp \
     --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
-    --with-pic --without-zstd"
+    --with-pic --without-zstd --without-system-zlib"
 
 case `uname` in
 	Linux)
 		LIBS="-lpthread" build_dep "linux-64" "$CONFOPTS_COMMON \
-		    --with-ssl=$(pwd)/../ssl/openssl-linux-64" \
+		    --with-ssl=$(pwd)/../ssl/openssl-linux-64 \
+		    --with-zlib=$(pwd)/../zlib/zlib-linux-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
 		LIBS="-lcrypt32" build_dep "win-64" \
 		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32 \
-		    --with-ssl=$(pwd)/../ssl/openssl-win-64" \
+		    --with-ssl=$(pwd)/../ssl/openssl-win-64 \
+		    --with-zlib=$(pwd)/../zlib/zlib-win-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
 		PATH="$(echo "$PATH" | sed 's|/opt/local[/_a-zA-Z0-9]*:||g')"
 		export PATH
 		build_dep "mac-64" "$CONFOPTS_COMMON \
-		    --with-ssl=\"$(pwd)/../ssl/openssl-mac-64\"" \
+		    --with-ssl=\"$(pwd)/../ssl/openssl-mac-64\" \
+		    --with-zlib=$(pwd)/../zlib/zlib-mac-64" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	*)
