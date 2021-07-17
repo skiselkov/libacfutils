@@ -93,7 +93,8 @@ static chart_prov_t prov[NUM_PROVIDERS] = {
 	.fini = chart_navigraph_fini,
 	.get_chart = chart_navigraph_get_chart,
 	.watermark_chart = chart_navigraph_watermark_chart,
-	.arpt_lazy_discover = chart_navigraph_arpt_lazy_discover
+	.arpt_lazy_discover = chart_navigraph_arpt_lazy_discover,
+	.pending_ext_account_setup = chart_navigraph_pending_ext_account_setup
     }
 };
 
@@ -1776,4 +1777,14 @@ static char *
 download_taf(chartdb_t *cdb, const char *icao)
 {
 	return (download_metar_taf_common(cdb, icao, "tafs", "TAF"));
+}
+
+bool_t
+chartdb_pending_ext_account_setup(chartdb_t *cdb)
+{
+	ASSERT(cdb != NULL);
+	if (prov[cdb->prov].pending_ext_account_setup != NULL)
+		return (prov[cdb->prov].pending_ext_account_setup(cdb));
+	else
+		return (B_FALSE);
 }

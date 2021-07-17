@@ -71,6 +71,8 @@ typedef struct {
 	int	intval;
 	time_t	next_check_t;
 	time_t	access_expire_t;
+
+	bool_t	pending_ext_setup;
 } navigraph_t;
 
 static void *navigraph_dl(chartdb_t *cdb, navigraph_t *nav,
@@ -247,6 +249,7 @@ start_auth(chartdb_t *cdb, navigraph_t *nav)
 		goto errout;
 	}
 	curl_easy_setopt(nav->curl, CURLOPT_POST, 0L);
+	nav->pending_ext_setup = B_TRUE;
 	chart_dl_info_fini(&dl_info);
 	return (B_TRUE);
 errout:
@@ -433,10 +436,13 @@ get_tokens(chartdb_t *cdb, navigraph_t *nav)
 		goto errout;
 	}
 	curl_easy_setopt(nav->curl, CURLOPT_POST, 0L);
+	nav->pending_ext_setup = B_FALSE;
 	chart_dl_info_fini(&dl_info);
 	return (B_TRUE);
 errout:
 	curl_easy_setopt(nav->curl, CURLOPT_POST, 0L);
+	/* Even if we fail completely, we exit the pending auth state */
+	nav->pending_ext_setup = B_FALSE;
 	chart_dl_info_fini(&dl_info);
 	return (B_FALSE);
 }
@@ -1060,4 +1066,21 @@ chart_navigraph_arpt_lazy_discover(chartdb_t *cdb, const char *icao)
 	}
 
 	return (arpt);
+}
+
+bool_t
+chart_navigraph_pending_ext_account_setup(chartdb_t *cdb)
+{
+	const navigraph_t *nav;
+
+	ASSERT(cdb != NULL);
+	/*
+	 * We might be called *really* early can't rely on init_complete
+	 * to be set before called here, so handle this case.
+	 */
+	if (cdb->prov_priv == NULL)
+		return (B_FALSE);
+	nav = cdb->prov_priv;
+
+	return (nav->pending_ext_setup);
 }

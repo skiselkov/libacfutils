@@ -42,6 +42,7 @@ chart_arpt_t *chart_navigraph_arpt_lazy_discover(chartdb_t *cdb,
 bool_t chart_navigraph_get_chart(chart_t *chart);
 void chart_navigraph_watermark_chart(chart_t *chart, cairo_surface_t *surf);
 bool_t chart_navigraph_test_conn(const chart_prov_info_login_t *creds);
+bool_t chart_navigraph_pending_ext_account_setup(chartdb_t *cdb);
 
 #ifdef	__cplusplus
 }

@@ -111,6 +111,7 @@ API_EXPORT char *chartdb_get_arpt_city(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_arpt_state(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_metar(chartdb_t *cdb, const char *icao);
 API_EXPORT char *chartdb_get_taf(chartdb_t *cdb, const char *icao);
+API_EXPORT bool_t chartdb_pending_ext_account_setup(chartdb_t *cdb);
 
 #ifdef	__cplusplus
 }

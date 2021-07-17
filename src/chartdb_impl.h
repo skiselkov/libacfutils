@@ -140,6 +140,7 @@ typedef struct {
 	chart_arpt_t 	*(*arpt_lazy_discover)(chartdb_t *cdb, const char *icao);
 	void		(*arpt_lazyload)(chart_arpt_t *arpt);
 	bool_t		(*test_conn)(const chart_prov_info_login_t *creds);
+	bool_t		(*pending_ext_account_setup)(chartdb_t *cdb);
 } chart_prov_t;
 
 chart_arpt_t *chartdb_add_arpt(chartdb_t *cdb, const char *icao,
