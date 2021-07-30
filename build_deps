@@ -23,10 +23,11 @@
 
 export minimal=0
 
-while getopts "cdm" opt; do
+while getopts "cdmn" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
+	n) export no_tesseract=1 ;;
 	m)
 		export minimal=1
 		touch .minimal-deps
@@ -56,7 +57,7 @@ fi
     ( cd ssl && ./build_ssl_deps ) && \
     ( cd curl && ./build_curl_deps ) && \
     ( [ $minimal -eq 1 ] || ( cd shapelib && ./build_shapelib_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd ocr && ./build_ocr_deps ) ) && \
+    ( [ $minimal -eq 1 ] || [ $no_tesseract -eq 1 ] || ( cd ocr && ./build_ocr_deps ) ) && \
     ( cd pcre2 && ./build_pcre2_deps ) && \
     ( [ $minimal -eq 1 ] || ( cd glew && ./build_glew_deps ) ) && \
     ( [ $minimal -eq 1 ] || ( cd openal-soft && ./build_openal ) ) && \
