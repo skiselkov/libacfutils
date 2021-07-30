@@ -35,7 +35,7 @@ INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
-QMAKE_CFLAGS += -std=c99 -g -W -Wall -Wextra -fvisibility=hidden
+QMAKE_CFLAGS += -std=c11 -g -W -Wall -Wextra -fvisibility=hidden
 contains(noerrors, 0) {
 	QMAKE_CFLAGS += -Werror
 }
@@ -63,6 +63,9 @@ contains(minimal, 1) {
 
 DEFINES += LIBACFUTILS_VERSION=\'\"$$system("git rev-parse --short HEAD")\"\'
 DEFINES += GLEW_STATIC
+
+# JSMN library needs this to avoid multiply defined symbols
+DEFINES += JSMN_STATIC
 
 TARGET = acfutils
 QMAKE_TARGET_COMPANY = Saso Kiselkov
@@ -282,7 +285,8 @@ contains(minimal, 1) {
 	    ../src/acfutils/png.h \
 	    ../src/acfutils/riff.h \
 	    ../src/acfutils/shader.h \
-	    ../src/acfutils/wav.h
+	    ../src/acfutils/wav.h \
+	    ../src/acfutils/jsmn/*.h
 
 	SOURCES += \
 	    ../src/apps.c \
@@ -290,6 +294,7 @@ contains(minimal, 1) {
 	    ../src/chart_prov_autorouter.c \
 	    ../src/chart_prov_common.c \
 	    ../src/chart_prov_faa.c \
+	    ../src/chart_prov_navigraph.c \
 	    ../src/glctx.c \
 	    ../src/glew.c \
 	    ../src/glew_os.c \

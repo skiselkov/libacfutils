@@ -44,6 +44,7 @@ extern "C" {
 typedef struct conf conf_t;
 
 API_EXPORT conf_t *conf_create_empty(void);
+API_EXPORT conf_t *conf_create_copy(const conf_t *conf2);
 API_EXPORT void conf_free(conf_t *conf);
 
 API_EXPORT conf_t *conf_read_file(const char *filename, int *errline);
@@ -54,6 +55,8 @@ API_EXPORT bool_t conf_write_file(const conf_t *conf, const char *filename);
 API_EXPORT bool_t conf_write_file2(const conf_t *conf, const char *filename,
     bool_t compressed);
 API_EXPORT bool_t conf_write(const conf_t *conf, FILE *fp);
+
+API_EXPORT void conf_merge(const conf_t *conf_from, conf_t *conf_to);
 
 API_EXPORT bool_t conf_get_str(const conf_t *conf, const char *key,
     const char **value);

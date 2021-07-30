@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -34,6 +34,7 @@
 #include <curl/curl.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
+#include <png.h>
 
 #if	IBM
 #include <windows.h>
@@ -46,6 +47,7 @@
 #include "acfutils/chartdb.h"
 #include "acfutils/helpers.h"
 #include "acfutils/list.h"
+#include "acfutils/mt_cairo_render.h"
 #include "acfutils/png.h"
 #include "acfutils/thread.h"
 #include "acfutils/worker.h"
@@ -54,6 +56,7 @@
 #include "chart_prov_common.h"
 #include "chart_prov_faa.h"
 #include "chart_prov_autorouter.h"
+#include "chart_prov_navigraph.h"
 
 #define	MAX_METAR_AGE	60	/* seconds */
 #define	MAX_TAF_AGE	300	/* seconds */
@@ -83,6 +86,15 @@ static chart_prov_t prov[NUM_PROVIDERS] = {
 	.get_chart = chart_autorouter_get_chart,
 	.arpt_lazyload = chart_autorouter_arpt_lazyload,
 	.test_conn = chart_autorouter_test_conn
+    },
+    {
+	.name = "navigraph.com",
+	.init = chart_navigraph_init,
+	.fini = chart_navigraph_fini,
+	.get_chart = chart_navigraph_get_chart,
+	.watermark_chart = chart_navigraph_watermark_chart,
+	.arpt_lazy_discover = chart_navigraph_arpt_lazy_discover,
+	.pending_ext_account_setup = chart_navigraph_pending_ext_account_setup
     }
 };
 
@@ -154,12 +166,19 @@ arpt_compar(const void *a, const void *b)
 static void
 chart_destroy(chart_t *chart)
 {
+	ASSERT(chart != NULL);
+
 	if (chart->surf != NULL)
 		cairo_surface_destroy(chart->surf);
+	if (chart->png_data != NULL) {
+		memset(chart->png_data, 0, chart->png_data_len);
+		free(chart->png_data);
+	}
 	free(chart->name);
 	free(chart->codename);
 	free(chart->filename);
-	free(chart);
+	free(chart->filename_night);
+	ZERO_FREE(chart);
 }
 
 static void
@@ -236,6 +255,10 @@ loader_init(void *userinfo)
 	if (!prov[cdb->prov].init(cdb))
 		return (B_FALSE);
 
+	mutex_enter(&cdb->lock);
+	cdb->init_complete = B_TRUE;
+	mutex_exit(&cdb->lock);
+
 	return (B_TRUE);
 }
 
@@ -249,6 +272,11 @@ loader_purge(chartdb_t *cdb)
 			if (chart->surf != NULL) {
 				cairo_surface_destroy(chart->surf);
 				chart->surf = NULL;
+			}
+			if (chart->png_data != NULL) {
+				free(chart->png_data);
+				chart->png_data = NULL;
+				chart->png_data_len = 0;
 			}
 		}
 	}
@@ -274,8 +302,8 @@ chartdb_add_arpt(chartdb_t *cdb, const char *icao, const char *name,
 		avl_create(&arpt->charts, chart_name_compar, sizeof (chart_t),
 		    offsetof(chart_t, node));
 		lacf_strlcpy(arpt->icao, icao, sizeof (arpt->icao));
-		arpt->name = strdup(name);
-		arpt->city = strdup(city_name);
+		arpt->name = safe_strdup(name);
+		arpt->city = safe_strdup(city_name);
 		lacf_strlcpy(arpt->state, state_id, sizeof (arpt->state));
 		arpt->db = cdb;
 		avl_insert(&cdb->arpts, arpt, where);
@@ -914,16 +942,72 @@ invert_surface(cairo_surface_t *surf)
 }
 
 static cairo_surface_t *
+chart_get_surface_nocache(chartdb_t *cdb, chart_t *chart)
+{
+	int width, height;
+	uint8_t *png_pixels;
+	cairo_surface_t *surf;
+	uint32_t *surf_data;
+
+	ASSERT(cdb != NULL);
+	ASSERT(chart != NULL);
+
+	if (chart->png_data == NULL)
+		return (NULL);
+	png_pixels = png_load_from_buffer_cairo_argb32(chart->png_data,
+	    chart->png_data_len, &width, &height);
+	if (png_pixels == NULL)
+		return (NULL);
+	surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+	surf_data = (uint32_t *)cairo_image_surface_get_data(surf);
+	ASSERT(surf_data != NULL);
+	memcpy(surf_data, png_pixels, width * height * 4);
+	cairo_surface_mark_dirty(surf);
+
+	ZERO_FREE_N(png_pixels, width * height * 4);
+
+	return (surf);
+}
+
+static bool_t
+chart_needs_get(chartdb_t *cdb, chart_t *chart)
+{
+	ASSERT(cdb != NULL);
+	ASSERT(chart != NULL);
+	if (!cdb->disallow_caching) {
+		/*
+		 * If we use caching, try to redownload the chart once,
+		 * or redownload if the file doesn't exist on disk.
+		 */
+		char *path = chartdb_mkpath(chart);
+		bool_t result = (!chart->refreshed || !file_exists(path, NULL));
+		free(path);
+		return (result);
+	} else {
+		/*
+		 * If we are not allowed to cache the chart, look for the
+		 * png_data pointer. The chart provider will populate it.
+		 * Also refresh the data if the day/night status changed
+		 * and the chart provider can do day/night specific charts.
+		 */
+		return (chart->png_data == NULL ||
+		    (chart->filename_night != NULL &&
+		    chart->night_prev != chart->night));
+	}
+}
+
+static cairo_surface_t *
 chart_get_surface(chartdb_t *cdb, chart_t *chart)
 {
-	char *path, *ext;
+	char *path = NULL, *ext = NULL;
 	cairo_surface_t *surf = NULL;
+
+	ASSERT(cdb != NULL);
+	ASSERT(chart != NULL);
 
 	if (chart->load_cb != NULL)
 		return (chart->load_cb(chart));
-
-	path = chartdb_mkpath(chart);
-	if (!chart->refreshed || !file_exists(path, NULL)) {
+	if (chart_needs_get(cdb, chart)) {
 		chart->refreshed = B_TRUE;
 		if (!prov[cdb->prov].get_chart(chart)) {
 			mutex_enter(&cdb->lock);
@@ -932,10 +1016,24 @@ chart_get_surface(chartdb_t *cdb, chart_t *chart)
 			goto out;
 		}
 	}
-
+	chart->night_prev = chart->night;
+	if (cdb->disallow_caching) {
+		surf = chart_get_surface_nocache(cdb, chart);
+		goto out;
+	}
+	path = chartdb_mkpath(chart);
 	ext = strrchr(path, '.');
 	if (ext != NULL &&
 	    (strcmp(&ext[1], "pdf") == 0 || strcmp(&ext[1], "PDF") == 0)) {
+		if (cdb->pdfinfo_path == NULL ||
+		    cdb->pdftoppm_path == NULL) {
+			logMsg("Attempted to load PDF chart, but this chart "
+			    "DB instance doesn't support PDF conversion");
+			mutex_enter(&cdb->lock);
+			chart->load_error = B_TRUE;
+			mutex_exit(&cdb->lock);
+			goto out;
+		}
 		if (chart->num_pages == -1) {
 			chart->num_pages = chartdb_pdf_count_pages_file(
 			    cdb->pdfinfo_path, path);
@@ -957,7 +1055,6 @@ chart_get_surface(chartdb_t *cdb, chart_t *chart)
 		}
 	}
 	surf = cairo_image_surface_create_from_png(path);
-
 out:
 	free(path);
 	return (surf);
@@ -972,11 +1069,17 @@ loader_load(chartdb_t *cdb, chart_t *chart)
 	if (surf == NULL)
 		return;
 	if ((st = cairo_surface_status(surf)) == CAIRO_STATUS_SUCCESS) {
-		if (chart->night)
+		/*
+		 * If night mode was selected and this provider doesn't
+		 * explicitly support supplying night charts, simply invert
+		 * the surface's colors.
+		 */
+		if (chart->night && chart->filename_night == NULL)
 			invert_surface(surf);
+		if (prov[cdb->prov].watermark_chart != NULL)
+			prov[cdb->prov].watermark_chart(chart, surf);
 		mutex_enter(&cdb->lock);
-		if (chart->surf != NULL)
-			cairo_surface_destroy(chart->surf);
+		CAIRO_SURFACE_DESTROY(chart->surf);
 		chart->surf = surf;
 		chart->cur_page = chart->load_page;
 		mutex_exit(&cdb->lock);
@@ -1002,6 +1105,7 @@ chart_mem_usage(chartdb_t *cdb)
 
 			total += w * h * 4;
 		}
+		total += c->png_data_len;
 	}
 
 	return (total);
@@ -1071,6 +1175,11 @@ loader(void *userinfo)
 					cairo_surface_destroy(c->surf);
 					c->surf = NULL;
 				}
+				if (c->png_data != NULL) {
+					free(c->png_data);
+					c->png_data = NULL;
+					c->png_data_len = 0;
+				}
 				list_remove(&cdb->load_seq, c);
 			}
 		}
@@ -1090,13 +1199,19 @@ loader_fini(void *userinfo)
 	prov[cdb->prov].fini(cdb);
 }
 
-API_EXPORT chartdb_t *
+chartdb_t *
 chartdb_init(const char *cache_path, const char *pdftoppm_path,
     const char *pdfinfo_path, unsigned airac, const char *provider_name,
     void *provider_info)
 {
 	chartdb_t *cdb;
 	chart_prov_id_t pid;
+
+	ASSERT(cache_path != NULL);
+	/* pdftoppm_path can be NULL */
+	/* pdfinfo_path can be NULL */
+	ASSERT(provider_name != NULL);
+	/* provider_info can be NULL */
 
 	for (pid = 0; pid < NUM_PROVIDERS; pid++) {
 		if (strcmp(provider_name, prov[pid].name) == 0)
@@ -1110,12 +1225,15 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	avl_create(&cdb->arpts, arpt_compar, sizeof (chart_arpt_t),
 	    offsetof(chart_arpt_t, node));
 	cdb->path = strdup(cache_path);
-	cdb->pdftoppm_path = strdup(pdftoppm_path);
-	cdb->pdfinfo_path = strdup(pdfinfo_path);
+	if (pdftoppm_path != NULL)
+		cdb->pdftoppm_path = safe_strdup(pdftoppm_path);
+	if (pdfinfo_path != NULL)
+		cdb->pdfinfo_path = safe_strdup(pdfinfo_path);
 	cdb->airac = airac;
 	cdb->prov = pid;
 	cdb->prov_info = provider_info;
-	cdb->load_limit = (physmem() >> 4);	/* 1/16th of physical memory */
+	/* Default to 1/32 of physical memory, but no more than 256MB */
+	cdb->load_limit = MIN(physmem() >> 5, 256 << 20);
 	lacf_strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
 
 	list_create(&cdb->loader_queue, sizeof (chart_t),
@@ -1131,8 +1249,8 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	return (cdb);
 }
 
-API_EXPORT
-void chartdb_fini(chartdb_t *cdb)
+void
+chartdb_fini(chartdb_t *cdb)
 {
 	void *cookie;
 	chart_arpt_t *arpt;
@@ -1161,7 +1279,7 @@ void chartdb_fini(chartdb_t *cdb)
 	free(cdb);
 }
 
-API_EXPORT bool_t
+bool_t
 chartdb_test_connection(const char *provider_name,
     const chart_prov_info_login_t *creds)
 {
@@ -1175,7 +1293,7 @@ chartdb_test_connection(const char *provider_name,
 	return (B_FALSE);
 }
 
-API_EXPORT void
+void
 chartdb_set_load_limit(chartdb_t *cdb, uint64_t bytes)
 {
 	bytes = MAX(bytes, 16 << 20);
@@ -1185,7 +1303,7 @@ chartdb_set_load_limit(chartdb_t *cdb, uint64_t bytes)
 	}
 }
 
-API_EXPORT void
+void
 chartdb_purge(chartdb_t *cdb)
 {
 	mutex_enter(&cdb->lock);
@@ -1199,7 +1317,7 @@ chartdb_purge(chartdb_t *cdb)
 	mutex_exit(&cdb->lock);
 }
 
-API_EXPORT char **
+char **
 chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
     size_t *num_charts)
 {
@@ -1232,10 +1350,9 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 		*num_charts = 0;
 		return (NULL);
 	}
-
 	for (chart = avl_first(&arpt->charts), num = 0; chart != NULL;
 	    chart = AVL_NEXT(&arpt->charts, chart)) {
-		if (chart->type & type)
+		if ((chart->type & type) != 0)
 			num++;
 	}
 	if (num == 0) {
@@ -1243,12 +1360,13 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 		*num_charts = 0;
 		return (NULL);
 	}
-	charts = calloc(num, sizeof (*charts));
+	charts = safe_calloc(num, sizeof (*charts));
 	for (chart = avl_first(&arpt->charts), i = 0; chart != NULL;
 	    chart = AVL_NEXT(&arpt->charts, chart)) {
-		if (chart->type & type) {
+		if ((chart->type & type) != 0) {
 			ASSERT3U(i, <, num);
-			charts[i] = strdup(chart->name);
+			ASSERT(chart->name[0] != '\0');
+			charts[i] = safe_strdup(chart->name);
 			i++;
 		}
 	}
@@ -1260,7 +1378,7 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 	return (charts);
 }
 
-API_EXPORT void
+void
 chartdb_free_str_list(char **l, size_t num)
 {
 	free_strlist(l, num);
@@ -1270,6 +1388,10 @@ static chart_arpt_t *
 arpt_find(chartdb_t *cdb, const char *icao)
 {
 	chart_arpt_t srch;
+	chart_arpt_t *arpt;
+
+	ASSERT(icao != NULL);
+
 	switch (strlen(icao)) {
 	case 3:
 		/*
@@ -1284,7 +1406,10 @@ arpt_find(chartdb_t *cdb, const char *icao)
 	default:
 		return (NULL);
 	}
-	return (avl_find(&cdb->arpts, &srch, NULL));
+	arpt = avl_find(&cdb->arpts, &srch, NULL);
+	if (arpt == NULL && prov[cdb->prov].arpt_lazy_discover != NULL)
+		arpt = prov[cdb->prov].arpt_lazy_discover(cdb, icao);
+	return (arpt);
 }
 
 static chart_t *
@@ -1297,7 +1422,100 @@ chart_find(chartdb_t *cdb, const char *icao, const char *chart_name)
 	return (avl_find(&arpt->charts, &srch_chart, NULL));
 }
 
-API_EXPORT bool_t
+char *
+chartdb_get_chart_codename(chartdb_t *cdb, const char *icao,
+    const char *chart_name)
+{
+	chart_t *chart;
+	char *codename = NULL;
+
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+
+	mutex_enter(&cdb->lock);
+
+	chart = chart_find(cdb, icao, chart_name);
+	if (chart == NULL || chart->load_error) {
+		mutex_exit(&cdb->lock);
+		return (NULL);
+	}
+	if (chart->codename != NULL)
+		codename = safe_strdup(chart->codename);
+	mutex_exit(&cdb->lock);
+
+	return (codename);
+}
+
+chart_type_t
+chartdb_get_chart_type(chartdb_t *cdb, const char *icao, const char *chart_name)
+{
+	chart_t *chart;
+	chart_type_t type;
+
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+
+	mutex_enter(&cdb->lock);
+	chart = chart_find(cdb, icao, chart_name);
+	if (chart == NULL || chart->load_error) {
+		mutex_exit(&cdb->lock);
+		return (CHART_TYPE_UNKNOWN);
+	}
+	type = chart->type;
+	mutex_exit(&cdb->lock);
+
+	return (type);
+}
+
+chart_georef_t
+chartdb_get_chart_georef(chartdb_t *cdb, const char *icao,
+    const char *chart_name)
+{
+	chart_t *chart;
+	chart_georef_t georef;
+
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+
+	mutex_enter(&cdb->lock);
+	chart = chart_find(cdb, icao, chart_name);
+	if (chart == NULL || chart->load_error) {
+		mutex_exit(&cdb->lock);
+		return ((chart_georef_t){});
+	}
+	georef = chart->georef;
+	mutex_exit(&cdb->lock);
+
+	return (georef);
+}
+
+chart_procs_t
+chartdb_get_chart_procs(chartdb_t *cdb, const char *icao,
+    const char *chart_name)
+{
+	chart_t *chart;
+	chart_procs_t procs;
+
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+
+	mutex_enter(&cdb->lock);
+	chart = chart_find(cdb, icao, chart_name);
+	if (chart == NULL || chart->load_error) {
+		mutex_exit(&cdb->lock);
+		return ((chart_procs_t){});
+	}
+	procs = chart->procs;
+	mutex_exit(&cdb->lock);
+
+	return (procs);
+}
+
+bool_t
 chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
     const char *chart_name, int page, double zoom, bool_t night,
     cairo_surface_t **surf, int *num_pages)
@@ -1318,6 +1536,7 @@ chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
 		chart->zoom = zoom;
 		chart->load_page = page;
 		chart->night = night;
+		CAIRO_SURFACE_DESTROY(chart->surf);
 		/*
 		 * Dump everything else in the queue so we get in first.
 		 */
@@ -1327,11 +1546,12 @@ chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
 		worker_wake_up(&cdb->loader);
 	}
 
-	if (chart->surf != NULL && page == chart->cur_page)
+	if (chart->surf != NULL && page == chart->cur_page &&
+	    chart->night == night) {
 		*surf = cairo_surface_reference(chart->surf);
-	else
+	} else {
 		*surf = NULL;
-
+	}
 	if (num_pages != NULL)
 		*num_pages = chart->num_pages;
 
@@ -1400,7 +1620,17 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 	return (result);
 }
 
-API_EXPORT bool_t
+bool_t
+chartdb_is_ready(chartdb_t *cdb)
+{
+	bool_t init_complete;
+	mutex_enter(&cdb->lock);
+	init_complete = cdb->init_complete;
+	mutex_exit(&cdb->lock);
+	return (init_complete);
+}
+
+bool_t
 chartdb_is_arpt_known(chartdb_t *cdb, const char *icao)
 {
 	chart_arpt_t *arpt;
@@ -1425,31 +1655,31 @@ chartdb_is_arpt_known(chartdb_t *cdb, const char *icao)
 		return (field_name); \
 	} while (0)
 
-API_EXPORT char *
+char *
 chartdb_get_arpt_name(chartdb_t *cdb, const char *icao)
 {
 	ARPT_GET_COMMON(name);
 }
 
-API_EXPORT char *
+char *
 chartdb_get_arpt_city(chartdb_t *cdb, const char *icao)
 {
 	ARPT_GET_COMMON(city);
 }
 
-API_EXPORT char *
+char *
 chartdb_get_arpt_state(chartdb_t *cdb, const char *icao)
 {
 	ARPT_GET_COMMON(state);
 }
 
-API_EXPORT char *
+char *
 chartdb_get_metar(chartdb_t *cdb, const char *icao)
 {
 	return (get_metar_taf_common(cdb, icao, B_TRUE));
 }
 
-API_EXPORT char *
+char *
 chartdb_get_taf(chartdb_t *cdb, const char *icao)
 {
 	return (get_metar_taf_common(cdb, icao, B_FALSE));
@@ -1547,4 +1777,14 @@ static char *
 download_taf(chartdb_t *cdb, const char *icao)
 {
 	return (download_metar_taf_common(cdb, icao, "tafs", "TAF"));
+}
+
+bool_t
+chartdb_pending_ext_account_setup(chartdb_t *cdb)
+{
+	ASSERT(cdb != NULL);
+	if (prov[cdb->prov].pending_ext_account_setup != NULL)
+		return (prov[cdb->prov].pending_ext_account_setup(cdb));
+	else
+		return (B_FALSE);
 }

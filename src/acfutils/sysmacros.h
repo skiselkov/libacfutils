@@ -64,6 +64,8 @@ extern "C" {
 #define	SENTINEL_ATTR		__attribute__((sentinel))
 #define	HOT_ATTR		__attribute__((hot))
 #define	PURE_ATTR		__attribute__((pure))
+#define	ALWAYS_INLINE_ATTR	__attribute__((always_inline))
+
 #ifndef	BSWAP32
 #define	BSWAP16(x)	__builtin_bswap16((x))
 #define	BSWAP32(x)	__builtin_bswap32((x))
@@ -80,6 +82,7 @@ extern "C" {
 #define	SENTINEL_ATTR
 #define	HOT_ATTR
 #define	PURE_ATTR
+#define	ALWAYS_INLINE_ATTR
 
 #define	COND_LIKELY(x)		x
 #define	COND_UNLIKELY(x)	x

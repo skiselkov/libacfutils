@@ -105,6 +105,49 @@ conf_create_empty(void)
 }
 
 /*
+ * Creates a new configuration as a copy of an existing configuration.
+ * The new copy is returned and must be freed by the caller using conf_free.
+ */
+conf_t *
+conf_create_copy(const conf_t *conf2)
+{
+	conf_t *conf = conf_create_empty();
+
+	ASSERT(conf2 != NULL);
+	conf_merge(conf2, conf);
+
+	return (conf);
+}
+
+/*
+ * Given two configurations, takes all values in `conf_from' and inserts
+ * them into `conf_to', in essence, merging the two configurations.
+ * After this call, `conf_to' will contain all the values present in
+ * `conf_from', as well as any pre-existing values that were already in
+ * `conf_to'. If a value exists in both `conf_to' and `conf_from', the
+ * value in `conf_from' replaces the value in `conf_to'.
+ */
+void
+conf_merge(const conf_t *conf_from, conf_t *conf_to)
+{
+	ASSERT(conf_from != NULL);
+	ASSERT(conf_to != NULL);
+
+	for (const conf_key_t *key = avl_first(&conf_from->tree); key != NULL;
+	    key = AVL_NEXT(&conf_from->tree, key)) {
+		switch (key->type) {
+		case CONF_KEY_STR:
+			conf_set_str(conf_to, key->key, key->str);
+			break;
+		case CONF_KEY_DATA:
+			conf_set_data(conf_to, key->key, key->data.buf,
+			    key->data.sz);
+			break;
+		}
+	}
+}
+
+/*
  * Frees a conf_t object and all of its internal resources.
  */
 void
@@ -463,13 +506,13 @@ conf_write(const conf_t *conf, FILE *fp)
  * Returns the conf_key_t object if found, NULL otherwise.
  */
 static conf_key_t *
-conf_find(const conf_t *conf, const char *key)
+conf_find(const conf_t *conf, const char *key, avl_index_t *where)
 {
 	char buf[strlen(key) + 1];
 	const conf_key_t srch = { .key = buf };
 	lacf_strlcpy(buf, key, sizeof (buf));
 	strtolower(buf);
-	return (avl_find(&conf->tree, &srch, NULL));
+	return (avl_find(&conf->tree, &srch, where));
 }
 
 /*
@@ -484,7 +527,7 @@ conf_get_str(const conf_t *conf, const char *key, const char **value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	*value = ck->str;
@@ -503,7 +546,7 @@ conf_get_i(const conf_t *conf, const char *key, int *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	*value = atoi(ck->str);
@@ -522,7 +565,7 @@ conf_get_lli(const conf_t *conf, const char *key, long long *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	*value = atoll(ck->str);
@@ -541,7 +584,7 @@ conf_get_d(const conf_t *conf, const char *key, double *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	return (sscanf(ck->str, "%lf", value) == 1);
@@ -556,7 +599,7 @@ conf_get_f(const conf_t *conf, const char *key, float *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	return (sscanf(ck->str, "%f", value) == 1);
@@ -580,7 +623,7 @@ conf_get_da(const conf_t *conf, const char *key, double *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 #if	IBM
@@ -612,7 +655,7 @@ conf_get_b(const conf_t *conf, const char *key, bool_t *value)
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 	ASSERT(value != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
 	*value = (strcmp(ck->str, "true") == 0 ||
@@ -640,7 +683,7 @@ conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
 	ASSERT(key != NULL);
 	ASSERT(buf != NULL || cap == 0);
 
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_DATA)
 		return (0);
 	ASSERT(ck->data.buf != NULL);
@@ -658,17 +701,18 @@ void
 conf_set_str(conf_t *conf, const char *key, const char *value)
 {
 	conf_key_t *ck;
+	avl_index_t where;
 
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, &where);
 	if (ck == NULL) {
 		if (value == NULL)
 			return;
 		ck = safe_calloc(1, sizeof (*ck));
-		ck->key = strdup(key);
+		ck->key = safe_strdup(key);
 		strtolower(ck->key);
-		avl_add(&conf->tree, ck);
+		avl_insert(&conf->tree, ck, where);
 	}
 	ck_free_value(ck);
 	if (value == NULL) {
@@ -678,7 +722,7 @@ conf_set_str(conf_t *conf, const char *key, const char *value)
 		return;
 	} else {
 		ck->type = CONF_KEY_STR;
-		ck->str = strdup(value);
+		ck->str = safe_strdup(value);
 	}
 }
 
@@ -689,7 +733,8 @@ static void
 conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 {
 	int n;
-	conf_key_t *ck = conf_find(conf, key);
+	avl_index_t where;
+	conf_key_t *ck = conf_find(conf, key, &where);
 	va_list ap1, ap2;
 
 	va_start(ap1, fmt);
@@ -697,9 +742,9 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 
 	if (ck == NULL) {
 		ck = safe_calloc(1, sizeof (*ck));
-		ck->key = strdup(key);
+		ck->key = safe_strdup(key);
 		strtolower(ck->key);
-		avl_add(&conf->tree, ck);
+		avl_insert(&conf->tree, ck, where);
 	} else {
 		ck_free_value(ck);
 	}
@@ -818,11 +863,12 @@ void
 conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 {
 	conf_key_t *ck;
+	avl_index_t where;
 
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
 
-	ck = conf_find(conf, key);
+	ck = conf_find(conf, key, &where);
 	if (buf == NULL || sz == 0) {
 		if (ck != NULL) {
 			avl_remove(&conf->tree, ck);
@@ -834,9 +880,9 @@ conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 	}
 	if (ck == NULL) {
 		ck = safe_calloc(1, sizeof (*ck));
-		ck->key = strdup(key);
+		ck->key = safe_strdup(key);
 		strtolower(ck->key);
-		avl_add(&conf->tree, ck);
+		avl_insert(&conf->tree, ck, where);
 	} else {
 		ck_free_value(ck);
 	}

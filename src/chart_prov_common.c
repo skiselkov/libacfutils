@@ -33,8 +33,27 @@
 #define	LOW_SPD_LIM	4096L		/* bytes/s */
 #define	LOW_SPD_TIME	30L		/* seconds */
 
-static size_t
-dl_write(char *ptr, size_t size, size_t nmemb, void *userdata)
+void
+chart_dl_info_init(chart_dl_info_t *info, chartdb_t *cdb, const char *url)
+{
+	ASSERT(info != NULL);
+	ASSERT(url != NULL);
+	ASSERT(cdb != NULL);
+	memset(info, 0, sizeof (*info));
+	info->url = url;
+	info->cdb = cdb;
+}
+
+void
+chart_dl_info_fini(chart_dl_info_t *info)
+{
+	ASSERT(info != NULL);
+	free(info->buf);
+	memset(info, 0, sizeof (*info));
+}
+
+size_t
+chart_dl_info_write(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	chart_dl_info_t *dl_info = userdata;
 	size_t bytes = size * nmemb;
@@ -213,7 +232,7 @@ chart_setup_curl(CURL *curl, const char *cainfo)
 {
 	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, LOW_SPD_TIME);
 	curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, LOW_SPD_LIM);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, dl_write);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, chart_dl_info_write);
 	curl_easy_setopt(curl, CURLOPT_ACCEPT_ENCODING, "");
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
@@ -241,4 +260,40 @@ word_subst(char *str, const char **subst)
 			    strlen(str) - (&p[l1] - str) + 1);
 		}
 	}
+}
+
+bool_t
+chartdb_want_to_stop(chartdb_t *cdb)
+{
+	bool_t result;
+
+	ASSERT(cdb != NULL);
+
+	mutex_enter(&cdb->lock);
+	result = (list_head(&cdb->loader_queue) == &cdb->loader_cmd_purge);
+	mutex_exit(&cdb->lock);
+
+	return (result);
+}
+
+void *
+chart_get_prov_info(const chart_t *chart, chartdb_t **cdb_p,
+    chart_arpt_t **arpt_p)
+{
+	chartdb_t *cdb;
+	chart_arpt_t *arpt;
+
+	ASSERT(chart != NULL);
+	ASSERT(chart->arpt != NULL);
+	arpt = chart->arpt;
+	if (arpt_p != NULL)
+		*arpt_p = arpt;
+	ASSERT(arpt->db != NULL);
+	cdb = arpt->db;
+	ASSERT(cdb != NULL);
+	if (cdb_p != NULL)
+		*cdb_p = cdb;
+	ASSERT(cdb->prov_priv != NULL);
+
+	return (cdb->prov_priv);
 }

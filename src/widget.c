@@ -483,7 +483,7 @@ is_in_VR(void)
 	return (dr_geti(&VR_enabled) != 0);
 }
 
-void
+bool_t
 window_follow_VR(XPLMWindowID win)
 {
 	bool_t vr = is_in_VR();
@@ -492,13 +492,15 @@ window_follow_VR(XPLMWindowID win)
 
 	ASSERT(win != NULL);
 	XPLMSetWindowPositioningMode(win, mode, -1);
+
+	return (vr);
 }
 
-void
+bool_t
 widget_follow_VR(XPWidgetID win)
 {
 	ASSERT(win != NULL);
-	window_follow_VR(XPGetWidgetUnderlyingWindow(win));
+	return (window_follow_VR(XPGetWidgetUnderlyingWindow(win)));
 }
 
 typedef struct {
