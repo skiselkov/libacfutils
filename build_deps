@@ -22,6 +22,7 @@
 #	pkg-config qt5-default qt5-qmake unzip
 
 export minimal=0
+export no_tesseract=0
 
 while getopts "cdmn" opt; do
 	case $opt in
