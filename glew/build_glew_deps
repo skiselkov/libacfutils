@@ -100,8 +100,10 @@ case `uname` in
 		MAKE_FLAGS="GLEW_PREFIX=$(pwd)/$GLEW-mac-64/install \
 		    GLEW_DEST=$(pwd)/$GLEW-mac-64/install \
 		    CFLAGS.CMDLINE=\"-mmacosx-version-min=10.9 \
+            -arch x86_64 \
 		    -fvisibility=hidden\" \
-		    LDFLAGS.CMDLINE=-mmacosx-version-min=10.9 \
+		    LDFLAGS.CMDLINE=\"-mmacosx-version-min=10.9 \
+            -arch x86_64\" \
 		    $MAKE_FLAGS_COMMON"
 		if ! [ -f "$GLEW-mac-64/install/lib/libGLEWmx.a" ]; then
 			rm -rf "$GLEW-mac-64" && tar xJf "$GLEW_ARCHIVE" && \
