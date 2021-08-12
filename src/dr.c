@@ -629,6 +629,7 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	dr->read_cb = NULL;
 	dr->write_cb = NULL;
 	dr->wide_type = wide_type;
+    dr->stride = 0;
 
 	if (!dre_plug_lookup_done) {
 		dre_plug = XPLMFindPluginBySignature(
