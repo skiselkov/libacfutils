@@ -1,72 +1,32 @@
---- cairo-1.16.0/src/cairo-scaled-font-private.h	2018-08-17 03:10:53.000000000 +0200
-+++ cairo-1.16.0-new/src/cairo-scaled-font-private.h	2020-02-27 21:04:43.572423600 +0100
-@@ -119,6 +119,8 @@
-     /* font backend managing this scaled font */
-     const cairo_scaled_font_backend_t *backend;
-     cairo_list_t link;
+commit a67735010dd7576fac7d5e30e0933a3be313b75e
+Author: Michal Sudolsky <michal@sudolio.com>
+Date:   Tue Jul 21 20:02:24 2020 +0200
+
+    fix double free and failed assertions in cairo_scaled_font_destroy
+
+diff --git a/src/cairo-scaled-font.c b/src/cairo-scaled-font.c
+old mode 100644
+new mode 100755
+index 8dff57d95..d53915fee
+--- a/src/cairo-scaled-font.c
++++ b/src/cairo-scaled-font.c
+@@ -1320,15 +1320,15 @@ cairo_scaled_font_destroy (cairo_scaled_font_t *scaled_font)
+ 
+     assert (CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count));
+ 
++    font_map = _cairo_scaled_font_map_lock ();
++    assert (font_map != NULL);
 +
-+    const char *ftag;
- };
- 
- struct _cairo_scaled_font_private {
---- cairo-1.16.0/src/cairoint.h	2018-08-17 03:10:53.000000000 +0200
-+++ cairo-1.16.0-new/src/cairoint.h	2020-02-27 21:04:53.564396220 +0100
-@@ -1175,8 +1175,11 @@
- 
- /* cairo-scaled-font.c */
- 
-+#define _cairo_scaled_font_freeze_cache(font) \
-+	_cairo_scaled_font_freeze_cache_impl((font), __func__)
- cairo_private void
--_cairo_scaled_font_freeze_cache (cairo_scaled_font_t *scaled_font);
-+_cairo_scaled_font_freeze_cache_impl (cairo_scaled_font_t *scaled_font,
-+    const char *ftag);
- 
- cairo_private void
- _cairo_scaled_font_thaw_cache (cairo_scaled_font_t *scaled_font);
---- cairo-1.16.0/src/cairo-scaled-font.c	2018-08-17 03:10:53.000000000 +0200
-+++ cairo-1.16.0-new/src/cairo-scaled-font.c	2020-03-01 16:02:15.696465323 +0100
-@@ -787,13 +787,15 @@
- }
- 
- void
--_cairo_scaled_font_freeze_cache (cairo_scaled_font_t *scaled_font)
-+_cairo_scaled_font_freeze_cache_impl (cairo_scaled_font_t *scaled_font,
-+    const char *ftag)
- {
-     /* ensure we do not modify an error object */
-     assert (scaled_font->status == CAIRO_STATUS_SUCCESS);
- 
-     CAIRO_MUTEX_LOCK (scaled_font->mutex);
-     scaled_font->cache_frozen = TRUE;
-+    scaled_font->ftag = ftag;
- }
- 
- void
-@@ -809,6 +811,7 @@
-     }
- 
-     scaled_font->cache_frozen = FALSE;
-+    scaled_font->ftag = NULL;
-     CAIRO_MUTEX_UNLOCK (scaled_font->mutex);
- }
- 
-@@ -1322,10 +1325,14 @@
- 
      if (! _cairo_reference_count_dec_and_test (&scaled_font->ref_count))
- 	return;
--
--    assert (! scaled_font->cache_frozen);
--    assert (! scaled_font->global_cache_frozen);
--
-+/*
-+ *  Saso: this seems extremely racy. If some other thread did freeze/thaw,
-+ *  this can become inconsistent between CPUs without an explicit memory
-+ *  barrier. This entire font locking infrastructure seems rather...
-+ *  unconventional.
-+ *    assert (! scaled_font->cache_frozen);
-+ *    assert (! scaled_font->global_cache_frozen);
-+ */
-     font_map = _cairo_scaled_font_map_lock ();
-     assert (font_map != NULL);
+-	return;
++	goto unlock;
  
+     assert (! scaled_font->cache_frozen);
+     assert (! scaled_font->global_cache_frozen);
+ 
+-    font_map = _cairo_scaled_font_map_lock ();
+-    assert (font_map != NULL);
+-
+     /* Another thread may have resurrected the font whilst we waited */
+     if (! CAIRO_REFERENCE_COUNT_HAS_REFERENCE (&scaled_font->ref_count)) {
+ 	if (! scaled_font->placeholder &&
