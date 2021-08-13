@@ -75,7 +75,7 @@ case `uname` in
 		    "pixman" "$PIXMAN_PRODUCT" "$PIXMAN_PATCHES" && \
 		CFLAGS="$CAIRO_CFLAGS_COMMON\\ -m64" LDFLAGS="-m64" \
 		    build_dep "mac-64" "$CAIRO_CONFOPTS_COMMON" "$CAIRO" \
-		    "cairo" "$CAIRO_PRODUCT"
+		    "cairo" "$CAIRO_PRODUCT" "$CAIRO_PATCHES"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
