@@ -58,12 +58,12 @@ API_EXPORT dr_t *dcr_get_dr(void *token);
 API_EXPORT void dcr_insert_rdr(void *token);
 #define	DCR_CREATE_COMMON(type, dr_ptr, ...) \
 	do { \
-		void *rdr = dcr_alloc_rdr(); \
-		dr_t *dr = dcr_get_dr(rdr); \
-		dr_create_ ## type(dr, __VA_ARGS__); \
-		dcr_insert_rdr(rdr); \
+		void *__rdr = dcr_alloc_rdr(); \
+		dr_t *__dr = dcr_get_dr(__rdr); \
+		dr_create_ ## type(__dr, __VA_ARGS__); \
+		dcr_insert_rdr(__rdr); \
 		if ((dr_ptr) != NULL) \
-			*(dr_t **)(dr_ptr) = dr; \
+			*(dr_t **)(dr_ptr) = __dr; \
 	} while (0)
 #define	DCR_CREATE_I(dr_p, ...)		\
 	DCR_CREATE_COMMON(i, dr_p, __VA_ARGS__)
