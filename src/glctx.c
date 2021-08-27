@@ -470,7 +470,8 @@ glctx_make_current(glctx_t *ctx)
 		ASSERT(ctx->dc != NULL);
 		ASSERT(ctx->hgl != NULL);
 		if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
-			logMsg("Failed to make context current");
+			win_perror(GetLastError(),
+			    "Failed to make context current");
 			return (B_FALSE);
 		}
 	} else {
