@@ -52,6 +52,8 @@ API_EXPORT void log_fini(void);
 
 #define	logMsg(...) \
 	log_impl(log_basename(__FILE__), __LINE__, __VA_ARGS__)
+#define	logMsg_v(fmt, ap) \
+	log_impl_v(log_basename(__FILE__), __LINE__, (fmt), (ap))
 API_EXPORT void log_impl(const char *filename, int line,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(3);
 API_EXPORT void log_impl_v(const char *filename, int line, const char *fmt,

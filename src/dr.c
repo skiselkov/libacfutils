@@ -612,6 +612,8 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 	ASSERT(value != NULL);
 	ASSERT(fmt != NULL);
 
+	memset(dr, 0, sizeof (*dr));
+
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 
 	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,

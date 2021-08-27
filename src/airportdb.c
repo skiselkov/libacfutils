@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		12
+#define	ARPTDB_CACHE_VERSION		13
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -575,7 +575,8 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
  * airport data cache creation process.
  */
 static airport_t *
-parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
+parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
+    airport_t **dup_arpt_p)
 {
 	/*
 	 * pre-allocate the buffer to be large enough that most names are
@@ -588,6 +589,9 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 	size_t ncomps;
 	char **comps = strsplit(line, " ", B_TRUE, &ncomps);
 	airport_t *arpt = NULL;
+
+	if (dup_arpt_p != NULL)
+		*dup_arpt_p = NULL;
 
 	ASSERT(strcmp(comps[0], "1") == 0);
 	if (ncomps < 5)
@@ -609,6 +613,8 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p)
 		 * This airport was already known from a previously loaded
 		 * apt.dat. Avoid overwriting its data.
 		 */
+		if (dup_arpt_p != NULL)
+			*dup_arpt_p = arpt;
 		arpt = NULL;
 		goto out;
 	}
@@ -1121,16 +1127,90 @@ out:
 	free_strlist(comps, n_comps);
 }
 
+static void
+extract_TA(airport_t *arpt, char *const*comps)
+{
+	int TA;
+
+	ASSERT(arpt != NULL);
+	ASSERT(comps != NULL);
+
+	TA = atoi(comps[2]);
+	if (is_valid_elev(TA)) {
+		arpt->TA = TA;
+		arpt->TA_m = FEET2MET(TA);
+	}
+}
+
+static void
+extract_TL(airport_t *arpt, char *const*comps)
+{
+	int TL;
+	ASSERT(arpt != NULL);
+	ASSERT(comps != NULL);
+
+	TL = atoi(comps[2]);
+	/*
+	 * Some "intelligent" people put in a flight level here, instead of
+	 * a number in feet. Detect that flip over to feet.
+	 */
+	if (TL < 600)
+		TL *= 100;
+	if (is_valid_elev(TL)) {
+		arpt->TL = TL;
+		arpt->TL_m = FEET2MET(TL);
+	}
+}
+
+/*
+ * Often times payware and custom airports lack a lot of the meta info
+ * that stock X-Plane airports contain. Normally we want to skip re-parsing
+ * stock airports in the presence of a custom one, however, we do want the
+ * extra meta info out of the stock dataset. To that end, if we hit a
+ * duplicate in the stock dataset, we try to use it fill in any precending
+ * custom airport.
+ */
+static void
+fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
+{
+	ASSERT(arpt != NULL);
+	ASSERT(line != NULL);
+
+	if (row_code == 1302) {
+		size_t ncomps;
+		char **comps = strsplit(line, " ", B_TRUE, &ncomps);
+
+		if (ncomps < 2) {
+			free_strlist(comps, ncomps);
+			return;
+		}
+
+		if (strcmp(comps[1], "iata_code") == 0 && ncomps >= 3 &&
+		    is_valid_iata_code(comps[2]) &&
+		    !is_valid_iata_code(arpt->iata)) {
+			lacf_strlcpy(arpt->iata, comps[2], sizeof (arpt->iata));
+		} else if (strcmp(comps[1], "transition_alt") == 0 &&
+		    ncomps >= 3 && arpt->TA == 0) {
+			extract_TA(arpt, comps);
+		} else if (strcmp(comps[1], "transition_level") == 0 &&
+		    ncomps >= 3 && arpt->TL == 0) {
+			extract_TL(arpt, comps);
+		}
+
+		free_strlist(comps, ncomps);
+	}
+}
+
 /*
  * Parses an apt.dat (either from regular scenery or from CACHE_DIR) to
  * cache the airports contained in it.
  */
 static void
 read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
-    iconv_t *cd_p)
+    iconv_t *cd_p, bool_t fill_in_dups)
 {
 	FILE *apt_dat_f;
-	airport_t *arpt = NULL;
+	airport_t *arpt = NULL, *dup_arpt = NULL;
 	char *line = NULL;
 	size_t linecap = 0;
 	int line_num = 0;
@@ -1164,11 +1244,17 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			if (arpt != NULL)
 				read_apt_dat_insert(db, arpt);
 			arpt = NULL;
+			dup_arpt = NULL;
 		}
-		if (row_code == 1)
-			arpt = parse_apt_dat_1_line(db, line, cd_p);
-		if (arpt == NULL)
+		if (row_code == 1) {
+			arpt = parse_apt_dat_1_line(db, line, cd_p,
+			    fill_in_dups ? &dup_arpt : NULL);
+		}
+		if (arpt == NULL) {
+			if (dup_arpt != NULL)
+				fill_dup_arpt_info(dup_arpt, line, row_code);
 			continue;
+		}
 
 		switch (row_code) {
 		case 21:
@@ -1213,24 +1299,9 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				lacf_strlcpy(arpt->iata, comps[2],
 				    sizeof (arpt->iata));
 			} else if (strcmp(comps[1], "transition_alt") == 0) {
-				int TA = atoi(comps[2]);
-				if (is_valid_elev(TA)) {
-					arpt->TA = TA;
-					arpt->TA_m = FEET2MET(TA);
-				}
+				extract_TA(arpt, comps);
 			} else if (strcmp(comps[1], "transition_level") == 0) {
-				int TL = atoi(comps[2]);
-				/*
-				 * Some "intelligent" people put in a flight
-				 * level here, instead of a number in feet.
-				 * Detect that flip over to feet.
-				 */
-				if (TL < 600)
-					TL *= 100;
-				if (is_valid_elev(TL)) {
-					arpt->TL = TL;
-					arpt->TL_m = FEET2MET(TL);
-				}
+				extract_TL(arpt, comps);
 			} else if (strcmp(comps[1], "datum_lat") == 0) {
 				double lat = atof(comps[2]);
 				if (is_valid_lat(lat)) {
@@ -1957,8 +2028,10 @@ recreate_cache(airportdb_t *db)
 	/* First scan all the provided apt.dat files */
 	cd = iconv_open("ASCII//TRANSLIT", "UTF-8");
 	for (apt_dats_entry_t *e = list_head(&apt_dat_files); e != NULL;
-	    e = list_next(&apt_dat_files, e))
-		read_apt_dat(db, e->fname, B_TRUE, &cd);
+	    e = list_next(&apt_dat_files, e)) {
+		bool_t fill_in_dups = (list_next(&apt_dat_files, e) == NULL);
+		read_apt_dat(db, e->fname, B_TRUE, &cd, fill_in_dups);
+	}
 	iconv_close(cd);
 	if (saved_locale != NULL) {
 		setlocale(LC_CTYPE, saved_locale);
@@ -2399,7 +2472,7 @@ load_airports_in_tile(airportdb_t *db, geo_pos2_t tile_pos)
 	    tile_pos.lat, tile_pos.lon);
 	fname = mkpathname(cache_dir, lat_lon, NULL);
 	if (file_exists(fname, NULL))
-		read_apt_dat(db, fname, B_FALSE, NULL);
+		read_apt_dat(db, fname, B_FALSE, NULL, B_FALSE);
 	free(cache_dir);
 	free(fname);
 }
@@ -2498,6 +2571,7 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	db->cachedir = strdup(cachedir);
 	db->load_limit = ARPT_LOAD_LIMIT;
 	db->ifr_only = B_TRUE;
+	db->normalize_gate_names = B_FALSE;
 
 	mutex_init(&db->lock);
 

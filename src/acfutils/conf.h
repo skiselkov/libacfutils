@@ -120,7 +120,7 @@ API_EXPORT void conf_set_b_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
 API_EXPORT void conf_set_data_v(conf_t *conf, PRINTF_FORMAT(const char *fmt),
     const void *buf, size_t sz, ...) PRINTF_ATTR2(2, 5);
 
-#if	__STDC_VERSION__ >= 199901L
+#if	__STDC_VERSION__ >= 199901L || defined(__cplusplus)
 API_EXPORT bool conf_get_b2(const conf_t *conf, const char *key,
     bool *value);
 API_EXPORT void conf_set_b2(conf_t *conf, const char *key, bool value);
@@ -132,7 +132,7 @@ API_EXPORT bool conf_get_b2_v(const conf_t *conf,
  * promotion, which is undefined behavior in varargs.
  */
 #define	conf_set_b2_v	conf_set_b_v
-#endif	/* __STDC_VERSION__ >= 199901L */
+#endif	/* __STDC_VERSION__ >= 199901L || defined(__cplusplus) */
 
 API_EXPORT bool_t conf_walk(const conf_t *conf, const char **key,
     const char **value, void **cookie);
