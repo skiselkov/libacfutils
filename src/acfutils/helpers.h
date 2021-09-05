@@ -492,6 +492,16 @@ API_EXPORT void win_perror(DWORD err, PRINTF_FORMAT(const char *fmt), ...)
 API_EXPORT void lacf_qsort_r(void *base, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *, void *), void *arg);
 
+#if	defined(__STDC_LIB_EXT1__) || IBM
+#define	lacf_gmtime_r(__time__, __tm__)	_gmtime64_s((__tm__), (__time__))
+#define	LACF_GMTIME_CHK(__time__, __tm__) \
+	(_gmtime64_s((__tm__), (__time__)) == 0)
+#else
+#define	lacf_gmtime_r			gmtime_r
+#define	LACF_GMTIME_CHK(__time__, __tm__) \
+	(gmtime_r((__time__), (__tm__)) != NULL)
+#endif
+
 #ifdef	__cplusplus
 }
 #endif

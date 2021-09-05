@@ -87,9 +87,11 @@ append_if_mod_since_hdr(struct curl_slist *hdrs, const char *path)
 	if (file_exists(path, NULL) && stat(path, &st) == 0) {
 		char buf[64];
 		time_t t = st.st_mtime;
+		struct tm tm;
 
+		lacf_gmtime_r(&t, &tm);
 		strftime(buf, sizeof (buf),
-		    "If-Modified-Since: %a, %d %b %Y %H:%M:%S GMT", gmtime(&t));
+		    "If-Modified-Since: %a, %d %b %Y %H:%M:%S GMT", &tm);
 		hdrs = curl_slist_append(hdrs, buf);
 	}
 
