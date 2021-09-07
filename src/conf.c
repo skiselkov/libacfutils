@@ -288,6 +288,7 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 		conf_key_t *ck;
 		avl_index_t where;
 		conf_key_type_t type;
+		bool unescape = false;
 
 		if (compressed) {
 			if (parser_get_next_gzline(gz_fp, &line, &linecap,
@@ -304,14 +305,24 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 		sep = strstr(line, "`");
 		if (sep != NULL) {
 			type = CONF_KEY_DATA;
+			sep[0] = '\0';
 		} else {
-			sep = strstr(line, "=");
-			if (sep != NULL)
+			sep = strstr(line, "%=");
+			if (sep != NULL) {
 				type = CONF_KEY_STR;
-			else
-				goto errout;
+				sep[0] = '\0';
+				sep[1] = '\0';
+				unescape = true;
+			} else {
+				sep = strstr(line, "=");
+				if (sep != NULL) {
+					sep[0] = '\0';
+					type = CONF_KEY_STR;
+				} else {
+					goto errout;
+				}
+			}
 		}
-		sep[0] = '\0';
 		strip_space(line);
 		strip_space(&sep[1]);
 
@@ -334,7 +345,8 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 		if (type == CONF_KEY_STR) {
 			ck->str = safe_malloc(strlen(&sep[1]) + 1);
 			strcpy(ck->str, &sep[1]);
-			unescape_percent(ck->str);
+			if (unescape)
+				unescape_percent(ck->str);
 		} else {
 			size_t l = strlen(&sep[1]);
 			ssize_t sz_est = BASE64_DEC_SIZE(l);
@@ -438,6 +450,18 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 }
 
 static bool_t
+needs_escape(const char *str)
+{
+	ASSERT(str != NULL);
+
+	for (unsigned i = 0, n = strlen(str); i < n; i++) {
+		if (str[i] < 32)
+			return (true);
+	}
+	return (false);
+}
+
+static bool_t
 conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 {
 	char *data_buf = NULL;
@@ -457,17 +481,28 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 	}
 	for (conf_key_t *ck = avl_first(&conf->tree); ck != NULL;
 	    ck = AVL_NEXT(&conf->tree, ck)) {
-		char *str_esc;
 		switch (ck->type) {
 		case CONF_KEY_STR:
-			str_esc = curl_easy_escape(curl, ck->str, 0);
-			if ((compressed ?
-			    gzprintf(gz_fp, "%s = %s\n", ck->key, str_esc) < 0 :
-			    fprintf(f_fp, "%s = %s\n", ck->key, str_esc) < 0)) {
-				curl_free(str_esc);
-				goto errout;
+			if (!needs_escape(ck->str)) {
+				if ((compressed ?
+				    gzprintf(gz_fp, "%s = %s\n", ck->key,
+				    ck->str) < 0 :
+				    fprintf(f_fp, "%s = %s\n", ck->key,
+				    ck->str) < 0)) {
+					goto errout;
+				}
+			} else {
+				char *str = curl_easy_escape(curl, ck->str, 0);
+				if ((compressed ?
+				    gzprintf(gz_fp, "%s %%= %s\n", ck->key,
+				    str) < 0 :
+				    fprintf(f_fp, "%s %%= %s\n", ck->key,
+				    str) < 0)) {
+					curl_free(str);
+					goto errout;
+				}
+				curl_free(str);
 			}
-			curl_free(str_esc);
 			break;
 		case CONF_KEY_DATA: {
 			size_t req = BASE64_ENC_SIZE(ck->data.sz);
