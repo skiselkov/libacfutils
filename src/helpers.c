@@ -638,7 +638,9 @@ void
 unescape_percent(char *str)
 {
 	for (int i = 0, n = strlen(str); i + 2 < n; i++) {
-		if (str[i] == '%') {
+		/* Skip non-parseable hex digits */
+		if (str[i] == '%' && isxdigit(str[i + 1]) &&
+		    isxdigit(str[i + 2])) {
 			char dig[3] = { str[i + 1], str[i + 2], 0 };
 			unsigned val;
 			sscanf(dig, "%x", &val);

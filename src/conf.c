@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <zlib.h>
 
+#include <curl/curl.h>
+
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"
 #include "acfutils/base64.h"
@@ -332,6 +334,7 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 		if (type == CONF_KEY_STR) {
 			ck->str = safe_malloc(strlen(&sep[1]) + 1);
 			strcpy(ck->str, &sep[1]);
+			unescape_percent(ck->str);
 		} else {
 			size_t l = strlen(&sep[1]);
 			ssize_t sz_est = BASE64_DEC_SIZE(l);
@@ -442,6 +445,9 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 	ASSERT(fp != NULL);
 	FILE *f_fp = compressed ? NULL : fp;
 	gzFile gz_fp = compressed ? fp : NULL;
+	/* This is only used for generating escape sequences */
+	CURL *curl = curl_easy_init();
+	ASSERT(curl != NULL);
 
 	ASSERT(conf != NULL);
 
@@ -451,13 +457,17 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 	}
 	for (conf_key_t *ck = avl_first(&conf->tree); ck != NULL;
 	    ck = AVL_NEXT(&conf->tree, ck)) {
+		char *str_esc;
 		switch (ck->type) {
 		case CONF_KEY_STR:
+			str_esc = curl_easy_escape(curl, ck->str, 0);
 			if ((compressed ?
-			    gzprintf(gz_fp, "%s = %s\n", ck->key, ck->str) < 0 :
-			    fprintf(f_fp, "%s = %s\n", ck->key, ck->str) < 0)) {
+			    gzprintf(gz_fp, "%s = %s\n", ck->key, str_esc) < 0 :
+			    fprintf(f_fp, "%s = %s\n", ck->key, str_esc) < 0)) {
+				curl_free(str_esc);
 				goto errout;
 			}
+			curl_free(str_esc);
 			break;
 		case CONF_KEY_DATA: {
 			size_t req = BASE64_ENC_SIZE(ck->data.sz);
@@ -485,9 +495,11 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 		}
 	}
 	free(data_buf);
+	curl_easy_cleanup(curl);
 	return (B_TRUE);
 errout:
 	free(data_buf);
+	curl_easy_cleanup(curl);
 	return (B_FALSE);
 }
 
