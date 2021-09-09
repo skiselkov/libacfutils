@@ -989,7 +989,14 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 
 		chart = safe_calloc(1, sizeof (*chart));
 		chart->arpt = arpt;
-		chart->name = safe_strdup(name);
+		/*
+		 * Navigraph charts don't always contain a unique name,
+		 * so to avoid name conflicts, we suffix the readable
+		 * chart name with "##<index>". The apps using the
+		 * interface must handle this case specially to avoid
+		 * showing the suffix.
+		 */
+		chart->name = sprintf_alloc("%s##%s", name, idx_nr);
 		if (strcmp(cat, "ARR") == 0) {
 			chart->type = CHART_TYPE_STAR;
 		} else if (strcmp(cat, "DEP") == 0) {
