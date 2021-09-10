@@ -1370,6 +1370,10 @@ chartdb_get_chart_names(chartdb_t *cdb, const char *icao, chart_type_t type,
 			i++;
 		}
 	}
+	if (cdb->chart_sort_func != NULL) {
+		lacf_qsort_r(charts, num, sizeof (*charts),
+		    cdb->chart_sort_func, cdb);
+	}
 
 	mutex_exit(&cdb->lock);
 

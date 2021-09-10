@@ -113,6 +113,7 @@ struct chartdb_s {
 	/* immutable after provider init */
 	bool_t		flat_db;
 	bool_t		disallow_caching;
+	int		(*chart_sort_func)(const void *, const void *, void *);
 
 	/* private to chart provider */
 	void		*prov_info;
