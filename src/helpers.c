@@ -470,8 +470,9 @@ airac_cycle2exp_date(int cycle, char buf[16], time_t *cycle_end_p)
 			 * the previous day at 23:59:59.
 			 */
 			time_t cycle_end_t = cycle2start(i) + 28 * 86400;
-			const struct tm end_tm = *gmtime(&cycle_end_t);
+			struct tm end_tm;
 
+			lacf_gmtime_r(&cycle_end_t, &end_tm);
 			if (buf != NULL) {
 				snprintf(buf, 16, "%02d-%s", end_tm.tm_mday,
 				    nr2month(end_tm.tm_mon));
@@ -637,7 +638,9 @@ void
 unescape_percent(char *str)
 {
 	for (int i = 0, n = strlen(str); i + 2 < n; i++) {
-		if (str[i] == '%') {
+		/* Skip non-parseable hex digits */
+		if (str[i] == '%' && isxdigit(str[i + 1]) &&
+		    isxdigit(str[i + 2])) {
 			char dig[3] = { str[i + 1], str[i + 2], 0 };
 			unsigned val;
 			sscanf(dig, "%x", &val);

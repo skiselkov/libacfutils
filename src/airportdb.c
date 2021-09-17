@@ -2666,8 +2666,23 @@ airport_lookup_htbl_multi(airportdb_t *db, const list_t *list,
 		if (found_cb != NULL) {
 			airport_t *apt = airport_lookup(db, idx->ident,
 			    TO_GEO2(idx->pos));
-			ASSERT(apt != NULL);
-			found_cb(apt, userinfo);
+			/*
+			 * Although we should NEVER hit a state where this
+			 * lookup fails, the function might need to perform
+			 * I/O to read the tile's apt.dat, which brings the
+			 * possibility of a failed read. Since users' drives
+			 * can be all kinds of garbage, we can't hard-assert
+			 * here due to potential I/O issues.
+			 */
+			if (apt != NULL) {
+				found_cb(apt, userinfo);
+			} else {
+				logMsg("WARNING: airport database index is "
+				    "damaged: index contains ICAO %s, but "
+				    "the associated database tile doesn't "
+				    "appear to contain this airport.",
+				    idx->icao);
+			}
 		}
 	}
 }

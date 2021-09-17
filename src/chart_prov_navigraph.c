@@ -113,6 +113,59 @@ get_json_error(const chart_dl_info_t *dl_info, char *error, size_t cap)
 	    toks, n_toks, "error", error, cap));
 }
 
+/*
+ * Sort the charts based on the index number.
+ */
+static int
+chart_sort_func_navigraph(const void *a, const void *b, void *c)
+{
+	const char *na = *(char **)a, *nb = *(char **)b;
+	const char *idx_a = strrchr(na, '#'), *idx_b = strrchr(nb, '#');
+	const char *dash_a, *dash_b;
+	char sect_a_str[8] = {}, sect_b_str[8] = {};
+	char page_a_str[8] = {}, page_b_str[8] = {};
+	int sect_a, sect_b, page_a, page_b, cmp;
+
+	UNUSED(c);
+
+	if (idx_a == NULL || idx_a < &na[1] || idx_a[-1] != '#' ||
+	    idx_b == NULL || idx_b < &nb[1] || idx_b[-1] != '#') {
+		return (0);
+	}
+	idx_a++;
+	idx_b++;
+	dash_a = strchr(idx_a, '-');
+	dash_b = strchr(idx_b, '-');
+	if (dash_a == NULL || dash_b == NULL)
+		return (0);
+	strlcpy(sect_a_str, idx_a,
+	    MIN(sizeof (sect_a_str), (unsigned)(dash_a - idx_a) + 1));
+	strlcpy(page_a_str, &dash_a[1], sizeof (page_a_str));
+	strlcpy(sect_b_str, idx_b,
+	    MIN(sizeof (sect_b_str), (unsigned)(dash_b - idx_b) + 1));
+	strlcpy(page_b_str, &dash_b[1], sizeof (page_b_str));
+
+	sect_a = atoi(sect_a_str);
+	page_a = atoi(page_a_str);
+	sect_b = atoi(sect_b_str);
+	page_b = atoi(page_b_str);
+
+	if (sect_a < sect_b)
+		return (-1);
+	if (sect_a > sect_b)
+		return (1);
+	if (page_a < page_b)
+		return (-1);
+	if (page_a > page_b)
+		return (1);
+	cmp = strcmp(idx_a, idx_b);
+	if (cmp < 0)
+		return (-1);
+	if (cmp > 0)
+		return (1);
+	return (0);
+}
+
 static bool_t
 handle_dev_auth(const chart_dl_info_t *dl_info, navigraph_t *nav)
 {
@@ -723,6 +776,7 @@ chart_navigraph_init(chartdb_t *cdb)
 	 */
 	cdb->disallow_caching = B_TRUE;
 	cdb->prov_priv = nav;
+	cdb->chart_sort_func = chart_sort_func_navigraph;
 	/*
 	 * Force a connection right away to set up the account from
 	 * the worker thread, where we can block for user input.
@@ -989,7 +1043,14 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 
 		chart = safe_calloc(1, sizeof (*chart));
 		chart->arpt = arpt;
-		chart->name = safe_strdup(name);
+		/*
+		 * Navigraph charts don't always contain a unique name,
+		 * so to avoid name conflicts, we suffix the readable
+		 * chart name with "##<index>". The apps using the
+		 * interface must handle this case specially to avoid
+		 * showing the suffix.
+		 */
+		chart->name = sprintf_alloc("%s##%s", name, idx_nr);
 		if (strcmp(cat, "ARR") == 0) {
 			chart->type = CHART_TYPE_STAR;
 		} else if (strcmp(cat, "DEP") == 0) {
