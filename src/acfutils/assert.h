@@ -39,22 +39,6 @@ extern "C" {
 #if	LIN || APL
 #define	LACF_CRASH()	abort()
 #else	/* !LIN && !APL */
-/*
- * Because the simplest things on Windows need to be a fucking Einstein
- * project, to actually trigger the unhandled exception filter from C,
- * we need actually cause a genuine SEH exception. The easiest is a NULL
- * pointer dereference. Even though the resulting exception will report
- * an exception access violation in the log, the assertion failure right
- * above it will clarify what the actual cause was.
- */
-#if 0
-#define	LACF_CRASH()	\
-	do { \
-		int *crashptr = NULL; \
-		*crashptr = 0; \
-		abort(); \
-	} while (0)
-#else
 #define	EXCEPTION_ASSERTION_FAILED	0x8000
 #define	LACF_CRASH()	\
 	do { \
@@ -63,7 +47,6 @@ extern "C" {
 		/* Needed to avoid no-return-value warnings */ \
 		abort(); \
 	} while (0)
-#endif
 #endif	/* !LIN && !APL */
 
 /*
