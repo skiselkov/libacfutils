@@ -36,6 +36,36 @@
 extern "C" {
 #endif
 
+#if	LIN || APL
+#define	LACF_CRASH()	abort()
+#else	/* !LIN && !APL */
+/*
+ * Because the simplest things on Windows need to be a fucking Einstein
+ * project, to actually trigger the unhandled exception filter from C,
+ * we need actually cause a genuine SEH exception. The easiest is a NULL
+ * pointer dereference. Even though the resulting exception will report
+ * an exception access violation in the log, the assertion failure right
+ * above it will clarify what the actual cause was.
+ */
+#if 0
+#define	LACF_CRASH()	\
+	do { \
+		int *crashptr = NULL; \
+		*crashptr = 0; \
+		abort(); \
+	} while (0)
+#else
+#define	EXCEPTION_ASSERTION_FAILED	0x8000
+#define	LACF_CRASH()	\
+	do { \
+		RaiseException(EXCEPTION_ASSERTION_FAILED, \
+		    EXCEPTION_NONCONTINUABLE, 0, NULL); \
+		/* Needed to avoid no-return-value warnings */ \
+		abort(); \
+	} while (0)
+#endif
+#endif	/* !LIN && !APL */
+
 /*
  * ASSERT() and VERIFY() are assertion test macros. If the condition
  * expression provided as the argument to the macro evaluates as non-true,
@@ -53,7 +83,7 @@ extern "C" {
 		if (COND_UNLIKELY(!(x))) { \
 			log_impl(log_basename(__FILE__), __LINE__, \
 			    "assertion \"%s\" failed: " fmt, #x, __VA_ARGS__); \
-			abort(); \
+			LACF_CRASH(); \
 		} \
 	} while (0)
 
@@ -67,7 +97,7 @@ extern "C" {
 			log_impl(log_basename(__FILE__), __LINE__, \
 			    "assertion %s %s %s failed (" fmt " %s " \
 			    fmt ")", #x, #op, #y, tmp_x, #op, tmp_y); \
-			abort(); \
+			LACF_CRASH(); \
 		} \
 	} while (0)
 #define	VERIFY3S(x, op, y)	VERIFY3_impl(x, op, y, long, "%lu")
@@ -84,7 +114,7 @@ extern "C" {
 #define	VERIFY_FAIL()		\
 	do { \
 		log_impl(log_basename(__FILE__), __LINE__, "Internal error"); \
-		abort(); \
+		LACF_CRASH(); \
 	} while (0)
 
 #ifdef	DEBUG
