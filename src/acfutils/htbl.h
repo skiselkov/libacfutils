@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "types.h"
 #include "list.h"
 
 #ifdef	__cplusplus
