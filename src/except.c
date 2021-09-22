@@ -206,6 +206,9 @@ LONG WINAPI
 handle_windows_exception(EXCEPTION_POINTERS *ei)
 {
 	switch(ei->ExceptionRecord->ExceptionCode) {
+	case EXCEPTION_ASSERTION_FAILED:
+		/* No need to print anything, there's already a log message */
+		break;
 	case EXCEPTION_ACCESS_VIOLATION:
 		logMsg("Caught EXCEPTION_ACCESS_VIOLATION");
 		break;
