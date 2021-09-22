@@ -345,9 +345,10 @@ lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
 #endif
 }
 
-#if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
+#if	IBM && !defined(__cplusplus) && \
+	(defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
 #define	getline				lacf_getline
-#endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
+#endif
 
 #define	strtolower			ACFSYM(strtolower)
 API_EXPORT void strtolower(char *str);
