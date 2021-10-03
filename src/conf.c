@@ -634,7 +634,12 @@ conf_get_d(const conf_t *conf, const char *key, double *value)
 	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	return (sscanf(ck->str, "%lf", value) == 1);
+	if (strcmp(ck->str, "nan") == 0) {
+		*value = NAN;
+		return (true);
+	} else {
+		return (sscanf(ck->str, "%lf", value) == 1);
+	}
 }
 
 /* Same as conf_get_d, but for float values */
@@ -649,7 +654,12 @@ conf_get_f(const conf_t *conf, const char *key, float *value)
 	ck = conf_find(conf, key, NULL);
 	if (ck == NULL || ck->type != CONF_KEY_STR)
 		return (B_FALSE);
-	return (sscanf(ck->str, "%f", value) == 1);
+	if (strcmp(ck->str, "nan") == 0) {
+		*value = NAN;
+		return (true);
+	} else {
+		return (sscanf(ck->str, "%f", value) == 1);
+	}
 }
 
 /*
