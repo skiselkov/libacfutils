@@ -2060,11 +2060,11 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 	ASSERT3F(mach_lim, >=, 0);
 	ASSERT(is_valid_alt(alt1_ft));
 	ASSERT3F(kcas1, >, 0);
-	ASSERT3F(kcas1, <, 600);
+	ASSERT3F(kcas1, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind1));
 	ASSERT(is_valid_alt(alt2_ft));
 	ASSERT3F(kcas2, >, 0);
-	ASSERT3F(kcas2, <, 600);
+	ASSERT3F(kcas2, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind2));
 	ASSERT3F(alt1_ft, >=, alt2_ft);
 	/* ttg_out can be NULL */
