@@ -194,6 +194,19 @@ DEF_DELAY_LINE_PEEK(uint64_t, u64)
 DEF_DELAY_LINE_PEEK(double, f64)
 
 /*
+ * Functions to peek at the new value in a delay line without ever
+ * affecting its state change to a new value. Can be used in combination
+ * with delay_line_push_* to look for a state change in a delay line in
+ * response to the passage of time.
+ *	delay_line_pull_i64_new	- peeks at the delay line as an int64_t
+ *	delay_line_pull_u64_new	- peeks at the delay line as a uint64_t
+ *	delay_line_pull_f64_new	- peeks at the delay line as a double
+ */
+DEF_DELAY_LINE_PEEK(int64_t, i64_new)
+DEF_DELAY_LINE_PEEK(uint64_t, u64_new)
+DEF_DELAY_LINE_PEEK(double, f64_new)
+
+/*
  * Functions that push a new value to a delay line:
  *	delay_line_push_i64	- pushes an int64_t to the delay line
  *	delay_line_push_u64	- pushes a uint64_t to the delay line
