@@ -345,9 +345,10 @@ lacf_getline(char **line_p, size_t *cap_p, FILE *fp)
 #endif
 }
 
-#if	IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
+#if	IBM && !defined(__cplusplus) && \
+	(defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE))
 #define	getline				lacf_getline
-#endif	/* IBM && (defined(_GNU_SOURCE) || defined(_POSIX_C_SOURCE)) */
+#endif
 
 #define	strtolower			ACFSYM(strtolower)
 API_EXPORT void strtolower(char *str);
@@ -465,7 +466,7 @@ API_EXPORT struct dirent *readdir(DIR *dirp);
 #define	closedir	ACFSYM(closedir)
 API_EXPORT void closedir(DIR *dirp);
 
-#if	!defined(_MSC_VER)
+#if	!defined(_MSC_VER) && !defined(LACF_HIDE_STAT_COMPAT)
 /* A minimally compatible POSIX-style file stat reading implementation */
 #define	stat		ACFSYM(stat)
 struct stat {
@@ -474,7 +475,7 @@ struct stat {
 	time_t		st_mtime;
 };
 API_EXPORT int stat(const char *pathname, struct stat *buf);
-#endif	/* !defined(_MSC_VER) */
+#endif	/* !defined(_MSC_VER) && !defined(LACF_HIDE_STAT_COMPAT) */
 
 #define	sleep(x)	SleepEx((x) * 1000, FALSE)
 #define	usleep(x)	SleepEx((x) / 1000, FALSE)

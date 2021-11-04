@@ -46,9 +46,10 @@ worker(void *ui)
 {
 	worker_t *wk = ui;
 	uint64_t now = microclock();
-
+#if	IBM
+	TIMECAPS tc;
+#endif
 	thread_set_name(wk->name);
-
 	/*
 	 * SIGPIPE is almost never desired on worker threads (typically due
 	 * to writing to broken network sockets).
@@ -59,6 +60,17 @@ worker(void *ui)
 		if (!wk->init_func(wk->userinfo))
 			return;
 	}
+#if	IBM
+	/*
+	 * On Windows, the sleep interval is constrained to a multiple of
+	 * the default clock tick. This is often something really crude,
+	 * like 20ms or so. That is way too crude for our needs, so we'll
+	 * drop the time tick to the minimum the hardware can support
+	 * (usually 1ms).
+	 */
+	timeGetDevCaps(&tc, sizeof (tc));
+	timeBeginPeriod(tc.wPeriodMin);
+#endif	/* IBM */
 
 	mutex_enter(&wk->lock);
 	while (wk->run) {
@@ -114,6 +126,10 @@ worker(void *ui)
 
 	if (wk->fini_func != NULL)
 		wk->fini_func(wk->userinfo);
+
+#if	IBM
+	timeEndPeriod(tc.wPeriodMin);
+#endif	/* IBM */
 }
 
 void

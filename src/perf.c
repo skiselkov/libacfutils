@@ -1447,7 +1447,11 @@ crz_step(double isadev, double tp_alt, double qnh, double alt_ft,
 		    KG2LBS(sfc) / get_num_eng(flt, acft), KG2LBS(mass) / 1000);
 		burn_step = sfc * (d_t / SECS_PER_HR);
 	}
-	dist_step = (tas_now + wind_mps) * d_t;
+	/*
+	 * The MAX here is important to make sure we keep making forward
+	 * progress, otherwise the solver can soft-lock.
+	 */
+	dist_step = MAX(tas_now + wind_mps, KT2MPS(60)) * d_t;
 	if ((*distp) + MET2NM(dist_step) > dist_nm) {
 		double rat = (dist_nm - (*distp)) / MET2NM(dist_step);
 		burn_step *= rat;
@@ -2060,11 +2064,11 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 	ASSERT3F(mach_lim, >=, 0);
 	ASSERT(is_valid_alt(alt1_ft));
 	ASSERT3F(kcas1, >, 0);
-	ASSERT3F(kcas1, <, 600);
+	ASSERT3F(kcas1, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind1));
 	ASSERT(is_valid_alt(alt2_ft));
 	ASSERT3F(kcas2, >, 0);
-	ASSERT3F(kcas2, <, 600);
+	ASSERT3F(kcas2, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind2));
 	ASSERT3F(alt1_ft, >=, alt2_ft);
 	/* ttg_out can be NULL */
@@ -2102,7 +2106,11 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 			tgt_spd = kcas;
 			tas_mps = KT2MPS(kcas2ktas(kcas, p, oat));
 		}
-		gs_mps = tas_mps + wind_mps;
+		/*
+		 * We must make sure we make forward progress,
+		 * otherwise the solver can soft-lock.
+		 */
+		gs_mps = MAX(tas_mps + wind_mps, KT2MPS(60));
 		vs_mps = (FEET2MET(alt2_ft) - FEET2MET(alt1_ft)) /
 		    (NM2MET(dist_nm) / gs_mps);
 		spd_mps_or_mach = (is_mach ? tgt_spd : KT2MPS(tgt_spd));
