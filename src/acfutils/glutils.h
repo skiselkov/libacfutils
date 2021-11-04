@@ -301,7 +301,7 @@ glutils_debug_push(GLuint msgid, const char *format, ...)
 	va_end(ap);
 
 	if (len >= (int)sizeof (buf_stack)) {
-		char *buf_heap = safe_malloc(len + 1);
+		char *buf_heap = (char *)safe_malloc(len + 1);
 
 		va_start(ap, format);
 		vsnprintf(buf_heap, len + 1, format, ap);
