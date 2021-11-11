@@ -412,7 +412,7 @@ lacf_strcasecmp(const char *s1, const char *s2)
 	l2 = strlen(s2);
 
 	if (l1 < 4096 && l2 < 4096) {
-		char s1_lower[l1], s2_lower[l2];
+		char s1_lower[l1 + 1], s2_lower[l2 + 1];
 
 		lacf_strlcpy(s1_lower, s1, l1 + 1);
 		lacf_strlcpy(s2_lower, s2, l2 + 1);
