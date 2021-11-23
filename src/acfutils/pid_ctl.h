@@ -92,11 +92,10 @@ static inline void pid_ctl_set_r_d(pid_ctl_t *pid, double r_d);
  *	approaches the current delta-error value.
  */
 static inline void
-pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
-    double r_d)
+pid_ctl_init_noreset(pid_ctl_t *pid, double k_p, double k_i, double lim_i,
+    double k_d, double r_d)
 {
 	ASSERT(pid != NULL);
-	pid_ctl_reset(pid);
 	pid->k_p = k_p;
 	pid->k_p_gain = 1;
 	pid->k_i = k_i;
@@ -106,6 +105,14 @@ pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
 	pid->k_d_gain = 1;
 	pid->r_d = r_d;
 	pid->integ_clamp = B_TRUE;
+}
+static inline void
+pid_ctl_init(pid_ctl_t *pid, double k_p, double k_i, double lim_i, double k_d,
+    double r_d)
+{
+	ASSERT(pid != NULL);
+	pid_ctl_init_noreset(pid, k_p, k_i, lim_i, k_d, r_d);
+	pid_ctl_reset(pid);
 }
 
 static inline void
