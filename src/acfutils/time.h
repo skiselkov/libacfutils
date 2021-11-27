@@ -115,9 +115,10 @@ lacf_yday_to_mon_mday(unsigned days, int *tm_mon, int *tm_mday)
 				*tm_mon = i;
 			if (tm_mday != NULL)
 				*tm_mday = days - month2days[i] + 1;
-			break;
+			return;
 		}
 	}
+	VERIFY_FAIL();
 }
 
 #ifdef	__cplusplus
