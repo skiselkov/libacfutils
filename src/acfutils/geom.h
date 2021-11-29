@@ -271,6 +271,7 @@ API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis) PURE_ATTR;
 API_EXPORT vect3l_t vect3l_rot(vect3l_t v, long double angle, unsigned axis)
     PURE_ATTR;
 API_EXPORT vect2_t vect2_rot(vect2_t v, double angle) PURE_ATTR;
+API_EXPORT vect2_t vect2_rot_inv_y(vect2_t v, double angle) PURE_ATTR;
 API_EXPORT vect3_t vect3_neg(vect3_t v) PURE_ATTR;
 API_EXPORT vect3l_t vect3l_neg(vect3l_t v) PURE_ATTR;
 API_EXPORT vect2_t vect2_neg(vect2_t v) PURE_ATTR;
