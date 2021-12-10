@@ -27,7 +27,9 @@
 #define	_ACF_UTILS_SHADER_H_
 
 #include <stdarg.h>
+#include <time.h>
 
+#include "delay_line.h"
 #include "glew.h"
 
 #ifdef	__cplusplus
@@ -269,6 +271,8 @@ typedef struct {
 	const char			**uniform_names;
 	unsigned			num_uniforms;
 	GLint				uniform_loc[SHADER_OBJ_MAX_UNIFORMS];
+	delay_line_t			check_delay;
+	time_t				load_time;
 } shader_obj_t;
 
 /*
@@ -316,6 +320,14 @@ API_EXPORT void shader_obj_fini(shader_obj_t *obj);
  * successful.
  */
 API_EXPORT bool_t shader_obj_reload(shader_obj_t *obj);
+/*
+ * Similar to shader_obj_reload, but instead only reloads the shader if
+ * the on-disk version has changed. To avoid excessive disk I/O, this only
+ * does the check every few seconds using an internal timer.
+ * The function returns B_TRUE if the shader was reloaded successfully.
+ * If the reload wasn't necessary, or failed, B_FALSE is returned instead.
+ */
+API_EXPORT bool_t shader_obj_reload_check(shader_obj_t *obj);
 
 /*
  * Binds the shader object's program to the current OpenGL context. This
