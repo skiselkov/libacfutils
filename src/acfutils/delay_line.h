@@ -129,6 +129,13 @@ delay_line_get_delay(const delay_line_t *line)
 	return (line->delay_base_us);
 }
 
+static inline uint64_t
+delay_line_get_delay_act(const delay_line_t *line)
+{
+	ASSERT(line != NULL);
+	return (line->delay_us);
+}
+
 static inline void
 delay_line_set_rand(delay_line_t *line, double rand_fract)
 {
@@ -227,6 +234,7 @@ delay_line_push_ ## abbrev_type(delay_line_t *line, typename value) \
 	if (line->abbrev_type == line->abbrev_type ## _new && \
 	    value != line->abbrev_type ## _new) { \
 		line->changed_t = now; \
+		delay_line_refresh_delay(line); \
 	} \
 	line->abbrev_type ## _new = value; \
 	return (delay_line_pull_ ## abbrev_type(line)); \

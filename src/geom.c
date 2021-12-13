@@ -520,6 +520,17 @@ vect2_rot(vect2_t v, double a)
 }
 
 /*
+ * Same as vect2_rot, but assumes an inverted Y coordinate. This is used in
+ * X-Plane OpenGL coordinates, where the Y coordinate points south not north.
+ */
+vect2_t
+vect2_rot_inv_y(vect2_t v, double a)
+{
+	double sin_a = sin(DEG2RAD(-a)), cos_a = cos(DEG2RAD(-a));
+	return (VECT2(v.x * cos_a + v.y * sin_a, v.y * cos_a - v.x * sin_a));
+}
+
+/*
  * Negates vector `v' to point in the opposite direction.
  */
 vect3_t

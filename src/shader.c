@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2021 Saso Kiselkov. All rights reserved.
  */
 
 #include <stdlib.h>
@@ -28,11 +28,11 @@
 #include <errno.h>
 #include <stdarg.h>
 
-#include <acfutils/glutils.h>
-#include <acfutils/helpers.h>
-#include <acfutils/log.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/shader.h>
+#include "acfutils/glutils.h"
+#include "acfutils/helpers.h"
+#include "acfutils/log.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/shader.h"
 
 #define	EXTRA_2D_DEFINES \
 	"#define textureSize2D textureSize\n" \
@@ -795,6 +795,9 @@ shader_obj_init(shader_obj_t *obj,
 	obj->num_uniforms = num_uniforms;
 	shader_obj_refresh_loc(obj);
 
+	delay_line_init(&obj->check_delay, SEC2USEC(2));
+	obj->load_time = time(NULL);
+
 	return (B_TRUE);
 }
 
@@ -823,6 +826,50 @@ shader_obj_reload(shader_obj_t *obj)
 		glDeleteProgram(obj->prog);
 	obj->prog = prog;
 	shader_obj_refresh_loc(obj);
+	obj->load_time = time(NULL);
 
 	return (B_TRUE);
+}
+
+static bool_t
+check_shader_outdated(const shader_obj_t *obj, const shader_info_t *info)
+{
+	char *filepath;
+	struct stat st;
+
+	ASSERT(obj != NULL);
+	ASSERT(info != NULL);
+	filepath = mkpathname(obj->dirpath, info->filename, NULL);
+
+	if (stat(filepath, &st) < 0) {
+		LACF_DESTROY(filepath);
+		return (B_FALSE);
+	}
+	LACF_DESTROY(filepath);
+
+	return (st.st_mtime > obj->load_time);
+}
+
+bool_t
+shader_obj_reload_check(shader_obj_t *obj)
+{
+	ASSERT(obj != NULL);
+
+	if (DELAY_LINE_PUSH(&obj->check_delay, true)) {
+		DELAY_LINE_PUSH_IMM(&obj->check_delay, false);
+
+		ASSERT(obj->info != NULL);
+		if ((obj->info->vert != NULL &&
+		    check_shader_outdated(obj, obj->info->vert)) ||
+		    (obj->info->frag != NULL &&
+		    check_shader_outdated(obj, obj->info->frag)) ||
+		    (obj->info->comp != NULL &&
+		    check_shader_outdated(obj, obj->info->comp))) {
+			return (shader_obj_reload(obj));
+		} else {
+			return (B_FALSE);
+		}
+	} else {
+		return (B_FALSE);
+	}
 }

@@ -50,6 +50,13 @@ typedef struct {
 	delay_line_t	snap_hold_delay;
 } win_resize_ctl_t;
 
+typedef struct {
+	int		left;
+	int		top;
+	int		right;
+	int		bottom;
+} monitor_t;
+
 #define	create_widget_rel	ACFSYM(create_widget_rel)
 API_EXPORT XPWidgetID create_widget_rel(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
@@ -62,6 +69,7 @@ API_EXPORT XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
 
 API_EXPORT void widget_win_center(XPWidgetID window);
 API_EXPORT void classic_win_center(XPLMWindowID window);
+API_EXPORT monitor_t lacf_get_first_monitor_bounds(void);
 
 API_EXPORT void tooltip_init(void);
 API_EXPORT void tooltip_fini(void);

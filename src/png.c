@@ -46,7 +46,7 @@ typedef struct {
  */
 uint8_t *
 png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
-    int *color_type, int *bit_depth, bool_t cairo_argb32)
+    int *color_type, int *bit_depth, bool_t bgr, bool_t add_alpha)
 {
 	FILE *volatile fp = NULL;
 	size_t rowbytes;
@@ -116,9 +116,9 @@ png_load_impl(png_rw_ptr readfunc, void *arg, int *width, int *height,
 		if (ct == PNG_COLOR_TYPE_PALETTE) {
 			png_set_palette_to_rgb(pngp);
 		}
-		if (cairo_argb32)
+		if (bgr)
 			png_set_bgr(pngp);
-		if (cairo_argb32 && (ct & PNG_COLOR_MASK_ALPHA) == 0) {
+		if (add_alpha && (ct & PNG_COLOR_MASK_ALPHA) == 0) {
 			png_set_filler(pngp, 0xff, PNG_FILLER_AFTER);
 			added_alpha = B_TRUE;
 		}
@@ -205,7 +205,19 @@ png_load_from_file_rgb_auto(const char *filename, int *width, int *height,
 	*color_type = -1;
 	*bit_depth = -1;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    color_type, bit_depth, B_FALSE));
+	    color_type, bit_depth, B_FALSE, B_FALSE));
+}
+
+uint8_t *
+png_load_from_file_rgba_auto(const char *filename, int *width, int *height,
+    int *color_type, int *bit_depth)
+{
+	ASSERT(color_type != NULL);
+	ASSERT(bit_depth != NULL);
+	*color_type = -1;
+	*bit_depth = -1;
+	return (png_load_impl(NULL, (void *)filename, width, height,
+	    color_type, bit_depth, B_FALSE, B_TRUE));
 }
 
 uint8_t *
@@ -214,7 +226,7 @@ png_load_from_file_rgba(const char *filename, int *width, int *height)
 	int color_type = PNG_COLOR_TYPE_RGBA;
 	int bit_depth = 8;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    &color_type, &bit_depth, B_FALSE));
+	    &color_type, &bit_depth, B_FALSE, B_FALSE));
 }
 
 uint8_t *
@@ -223,7 +235,7 @@ png_load_from_file_grey(const char *filename, int *width, int *height)
 	int color_type = PNG_COLOR_TYPE_GRAY;
 	int bit_depth = 8;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    &color_type, &bit_depth, B_FALSE));
+	    &color_type, &bit_depth, B_FALSE, B_FALSE));
 }
 
 uint8_t *
@@ -232,7 +244,7 @@ png_load_from_file_grey16(const char *filename, int *width, int *height)
 	int color_type = PNG_COLOR_TYPE_GRAY;
 	int bit_depth = 16;
 	return (png_load_impl(NULL, (void *)filename, width, height,
-	    &color_type, &bit_depth, B_FALSE));
+	    &color_type, &bit_depth, B_FALSE, B_FALSE));
 }
 
 static void
@@ -252,7 +264,7 @@ png_load_from_buffer(const void *buf, size_t len, int *width, int *height)
 	int color_type = PNG_COLOR_TYPE_RGBA;
 	int bit_depth = 8;
 	return (png_load_impl(bufread, &br, width, height,
-	    &color_type, &bit_depth, B_FALSE));
+	    &color_type, &bit_depth, B_FALSE, B_FALSE));
 }
 
 uint8_t *
@@ -265,7 +277,7 @@ png_load_from_buffer_rgb_auto(const void *buf, size_t len, int *width,
 	*color_type = -1;
 	*bit_depth = -1;
 	return (png_load_impl(bufread, &br, width, height,
-	    color_type, bit_depth, B_FALSE));
+	    color_type, bit_depth, B_FALSE, B_FALSE));
 }
 
 uint8_t *
@@ -277,7 +289,7 @@ png_load_from_buffer_cairo_argb32(const void *buf, size_t len,
 	uint8_t *pixels;
 
 	pixels = png_load_impl(bufread, &br, width, height, &color_type,
-	    &bit_depth, B_TRUE);
+	    &bit_depth, B_TRUE, B_TRUE);
 	if (bit_depth == 8 && color_type == PNG_COLOR_TYPE_RGBA) {
 		return (pixels);
 	} else {

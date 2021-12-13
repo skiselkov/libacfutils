@@ -163,6 +163,7 @@ struct airport {
 	vect3_t		ecef;		/* refpt ECEF coordinates */
 	fpp_t		fpp;		/* ortho fpp centered on refpt */
 	bool_t		in_navdb;	/* used by recreate_apt_dat_cache */
+	bool_t		have_iaps;	/* used by recreate_apt_dat_cache */
 
 	avl_node_t	apt_dat_node;	/* apt_dat tree */
 	list_node_t	cur_arpts_node;	/* cur_arpts list */

@@ -92,6 +92,35 @@ lacf_microtime(void)
 #endif	/* !IBM */
 }
 
+/*
+ * Takes day-of-year (or an X-Plane "local_date_days" value) and converts
+ * it to month + day-of-month in the format used in the "tm" structure
+ * (see the C89 standard gmtime, ctime, asctime or localtime functions).
+ *
+ * @param days The input value of the number of days since January 1.
+ *	The function always assumes a non-leap year (consistent with
+ *	X-Plane's behavior).
+ * @param tm_mon If not NULL, this is filled with the month (0-11).
+ * @param tm_mday If not NULL, this is filled with the day-of-month (1-31).
+ */
+static inline void
+lacf_yday_to_mon_mday(unsigned days, int *tm_mon, int *tm_mday)
+{
+	static const unsigned month2days[12] = {
+	    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+	};
+	for (int i = 11; i >= 0; i--) {
+		if (month2days[i] <= days) {
+			if (tm_mon != NULL)
+				*tm_mon = i;
+			if (tm_mday != NULL)
+				*tm_mday = days - month2days[i] + 1;
+			return;
+		}
+	}
+	VERIFY_FAIL();
+}
+
 #ifdef	__cplusplus
 }
 #endif

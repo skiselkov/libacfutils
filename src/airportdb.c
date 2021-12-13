@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		13
+#define	ARPTDB_CACHE_VERSION		14
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -1457,6 +1457,8 @@ load_arinc424_arpt_data(const char *filename, airport_t *arpt)
 			runway_t *rwy;
 			float gpa;
 
+			arpt->have_iaps = B_TRUE;
+
 			comps = strsplit(line + 6, ",", B_FALSE, &ncomps);
 			if (strstr(comps[4], "RW") != comps[4] ||
 			    sscanf(comps[28], "%f", &gpa) != 1 ||
@@ -2072,7 +2074,7 @@ recreate_cache(airportdb_t *db)
 		 * airport, because we don't have TA/TL info on them. But if
 		 * we are in ifr_only=B_FALSE mode, then accept it anyway.
 		 */
-		if (!arpt->in_navdb && db->ifr_only) {
+		if (!arpt->have_iaps && db->ifr_only) {
 			geo_unlink_airport(db, arpt);
 			avl_remove(&db->apt_dat, arpt);
 			free_airport(arpt);
