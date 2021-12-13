@@ -1863,7 +1863,7 @@ create_arpt_index(airportdb_t *db, const airport_t *arpt)
 	idx->pos = TO_GEO3_32(arpt->refpt);
 	for (const runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
 	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
-		if (rwy_is_hard(rwy->surf)) {
+		if (!db->ifr_only || rwy_is_hard(rwy->surf)) {
 			idx->max_rwy_len = MAX(idx->max_rwy_len,
 			    MET2FEET(rwy->ends[0].land_len));
 			idx->max_rwy_len = MAX(idx->max_rwy_len,
