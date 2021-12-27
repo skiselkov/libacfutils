@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		14
+#define	ARPTDB_CACHE_VERSION		15
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -1195,6 +1195,9 @@ fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
 		} else if (strcmp(comps[1], "transition_level") == 0 &&
 		    ncomps >= 3 && arpt->TL == 0) {
 			extract_TL(arpt, comps);
+		} else if (strcmp(comps[1], "region_code") == 0 &&
+		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
+			lacf_strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
 		}
 
 		free_strlist(comps, ncomps);
