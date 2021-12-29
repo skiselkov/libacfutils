@@ -334,7 +334,6 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	};
 	CGLPixelFormatObj pix;
 	CGLError error;
-	GLint num;
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
 
 	UNUSED(win_ptr);
@@ -344,10 +343,16 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	ASSERT(share_ctx == NULL || share_ctx->cgl != NULL);
 
 	ctx->created = B_TRUE;
-	error = CGLChoosePixelFormat(attrs, &pix, &num);
-	if (error != kCGLNoError) {
-		logMsg("CGLChoosePixelFormat failed with error %d", error);
-		goto errout;
+	if (share_ctx != NULL) {
+		pix = CGLGetPixelFormat(share_ctx->cgl);
+	} else {
+		GLint num;
+		error = CGLChoosePixelFormat(attrs, &pix, &num);
+		if (error != kCGLNoError) {
+			logMsg("CGLChoosePixelFormat failed with error %d",
+			    error);
+			goto errout;
+		}
 	}
 	error = CGLCreateContext(pix,
 	    share_ctx != NULL ? share_ctx->cgl : NULL, &ctx->cgl);
