@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		15
+#define	ARPTDB_CACHE_VERSION		16
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -566,6 +566,43 @@ read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
 	}
 }
 
+static void
+normalize_name(iconv_t *cd_p, char *str_in, char *str_out, size_t cap)
+{
+	ASSERT(cd_p != NULL);
+	ASSERT(str_in != NULL);
+	ASSERT(str_out != NULL);
+
+	char str_conv[strlen(str_in) + 1];
+	char *conv_in = str_in, *conv_out = str_conv;
+	size_t conv_in_sz = strlen(str_in);
+	size_t conv_out_sz = sizeof (str_conv);
+
+	memset(str_conv, 0, sizeof (str_conv));
+	iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
+	for (size_t i = 0, j = 0; str_conv[i] != '\0' && j + 1 < cap; i++) {
+		if (str_conv[i] != '\'' && str_conv[i] != '`' &&
+		    str_conv[i] != '^' && str_conv[i] != '\\' &&
+		    str_conv[i] != '"') {
+			str_out[j++] = str_conv[i];
+		}
+	}
+}
+
+static char *
+concat_comps(char **comps, size_t count)
+{
+	char *str = NULL;
+	size_t cap = 0;
+
+	for (size_t i = 0; i < count; i++) {
+		strip_space(comps[i]);
+		append_format(&str, &cap, "%s%s",
+		    comps[i], i + 1 < count ? " " : "");
+	}
+	return (str);
+}
+
 /*
  * Parses an airport line in apt.dat. The default apt.dat spec only supplies
  * the identifier and field elevation on this line. Our extended format which
@@ -582,8 +619,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	 * pre-allocate the buffer to be large enough that most names are
 	 * already gonna fit in there without too much reallocation.
 	 */
-	char *name = safe_calloc(32, 1);
-	size_t name_len = 0;
+	char *name = NULL;
 	const char *new_ident;
 	geo_pos3_t pos = NULL_GEO_POS3;
 	size_t ncomps;
@@ -602,11 +638,7 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	if (!is_valid_elev(pos.elev))
 		/* Small GA fields might not have valid identifiers. */
 		goto out;
-	for (size_t i = 5; i < ncomps; i++) {
-		strip_space(comps[i]);
-		append_format(&name, &name_len, "%s%s",
-		    comps[i], i + 1 < ncomps ? " " : "");
-	}
+	name = concat_comps(&comps[5], ncomps - 5);
 	arpt = apt_dat_lookup(db, new_ident);
 	if (arpt != NULL) {
 		/*
@@ -641,21 +673,8 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	 * to hopefully transliterate that junk away as much as possible.
 	 */
 	if (cd_p != NULL) {
-		char name_conv[strlen(name) + 1];
-		char *conv_in = name, *conv_out = name_conv;
-		size_t conv_in_sz = strlen(name);
-		size_t conv_out_sz = sizeof (name_conv);
-
-		memset(name_conv, 0, sizeof (name_conv));
-		iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
-		for (size_t i = 0, j = 0; name_conv[i] != '\0' &&
-		    j + 1 < sizeof (arpt->name); i++) {
-			if (name_conv[i] != '\'' && name_conv[i] != '`' &&
-			    name_conv[i] != '^' && name_conv[i] != '\\' &&
-			    name_conv[i] != '"') {
-				arpt->name[j++] = name_conv[i];
-			}
-		}
+		strlcpy(arpt->name_orig, name, sizeof (arpt->name_orig));
+		normalize_name(cd_p, name, arpt->name, sizeof (arpt->name));
 		strtoupper(arpt->name);
 	} else {
 		/*
@@ -1198,8 +1217,18 @@ fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
 		} else if (strcmp(comps[1], "region_code") == 0 &&
 		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
 			lacf_strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
+		} else if (strcmp(comps[1], "country") == 0 &&
+		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
+			char *str = concat_comps(&comps[2], ncomps - 2);
+			lacf_strlcpy(arpt->country, str,
+			    sizeof (arpt->country));
+			free(str);
+		} else if (strcmp(comps[1], "city") == 0 &&
+		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
+			char *str = concat_comps(&comps[2], ncomps - 2);
+			lacf_strlcpy(arpt->city, str, sizeof (arpt->city));
+			free(str);
 		}
-
 		free_strlist(comps, ncomps);
 	}
 }
@@ -1283,7 +1312,7 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			 * X-Plane 11. This line can contain varying numbers
 			 * of components, but we only care when it's 3.
 			 */
-			if (ncomps != 3) {
+			if (ncomps < 3) {
 				free_strlist(comps, ncomps);
 				continue;
 			}
@@ -1301,6 +1330,21 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 			    is_valid_iata_code(comps[2])) {
 				lacf_strlcpy(arpt->iata, comps[2],
 				    sizeof (arpt->iata));
+			} else if (strcmp(comps[1], "country") == 0) {
+				char *str = concat_comps(&comps[2], ncomps - 2);
+				lacf_strlcpy(arpt->country, str,
+				    sizeof (arpt->country));
+				free(str);
+			} else if (strcmp(comps[1], "city") == 0) {
+				char *str = concat_comps(&comps[2], ncomps - 2);
+				lacf_strlcpy(arpt->city, str,
+				    sizeof (arpt->city));
+				free(str);
+			} else if (strcmp(comps[1], "name_orig") == 0) {
+				char *str = concat_comps(&comps[2], ncomps - 2);
+				lacf_strlcpy(arpt->name_orig, str,
+				    sizeof (arpt->name_orig));
+				free(str);
 			} else if (strcmp(comps[1], "transition_alt") == 0) {
 				extract_TA(arpt, comps);
 			} else if (strcmp(comps[1], "transition_level") == 0) {
@@ -1363,10 +1407,15 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	    "1302 datum_lon %f\n",
 	    arpt->refpt.elev, arpt->ident, arpt->name, arpt->refpt.lat,
 	    arpt->refpt.lon);
+	fprintf(fp, "1302 name_orig %s\n", arpt->name_orig);
 	if (arpt->icao[0] != '\0')
 		fprintf(fp, "1302 icao_code %s\n", arpt->icao);
 	if (arpt->iata[0] != '\0')
 		fprintf(fp, "1302 iata_code %s\n", arpt->iata);
+	if (arpt->country[0] != '\0')
+		fprintf(fp, "1302 country %s\n", arpt->country);
+	if (arpt->city[0] != '\0')
+		fprintf(fp, "1302 city %s\n", arpt->city);
 	if (arpt->TA != 0)
 		fprintf(fp, "1302 transition_alt %.0f\n", arpt->TA);
 	if (arpt->TL != 0)
