@@ -345,6 +345,7 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	ctx->created = B_TRUE;
 	if (share_ctx != NULL) {
 		pix = CGLGetPixelFormat(share_ctx->cgl);
+		error = CGLCreateContext(pix, share_ctx->cgl, &ctx->cgl);
 	} else {
 		GLint num;
 		error = CGLChoosePixelFormat(attrs, &pix, &num);
@@ -353,14 +354,13 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 			    error);
 			goto errout;
 		}
+		error = CGLCreateContext(pix, NULL, &ctx->cgl);
+		CGLDestroyPixelFormat(pix);
 	}
-	error = CGLCreateContext(pix,
-	    share_ctx != NULL ? share_ctx->cgl : NULL, &ctx->cgl);
 	if (error != kCGLNoError) {
 		logMsg("CGLCreateContext failed with error %d", error);
 		goto errout;
 	}
-	CGLDestroyPixelFormat(pix);
 
 	return (ctx);
 errout:
