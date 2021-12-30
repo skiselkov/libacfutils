@@ -146,10 +146,10 @@ struct airport {
 	char		iata[AIRPORTDB_IATA_LEN];
 	/* 2-letter ICAO country/region code, nul terminated */
 	char		cc[AIRPORTDB_CC_LEN];
-	char		name[32];	/* Airport name, nul terminated */
-	char		name_orig[48];	/* Non-normalized version of name */
-	char		country[24];	/* Country name, nul terminated */
-	char		city[32];	/* City name, nul terminated */
+	char		name[24];	/* Airport name, nul terminated */
+	char		*name_orig;	/* Non-normalized version of name */
+	char		*country;	/* Country name, nul terminated */
+	char		*city;		/* City name, nul terminated */
 	geo_pos3_t	refpt;		/* airport reference point location */
 					/* (^^^ elev in FEET!) */
 	geo_pos3_t	refpt_m;	/* same as refpt, but elev in meters */

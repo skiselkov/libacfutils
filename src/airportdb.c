@@ -149,7 +149,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		16
+#define	ARPTDB_CACHE_VERSION		17
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -673,7 +673,8 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	 * to hopefully transliterate that junk away as much as possible.
 	 */
 	if (cd_p != NULL) {
-		strlcpy(arpt->name_orig, name, sizeof (arpt->name_orig));
+		LACF_DESTROY(arpt->name_orig);
+		arpt->name_orig = safe_strdup(name);
 		normalize_name(cd_p, name, arpt->name, sizeof (arpt->name));
 		strtoupper(arpt->name);
 	} else {
@@ -1219,15 +1220,12 @@ fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
 			lacf_strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
 		} else if (strcmp(comps[1], "country") == 0 &&
 		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
-			char *str = concat_comps(&comps[2], ncomps - 2);
-			lacf_strlcpy(arpt->country, str,
-			    sizeof (arpt->country));
-			free(str);
+			LACF_DESTROY(arpt->country);
+			arpt->country = concat_comps(&comps[2], ncomps - 2);
 		} else if (strcmp(comps[1], "city") == 0 &&
 		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
-			char *str = concat_comps(&comps[2], ncomps - 2);
-			lacf_strlcpy(arpt->city, str, sizeof (arpt->city));
-			free(str);
+			LACF_DESTROY(arpt->city);
+			arpt->city = concat_comps(&comps[2], ncomps - 2);
 		}
 		free_strlist(comps, ncomps);
 	}
@@ -1331,20 +1329,17 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				lacf_strlcpy(arpt->iata, comps[2],
 				    sizeof (arpt->iata));
 			} else if (strcmp(comps[1], "country") == 0) {
-				char *str = concat_comps(&comps[2], ncomps - 2);
-				lacf_strlcpy(arpt->country, str,
-				    sizeof (arpt->country));
-				free(str);
+				LACF_DESTROY(arpt->country);
+				arpt->country = concat_comps(&comps[2],
+				    ncomps - 2);
 			} else if (strcmp(comps[1], "city") == 0) {
-				char *str = concat_comps(&comps[2], ncomps - 2);
-				lacf_strlcpy(arpt->city, str,
-				    sizeof (arpt->city));
-				free(str);
+				LACF_DESTROY(arpt->city);
+				arpt->city = concat_comps(&comps[2],
+				    ncomps - 2);
 			} else if (strcmp(comps[1], "name_orig") == 0) {
-				char *str = concat_comps(&comps[2], ncomps - 2);
-				lacf_strlcpy(arpt->name_orig, str,
-				    sizeof (arpt->name_orig));
-				free(str);
+				LACF_DESTROY(arpt->name_orig);
+				arpt->name_orig = concat_comps(&comps[2],
+				    ncomps - 2);
 			} else if (strcmp(comps[1], "transition_alt") == 0) {
 				extract_TA(arpt, comps);
 			} else if (strcmp(comps[1], "transition_level") == 0) {
@@ -1407,14 +1402,15 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	    "1302 datum_lon %f\n",
 	    arpt->refpt.elev, arpt->ident, arpt->name, arpt->refpt.lat,
 	    arpt->refpt.lon);
-	fprintf(fp, "1302 name_orig %s\n", arpt->name_orig);
+	if (arpt->name_orig != NULL)
+		fprintf(fp, "1302 name_orig %s\n", arpt->name_orig);
 	if (arpt->icao[0] != '\0')
 		fprintf(fp, "1302 icao_code %s\n", arpt->icao);
 	if (arpt->iata[0] != '\0')
 		fprintf(fp, "1302 iata_code %s\n", arpt->iata);
-	if (arpt->country[0] != '\0')
+	if (arpt->country != NULL)
 		fprintf(fp, "1302 country %s\n", arpt->country);
-	if (arpt->city[0] != '\0')
+	if (arpt->city != NULL)
 		fprintf(fp, "1302 city %s\n", arpt->city);
 	if (arpt->TA != 0)
 		fprintf(fp, "1302 transition_alt %.0f\n", arpt->TA);
@@ -2454,7 +2450,10 @@ free_airport(airport_t *arpt)
 		free(freq);
 	list_destroy(&arpt->freqs);
 	ASSERT(!list_link_active(&arpt->cur_arpts_node));
-	free(arpt);
+	LACF_DESTROY(arpt->name_orig);
+	LACF_DESTROY(arpt->city);
+	LACF_DESTROY(arpt->country);
+	ZERO_FREE(arpt);
 }
 
 /*
@@ -2506,7 +2505,7 @@ free_nearest_airport_list(list_t *l)
 {
 	for (airport_t *a = list_head(l); a != NULL; a = list_head(l))
 		list_remove(l, a);
-	free(l);
+	ZERO_FREE(l);
 }
 
 static void
@@ -2545,7 +2544,7 @@ free_tile(airportdb_t *db, tile_t *tile, bool_t do_remove)
 
 	if (do_remove)
 		avl_remove(&db->geo_table, tile);
-	free(tile);
+	ZERO_FREE(tile);
 }
 
 void
