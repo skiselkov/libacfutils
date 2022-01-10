@@ -640,6 +640,8 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 		/* Small GA fields might not have valid identifiers. */
 		goto out;
 	name = concat_comps(&comps[5], ncomps - 5);
+	if (name == NULL)
+		name = safe_strdup("");
 	arpt = apt_dat_lookup(db, new_ident);
 	if (arpt != NULL) {
 		/*
