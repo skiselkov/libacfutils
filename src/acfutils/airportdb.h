@@ -33,6 +33,7 @@ typedef struct airportdb {
 	bool_t		inited;
 	bool_t		ifr_only;
 	bool_t		normalize_gate_names;
+	bool_t		override_settings;
 	char		*xpdir;
 	char		*cachedir;
 	int		xp_airac_cycle;
@@ -210,6 +211,7 @@ API_EXPORT void airportdb_unlock(airportdb_t *db);
  */
 #define	recreate_cache			ACFSYM(recreate_cache)
 API_EXPORT bool_t recreate_cache(airportdb_t *db);
+API_EXPORT bool_t adb_recreate_cache(airportdb_t *db, int app_version);
 
 #define	find_nearest_airports		ACFSYM(find_nearest_airports)
 API_EXPORT list_t *find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos);

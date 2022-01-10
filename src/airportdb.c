@@ -38,6 +38,7 @@
 #include "acfutils/airportdb.h"
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"
+#include "acfutils/conf.h"
 #include "acfutils/geom.h"
 #include "acfutils/helpers.h"
 #include "acfutils/list.h"
@@ -149,7 +150,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		17
+#define	ARPTDB_CACHE_VERSION		18
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -1709,7 +1710,7 @@ load_xp11_navdata(airportdb_t *db)
  * Checks to make sure our data cache is up to the newest version.
  */
 static bool_t
-check_cache_version(const airportdb_t *db)
+check_cache_version(const airportdb_t *db, int app_version)
 {
 	char *version_str;
 	int version = -1;
@@ -1718,8 +1719,13 @@ check_cache_version(const airportdb_t *db)
 		version = atoi(version_str);
 		free(version_str);
 	}
-
-	return (version == ARPTDB_CACHE_VERSION);
+	/*
+	 * If the caller provided an app_version number, also check that.
+	 * Otherwise ignore it.
+	 */
+	if (app_version == 0)
+		version &= 0xffff;
+	return (version == (ARPTDB_CACHE_VERSION | (app_version << 16)));
 }
 
 /*
@@ -1855,7 +1861,7 @@ destroy_apt_dats_list(list_t *list)
 }
 
 static bool_t
-cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats)
+cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats, int app_version)
 {
 	list_t db_apt_dats;
 	bool_t result = B_TRUE;
@@ -1867,7 +1873,7 @@ cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats)
 	 * establishes what AIRAC cycle X-Plane uses and modifies `db', so
 	 * we'll need it later on when recreating the cache.
 	 */
-	vers_ok = check_cache_version(db);
+	vers_ok = check_cache_version(db, app_version);
 	cycle_ok = check_airac_cycle(db);
 	if (!vers_ok || !cycle_ok)
 		return (B_FALSE);
@@ -1942,6 +1948,20 @@ read_index_dat(airportdb_t *db)
 	if (index_file == NULL)
 		return (B_FALSE);
 
+	if (!db->override_settings) {
+		conf_t *conf;
+		char *filename = mkpathname(db->cachedir, "settings.conf",
+		    NULL);
+
+		if (file_exists(filename, NULL) &&
+		    (conf = conf_read_file(filename, NULL)) != NULL) {
+			conf_get_b(conf, "ifr_only", &db->ifr_only);
+			conf_get_b(conf, "normalize_gate_names",
+			    &db->normalize_gate_names);
+			conf_free(conf);
+		}
+		LACF_DESTROY(filename);
+	}
 	while (lacf_getline(&line, &line_cap, index_file) > 0)
 		num_lines++;
 	rewind(index_file);
@@ -1999,6 +2019,9 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 	FILE *fp;
 	bool_t exists, isdir;
 
+	ASSERT(db != NULL);
+	ASSERT(apt_dat_files != NULL);
+
 	exists = file_exists(db->cachedir, &isdir);
 	if ((exists && ((isdir && !remove_directory(db->cachedir)) ||
 	    (!isdir && !remove_file(db->cachedir, B_FALSE)))) ||
@@ -2043,6 +2066,17 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 	fclose(fp);
 	free(filename);
 
+	if (db->override_settings) {
+		conf_t *conf = conf_create_empty();
+
+		conf_set_b(conf, "ifr_only", db->ifr_only);
+		conf_set_b(conf, "normalize_gate_names",
+		    db->normalize_gate_names);
+		filename = mkpathname(db->cachedir, "settings.conf", NULL);
+		conf_write_file(conf, filename);
+		conf_free(conf);
+	}
+
 	return (B_TRUE);
 }
 
@@ -2055,7 +2089,7 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
  * airports should also be allowed.
  */
 bool_t
-recreate_cache(airportdb_t *db)
+adb_recreate_cache(airportdb_t *db, int app_version)
 {
 	list_t apt_dat_files;
 	bool_t success = B_TRUE;
@@ -2067,9 +2101,10 @@ recreate_cache(airportdb_t *db)
 	list_create(&apt_dat_files, sizeof (apt_dats_entry_t),
 	    offsetof(apt_dats_entry_t, node));
 	find_all_apt_dats(db, &apt_dat_files);
-	if (cache_up_to_date(db, &apt_dat_files) && read_index_dat(db))
+	if (cache_up_to_date(db, &apt_dat_files, app_version) &&
+	    read_index_dat(db)) {
 		goto out;
-
+	}
 	/* This is needed to get iconv transliteration to work correctly */
 	prev_locale = setlocale(LC_CTYPE, NULL);
 	if (prev_locale != NULL)
@@ -2155,6 +2190,12 @@ out:
 		fclose(index_file);
 
 	return (success);
+}
+
+bool_t
+recreate_cache(airportdb_t *db)
+{
+	return (adb_recreate_cache(db, 0));
 }
 
 /*
