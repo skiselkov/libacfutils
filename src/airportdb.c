@@ -2015,7 +2015,7 @@ write_index_dat(const arpt_index_t *idx, FILE *index_file)
 }
 
 static bool_t
-recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
+recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files, int app_version)
 {
 	char *filename;
 	FILE *fp;
@@ -2038,7 +2038,7 @@ recreate_cache_skeleton(airportdb_t *db, list_t *apt_dat_files)
 		free(filename);
 		return (B_FALSE);
 	}
-	fprintf(fp, "%d", ARPTDB_CACHE_VERSION);
+	fprintf(fp, "%d", (app_version << 16) | ARPTDB_CACHE_VERSION);
 	fclose(fp);
 	free(filename);
 
@@ -2137,7 +2137,7 @@ adb_recreate_cache(airportdb_t *db, int app_version)
 		goto out;
 	}
 
-	if (!recreate_cache_skeleton(db, &apt_dat_files)) {
+	if (!recreate_cache_skeleton(db, &apt_dat_files, app_version)) {
 		success = B_FALSE;
 		goto out;
 	}
