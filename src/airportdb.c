@@ -321,6 +321,9 @@ geo_table_get_tile(airportdb_t *db, geo_pos2_t pos, bool_t create,
 	tile_t *tile;
 	avl_index_t where;
 
+	ASSERT(db != NULL);
+	ASSERT(!IS_NULL_GEO_POS(pos));
+
 	tile = avl_find(&db->geo_table, &srch, &where);
 	if (tile == NULL && create) {
 		tile = safe_malloc(sizeof (*tile));
@@ -347,6 +350,12 @@ make_rwy_bbox(vect2_t thresh_v, vect2_t dir_v, double width, double len,
 {
 	vect2_t *bbox;
 	vect2_t len_displ_v;
+
+	ASSERT(!IS_NULL_VECT(thresh_v));
+	ASSERT(!IS_NULL_VECT(dir_v));
+	ASSERT(!isnan(width));
+	ASSERT(!isnan(len));
+	ASSERT(!isnan(long_displ));
 
 	bbox = safe_malloc(sizeof (*bbox) * 5);
 
@@ -400,6 +409,9 @@ apt_dat_lookup(airportdb_t *db, const char *ident)
 {
 	airport_t search, *result;
 
+	ASSERT(db != NULL);
+	ASSERT(ident != NULL);
+
 	lacf_strlcpy(search.ident, ident, sizeof (search.ident));
 	strtoupper(search.ident);
 	result = avl_find(&db->apt_dat, &search, NULL);
@@ -413,6 +425,8 @@ static void
 apt_dat_insert(airportdb_t *db, airport_t *arpt)
 {
 	avl_index_t where;
+	ASSERT(db != NULL);
+	ASSERT(arpt != NULL);
 	VERIFY(avl_find(&db->apt_dat, arpt, &where) == NULL);
 	avl_insert(&db->apt_dat, arpt, where);
 }
@@ -425,9 +439,13 @@ apt_dat_insert(airportdb_t *db, airport_t *arpt)
 static void
 geo_link_airport(airportdb_t *db, airport_t *arpt)
 {
-	tile_t *tile = geo_table_get_tile(db, GEO3_TO_GEO2(arpt->refpt),
-	    B_TRUE, NULL);
+	tile_t *tile;
 	avl_index_t where;
+
+	ASSERT(db != NULL);
+	ASSERT(arpt != NULL);
+
+	tile = geo_table_get_tile(db, GEO3_TO_GEO2(arpt->refpt), B_TRUE, NULL);
 	ASSERT(!arpt->geo_linked);
 	VERIFY(avl_find(&tile->arpts, arpt, &where) == NULL);
 	avl_insert(&tile->arpts, arpt, where);
@@ -441,9 +459,11 @@ geo_link_airport(airportdb_t *db, airport_t *arpt)
 static void
 geo_unlink_airport(airportdb_t *db, airport_t *arpt)
 {
-	tile_t *tile = geo_table_get_tile(db, GEO3_TO_GEO2(arpt->refpt),
-	    B_TRUE, NULL);
+	tile_t *tile;
+
+	ASSERT(arpt != NULL);
 	ASSERT(arpt->geo_linked);
+	tile = geo_table_get_tile(db, GEO3_TO_GEO2(arpt->refpt), B_TRUE, NULL);
 	ASSERT(avl_find(&tile->arpts, arpt, NULL) == arpt);
 	avl_remove(&tile->arpts, arpt);
 	arpt->geo_linked = B_FALSE;
@@ -460,6 +480,8 @@ airport_auto_refpt(airport_t *arpt)
 {
 	runway_t *rwy;
 	geo_pos3_t p1, p2;
+
+	ASSERT(arpt != NULL);
 
 	rwy = avl_first(&arpt->rwys);
 	ASSERT(isnan(arpt->refpt.lat) && isnan(arpt->refpt.lon));
@@ -484,7 +506,9 @@ apt_dat_cache_dir(const airportdb_t *db, geo_pos2_t pos, const char *suffix)
 {
 	char lat_lon[16];
 
-	VERIFY(!IS_NULL_GEO_POS(pos));
+	ASSERT(db != NULL);
+	ASSERT(!IS_NULL_GEO_POS(pos));
+
 	pos = geo_pos2tile_pos(pos, B_TRUE);
 	snprintf(lat_lon, sizeof (lat_lon), TILE_NAME_FMT, pos.lat, pos.lon);
 
@@ -511,6 +535,9 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 	char *fname;
 	FILE *scenery_packs_ini;
 	apt_dats_entry_t *e;
+
+	ASSERT(db != NULL);
+	ASSERT(list != NULL);
 
 	fname = mkpathname(db->xpdir, "Custom Scenery", "scenery_packs.ini",
 	    NULL);
@@ -556,6 +583,8 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 static void
 read_apt_dat_insert(airportdb_t *db, airport_t *arpt)
 {
+	ASSERT(db != NULL);
+
 	if (arpt == NULL)
 		return;
 	if (avl_numnodes(&arpt->rwys) != 0) {
@@ -596,6 +625,8 @@ concat_comps(char **comps, size_t count)
 	char *str = NULL;
 	size_t cap = 0;
 
+	ASSERT(comps != NULL);
+
 	for (size_t i = 0; i < count; i++) {
 		strip_space(comps[i]);
 		append_format(&str, &cap, "%s%s",
@@ -626,6 +657,9 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	size_t ncomps;
 	char **comps = strsplit(line, " ", B_TRUE, &ncomps);
 	airport_t *arpt = NULL;
+
+	ASSERT(db != NULL);
+	ASSERT(line != NULL);
 
 	if (dup_arpt_p != NULL)
 		*dup_arpt_p = NULL;
@@ -715,6 +749,8 @@ runway_vgsi_fuzzy_match(runway_t *rwy, int end, vgsi_t type, vect2_t pos_v,
 	double lat_displ = vect2_dotprod(thr2light_v, thr2thr_norm_uv),
 	    lon_displ = vect2_dotprod(thr2light_v, thr2thr_uv);
 
+	ASSERT(rwy != NULL);
+
 	/*
 	 * The checks we perform are:
 	 * 1) the lateral displacement from the runway centerline must be
@@ -739,6 +775,11 @@ find_nearest_runway_to_vgsi(airport_t *arpt, vgsi_t type, vect2_t pos_v,
     double true_hdg, runway_t **rwy, runway_end_t **re, runway_end_t **ore)
 {
 	double max_displ = 100000;
+
+	ASSERT(arpt != NULL);
+	ASSERT(rwy != NULL);
+	ASSERT(re != NULL);
+	ASSERT(ore != NULL);
 	/*
 	 * Runway unknown. Let's try to do a more fuzzy search.
 	 * We will look for the closest runway from which we are
@@ -781,6 +822,9 @@ parse_apt_dat_21_line(airport_t *arpt, const char *line)
 	runway_t *rwy = NULL;
 	runway_end_t *re = NULL, *ore = NULL;
 	vect2_t pos_v, thr2light_v, thr2thr_v;
+
+	ASSERT(arpt != NULL);
+	ASSERT(line != NULL);
 
 	/* Construct the airport fpp to compute the thresholds */
 	if (!load_airport(arpt))
@@ -880,6 +924,8 @@ out:
 static bool_t
 validate_rwy_end(const runway_end_t *re, char error_descr[128])
 {
+	ASSERT(re != NULL);
+	ASSERT(error_descr != NULL);
 #define	VALIDATE(cond, ...) \
 	do { \
 		if (!(cond)) { \
@@ -911,6 +957,8 @@ parse_apt_dat_freq_line(airport_t *arpt, char *line, bool_t use833)
 	size_t ncomps;
 	freq_info_t *freq;
 
+	ASSERT(arpt != NULL);
+	ASSERT(line != NULL);
 	/*
 	 * Remove spurious underscores and dashes that some sceneries insist
 	 * on using in frequency names. Do this before the strsplit pass, so
@@ -975,6 +1023,9 @@ parse_apt_dat_100_line(airport_t *arpt, const char *line, bool_t hard_surf_only)
 	runway_t *rwy;
 	avl_index_t where;
 	char error_descr[128];
+
+	ASSERT(arpt != NULL);
+	ASSERT(line != NULL);
 
 	comps = strsplit(line, " ", B_TRUE, &ncomps);
 	ASSERT(strcmp(comps[0], "100") == 0);
@@ -1250,6 +1301,9 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 	char **comps;
 	size_t ncomps;
 
+	ASSERT(db != NULL);
+	ASSERT(apt_dat_fname != NULL);
+
 	apt_dat_f = fopen(apt_dat_fname, "r");
 	if (apt_dat_f == NULL) {
 		if (!fail_ok)
@@ -1388,6 +1442,9 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	FILE *fp;
 	geo_pos2_t p;
 
+	ASSERT(db != NULL);
+	ASSERT(arpt != NULL);
+
 	p = geo_pos2tile_pos(GEO3_TO_GEO2(arpt->refpt), B_FALSE);
 	snprintf(lat_lon, sizeof (lat_lon), TILE_NAME_FMT, p.lat, p.lon);
 	fname = apt_dat_cache_dir(db, GEO3_TO_GEO2(arpt->refpt), lat_lon);
@@ -1480,6 +1537,9 @@ load_arinc424_arpt_data(const char *filename, airport_t *arpt)
 	size_t linecap = 0;
 	FILE *fp;
 	int line_num = 0;
+
+	ASSERT(filename != NULL);
+	ASSERT(arpt != NULL);
 
 	/* airport already seen in previous version of the database, skip */
 	if (arpt->in_navdb)
@@ -1597,6 +1657,10 @@ load_CIFP_file(airportdb_t *db, const char *dirpath, const char *filename)
 	char ident[8];
 	bool_t res;
 
+	ASSERT(db != NULL);
+	ASSERT(dirpath != NULL);
+	ASSERT(filename != NULL);
+
 	/* the filename must end in ".dat" */
 	if (strlen(filename) < 4 ||
 	    strcmp(&filename[strlen(filename) - 4], ".dat") != 0) {
@@ -1630,6 +1694,9 @@ load_CIFP_dir(airportdb_t *db, const char *dirpath)
 	WIN32_FIND_DATA find_data;
 	HANDLE h_find;
 
+	ASSERT(db != NULL);
+	ASSERT(dirpath != NULL);
+
 	MultiByteToWideChar(CP_UTF8, 0, dirpath, -1, dirnameT, dirpath_len + 1);
 	StringCchPrintf(srchnameT, dirpath_len + 4, TEXT("%s\\*"), dirnameT);
 	h_find = FindFirstFile(srchnameT, &find_data);
@@ -1657,6 +1724,9 @@ load_CIFP_dir(airportdb_t *db, const char *dirpath)
 {
 	DIR *dp = opendir(dirpath);
 	struct dirent *de;
+
+	ASSERT(db != NULL);
+	ASSERT(dirpath != NULL);
 
 	if (dp == NULL)
 		return (B_FALSE);
@@ -1688,6 +1758,8 @@ load_xp11_navdata(airportdb_t *db)
 	char *dirpath;
 	bool_t success = B_FALSE;
 
+	ASSERT(db != NULL);
+
 	dirpath = mkpathname(db->xpdir, "Custom Data", "CIFP", NULL);
 	if (file_exists(dirpath, &isdir) && isdir) {
 		if (!load_CIFP_dir(db, dirpath))
@@ -1717,6 +1789,8 @@ check_cache_version(const airportdb_t *db, int app_version)
 	char *version_str;
 	int version = -1;
 
+	ASSERT(db != NULL);
+
 	if ((version_str = file2str(db->cachedir, "version", NULL)) != NULL) {
 		version = atoi(version_str);
 		free(version_str);
@@ -1745,6 +1819,9 @@ airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 	char *filename;
 	FILE *fp;
 	bool_t success = B_FALSE;
+
+	ASSERT(xpdir != NULL);
+	ASSERT(cycle != NULL);
 
 	/* First try 'Custom Data', then 'default data' */
 	filename = mkpathname(xpdir, "Custom Data", "earth_nav.dat", NULL);
@@ -1794,6 +1871,8 @@ check_airac_cycle(airportdb_t *db)
 	char *cycle_str;
 	int db_cycle = -1, xp_cycle = -1;
 
+	ASSERT(db != NULL);
+
 	if ((cycle_str = file2str(db->cachedir, "airac_cycle", NULL)) != NULL) {
 		db_cycle = atoi(cycle_str);
 		free(cycle_str);
@@ -1827,6 +1906,9 @@ read_apt_dats_list(const airportdb_t *db, list_t *list)
 	char *line = NULL;
 	size_t cap = 0;
 
+	ASSERT(db != NULL);
+	ASSERT(list != NULL);
+
 	filename = mkpathname(db->cachedir, "apt_dats", NULL);
 	fp = fopen(filename, "r");
 	free(filename);
@@ -1854,6 +1936,7 @@ static void
 destroy_apt_dats_list(list_t *list)
 {
 	apt_dats_entry_t *e;
+	ASSERT(list != NULL);
 	while ((e = list_head(list)) != NULL) {
 		list_remove(list, e);
 		free(e->fname);
@@ -1870,6 +1953,8 @@ cache_up_to_date(airportdb_t *db, list_t *xp_apt_dats, int app_version)
 	apt_dats_entry_t *xp_e, *db_e;
 	bool_t vers_ok, cycle_ok;
 
+	ASSERT(db != NULL);
+	ASSERT(xp_apt_dats != NULL);
 	/*
 	 * We need to call both of these functions because check_airac_cycle
 	 * establishes what AIRAC cycle X-Plane uses and modifies `db', so
@@ -1941,11 +2026,15 @@ create_arpt_index(airportdb_t *db, const airport_t *arpt)
 static bool_t
 read_index_dat(airportdb_t *db)
 {
-	char *index_filename = mkpathname(db->cachedir, "index.dat", NULL);
-	FILE *index_file = fopen(index_filename, "r");
+	char *index_filename;
+	FILE *index_file;
 	char *line = NULL;
 	size_t line_cap = 0;
 	size_t num_lines = 0;
+
+	ASSERT(db != NULL);
+	index_filename = mkpathname(db->cachedir, "index.dat", NULL);
+	index_file = fopen(index_filename, "r");
 
 	if (index_file == NULL)
 		return (B_FALSE);
@@ -2100,6 +2189,8 @@ adb_recreate_cache(airportdb_t *db, int app_version)
 	iconv_t cd;
 	char *prev_locale = NULL, *saved_locale = NULL;
 
+	ASSERT(db != NULL);
+
 	list_create(&apt_dat_files, sizeof (apt_dats_entry_t),
 	    offsetof(apt_dats_entry_t, node));
 	find_all_apt_dats(db, &apt_dat_files);
@@ -2197,6 +2288,7 @@ out:
 bool_t
 recreate_cache(airportdb_t *db)
 {
+	ASSERT(db != NULL);
 	return (adb_recreate_cache(db, 0));
 }
 
@@ -2227,13 +2319,14 @@ static vect2_t *
 make_apch_prox_bbox(const runway_t *rwy, int end_i)
 {
 	const runway_end_t *end, *oend;
-	const fpp_t *fpp = &rwy->arpt->fpp;
+	const fpp_t *fpp;
 	double limit_left = 1000000, limit_right = 1000000;
 	vect2_t x, a, b, b1, c, c1, d, thr_v, othr_v, dir_v;
 	vect2_t *bbox = safe_calloc(7, sizeof (vect2_t));
 	size_t n_pts = 0;
 
-	ASSERT(fpp != NULL);
+	ASSERT(rwy != NULL);
+	fpp = &rwy->arpt->fpp;
 	ASSERT(end_i == 0 || end_i == 1);
 
 	/*
@@ -2344,6 +2437,7 @@ make_apch_prox_bbox(const runway_t *rwy, int end_i)
 static void
 load_rwy_info(runway_t *rwy)
 {
+	ASSERT(rwy != NULL);
 	ASSERT(rwy->arpt->load_complete);
 	/*
 	 * RAAS runway proximity entry bounding box is defined as:
@@ -2408,6 +2502,7 @@ load_rwy_info(runway_t *rwy)
 static void
 unload_rwy_info(runway_t *rwy)
 {
+	ASSERT(rwy != NULL);
 	ASSERT(rwy->rwy_bbox != NULL);
 
 	free(rwy->rwy_bbox);
@@ -2436,6 +2531,8 @@ unload_rwy_info(runway_t *rwy)
 static bool_t
 load_airport(airport_t *arpt)
 {
+	ASSERT(arpt != NULL);
+
 	if (arpt->load_complete)
 		return (B_TRUE);
 
@@ -2460,6 +2557,7 @@ load_airport(airport_t *arpt)
 static void
 unload_airport(airport_t *arpt)
 {
+	ASSERT(arpt != NULL);
 	if (!arpt->load_complete)
 		return;
 	for (runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
@@ -2476,6 +2574,7 @@ free_airport(airport_t *arpt)
 	freq_info_t *freq;
 	ramp_start_t *rs;
 
+	ASSERT(arpt != NULL);
 	if (arpt->load_complete)
 		unload_airport(arpt);
 
@@ -2507,7 +2606,11 @@ static void
 find_nearest_airports_tile(airportdb_t *db, vect3_t ecef,
     geo_pos2_t tile_coord, list_t *l)
 {
-	tile_t *tile = geo_table_get_tile(db, tile_coord, B_FALSE, NULL);
+	tile_t *tile;
+
+	ASSERT(db != NULL);
+	ASSERT(l != NULL);
+	tile = geo_table_get_tile(db, tile_coord, B_FALSE, NULL);
 
 	if (tile == NULL)
 		return;
@@ -2529,8 +2632,12 @@ find_nearest_airports_tile(airportdb_t *db, vect3_t ecef,
 list_t *
 find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos)
 {
-	vect3_t ecef = geo2ecef_ft(GEO_POS3(my_pos.lat, my_pos.lon, 0), &wgs84);
+	vect3_t ecef;
 	list_t *l;
+
+	ASSERT(db != NULL);
+	ASSERT(!IS_NULL_GEO_POS(my_pos));
+	ecef = geo2ecef_ft(GEO_POS3(my_pos.lat, my_pos.lon, 0), &wgs84);
 
 	l = safe_malloc(sizeof (*l));
 	list_create(l, sizeof (airport_t), offsetof(airport_t, cur_arpts_node));
@@ -2546,6 +2653,7 @@ find_nearest_airports(airportdb_t *db, geo_pos2_t my_pos)
 void
 free_nearest_airport_list(list_t *l)
 {
+	ASSERT(l != NULL);
 	for (airport_t *a = list_head(l); a != NULL; a = list_head(l))
 		list_remove(l, a);
 	ZERO_FREE(l);
@@ -2557,6 +2665,9 @@ load_airports_in_tile(airportdb_t *db, geo_pos2_t tile_pos)
 	bool_t created;
 	char *cache_dir, *fname;
 	char lat_lon[16];
+
+	ASSERT(db != NULL);
+	ASSERT(!IS_NULL_GEO_POS(tile_pos));
 
 	(void) geo_table_get_tile(db, tile_pos, B_TRUE, &created);
 	if (!created)
@@ -2579,6 +2690,9 @@ free_tile(airportdb_t *db, tile_t *tile, bool_t do_remove)
 	void *cookie = NULL;
 	airport_t *arpt;
 
+	ASSERT(db != NULL);
+	ASSERT(tile != NULL);
+
 	while ((arpt = avl_destroy_nodes(&tile->arpts, &cookie)) != NULL) {
 		avl_remove(&db->apt_dat, arpt);
 		free_airport(arpt);
@@ -2593,12 +2707,16 @@ free_tile(airportdb_t *db, tile_t *tile, bool_t do_remove)
 void
 set_airport_load_limit(airportdb_t *db, double limit)
 {
+	ASSERT(db != NULL);
 	db->load_limit = limit;
 }
 
 void
 load_nearest_airport_tiles(airportdb_t *db, geo_pos2_t my_pos)
 {
+	ASSERT(db != NULL);
+	ASSERT(!IS_NULL_GEO_POS(my_pos));
+
 	for (int i = -1; i <= 1; i++) {
 		for (int j = -1; j <= 1; j++)
 			load_airports_in_tile(db, GEO_POS2(my_pos.lat + i,
@@ -2620,6 +2738,8 @@ lon_delta(double x, double y)
 void
 unload_distant_airport_tiles_i(airportdb_t *db, tile_t *tile, geo_pos2_t my_pos)
 {
+	ASSERT(db != NULL);
+	ASSERT(tile != NULL);
 	if (IS_NULL_GEO_POS(my_pos) ||
 	    fabs(tile->pos.lat - floor(my_pos.lat)) > 1 ||
 	    lon_delta(tile->pos.lon, floor(my_pos.lon)) > 1)
@@ -2630,6 +2750,9 @@ void
 unload_distant_airport_tiles(airportdb_t *db, geo_pos2_t my_pos)
 {
 	tile_t *tile, *next_tile;
+
+	ASSERT(db != NULL);
+	/* my_pos can be NULL_GEO_POS2 */
 
 	for (tile = avl_first(&db->geo_table); tile != NULL; tile = next_tile) {
 		next_tile = AVL_NEXT(&db->geo_table, tile);
@@ -2723,12 +2846,14 @@ airportdb_destroy(airportdb_t *db)
 void
 airportdb_lock(airportdb_t *db)
 {
+	ASSERT(db != NULL);
 	mutex_enter(&db->lock);
 }
 
 void
 airportdb_unlock(airportdb_t *db)
 {
+	ASSERT(db != NULL);
 	mutex_exit(&db->lock);
 }
 
@@ -2826,6 +2951,8 @@ airport_lookup_by_iata(airportdb_t *db, const char *iata,
 airport_t *
 airport_lookup(airportdb_t *db, const char *ident, geo_pos2_t pos)
 {
+	ASSERT(db != NULL);
+	ASSERT(ident != NULL);
 	load_airports_in_tile(db, pos);
 	return (apt_dat_lookup(db, ident));
 }
@@ -2834,6 +2961,7 @@ static void
 save_arpt_cb(airport_t *airport, void *userinfo)
 {
 	airport_t **out_arpt = userinfo;
+	ASSERT(airport != NULL);
 	*out_arpt = airport;
 }
 
@@ -2845,6 +2973,8 @@ API_EXPORT airport_t *
 airport_lookup_global(airportdb_t *db, const char *icao)
 {
 	airport_t *found = NULL;
+	ASSERT(db != NULL);
+	ASSERT(icao != NULL);
 	(void)airport_lookup_by_icao(db, icao, save_arpt_cb, &found);
 	return (found);
 }
@@ -2893,7 +3023,11 @@ matching_airport_in_tile_with_TATL(airportdb_t *db, geo_pos2_t pos,
     const char *search_icao)
 {
 	tile_t *tile;
-	char const *search_cc = extract_icao_country_code(search_icao);
+	char const *search_cc;
+
+	ASSERT(db != NULL);
+	ASSERT(search_icao != NULL);
+	search_cc = extract_icao_country_code(search_icao);
 
 	load_airports_in_tile(db, pos);
 	tile = geo_table_get_tile(db, pos, B_FALSE, NULL);
