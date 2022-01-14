@@ -728,7 +728,7 @@ table_lookup_common(perf_table_set_t *ts, double isadev, double mass,
 
 	if (isa0_param != isa1_param) {
 		double rat = clamp(iter_fract(isadev, isa0_min->isa,
-		    isa1_min->isa, B_FALSE), -1, 2);
+		    isa1_min->isa, B_FALSE), -0.5, 1.5);
 		param = wavg2(isa0_param, isa1_param, rat);
 	} else {
 		param = isa0_param;
@@ -1369,6 +1369,7 @@ clb_table_step(const acft_perf_t *acft, double isadev, double qnh, double alt,
 
 	ff = table_lookup_common(acft->clb_tables, isadev, mass, spd, is_mach,
 	    alt, offsetof(perf_table_cell_t, ff));
+	ff = MAX(ff, 0);
 	vs = table_lookup_common(acft->clb_tables, isadev, mass, spd, is_mach,
 	    alt, offsetof(perf_table_cell_t, vs));
 	if (vs < MIN_CLB_VS)
@@ -1422,6 +1423,7 @@ crz_step(double isadev, double tp_alt, double qnh, double alt_ft,
 		double ff = table_lookup_common(acft->crz_tables, isadev, mass,
 		    spd_mps_or_mach, is_mach, FEET2MET(alt_ft),
 		    offsetof(perf_table_cell_t, ff));
+		ff = MAX(ff, 0);
 		burn_step = ff * d_t;
 		if (step_debug) {
 			double spd_kias_or_mach = (is_mach ? spd_mps_or_mach :
@@ -1570,7 +1572,13 @@ des_burn_step(double isadev, double alt_m, double vs_act_mps,
 	double vs_des_mps = table_lookup_common(acft->des_tables, isadev, mass,
 	    spd_mps_or_mach, is_mach, alt_m, offsetof(perf_table_cell_t, vs));
 	double rat = iter_fract(vs_act_mps, 0, vs_des_mps, B_TRUE);
-	double burn = wavg(ff_crz, ff_des, rat) * d_t;
+	double burn;
+	/*
+	 * Prevent sliding off the tables into nonsense.
+	 */
+	ff_des = MAX(ff_des, 0);
+	ff_crz = MAX(ff_crz, 0);
+	burn = wavg(ff_crz, ff_des, rat) * d_t;
 	if (step_debug) {
 		printf("DES:%-5.0f ft m:%-5.0f lb vs:%-5.0f fpm "
 		    "ff_crz:%-4.0f lbs/hr ff_des:%-4.0f rat:%.3f\n",
