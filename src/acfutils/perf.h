@@ -49,10 +49,14 @@ extern "C" {
 #define	MET2FEET(x)	((x) * 3.2808398950131)	/* meters to feet */
 #define	NM2MET(x)	((x) * 1852)		/* nautical miles to meters */
 #define	MET2NM(x)	((x) / 1852.0)		/* meters to nautical miles */
+#define	MET2MILES(x)	(MET2FEET(x) / 5280.0)	/* meters to statute miles */
+#define	MILES2MET(x)	FEET2MET((x) * 5280.0)	/* statute miles to meters */
 #define	KT2MPS(k)	(NM2MET(k) / 3600.0)	/* knots to m/s */
 #define	MPS2KT(k)	(MET2NM(k) * 3600.0)	/* m/s to knots */
 #define	MPS2KPH(k)	((k) * 3.6)		/* m/s to km/h */
 #define	KPH2MPS(k)	((k) / 3.6)		/* km/h to m/s */
+#define	MPS2MPH(k)	((k) / 0.44704)		/* m/s to mph */
+#define	MPH2MPS(k)	((k) * 0.44704)		/* mph to m/s */
 #define	FPM2MPS(f)	FEET2MET((f) / 60.0)	/* ft.min^-1 to m.s^-1 */
 #define	MPS2FPM(m)	MET2FEET((m) * 60.0)	/* m.s^-1 to ft.min^-1 */
 
