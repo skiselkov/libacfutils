@@ -370,7 +370,7 @@ mt_cairo_render_glob_init(void)
 		return;
 	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 	    1, 1));
-	mtcr_main_thread = curthread;
+	mtcr_main_thread = curthread_id;
 	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
 	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
 	fdr_find(&drs.mv_matrix, "sim/graphics/view/modelview_matrix");
@@ -382,7 +382,7 @@ static void
 setup_vao(mt_cairo_render_t *mtcr)
 {
 	GLint old_vao = 0;
-	bool_t on_main_thread = (curthread == mtcr_main_thread);
+	bool_t on_main_thread = (curthread_id == mtcr_main_thread);
 
 	if (GLEW_VERSION_3_0 && !on_main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
