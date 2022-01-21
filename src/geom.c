@@ -1510,7 +1510,7 @@ gc_distance(geo_pos2_t start, geo_pos2_t end)
 double
 gc_point_hdg(geo_pos2_t start, geo_pos2_t end)
 {
-	fpp_t fpp = stereo_fpp_init(start, 0, &wgs84, B_FALSE);
+	fpp_t fpp = ortho_fpp_init(start, 0, &wgs84, B_FALSE);
 	return (dir2hdg(geo2fpp(end, &fpp)));
 }
 
