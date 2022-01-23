@@ -402,15 +402,23 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	cv_signal(cv)		pthread_cond_signal((cv))
 #define	cv_broadcast(cv)	pthread_cond_broadcast((cv))
 
-/* Unused on APL|LIN */
-#define	THREAD_PRIO_IDLE
-#define	THREAD_PRIO_VLOW
-#define	THREAD_PRIO_LOW
-#define	THREAD_PRIO_NORM
-#define	THREAD_PRIO_HIGH
-#define	THREAD_PRIO_VHIGH
-#define	THREAD_PRIO_RT
-#define	thread_set_prio(thr, prio)
+#define	THREAD_PRIO_IDLE	sched_get_priority_min()
+#define	THREAD_PRIO_VERY_LOW	(THREAD_PRIO_NORM - 2)
+#define	THREAD_PRIO_LOW		(THREAD_PRIO_NORM - 1)
+#if	APL
+#define	THREAD_PRIO_NORM	31	/* Default priority on macOS */
+#else
+#define	THREAD_PRIO_NORM	0	/* Default priority on Linux */
+#endif
+#define	THREAD_PRIO_HIGH	(THREAD_PRIO_NORM + 1)
+#define	THREAD_PRIO_VERY_HIGH	(THREAD_PRIO_NORM + 2)
+#define	THREAD_PRIO_RT		sched_get_priority_max()
+#define	thread_set_prio(thr, prio) \
+	do { \
+		struct sched_param param = {}; \
+		param.sched_priority = (prio); \
+		pthread_setschedparam((thr), SCHED_OTHER, &param); \
+	} while (0)
 
 #else	/* !APL && !LIN */
 
