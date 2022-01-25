@@ -135,6 +135,8 @@ dr_setf_impl(const dr_t *dr, DR_DEBUG_VARS, double f)
 	DR_WRITE_CHECK(VERIFY);
 	ASSERT_MSG(!isnan(f), "%s (%s%d: %s)", dr->name, filename, line,
 	    varname);
+	ASSERT_MSG(isfinite(f), "%s (%s%d: %s)", dr->name, filename, line,
+	    varname);
 	if (dr->type & xplmType_Double)
 		XPLMSetDatad(dr->dr, f);
 	else if (dr->type & xplmType_Float)
@@ -299,8 +301,10 @@ dr_setvf_impl(const dr_t *dr, DR_DEBUG_VARS, double *df, unsigned off,
 {
 	ASSERT(df != NULL);
 	DR_WRITE_CHECK(VERIFY);
-	for (unsigned x = 0; x < num; x++)
+	for (unsigned x = 0; x < num; x++) {
 		ASSERT_MSG(!isnan(df[x]), "%s[%d]", dr->name, x);
+		ASSERT_MSG(isfinite(df[x]), "%s[%d]", dr->name, x);
+	}
 	if (dr->type & xplmType_IntArray) {
 		int *i = safe_malloc(num * sizeof (*i));
 		for (unsigned x = 0; x < num; x++)
