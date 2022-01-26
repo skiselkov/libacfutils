@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 /*
  * mt_cairo_render is a multi-threaded cairo rendering surface with
@@ -1448,6 +1448,7 @@ mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 	if (rs->chg) {
 		rs_tex_alloc(mtcr, rs);
 		rs_upload(mtcr, rs);
+		ASSERT3P(rs->sync, ==, NULL);
 		rs->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		ASSERT(!list_link_active(&rs->ul_inprog_node));
 		list_insert_tail(ul_inprog_list, rs);
@@ -1483,6 +1484,7 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 
 	mutex_enter(&mtcr->lock);
 
+	glDeleteSync(rs->sync);
 	rs->sync = NULL;
 	ASSERT(rs->chg);
 	rs->chg = B_FALSE;
