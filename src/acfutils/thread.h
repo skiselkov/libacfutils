@@ -402,14 +402,11 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	cv_signal(cv)		pthread_cond_signal((cv))
 #define	cv_broadcast(cv)	pthread_cond_broadcast((cv))
 
+#if	!APL
 #define	THREAD_PRIO_IDLE	sched_get_priority_min()
 #define	THREAD_PRIO_VERY_LOW	(THREAD_PRIO_NORM - 2)
 #define	THREAD_PRIO_LOW		(THREAD_PRIO_NORM - 1)
-#if	APL
-#define	THREAD_PRIO_NORM	31	/* Default priority on macOS */
-#else
 #define	THREAD_PRIO_NORM	0	/* Default priority on Linux */
-#endif
 #define	THREAD_PRIO_HIGH	(THREAD_PRIO_NORM + 1)
 #define	THREAD_PRIO_VERY_HIGH	(THREAD_PRIO_NORM + 2)
 #define	THREAD_PRIO_RT		sched_get_priority_max()
@@ -419,6 +416,25 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 		param.sched_priority = (prio); \
 		pthread_setschedparam((thr), SCHED_OTHER, &param); \
 	} while (0)
+
+#else	/* APL */
+/*
+ * BIG CAVEAT: Apparently idle thread prioritization is causing massive
+ * thread scheduling stability issues on MacOS Monterey with its Rosetta
+ * x86 emulation. Threads either don't get scheduled, or they run in
+ * "slow mo", gradually speeding up and generally just behave entirely
+ * erratically.
+ */
+#define	THREAD_PRIO_IDLE	0
+#define	THREAD_PRIO_VERY_LOW	0
+#define	THREAD_PRIO_LOW		0
+#define	THREAD_PRIO_NORM	0
+#define	THREAD_PRIO_HIGH	0
+#define	THREAD_PRIO_VERY_HIGH	0
+#define	THREAD_PRIO_RT		0
+#define	thread_set_prio(thr, prio)
+
+#endif	/* APL */
 
 #else	/* !APL && !LIN */
 
