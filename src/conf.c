@@ -864,7 +864,10 @@ conf_set_d(conf_t *conf, const char *key, double value)
 {
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	conf_set_common(conf, key, "%.15f", value);
+	if (isnan(value))
+		conf_set_str(conf, key, "nan");
+	else
+		conf_set_common(conf, key, "%.15f", value);
 }
 
 void
@@ -872,7 +875,10 @@ conf_set_f(conf_t *conf, const char *key, float value)
 {
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	conf_set_common(conf, key, "%.12f", value);
+	if (isnan(value))
+		conf_set_str(conf, key, "nan");
+	else
+		conf_set_common(conf, key, "%.12f", value);
 }
 
 /*
