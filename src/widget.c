@@ -406,6 +406,7 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 		XPLMGetWindowGeometry(tts->window, &wleft, &wtop, &wright,
 		    &wbottom);
 		if (!XPLMGetWindowIsVisible(tts->window) ||
+		    !XPLMIsWindowInFront(tts->window) ||
 		    mouse_x < wleft || mouse_x > wright ||
 		    mouse_y < wbottom || mouse_y > wtop)
 			continue;
