@@ -33,6 +33,7 @@
 #include "acfutils/log.h"
 #include "acfutils/safe_alloc.h"
 #include "acfutils/shader.h"
+#include "acfutils/stat.h"
 
 #define	EXTRA_2D_DEFINES \
 	"#define textureSize2D textureSize\n" \

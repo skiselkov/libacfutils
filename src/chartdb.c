@@ -49,6 +49,7 @@
 #include "acfutils/list.h"
 #include "acfutils/mt_cairo_render.h"
 #include "acfutils/png.h"
+#include "acfutils/stat.h"
 #include "acfutils/thread.h"
 #include "acfutils/worker.h"
 

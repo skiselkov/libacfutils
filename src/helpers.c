@@ -47,6 +47,7 @@
 #include "acfutils/helpers.h"
 #include "acfutils/log.h"
 #include "acfutils/safe_alloc.h"
+#include "acfutils/stat.h"
 #include "acfutils/time.h"
 
 /*

@@ -503,17 +503,6 @@ API_EXPORT struct dirent *readdir(DIR *dirp);
 #define	closedir	ACFSYM(closedir)
 API_EXPORT void closedir(DIR *dirp);
 
-#if	!defined(_MSC_VER) && !defined(LACF_HIDE_STAT_COMPAT)
-/* A minimally compatible POSIX-style file stat reading implementation */
-#define	stat		ACFSYM(stat)
-struct stat {
-	uint64_t	st_size;
-	time_t		st_atime;
-	time_t		st_mtime;
-};
-API_EXPORT int stat(const char *pathname, struct stat *buf);
-#endif	/* !defined(_MSC_VER) && !defined(LACF_HIDE_STAT_COMPAT) */
-
 #define	sleep(x)	SleepEx((x) * 1000, FALSE)
 #define	usleep(x)	SleepEx((x) / 1000, FALSE)
 
