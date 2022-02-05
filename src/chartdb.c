@@ -299,7 +299,7 @@ chartdb_add_arpt(chartdb_t *cdb, const char *icao, const char *name,
 	mutex_enter(&cdb->lock);
 	arpt = avl_find(&cdb->arpts, &srch, &where);
 	if (arpt == NULL) {
-		arpt = calloc(1, sizeof (*arpt));
+		arpt = safe_calloc(1, sizeof (*arpt));
 		avl_create(&arpt->charts, chart_name_compar, sizeof (chart_t),
 		    offsetof(chart_t, node));
 		lacf_strlcpy(arpt->icao, icao, sizeof (arpt->icao));
@@ -489,7 +489,7 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 
 		if (cap - fill < READ_BUFSZ) {
 			cap += READ_BUFSZ;
-			out_buf = realloc(out_buf, cap);
+			out_buf = safe_realloc(out_buf, cap);
 		}
 		to_read = cap - fill;
 		n = read(fd_out, &out_buf[fill], to_read);
@@ -587,7 +587,7 @@ chartdb_pdf_count_pages_file(const char *pdfinfo_path, const char *path)
 
 		if (len - fill < READ_BUFSZ) {
 			len += READ_BUFSZ;
-			buf = realloc(buf, len);
+			buf = safe_realloc(buf, len);
 		}
 		ret = fread(&buf[fill], 1, len - fill, infp);
 		if (ret > 0)
@@ -631,7 +631,7 @@ chartdb_pdf_convert_file(const char *pdftoppm_path, char *old_path, int page,
 
 		if (pdf_len - pdf_fill < READ_BUFSZ) {
 			pdf_len += READ_BUFSZ;
-			pdf_buf = realloc(pdf_buf, pdf_len);
+			pdf_buf = safe_realloc(pdf_buf, pdf_len);
 		}
 		ret = fread(&pdf_buf[pdf_fill], 1, pdf_len - pdf_fill, infp);
 		if (ret > 0)
@@ -830,7 +830,7 @@ chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
 
 		if (png_buf_sz - png_buf_fill < READ_BUFSZ) {
 			png_buf_sz += READ_BUFSZ;
-			png_buf = realloc(png_buf, png_buf_sz);
+			png_buf = safe_realloc(png_buf, png_buf_sz);
 		}
 		to_read = png_buf_sz - png_buf_fill;
 		n = read(fd_out, &png_buf[png_buf_fill], to_read);
@@ -1221,11 +1221,11 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	if (pid >= NUM_PROVIDERS)
 		return (NULL);
 
-	cdb = calloc(1, sizeof (*cdb));
+	cdb = safe_calloc(1, sizeof (*cdb));
 	mutex_init(&cdb->lock);
 	avl_create(&cdb->arpts, arpt_compar, sizeof (chart_arpt_t),
 	    offsetof(chart_arpt_t, node));
-	cdb->path = strdup(cache_path);
+	cdb->path = safe_strdup(cache_path);
 	if (pdftoppm_path != NULL)
 		cdb->pdftoppm_path = safe_strdup(pdftoppm_path);
 	if (pdfinfo_path != NULL)
@@ -1233,6 +1233,7 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	cdb->airac = airac;
 	cdb->prov = pid;
 	cdb->prov_info = provider_info;
+	cdb->normalize_non_icao = B_TRUE;
 	/* Default to 1/32 of physical memory, but no more than 256MB */
 	cdb->load_limit = MIN(physmem() >> 5, 256 << 20);
 	lacf_strlcpy(cdb->prov_name, provider_name, sizeof (cdb->prov_name));
@@ -1392,24 +1393,28 @@ chartdb_free_str_list(char **l, size_t num)
 static chart_arpt_t *
 arpt_find(chartdb_t *cdb, const char *icao)
 {
-	chart_arpt_t srch;
+	chart_arpt_t srch = {};
 	chart_arpt_t *arpt;
 
 	ASSERT(icao != NULL);
 
-	switch (strlen(icao)) {
-	case 3:
-		/*
-		 * In the US it's common to omit the leading 'K', especially
-		 * for non-ICAO airports. Adapt to them.
-		 */
-		snprintf(srch.icao, sizeof (srch.icao), "K%s", icao);
-		break;
-	case 4:
+	if (cdb->normalize_non_icao) {
+		switch (strlen(icao)) {
+		case 3:
+			/*
+			 * In the US it's common to omit the leading 'K',
+			 * especially for non-ICAO airports. Adapt to them.
+			 */
+			snprintf(srch.icao, sizeof (srch.icao), "K%s", icao);
+			break;
+		case 4:
+			lacf_strlcpy(srch.icao, icao, sizeof (srch.icao));
+			break;
+		default:
+			return (NULL);
+		}
+	} else {
 		lacf_strlcpy(srch.icao, icao, sizeof (srch.icao));
-		break;
-	default:
-		return (NULL);
 	}
 	arpt = avl_find(&cdb->arpts, &srch, NULL);
 	if (arpt == NULL && prov[cdb->prov].arpt_lazy_discover != NULL)
