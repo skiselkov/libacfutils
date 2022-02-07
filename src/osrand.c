@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -23,6 +23,8 @@
 #if	IBM
 #include <windows.h>
 #include <wincrypt.h>
+#include <bcrypt.h>
+#include <ntstatus.h>
 #endif	/* !IBM */
 
 #include <acfutils/core.h>
@@ -44,7 +46,17 @@ osrand(void *buf, size_t len)
 {
 #if	IBM
 	HCRYPTPROV prov;
-
+	/*
+	 * First try the New-New RNG API. MS, will you ever stop making new
+	 * APIs for old functionality?
+	 */
+	if (BCryptGenRandom(NULL, buf, len, BCRYPT_USE_SYSTEM_PREFERRED_RNG) ==
+	    STATUS_SUCCESS) {
+		return (B_TRUE);
+	}
+	/*
+	 * If that fails, try the crypto interface.
+	 */
 	if (!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, 0) &&
 	    !CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL,
 	    CRYPT_NEWKEYSET) &&

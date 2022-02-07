@@ -185,6 +185,7 @@ typedef struct {
 #define	thread_id_t		pthread_t
 #define	mutex_t			pthread_mutex_t
 #define	condvar_t		pthread_cond_t
+#define	curthread_id		pthread_self()
 #define	curthread		pthread_self()
 
 #define	mutex_init(mtx)	\
@@ -217,7 +218,8 @@ typedef struct {
 	CRITICAL_SECTION	cs;
 } mutex_t;
 #define	condvar_t	CONDITION_VARIABLE
-#define	curthread	GetCurrentThreadId()
+#define	curthread_id	GetCurrentThreadId()
+#define	curthread	GetCurrentThread()
 
 #define	mutex_init(x) \
 	do { \
@@ -400,6 +402,40 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	cv_signal(cv)		pthread_cond_signal((cv))
 #define	cv_broadcast(cv)	pthread_cond_broadcast((cv))
 
+#if	!APL
+#define	THREAD_PRIO_IDLE	sched_get_priority_min()
+#define	THREAD_PRIO_VERY_LOW	(THREAD_PRIO_NORM - 2)
+#define	THREAD_PRIO_LOW		(THREAD_PRIO_NORM - 1)
+#define	THREAD_PRIO_NORM	0	/* Default priority on Linux */
+#define	THREAD_PRIO_HIGH	(THREAD_PRIO_NORM + 1)
+#define	THREAD_PRIO_VERY_HIGH	(THREAD_PRIO_NORM + 2)
+#define	THREAD_PRIO_RT		sched_get_priority_max()
+#define	thread_set_prio(thr, prio) \
+	do { \
+		struct sched_param param = {}; \
+		param.sched_priority = (prio); \
+		pthread_setschedparam((thr), SCHED_OTHER, &param); \
+	} while (0)
+
+#else	/* APL */
+/*
+ * BIG CAVEAT: Apparently idle thread prioritization is causing massive
+ * thread scheduling stability issues on MacOS Monterey with its Rosetta
+ * x86 emulation. Threads either don't get scheduled, or they run in
+ * "slow mo", gradually speeding up and generally just behave entirely
+ * erratically.
+ */
+#define	THREAD_PRIO_IDLE	0
+#define	THREAD_PRIO_VERY_LOW	0
+#define	THREAD_PRIO_LOW		0
+#define	THREAD_PRIO_NORM	0
+#define	THREAD_PRIO_HIGH	0
+#define	THREAD_PRIO_VERY_HIGH	0
+#define	THREAD_PRIO_RT		0
+#define	thread_set_prio(thr, prio)
+
+#endif	/* APL */
+
 #else	/* !APL && !LIN */
 
 static DWORD _lacf_thread_start_routine(void *arg) UNUSED_ATTR;
@@ -472,6 +508,15 @@ cv_timedwait(condvar_t *cv, mutex_t *mtx, uint64_t limit)
 #define	cv_signal	WakeConditionVariable
 #define	cv_broadcast	WakeAllConditionVariable
 
+#define	THREAD_PRIO_IDLE		THREAD_PRIORITY_IDLE
+#define	THREAD_PRIO_VERY_LOW		THREAD_PRIORITY_LOWEST
+#define	THREAD_PRIO_LOW			THREAD_PRIORITY_BELOW_NORMAL
+#define	THREAD_PRIO_NORM		THREAD_PRIORITY_NORMAL
+#define	THREAD_PRIO_HIGH		THREAD_PRIORITY_ABOVE_NORMAL
+#define	THREAD_PRIO_VERY_HIGH		THREAD_PRIORITY_HIGHEST
+#define	THREAD_PRIO_RT			THREAD_PRIORITY_TIME_CRITICAL
+#define	thread_set_prio(thr, prio)	SetThreadPriority((thr), (prio))
+
 #endif	/* !APL && !LIN */
 
 API_EXPORT void lacf_mask_sigpipe(void);
@@ -511,21 +556,21 @@ rwmutex_enter(rwmutex_t *rw, bool_t write)
 {
 	mutex_enter(&rw->lock);
 
-	if (rw->write_locked && rw->writer != curthread) {
+	if (rw->write_locked && rw->writer != curthread_id) {
 		rw->waiters++;
 		while (rw->write_locked)
 			cv_wait(&rw->cv, &rw->lock);
 		rw->waiters--;
 	}
 	if (write) {
-		if (rw->refcount > 0 && rw->writer != curthread) {
+		if (rw->refcount > 0 && rw->writer != curthread_id) {
 			rw->waiters++;
 			while (rw->refcount > 0)
 				cv_wait(&rw->cv, &rw->lock);
 			rw->waiters--;
 		}
 		rw->write_locked = B_TRUE;
-		rw->writer = curthread;
+		rw->writer = curthread_id;
 	}
 	rw->refcount++;
 
@@ -539,7 +584,7 @@ rwmutex_exit(rwmutex_t *rw)
 	ASSERT3U(rw->refcount, >, 0);
 	rw->refcount--;
 	if (rw->refcount == 0 && rw->write_locked) {
-		ASSERT3U(rw->writer, ==, curthread);
+		ASSERT3U(rw->writer, ==, curthread_id);
 		rw->write_locked = B_FALSE;
 		rw->writer = 0;
 	}
@@ -558,7 +603,7 @@ rwmutex_upgrade(rwmutex_t *rw)
 static inline bool_t
 rwmutex_held_write(rwmutex_t *rw)
 {
-	return (rw->writer == curthread);
+	return (rw->writer == curthread_id);
 }
 
 #ifdef	DEBUG

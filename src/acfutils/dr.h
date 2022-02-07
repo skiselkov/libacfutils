@@ -125,10 +125,10 @@ static inline double
 dr_getf_prot_impl(const dr_t *dr, DR_DEBUG_VARS)
 {
 	double x = dr_getf_impl(dr, filename, line, varname);
-	ASSERT_MSG(!isnan(x), "%s:%d: Dataref %s (varname %s) contains a "
-	    "garbage (NAN) value. We didn't write that, somebody else did! "
-	    "Remove extraneous plugins and try to isolate the cause.",
-	    filename, line, dr->name, varname);
+	ASSERT_MSG(!isnan(x) && isfinite(x), "%s:%d: Dataref %s (varname %s) "
+	    "contains a garbage value (%f). We didn't write that, somebody "
+	    "else did! Remove extraneous plugins and try to isolate the cause.",
+	    filename, line, dr->name, varname, x);
 	return (x);
 }
 /*

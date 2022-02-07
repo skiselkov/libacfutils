@@ -311,7 +311,8 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 			if (sep != NULL) {
 				type = CONF_KEY_STR;
 				sep[0] = '\0';
-				sep[1] = '\0';
+				sep++;
+				sep[0] = '\0';
 				unescape = true;
 			} else {
 				sep = strstr(line, "=");
@@ -455,8 +456,16 @@ needs_escape(const char *str)
 	ASSERT(str != NULL);
 
 	for (unsigned i = 0, n = strlen(str); i < n; i++) {
-		if (str[i] < 32)
+		if ((i == 0 && isspace(str[i])) ||
+		    (i + 1 == n && isspace(str[i]))) {
+			/* String begins and ends in whitespace */
 			return (true);
+		}
+		if (str[i] < 32 || str[i] == '#' || str[i] == '%' ||
+		    str[i] == '`') {
+			/* String contains chars that could confuse us */
+			return (true);
+		}
 	}
 	return (false);
 }
@@ -855,7 +864,10 @@ conf_set_d(conf_t *conf, const char *key, double value)
 {
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	conf_set_common(conf, key, "%.15f", value);
+	if (isnan(value))
+		conf_set_str(conf, key, "nan");
+	else
+		conf_set_common(conf, key, "%.15f", value);
 }
 
 void
@@ -863,7 +875,10 @@ conf_set_f(conf_t *conf, const char *key, float value)
 {
 	ASSERT(conf != NULL);
 	ASSERT(key != NULL);
-	conf_set_common(conf, key, "%.12f", value);
+	if (isnan(value))
+		conf_set_str(conf, key, "nan");
+	else
+		conf_set_common(conf, key, "%.12f", value);
 }
 
 /*

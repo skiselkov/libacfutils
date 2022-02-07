@@ -26,6 +26,7 @@
 #endif	/* !IBM */
 
 #include "chart_prov_common.h"
+#include "acfutils/stat.h"
 
 #define	REALLOC_STEP	(8 << 20)	/* bytes */
 #define	MAX_DL_SIZE	(128 << 20)	/* bytes */

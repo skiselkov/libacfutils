@@ -778,6 +778,10 @@ chart_navigraph_init(chartdb_t *cdb)
 	cdb->prov_priv = nav;
 	cdb->chart_sort_func = chart_sort_func_navigraph;
 	/*
+	 * Do NOT normalize 3-letter identifiers.
+	 */
+	cdb->normalize_non_icao = false;
+	/*
 	 * Force a connection right away to set up the account from
 	 * the worker thread, where we can block for user input.
 	 */

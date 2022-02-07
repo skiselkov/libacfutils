@@ -164,6 +164,7 @@ elif [[ "$1" = "--libs" ]]; then
 			OPENAL_EXTRA="-lole32"
 		fi
 		WINMM_EXTRA="-lwinmm"
+		WINBCRYPT_EXTRA="-lbcrypt"
 	elif [[ "$ARCH" = "mac-64" ]]; then
 		if [[ "$STATIC_OPENAL" = 1 ]]; then
 			OPENAL_EXTRA="-lstdc++"
@@ -191,4 +192,4 @@ echo $WHOLE_ARCH_ON ${ACFUTILS_EXTRA} ${LZMA} ${LIBICONV} \
     $(pkg-config $@ $PACKAGES) \
     $EXTRA $WHOLE_ARCH_OFF \
     $OPENSSL_EXTRA $DBGEXTRA ${CGLM_EXTRA} ${PCRE2_EXTRA} ${OPENAL_EXTRA} \
-    ${GLEW_EXTRA} ${STACKPROT_EXTRA} ${WINMM_EXTRA}
+    ${GLEW_EXTRA} ${STACKPROT_EXTRA} ${WINBCRYPT_EXTRA} ${WINMM_EXTRA}

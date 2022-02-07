@@ -256,7 +256,7 @@ parse_chart(chartdb_t *cdb, CURL *curl, const char *path)
 	chart_name_process(chartname);
 
 	arpt = chartdb_add_arpt(cdb, icao, arpt_name, country, "");
-	chart = calloc(1, sizeof (*chart));
+	chart = safe_calloc(1, sizeof (*chart));
 	chart->name = strdup(chartname);
 	chart->codename = strdup(path);
 	chart->type = chart_type;

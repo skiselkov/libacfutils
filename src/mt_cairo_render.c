@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 /*
  * mt_cairo_render is a multi-threaded cairo rendering surface with
@@ -370,7 +370,7 @@ mt_cairo_render_glob_init(void)
 		return;
 	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 	    1, 1));
-	mtcr_main_thread = curthread;
+	mtcr_main_thread = curthread_id;
 	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
 	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
 	fdr_find(&drs.mv_matrix, "sim/graphics/view/modelview_matrix");
@@ -382,7 +382,7 @@ static void
 setup_vao(mt_cairo_render_t *mtcr)
 {
 	GLint old_vao = 0;
-	bool_t on_main_thread = (curthread == mtcr_main_thread);
+	bool_t on_main_thread = (curthread_id == mtcr_main_thread);
 
 	if (GLEW_VERSION_3_0 && !on_main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
@@ -1448,6 +1448,7 @@ mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 	if (rs->chg) {
 		rs_tex_alloc(mtcr, rs);
 		rs_upload(mtcr, rs);
+		ASSERT3P(rs->sync, ==, NULL);
 		rs->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 		ASSERT(!list_link_active(&rs->ul_inprog_node));
 		list_insert_tail(ul_inprog_list, rs);
@@ -1483,6 +1484,7 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 
 	mutex_enter(&mtcr->lock);
 
+	glDeleteSync(rs->sync);
 	rs->sync = NULL;
 	ASSERT(rs->chg);
 	rs->chg = B_FALSE;

@@ -109,6 +109,7 @@ struct chartdb_s {
 	chart_prov_id_t	prov;
 	char		prov_name[32];
 	avl_tree_t	arpts;
+	bool_t		normalize_non_icao;
 
 	/* immutable after provider init */
 	bool_t		flat_db;

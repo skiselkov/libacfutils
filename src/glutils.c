@@ -101,7 +101,7 @@ static thread_id_t main_thread;
 void
 glutils_sys_init(void)
 {
-	main_thread = curthread;
+	main_thread = curthread_id;
 }
 
 /*
@@ -216,7 +216,7 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 		}
 	}
 
-	if (GLEW_VERSION_3_0 && curthread != main_thread) {
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		glGenVertexArrays(1, &quads->vao);
@@ -238,7 +238,7 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 	IF_TEXSZ(TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
 	    filename, line, quads->num_vtx * sizeof (vtx_t)));
 
-	if (GLEW_VERSION_3_0 && curthread != main_thread)
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread)
 		glBindVertexArray(old_vao);
 }
 
@@ -560,7 +560,7 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		vtx_data[i].pos[2] = p[i].z;
 	}
 
-	if (GLEW_VERSION_3_0 && curthread != main_thread) {
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		glGenVertexArrays(1, &lines->vao);
@@ -583,7 +583,7 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		    filename, line, lines->num_vtx * sizeof (vtx_t));
 	}
 
-	if (GLEW_VERSION_3_0 && curthread != main_thread)
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread)
 		glBindVertexArray(old_vao);
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -945,7 +945,7 @@ glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts)
 	}
 
 	nl->num_pts = num_pts;
-	if (GLEW_VERSION_3_0 && curthread != main_thread) {
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread) {
 		glGenVertexArrays(1, &nl->vao);
 		VERIFY(nl->vao != 0);
 		glBindVertexArray(nl->vao);
@@ -964,7 +964,7 @@ glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts)
 	nl->loc.seg_start = -1;
 	nl->loc.seg_end = -1;
 
-	if (GLEW_VERSION_3_0 && curthread != main_thread)
+	if (GLEW_VERSION_3_0 && curthread_id != main_thread)
 		glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
