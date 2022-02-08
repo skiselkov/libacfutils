@@ -12,7 +12,7 @@
  *
  * CDDL HEADER END
  *
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <dirent.h>
 #endif	/* !IBM */
+
+#include <XPLMUtilities.h>
 
 #include "acfutils/airportdb.h"
 #include "acfutils/assert.h"
@@ -535,9 +537,12 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 	char *fname;
 	FILE *scenery_packs_ini;
 	apt_dats_entry_t *e;
+	int xpver;
 
 	ASSERT(db != NULL);
 	ASSERT(list != NULL);
+
+	XPLMGetVersions(&xpver, NULL, NULL);
 
 	fname = mkpathname(db->xpdir, "Custom Scenery", "scenery_packs.ini",
 	    NULL);
@@ -568,11 +573,16 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 		fclose(scenery_packs_ini);
 		free(line);
 	}
-
-	/* append the default apt.dat */
 	e = safe_malloc(sizeof (*e));
-	e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
-	    "default apt dat", "Earth nav data", "apt.dat", NULL);
+	if (xpver < 12000) {
+		/* append the default apt.dat in XP11 */
+		e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
+		    "default apt dat", "Earth nav data", "apt.dat", NULL);
+	} else {
+		/* append the default apt.dat in XP12 */
+		e->fname = mkpathname(db->xpdir, "Global Scenery",
+		    "Global Airports", "Earth nav data", "apt.dat", NULL);
+	}
 	list_insert_tail(list, e);
 }
 
