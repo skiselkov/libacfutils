@@ -1296,7 +1296,7 @@ geo_displace_dir(const ellip_t *ellip, geo_pos2_t pos, vect2_t dir, double dist)
 	if (dist >= M_PI * EARTH_MSL / 2)
 		return (NULL_GEO_POS2);
 	fpp = gnomo_fpp_init(pos, 0, ellip, B_TRUE);
-	dir = vect2_set_abs(dir, tan(dist_r));
+	dir = vect2_set_abs(dir, EARTH_MSL * tan(dist_r));
 
 	return (fpp2geo(dir, &fpp));
 }
