@@ -67,7 +67,7 @@ ifeq ($(UNAME), Darwin)
 FLAGS += -arch x86_64 -arch arm64
 LDFLAGS += -arch x86_64 -arch arm64
 LIB = libtool
-ARFLAGS = 
+ARFLAGS = -static
 endif
 #FLAGS = -g -W -Wall -ansi -DAUDIT -DMEM_DEBUG
 #FLAGS = -O3 -mcpu=pentiumpro -fomit-frame-pointer -W -Wall -ansi -DMEM_CHECK
@@ -102,7 +102,7 @@ COBJ = mem.o nhash.o cpp.o lexer.o assert.o macro.o eval.o
 CFLAGS = $(FLAGS)
 
 all: ucpp
-	@$(LIB) $(LIBFLAGS) -static -o libucpp.a *.o
+	@$(LIB) $(LIBFLAGS) -o libucpp.a *.o
 
 clean:
 	@rm -f *.o ucpp core *.a
