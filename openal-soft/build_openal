@@ -105,6 +105,7 @@ case $(uname) in
 			    patch -p1 < ../visibility.patch )
 			do_build "mac-64" \
 			    "-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 \
+                -DCMAKE_OSX_ARCHITECTURES=x86_64;arm64 \
 			    $CONFOPTS_COMMON"
 		fi
 		;;
