@@ -44,81 +44,87 @@ if [[ "$do_clean" == "1" ]]; then
 	exit
 fi
 
+function clean_dyn_lib() {
+    ARCH="$1"
+    
+    case $ARCH in
+    'linux-64')
+        ( cd "$GLEW-$ARCH" && rm -f install/lib/*.so*)
+        ;;
+    'mac-64')
+        ( cd "$GLEW-$ARCH" && rm -f install/lib/*.dylib)
+        ;;
+    'win-64')
+        ( cd "$GLEW-$ARCH" && rm -f install/lib/*.dll)
+        ;;
+    *)
+		echo "Unsupported build platform" >&2
+		exit 1
+		;;
+    esac
+}
+
+function do_build() {
+    ARCH="$1"
+    ADD_MFLAGS="$2"
+    ADD_CFLAGS="$3"
+    
+    
+	MAKE_FLAGS="$ADD_MFLAGS GLEW_PREFIX=$(pwd)/$GLEW-$ARCH/install \
+	    GLEW_DEST=$(pwd)/$GLEW-$ARCH/install \
+	    CFLAGS.CMDLINE=\"-fvisibility=hidden $ADD_CFLAGS\" \
+	    LDFLAGS.CMDLINE=\"$ADD_CFLAGS\" \
+	    $MAKE_FLAGS_COMMON"
+	if ! [ -f "$GLEW-$ARCH/install/lib/libGLEWmx.a" ]; then
+		rm -rf "$GLEW-$ARCH" && tar xJf "$GLEW_ARCHIVE" && \
+		    mv "$GLEW" "$GLEW-$ARCH" && \
+		    cp -r "auto" "$GLEW-$ARCH" && \
+		    ( cd "$GLEW-$ARCH" && \
+		    patch -p1 < ../opengl_4.6.patch && \
+		    patch -p1 < ../cmdline_flags.patch && \
+		    patch -p1 < ../ctx_funcs_1.patch && \
+		    eval make $MAKE_FLAGS extensions && \
+		    patch -p1 < ../ctx_funcs_2.patch && \
+		    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
+		    eval make $MAKE_FLAGS install.mx )
+	fi
+    
+}
+
+function make_macOS_fat() {
+    PLATFORM="$1"
+    PLATFORM_ARM="$2"
+    
+    OUTDIR_ARM="$(pwd)/$GLEW-$PLATFORM_ARM"
+    OUTDIR="$(pwd)/$GLEW-$PLATFORM"
+    
+    ARCHS=$(lipo -archs $OUTDIR/install/lib/libGLEWmx.a)
+    
+    # We need to do that in order to replace the arm64 slice if it already exists.
+    if [[ "$ARCHS" =~ "arm64" ]]; then
+        lipo -remove arm64 "$OUTDIR/install/lib/libGLEWmx.a" \
+            -output "$OUTDIR/install/lib/libGLEWmx.a"
+    fi
+    lipo -create "$OUTDIR_ARM/install/lib/libGLEWmx.a" "$OUTDIR/install/lib/libGLEWmx.a" \
+        -output "$OUTDIR/install/lib/libGLEWmx.a"
+}
+
 case `uname` in
 	Linux)
-		MAKE_FLAGS="GLEW_PREFIX=$(pwd)/$GLEW-linux-64/install \
-		    GLEW_DEST=$(pwd)/$GLEW-linux-64/install \
-		    CFLAGS.CMDLINE=-fvisibility=hidden \
-		    $MAKE_FLAGS_COMMON"
-		if ! [ -f "$GLEW-linux-64/install/lib64/libGLEWmx.a" ]; then
-			# To get OpenGL 4.6 extension functionality in, we'll
-			# manually bring over the extensions specification
-			# from GLEW-2.1.0. We must also patch the auto/Makefile
-			# to avoid fetching the github-hosted registry, as that
-			# breaks the build. Instead, use only the local files
-			# to generate the library.
-			rm -rf "$GLEW-linux-64" && tar xJf "$GLEW_ARCHIVE" && \
-			    mv "$GLEW" "$GLEW-linux-64" && \
-			    cp -r "auto" "$GLEW-linux-64" && \
-			    ( cd "$GLEW-linux-64" && \
-			    patch -p1 < ../opengl_4.6.patch && \
-			    patch -p1 < ../cmdline_flags.patch && \
-			    patch -p1 < ../ld.patch && \
-			    eval make $MAKE_FLAGS extensions && \
-			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
-			    eval make $MAKE_FLAGS install.mx && \
-			    rm install/lib64/*.so* )
-		fi
-
-		MAKE_FLAGS="SYSTEM=linux-mingw64 HOST=x86_64-w64-mingw32 \
-		    GLEW_PREFIX=$(pwd)/$GLEW-win-64/install \
-		    GLEW_DEST=$(pwd)/$GLEW-win-64/install \
-		    CFLAGS.CMDLINE=-fvisibility=hidden \
-		    $MAKE_FLAGS_COMMON"
-		if ! [ -f "$GLEW-win-64/install/lib/libglew32mx.a" ] && \
-		    [ "$minimal" -ne 1 ]; then
-			rm -rf "$GLEW-win-64" && tar xJf "$GLEW_ARCHIVE"
-			mv "$GLEW" "$GLEW-win-64"
-			cp -r "auto" "$GLEW-win-64"
-			(
-				cd "$GLEW-win-64"
-				patch -p1 < ../opengl_4.6.patch
-				patch -p1 < ../cmdline_flags.patch
-				patch -p1 < ../ld.patch
-				if [ -n "$do_dll" ]; then
-					patch -p1 < ../dll.patch
-				fi
-				eval make $MAKE_FLAGS extensions
-				eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx
-				eval make $MAKE_FLAGS install.mx
-				rm install/lib/*.dll
-			)
-		fi
+        (
+            do_build "linux-64" "" "" && \
+            do_build "win-64" "SYSTEM=linux-mingw64 HOST=x86_64-w64-mingw32" "" && \
+            clean_dyn_lib "linux-64" && \
+            clean_dyn_lib "win-64"
+        )
 		;;
 	Darwin)
-
-		MAKE_FLAGS="GLEW_PREFIX=$(pwd)/$GLEW-mac-64/install \
-		    GLEW_DEST=$(pwd)/$GLEW-mac-64/install \
-		    CFLAGS.CMDLINE=\"-mmacosx-version-min=10.9 \
-            -arch x86_64 \
-		    -fvisibility=hidden\" \
-		    LDFLAGS.CMDLINE=\"-mmacosx-version-min=10.9 \
-            -arch x86_64\" \
-		    $MAKE_FLAGS_COMMON"
-		if ! [ -f "$GLEW-mac-64/install/lib/libGLEWmx.a" ]; then
-			rm -rf "$GLEW-mac-64" && tar xJf "$GLEW_ARCHIVE" && \
-			    mv "$GLEW" "$GLEW-mac-64" && \
-			    cp -r "auto" "$GLEW-mac-64" && \
-			    ( cd "$GLEW-mac-64" && \
-			    patch -p1 < ../opengl_4.6.patch && \
-			    patch -p1 < ../cmdline_flags.patch && \
-			    patch -p1 < ../ctx_funcs_1.patch && \
-			    eval make $MAKE_FLAGS extensions && \
-			    patch -p1 < ../ctx_funcs_2.patch && \
-			    eval make $MAKE_FLAGS -j $NCPUS glew.lib.mx && \
-			    eval make $MAKE_FLAGS install.mx && \
-			    rm install/lib/*.dylib )
-		fi
+        (
+            do_build "mac-64" "" "-mmacosx-version-min=10.9 -arch x86_64" && \
+            do_build "mac-arm" "" "-mmacosx-version-min=10.9 -arch arm64" && \
+            make_macOS_fat "mac-64" "mac-arm" && \
+            clean_dyn_lib "mac-64"
+        )
 		;;
 	*)
 		echo "Unsupported build platform" >&2

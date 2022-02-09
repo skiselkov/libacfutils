@@ -117,6 +117,7 @@ glfw/glfw-win-64
 glew/glew-1.13.0-linux-64
 glew/glew-1.13.0-mac-64
 glew/glew-1.13.0-win-64
+glew/glew-1.13.0-mac-arm
 
 cairo/cairo-1.16.0
 cairo/pixman-0.36.0

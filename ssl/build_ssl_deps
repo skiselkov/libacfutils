@@ -27,6 +27,14 @@ function make_macOS_fat() {
     OUTDIR_ARM="$(pwd)/openssl-$PLATFORM_ARM"
     OUTDIR="$(pwd)/openssl-$PLATFORM"
     
+    if [[ $(lipo -archs "$OUTDIR/lib/libcrypto.a") =~ "arm64" ]]; then
+        lipo -remove arm64 "$OUTDIR/lib/libcrypto.a" -output "$OUTDIR/lib/libcrypto.a"
+    fi
+    
+    if [[ $(lipo -archs "$OUTDIR/lib/libssl.a") =~ "arm64" ]]; then
+        lipo -remove arm64 "$OUTDIR/lib/libssl.a" -output "$OUTDIR/lib/libssl.a"
+    fi
+    
     lipo -create "$OUTDIR_ARM/lib/libcrypto.a" "$OUTDIR/lib/libcrypto.a" \
         -output "$OUTDIR/lib/libcrypto.a"
     lipo -create "$OUTDIR_ARM/lib/libssl.a" "$OUTDIR/lib/libssl.a" \
@@ -77,9 +85,9 @@ case `uname` in
 		fi
 		;;
 	Darwin)
-		build_ssl mac-64 "-fvisibility=hidden darwin64-x86_64-cc"
-		build_ssl mac-64-arm "-fvisibility=hidden darwin64-arm64-cc"
-        make_macOS_fat mac-64 mac-64-arm
+		build_ssl "mac-64" "-fvisibility=hidden darwin64-x86_64-cc"
+		build_ssl "mac-64-arm" "-fvisibility=hidden darwin64-arm64-cc"
+        make_macOS_fat "mac-64" "mac-64-arm"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
