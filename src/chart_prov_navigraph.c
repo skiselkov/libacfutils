@@ -1087,7 +1087,15 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 			}
 		}
 		parse_chart_georef_data(json, toks, n_toks, chart, i);
-		VERIFY(chartdb_add_chart(arpt, chart));
+		if (!chartdb_add_chart(arpt, chart)) {
+			/*
+			 * Duplicate chart - unfortunately, Navigraph is
+			 * prone to sending duplicates.
+			 */
+			logMsg("Chart error: airport %s contains duplicate "
+			    "chart %s", arpt->icao, chart->name);
+			chartdb_chart_destroy(chart);
+		}
 	}
 
 	return (B_TRUE);

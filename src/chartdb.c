@@ -164,8 +164,8 @@ arpt_compar(const void *a, const void *b)
 	return (1);
 }
 
-static void
-chart_destroy(chart_t *chart)
+void
+chartdb_chart_destroy(chart_t *chart)
 {
 	ASSERT(chart != NULL);
 
@@ -190,7 +190,7 @@ arpt_destroy(chart_arpt_t *arpt)
 
 	cookie = NULL;
 	while ((chart = avl_destroy_nodes(&arpt->charts, &cookie)) != NULL)
-		chart_destroy(chart);
+		chartdb_chart_destroy(chart);
 	avl_destroy(&arpt->charts);
 
 	free(arpt->name);
