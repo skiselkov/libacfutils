@@ -287,8 +287,10 @@ is_valid_icao_code(const char *icao)
 	if (strlen(icao) != 4)
 		return (B_FALSE);
 	for (int i = 0; i < 4; i++) {
-		if (icao[i] < 'A' || icao[i] > 'Z')
+		if ((icao[i] < 'A' || icao[i] > 'Z') &&
+		    (icao[i] < '0' || icao[i] > '9')) {
 			return (B_FALSE);
+		}
 	}
 	if (icao[0] == 'I' || icao[0] == 'J' || icao[0] == 'Q' ||
 	    icao[0] == 'X')
