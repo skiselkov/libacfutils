@@ -84,25 +84,25 @@ is_valid_lon(double lon)
 static inline bool_t
 is_valid_elev(double elev)
 {
-	return (elev >= MIN_ELEV && elev <= MAX_ELEV);
+	return (!isnan(elev) && elev >= MIN_ELEV && elev <= MAX_ELEV);
 }
 
 static inline bool_t
 is_valid_alt(double alt)
 {
-	return (alt >= MIN_ALT && alt <= MAX_ALT);
+	return (!isnan(alt) && alt >= MIN_ALT && alt <= MAX_ALT);
 }
 
 static inline bool_t
 is_valid_spd(double spd)
 {
-	return (spd >= 0.0 && spd <= MAX_SPD);
+	return (!isnan(spd) && spd >= 0.0 && spd <= MAX_SPD);
 }
 
 static inline bool_t
 is_valid_hdg(double hdg)
 {
-	return (hdg >= 0.0 && hdg <= 360.0);
+	return (!isnan(hdg) && hdg >= 0.0 && hdg <= 360.0);
 }
 
 #define	rel_hdg(h1, h2)	rel_hdg_impl(h1, h2, __FILE__, __LINE__)
