@@ -574,7 +574,7 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 		free(line);
 	}
 	e = safe_malloc(sizeof (*e));
-	if (xpver < 12000) {
+	if (xpver < 1200) {
 		/* append the default apt.dat in XP11 */
 		e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
 		    "default apt dat", "Earth nav data", "apt.dat", NULL);
