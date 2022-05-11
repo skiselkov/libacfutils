@@ -158,6 +158,10 @@ handle_posix_sig(int sig, siginfo_t *siginfo, void *context)
 	exit(EXIT_FAILURE);
 }
 
+#if	LIN
+static uint8_t *alternate_stack = NULL;
+#endif
+
 static void
 signal_handler_init(void)
 {
@@ -166,7 +170,11 @@ signal_handler_init(void)
 	sigemptyset(&sig_action.sa_mask);
 
 #if	LIN
-	static uint8_t alternate_stack[SIGSTKSZ];
+	/*
+	 * Since glibc 2.34, SIGSTKSZ is no longer constant, so we need to
+	 * heap storage for the stack snapshot.
+	 */
+	alternate_stack = malloc(SIGSTKSZ);
 	stack_t ss = {
 	    .ss_sp = (void*)alternate_stack,
 	    .ss_size = SIGSTKSZ,
@@ -196,6 +204,10 @@ signal_handler_fini(void)
 	VERIFY0(sigaction(SIGINT, &old_sigint, NULL));
 	VERIFY0(sigaction(SIGILL, &old_sigill, NULL));
 	VERIFY0(sigaction(SIGTERM, &old_sigterm, NULL));
+#if	LIN
+	free(alternate_stack);
+	alternate_stack = NULL;
+#endif	/* LIN */
 }
 
 #else	/* APL || LIN */
