@@ -85,6 +85,8 @@ case $(uname) in
 		elif ! [ -f "$PRODUCT" ]; then
 			rm -fr "$DIR-linux-64" && \
 			tar xjvf "$FILE" && mv "$DIR" "$DIR-linux-64" && \
+			( cd "$DIR-linux-64" && \
+			    patch -p1 < ../cxx_standard.patch )
 			do_build "linux-64" \
 			    "-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 			    -DALSOFT_REQUIRE_ALSA=ON \

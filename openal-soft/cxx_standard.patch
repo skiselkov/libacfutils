@@ -1,0 +1,11 @@
+--- foo/CMakeLists.txt	2020-11-04 11:00:35.000000000 +0100
++++ bar/CMakeLists.txt	2022-05-15 20:00:07.580677020 +0200
+@@ -151,7 +151,7 @@
+ 
+ 
+ # Require C++14
+-set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+ 
+ # Prefer C11, but support C99 and C90 too.
