@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -32,6 +32,7 @@
 #include "acfutils/geom.h"
 #include "acfutils/helpers.h"
 #include "acfutils/list.h"
+#include "acfutils/mt_cairo_render.h"
 #include "acfutils/safe_alloc.h"
 #include "acfutils/widget.h"
 #include "acfutils/time.h"
@@ -40,7 +41,7 @@ enum {
 	TOOLTIP_LINE_HEIGHT =	13,
 	TOOLTIP_WINDOW_OFFSET =	15,
 	TOOLTIP_WINDOW_MARGIN = 10,
-	TOOLTIP_WINDOW_WIDTH = 450
+	TOOLTIP_WINDOW_WIDTH = 600
 };
 
 #define	TOOLTIP_INTVAL		0.1
@@ -59,17 +60,71 @@ struct tooltip_set {
 	list_t		tooltips;
 	list_node_t	node;
 	double		display_delay;
+	/* These are only used for text size measurement */
+	cairo_surface_t	*surf;
+	cairo_t		*cr;
 };
 
-#define	NUM_TOOLTIP_SUBWINDOWS	3
+#define	TT_FONT_SIZE		21
+#define	TT_LINE_HEIGHT		21
+#define	TT_BACKGROUND_RGBA	0, 0, 0, 0.85
+#define	TT_TEXT_RGBA		1, 1, 1, 1
 
 static list_t tooltip_sets;
 static bool inited = false;
 static tooltip_t *cur_tt = NULL;
-static XPWidgetID cur_tt_subwin[NUM_TOOLTIP_SUBWINDOWS] = { NULL };
-static XPWidgetID cur_tt_win = NULL;
+static const tooltip_set_t *cur_tts = NULL;
+static mt_cairo_render_t *cur_tt_mtcr = NULL;
+static XPLMWindowID cur_tt_win = NULL;
+static size_t n_cur_tt_lines = 0;
+static char **cur_tt_lines = NULL;
 static int last_mouse_x, last_mouse_y;
 static uint64_t mouse_moved_time;
+
+static void
+tt_draw_cb(XPLMWindowID win, void *refcon)
+{
+	int left, top, right, bottom;
+
+	ASSERT(win != NULL);
+	UNUSED(refcon);
+
+	ASSERT(cur_tt_mtcr != NULL);
+	XPLMGetWindowGeometry(win, &left, &top, &right, &bottom);
+	mt_cairo_render_draw(cur_tt_mtcr, VECT2(left, bottom),
+	    VECT2(right - left, top - bottom));
+}
+
+static void
+tt_render_cb(cairo_t *cr, unsigned w, unsigned h, void *userinfo)
+{
+	double x = TOOLTIP_WINDOW_MARGIN;
+	double y = TOOLTIP_WINDOW_MARGIN + TT_LINE_HEIGHT / 2;
+	cairo_text_extents_t te;
+
+	ASSERT(cr != NULL);
+	UNUSED(userinfo);
+
+	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
+	cairo_paint(cr);
+	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+
+	cairo_set_source_rgba(cr, TT_BACKGROUND_RGBA);
+	mt_cairo_render_rounded_rectangle(cr, 0, 0, w, h,
+	    TOOLTIP_WINDOW_MARGIN);
+	cairo_fill(cr);
+
+	cairo_set_source_rgba(cr, TT_TEXT_RGBA);
+	cairo_set_font_size(cr, TT_FONT_SIZE);
+
+	ASSERT(n_cur_tt_lines != 0);
+	cairo_text_extents(cr, cur_tt_lines[0], &te);
+	for (size_t i = 0; i < n_cur_tt_lines; i++) {
+		cairo_move_to(cr, x, y - te.height / 2 - te.y_bearing);
+		cairo_show_text(cr, cur_tt_lines[i]);
+		y += TT_LINE_HEIGHT;
+	}
+}
 
 XPWidgetID
 create_widget_rel(int x, int y, bool_t y_from_bottom, int width, int height,
@@ -199,6 +254,9 @@ tooltip_set_new_native(XPLMWindowID window)
 	tts->orig_w = right - left;
 	tts->orig_h = top - bottom;
 	tts->display_delay = DEFAULT_DISPLAY_DELAY;
+	tts->surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
+	tts->cr = cairo_create(tts->surf);
+	cairo_set_font_size(tts->cr, TT_FONT_SIZE);
 
 	return (tts);
 }
@@ -223,15 +281,17 @@ tooltip_set_delay(tooltip_set_t *set, double secs)
 static void
 destroy_cur_tt(void)
 {
-	ASSERT(cur_tt_subwin[0] != NULL);
-	ASSERT(cur_tt_win != NULL);
-	ASSERT(cur_tt != NULL);
-	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++)
-		XPDestroyWidget(cur_tt_subwin[i], 1);
-	XPDestroyWidget(cur_tt_win, 1);
-	memset(cur_tt_subwin, 0, sizeof (cur_tt_subwin));
-	cur_tt_win = NULL;
-	cur_tt = NULL;
+	if (cur_tt != NULL) {
+		mt_cairo_render_fini(cur_tt_mtcr);
+		cur_tt_mtcr = NULL;
+		XPLMDestroyWindow(cur_tt_win);
+		cur_tt_win = NULL;
+		free_strlist(cur_tt_lines, n_cur_tt_lines);
+		cur_tt_lines = NULL;
+		n_cur_tt_lines = 0;
+		cur_tt = NULL;
+		cur_tts = NULL;
+	}
 }
 
 void
@@ -246,7 +306,9 @@ tooltip_set_destroy(tooltip_set_t *tts)
 	}
 	list_destroy(&tts->tooltips);
 	list_remove(&tooltip_sets, tts);
-	free(tts);
+	cairo_destroy(tts->cr);
+	cairo_surface_destroy(tts->surf);
+	ZERO_FREE(tts);
 }
 
 void
@@ -271,13 +333,31 @@ find_whitespace(const char *p, const char *end)
 	return (p);
 }
 
+static cairo_text_extents_t
+tts_measure_string(const tooltip_set_t *tts, const char *text, unsigned len)
+{
+	cairo_text_extents_t ts;
+	char buf[len + 1];
+
+	ASSERT(tts != NULL);
+	ASSERT(tts->cr != NULL);
+	ASSERT(text != NULL);
+
+	strlcpy(buf, text, len + 1);
+	cairo_text_extents(tts->cr, buf, &ts);
+
+	return (ts);
+}
+
 static char **
-auto_wrap_text(const char *text, double max_width, size_t *n_lines)
+auto_wrap_text(const tooltip_set_t *tts, const char *text, double max_width,
+    size_t *n_lines)
 {
 	char **lines = NULL;
 	const char *start, *end;
 	size_t n = 0;
 
+	ASSERT(tts != NULL);
 	ASSERT(text != NULL);
 	ASSERT(n_lines != NULL);
 
@@ -286,8 +366,8 @@ auto_wrap_text(const char *text, double max_width, size_t *n_lines)
 
 	for (const char *p = text, *sp_prev = text; p < end;) {
 		const char *const sp_here = find_whitespace(p, end);
-		double width = XPLMMeasureString(xplmFont_Proportional,
-		    start, sp_here - start);
+		double width = tts_measure_string(tts, start,
+		    sp_here - start).width;
 
 		if (width > max_width || *sp_prev == '\n') {
 			lines = safe_realloc(lines, (n + 1) * sizeof (*lines));
@@ -311,61 +391,74 @@ auto_wrap_text(const char *text, double max_width, size_t *n_lines)
 }
 
 static void
-set_cur_tt(tooltip_t *tt, int mouse_x, int mouse_y)
+set_cur_tt(const tooltip_set_t *tts, tooltip_t *tt, int mouse_x, int mouse_y)
 {
+	int scr_left, scr_top, scr_right, scr_bottom;
 	int width = 2 * TOOLTIP_WINDOW_MARGIN;
 	int height = 2 * TOOLTIP_WINDOW_MARGIN;
-	size_t n_lines;
-	char **lines;
+	XPLMCreateWindow_t cr = {
+	    .structSize = sizeof (cr),
+	    .visible = true,
+	    .drawWindowFunc = tt_draw_cb,
+	    .decorateAsFloatingWindow = xplm_WindowDecorationNone,
+	    .layer = xplm_WindowLayerGrowlNotifications
+	};
 
+	ASSERT(tts != NULL);
 	ASSERT(tt != NULL);
-	ASSERT(cur_tt == NULL);
-	ASSERT(cur_tt_subwin[0] == NULL);
-	ASSERT(cur_tt_win == NULL);
+	ASSERT3P(cur_tt, ==, NULL);
+	ASSERT3P(cur_tt_win, ==, NULL);
+	ASSERT3P(cur_tt_mtcr, ==, NULL);
+	ASSERT3P(cur_tt_lines, ==, NULL);
 
-	lines = auto_wrap_text(tt->text, TOOLTIP_WINDOW_WIDTH, &n_lines);
-	for (size_t i = 0; i < n_lines; i++) {
-		width = MAX(XPLMMeasureString(xplmFont_Proportional, lines[i],
-		    strlen(lines[i])) + 2 * TOOLTIP_WINDOW_MARGIN, width);
-		height += TOOLTIP_LINE_HEIGHT;
+	cur_tt_lines = auto_wrap_text(tts, tt->text, TOOLTIP_WINDOW_WIDTH,
+	    &n_cur_tt_lines);
+	for (size_t i = 0; i < n_cur_tt_lines; i++) {
+		cairo_text_extents_t sz = tts_measure_string(tts,
+		    cur_tt_lines[i], strlen(cur_tt_lines[i]));
+		width = MAX(sz.width + 2 * TOOLTIP_WINDOW_MARGIN, width);
+		height += TT_LINE_HEIGHT;
 	}
-
 	cur_tt = tt;
+	cur_tts = tts;
+	cur_tt_mtcr = mt_cairo_render_init(width, height, 0, NULL,
+	    tt_render_cb, NULL, NULL);
+	mt_cairo_render_once_wait(cur_tt_mtcr);
 
-	/*
-	 * This is just a pair of backing windows to make the main
-	 * window appear to have a darker background.
-	 */
-	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++) {
-		cur_tt_subwin[i] = create_widget_rel(mouse_x +
-		    TOOLTIP_WINDOW_OFFSET, mouse_y - TOOLTIP_WINDOW_OFFSET,
-		    B_TRUE, width, height, 0, "", 1, NULL,
-		    xpWidgetClass_MainWindow);
-		XPSetWidgetProperty(cur_tt_subwin[i], xpProperty_MainWindowType,
-		    xpMainWindowStyle_Translucent);
+	XPLMGetScreenBoundsGlobal(&scr_left, &scr_top, &scr_right,
+	    &scr_bottom);
+	cr.left = mouse_x + TOOLTIP_WINDOW_OFFSET;
+	cr.right = mouse_x + width + TOOLTIP_WINDOW_OFFSET;
+	cr.top = mouse_y - TOOLTIP_WINDOW_OFFSET;
+	cr.bottom = mouse_y - height - TOOLTIP_WINDOW_OFFSET;
+	if (cr.left < scr_left) {
+		int delta = scr_left - cr.left;
+		cr.left += delta;
+		cr.right += delta;
+	}
+	if (cr.right > scr_right) {
+		int delta = cr.right - scr_right;
+		cr.left -= delta;
+		cr.right -= delta;
+	}
+	if (cr.bottom < scr_bottom) {
+		int delta = scr_bottom - cr.bottom;
+		cr.top += delta;
+		cr.bottom += delta;
+	}
+	if (cr.top > scr_top) {
+		int delta = cr.top - scr_top;
+		cr.top -= delta;
+		cr.bottom -= delta;
 	}
 
-	cur_tt_win = create_widget_rel(mouse_x + TOOLTIP_WINDOW_OFFSET,
-	    mouse_y - TOOLTIP_WINDOW_OFFSET, B_TRUE, width, height,
-	    0, "", 1, NULL, xpWidgetClass_MainWindow);
-	XPSetWidgetProperty(cur_tt_win, xpProperty_MainWindowType,
-	    xpMainWindowStyle_Translucent);
+	cur_tt_win = XPLMCreateWindowEx(&cr);
+}
 
-	for (size_t i = 0, y = TOOLTIP_WINDOW_MARGIN; i < n_lines; i++,
-	    y += TOOLTIP_LINE_HEIGHT) {
-		XPWidgetID line_caption;
-
-		line_caption = create_widget_rel(TOOLTIP_WINDOW_MARGIN, y,
-		    B_FALSE, width - 2 * TOOLTIP_WINDOW_MARGIN,
-		    TOOLTIP_LINE_HEIGHT, 1, lines[i], 0, cur_tt_win,
-		    xpWidgetClass_Caption);
-		XPSetWidgetProperty(line_caption, xpProperty_CaptionLit, 1);
-	}
-
-	free_strlist(lines, n_lines);
-	for (int i = 0; i < NUM_TOOLTIP_SUBWINDOWS; i++)
-		XPShowWidget(cur_tt_subwin[i]);
-	XPShowWidget(cur_tt_win);
+static bool
+tooltip_invalid(void)
+{
+	return (cur_tts != NULL && !XPLMIsWindowInFront(cur_tts->window));
 }
 
 static float
@@ -374,6 +467,7 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 {
 	int mouse_x, mouse_y;
 	long long now = microclock();
+	tooltip_set_t *hit_tts = NULL;
 	tooltip_t *hit_tt = NULL;
 
 	UNUSED(elapsed_since_last_call);
@@ -381,9 +475,10 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	UNUSED(counter);
 	UNUSED(refcon);
 
-	XPLMGetMouseLocation(&mouse_x, &mouse_y);
+	XPLMGetMouseLocationGlobal(&mouse_x, &mouse_y);
 
-	if (last_mouse_x != mouse_x || last_mouse_y != mouse_y) {
+	if (last_mouse_x != mouse_x || last_mouse_y != mouse_y ||
+	    tooltip_invalid()) {
 		last_mouse_x = mouse_x;
 		last_mouse_y = mouse_y;
 		mouse_moved_time = now;
@@ -423,6 +518,7 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 
 			if (mouse_x >= x1 && mouse_x <= x2 &&
 			    mouse_y >= y1 && mouse_y <= y2) {
+				hit_tts = tts;
 				hit_tt = tt;
 				goto out;
 			}
@@ -430,7 +526,7 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	}
 out:
 	if (hit_tt != NULL)
-		set_cur_tt(hit_tt, mouse_x, mouse_y);
+		set_cur_tt(hit_tts, hit_tt, mouse_x, mouse_y);
 
 	return (TOOLTIP_INTVAL);
 }
