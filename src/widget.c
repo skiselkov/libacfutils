@@ -38,7 +38,6 @@
 #include "acfutils/time.h"
 
 enum {
-	TOOLTIP_LINE_HEIGHT =	13,
 	TOOLTIP_WINDOW_OFFSET =	15,
 	TOOLTIP_WINDOW_MARGIN = 10,
 	TOOLTIP_WINDOW_WIDTH = 600
@@ -54,19 +53,24 @@ typedef struct {
 } tooltip_t;
 
 struct tooltip_set {
-	XPLMWindowID	window;
-	int		orig_w;
-	int		orig_h;
-	list_t		tooltips;
-	list_node_t	node;
-	double		display_delay;
+	XPLMWindowID		window;
+	int			orig_w;
+	int			orig_h;
+	list_t			tooltips;
+	list_node_t		node;
+	double			display_delay;
 	/* These are only used for text size measurement */
-	cairo_surface_t	*surf;
-	cairo_t		*cr;
+	cairo_surface_t		*surf;
+	cairo_t			*cr;
+	cairo_font_face_t	*font_face;
+	double			font_size;
+	double			line_height;
+	double			font_color[4];
+	double			bg_color[4];
 };
 
-#define	TT_FONT_SIZE		21
-#define	TT_LINE_HEIGHT		21
+#define	TT_FONT_SIZE		18
+#define	TT_LINE_HEIGHT_MULT	1.5
 #define	TT_BACKGROUND_RGBA	0, 0, 0, 0.85
 #define	TT_TEXT_RGBA		1, 1, 1, 1
 
@@ -99,30 +103,37 @@ static void
 tt_render_cb(cairo_t *cr, unsigned w, unsigned h, void *userinfo)
 {
 	double x = TOOLTIP_WINDOW_MARGIN;
-	double y = TOOLTIP_WINDOW_MARGIN + TT_LINE_HEIGHT / 2;
+	double y;
 	cairo_text_extents_t te;
+	const tooltip_set_t *tts;
 
 	ASSERT(cr != NULL);
-	UNUSED(userinfo);
+	ASSERT(userinfo != NULL);
+	tts = userinfo;
+	y = TOOLTIP_WINDOW_MARGIN + tts->line_height / 2;
+
+	if (tts->font_face != NULL)
+		cairo_set_font_face(cr, tts->font_face);
+	cairo_set_font_size(cr, tts->font_size);
 
 	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
 	cairo_paint(cr);
 	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-	cairo_set_source_rgba(cr, TT_BACKGROUND_RGBA);
+	cairo_set_source_rgba(cr, tts->bg_color[0], tts->bg_color[1],
+	    tts->bg_color[2], tts->bg_color[3]);
 	mt_cairo_render_rounded_rectangle(cr, 0, 0, w, h,
 	    TOOLTIP_WINDOW_MARGIN);
 	cairo_fill(cr);
 
 	cairo_set_source_rgba(cr, TT_TEXT_RGBA);
-	cairo_set_font_size(cr, TT_FONT_SIZE);
 
 	ASSERT(n_cur_tt_lines != 0);
 	cairo_text_extents(cr, cur_tt_lines[0], &te);
 	for (size_t i = 0; i < n_cur_tt_lines; i++) {
 		cairo_move_to(cr, x, y - te.height / 2 - te.y_bearing);
 		cairo_show_text(cr, cur_tt_lines[i]);
-		y += TT_LINE_HEIGHT;
+		y += tts->line_height;
 	}
 }
 
@@ -244,6 +255,7 @@ tooltip_set_t *
 tooltip_set_new_native(XPLMWindowID window)
 {
 	int left, top, right, bottom;
+	cairo_text_extents_t te;
 
 	tooltip_set_t *tts = safe_malloc(sizeof (*tts));
 	tts->window = window;
@@ -256,7 +268,12 @@ tooltip_set_new_native(XPLMWindowID window)
 	tts->display_delay = DEFAULT_DISPLAY_DELAY;
 	tts->surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	tts->cr = cairo_create(tts->surf);
-	cairo_set_font_size(tts->cr, TT_FONT_SIZE);
+	tts->font_size = TT_FONT_SIZE;
+	cairo_set_font_size(tts->cr, tts->font_size);
+	memcpy(tts->bg_color, (double[4]){TT_BACKGROUND_RGBA},
+	    sizeof (tts->bg_color));
+	cairo_text_extents(tts->cr, "X", &te);
+	tts->line_height = te.height * TT_LINE_HEIGHT_MULT;
 
 	return (tts);
 }
@@ -309,6 +326,45 @@ tooltip_set_destroy(tooltip_set_t *tts)
 	cairo_destroy(tts->cr);
 	cairo_surface_destroy(tts->surf);
 	ZERO_FREE(tts);
+}
+
+void
+tooltip_set_font_face(tooltip_set_t *tts, cairo_font_face_t *font)
+{
+	cairo_text_extents_t te;
+
+	ASSERT(tts != NULL);
+	ASSERT(font != NULL);
+	tts->font_face = font;
+	cairo_set_font_face(tts->cr, font);
+	cairo_text_extents(tts->cr, "X", &te);
+	tts->line_height = te.height * TT_LINE_HEIGHT_MULT;
+}
+
+cairo_font_face_t *
+tooltip_get_font_face(const tooltip_set_t *tts)
+{
+	ASSERT(tts != NULL);
+	return (tts->font_face);
+}
+
+void
+tooltip_set_font_size(tooltip_set_t *tts, double size)
+{
+	cairo_text_extents_t te;
+
+	ASSERT(tts != NULL);
+	tts->font_size = size;
+	cairo_set_font_size(tts->cr, tts->font_size);
+	cairo_text_extents(tts->cr, "X", &te);
+	tts->line_height = te.height * TT_LINE_HEIGHT_MULT;
+}
+
+double
+tooltip_get_font_size(const tooltip_set_t *tts)
+{
+	ASSERT(tts != NULL);
+	return (tts->font_size);
 }
 
 void
@@ -413,16 +469,16 @@ set_cur_tt(const tooltip_set_t *tts, tooltip_t *tt, int mouse_x, int mouse_y)
 
 	cur_tt_lines = auto_wrap_text(tts, tt->text, TOOLTIP_WINDOW_WIDTH,
 	    &n_cur_tt_lines);
+	height += n_cur_tt_lines * tts->line_height;
 	for (size_t i = 0; i < n_cur_tt_lines; i++) {
 		cairo_text_extents_t sz = tts_measure_string(tts,
 		    cur_tt_lines[i], strlen(cur_tt_lines[i]));
 		width = MAX(sz.width + 2 * TOOLTIP_WINDOW_MARGIN, width);
-		height += TT_LINE_HEIGHT;
 	}
 	cur_tt = tt;
 	cur_tts = tts;
 	cur_tt_mtcr = mt_cairo_render_init(width, height, 0, NULL,
-	    tt_render_cb, NULL, NULL);
+	    tt_render_cb, NULL, (void *)tts);
 	mt_cairo_render_once_wait(cur_tt_mtcr);
 
 	XPLMGetScreenBoundsGlobal(&scr_left, &scr_top, &scr_right,

@@ -30,6 +30,7 @@
 #include <XPWidgets.h>
 
 #include "delay_line.h"
+#include "mt_cairo_render.h"
 #include "types.h"
 
 #ifdef	__cplusplus
@@ -84,6 +85,13 @@ API_EXPORT void tooltip_set_opaque(tooltip_set_t *tts, bool_t opaque);
 
 API_EXPORT void tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h,
     const char *text);
+
+API_EXPORT void tooltip_set_font_face(tooltip_set_t *tts,
+    cairo_font_face_t *font);
+API_EXPORT cairo_font_face_t *tooltip_get_font_face(const tooltip_set_t *tts);
+
+API_EXPORT void tooltip_set_font_size(tooltip_set_t *tts, double size);
+API_EXPORT double tooltip_get_font_size(const tooltip_set_t *tts);
 
 #define	window_follow_VR	ACFSYM(window_follow_VR)
 API_EXPORT bool_t window_follow_VR(XPLMWindowID win);
