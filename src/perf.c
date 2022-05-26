@@ -2524,6 +2524,7 @@ tat2sat(double tat, double mach)
 double
 sat2isadev(double fl, double sat)
 {
+	fl = MIN(fl, ISA_TP_ALT / 100);
 	return (sat - (ISA_SL_TEMP_C - ((fl / 10) * ISA_TLR_PER_1000FT)));
 }
 
@@ -2538,6 +2539,7 @@ sat2isadev(double fl, double sat)
 double
 isadev2sat(double fl, double isadev)
 {
+	fl = MIN(fl, ISA_TP_ALT / 100);
 	return (isadev + ISA_SL_TEMP_C - ((fl / 10) * ISA_TLR_PER_1000FT));
 }
 
