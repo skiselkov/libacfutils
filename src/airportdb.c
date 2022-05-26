@@ -537,12 +537,9 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 	char *fname;
 	FILE *scenery_packs_ini;
 	apt_dats_entry_t *e;
-	int xpver;
 
 	ASSERT(db != NULL);
 	ASSERT(list != NULL);
-
-	XPLMGetVersions(&xpver, NULL, NULL);
 
 	fname = mkpathname(db->xpdir, "Custom Scenery", "scenery_packs.ini",
 	    NULL);
@@ -574,12 +571,12 @@ find_all_apt_dats(const airportdb_t *db, list_t *list)
 		free(line);
 	}
 	e = safe_malloc(sizeof (*e));
-	if (xpver < 12000) {
-		/* append the default apt.dat in XP11 */
-		e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
-		    "default apt dat", "Earth nav data", "apt.dat", NULL);
-	} else {
-		/* append the default apt.dat in XP12 */
+	/* append the default apt.dat in XP11 */
+	e->fname = mkpathname(db->xpdir, "Resources", "default scenery",
+	    "default apt dat", "Earth nav data", "apt.dat", NULL);
+	if (!file_exists(e->fname, NULL)) {
+		lacf_free(e->fname);
+		/* Try the default apt.dat in XP12 */
 		e->fname = mkpathname(db->xpdir, "Global Scenery",
 		    "Global Airports", "Earth nav data", "apt.dat", NULL);
 	}
