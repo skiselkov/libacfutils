@@ -434,6 +434,48 @@ lacf_strcasecmp(const char *s1, const char *s2)
 	return (res);
 }
 
+/*
+ * Portable version of BSD & POSIX strcasestr.
+ */
+static inline char *
+lacf_strcasestr(const char *haystack, const char *needle)
+{
+	int l1, l2;
+	char *res;
+
+	ASSERT(haystack != NULL);
+	ASSERT(needle != NULL);
+
+	l1 = strlen(haystack);
+	l2 = strlen(needle);
+
+	if (l1 < 4096 && l2 < 4096) {
+		char haystack_lower[l1 + 1], needle_lower[l2 + 1];
+
+		lacf_strlcpy(haystack_lower, haystack, l1 + 1);
+		lacf_strlcpy(needle_lower, needle, l2 + 1);
+		strtolower(haystack_lower);
+		strtolower(needle_lower);
+		res = strstr(haystack_lower, needle_lower);
+		if (res != NULL)
+			res = (char *)haystack + (res - haystack_lower);
+	} else {
+		char *haystack_lower = (char *)safe_malloc(l1 + 1);
+		char *needle_lower = (char *)safe_malloc(l2 + 1);
+
+		lacf_strlcpy(haystack_lower, haystack, l1 + 1);
+		lacf_strlcpy(needle_lower, needle, l2 + 1);
+		strtolower(haystack_lower);
+		strtolower(needle_lower);
+		res = strstr(haystack_lower, needle_lower);
+		if (res != NULL)
+			res = (char *)haystack + (res - haystack_lower);
+		free(haystack_lower);
+		free(needle_lower);
+	}
+	return (res);
+}
+
 static inline int
 fixed_decimals(double x, int digits)
 {
