@@ -35,7 +35,8 @@ extern "C" {
 #endif
 
 static inline void
-pid_ctl_parse(pid_ctl_t *pid, const conf_t *conf, const char *prefix)
+pid_ctl_parse2(pid_ctl_t *pid, const conf_t *conf, const char *prefix,
+    bool noreset)
 {
 	double k_p = 0, k_i = 0, lim_i = 0, k_d = 0, r_d = 0;
 	bool_t integ_clamp;
@@ -51,8 +52,17 @@ pid_ctl_parse(pid_ctl_t *pid, const conf_t *conf, const char *prefix)
 	conf_get_d_v(conf, "%s/r_d", &r_d, prefix);
 	conf_get_b_v(conf, "%s/integ_clamp", &integ_clamp, prefix);
 
-	pid_ctl_init(pid, k_p, k_i, lim_i, k_d, r_d);
+	if (noreset)
+		pid_ctl_init_noreset(pid, k_p, k_i, lim_i, k_d, r_d);
+	else
+		pid_ctl_init(pid, k_p, k_i, lim_i, k_d, r_d);
 	pid_ctl_set_integ_clamp(pid, integ_clamp);
+}
+
+static inline void
+pid_ctl_parse(pid_ctl_t *pid, const conf_t *conf, const char *prefix)
+{
+	pid_ctl_parse2(pid, conf, prefix, false);
 }
 
 #ifdef __cplusplus
