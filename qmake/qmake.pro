@@ -274,6 +274,7 @@ contains(minimal, 1) {
 	    ../src/acfutils/apps.h \
 	    ../src/acfutils/chartdb.h \
 	    ../src/acfutils/cursor.h \
+	    ../src/acfutils/font_utils.h \
 	    ../src/acfutils/glctx.h \
 	    ../src/acfutils/glew.h \
 	    ../src/acfutils/glew_os.h \
@@ -295,6 +296,7 @@ contains(minimal, 1) {
 	    ../src/chart_prov_common.c \
 	    ../src/chart_prov_faa.c \
 	    ../src/chart_prov_navigraph.c \
+	    ../src/font_utils.c \
 	    ../src/glctx.c \
 	    ../src/glew.c \
 	    ../src/glew_os.c \
