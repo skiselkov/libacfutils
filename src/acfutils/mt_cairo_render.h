@@ -33,8 +33,9 @@
 
 #include "geom.h"
 #include "glew.h"
-#include "font_utils.h"		/* for backwards compat with apps */
 #include "log.h"
+#include "font_utils.h"		/* for backwards compat with apps */
+#include "cairo_utils.h"	/* for backwards compat with apps */
 
 #ifdef	__cplusplus
 extern "C" {
@@ -108,14 +109,6 @@ API_EXPORT void mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
 
 API_EXPORT void mt_cairo_render_rounded_rectangle(cairo_t *cr, double x,
     double y, double w, double h, double radius);
-
-#define	CAIRO_SURFACE_DESTROY(surf) \
-	do {\
-		if ((surf) != NULL) { \
-			cairo_surface_destroy((surf)); \
-			(surf) = NULL; \
-		} \
-	} while (0)
 
 API_EXPORT mt_cairo_uploader_t *mt_cairo_uploader_init(void);
 API_EXPORT void mt_cairo_uploader_fini(mt_cairo_uploader_t *mtul);

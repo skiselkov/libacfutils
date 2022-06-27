@@ -1348,25 +1348,6 @@ mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr)
 	return (mtcr->debug);
 }
 
-void
-mt_cairo_render_rounded_rectangle(cairo_t *cr, double x, double y,
-    double w, double h, double radius)
-{
-	cairo_move_to(cr, x + radius, y);
-	cairo_line_to(cr, x + w - radius, y);
-	cairo_arc(cr, x + w - radius, y + radius, radius,
-	    DEG2RAD(270), DEG2RAD(360));
-	cairo_line_to(cr, x + w, y + h - radius);
-	cairo_arc(cr, x + w - radius, y + h - radius, radius,
-	    DEG2RAD(0), DEG2RAD(90));
-	cairo_line_to(cr, x + radius, y + h);
-	cairo_arc(cr, x + radius, y + h - radius, radius,
-	    DEG2RAD(90), DEG2RAD(180));
-	cairo_line_to(cr, x, y + radius);
-	cairo_arc(cr, x + radius, y + radius, radius,
-	    DEG2RAD(180), DEG2RAD(270));
-}
-
 static void
 mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 {

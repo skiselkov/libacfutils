@@ -280,6 +280,7 @@ contains(minimal, 1) {
 	    ../src/acfutils/glew_os.h \
 	    ../src/acfutils/glutils.h \
 	    ../src/acfutils/lacf_gl_pic.h \
+	    ../src/acfutils/cairo_utils.h \
 	    ../src/acfutils/mt_cairo_render.h \
 	    ../src/acfutils/odb.h \
 	    ../src/acfutils/paste.h \
@@ -303,6 +304,7 @@ contains(minimal, 1) {
 	    ../src/glutils.c \
 	    ../src/lacf_gl_pic.c \
 	    ../src/minimp3.c \
+	    ../src/cairo_utils.c \
 	    ../src/mt_cairo_render.c \
 	    ../src/odb.c \
 	    ../src/paste.c \
