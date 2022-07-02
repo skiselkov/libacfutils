@@ -153,30 +153,46 @@ typedef struct {
 #define	atomic32_t		_Atomic int32_t
 #define	atomic_inc_32(x)	atomic_fetch_add((x), 1)
 #define	atomic_dec_32(x)	atomic_fetch_add((x), -1)
+#define	atomic_set_32(x, y)	atomic_store((x), (y))
+#define	atomic_add_32(x, y)	atomic_fetch_add((x), (y))
 #define	atomic64_t		_Atomic int64_t
 #define	atomic_inc_64(x)	atomic_fetch_add((x), 1)
 #define	atomic_dec_64(x)	atomic_fetch_add((x), -1)
+#define	atomic_set_64(x, y)	atomic_store((x), (y))
+#define	atomic_add_64(x, y)	atomic_fetch_add((x), (y))
 #elif	IBM
 #define	atomic32_t		volatile LONG
 #define	atomic_inc_32(x)	InterlockedIncrement((x))
 #define	atomic_dec_32(x)	InterlockedDecrement((x))
+#define	atomic_add_32(x, y)	InterlockedAdd((x), (y))
+#define	atomic_set_32(x, y)	InterlockedExchange((x), (y))
 #define	atomic64_t		volatile LONG64
 #define	atomic_inc_64(x)	InterlockedIncrement64((x))
 #define	atomic_dec_64(x)	InterlockedDecrement64((x))
+#define	atomic_add_64(x, y)	InterlockedAdd64((x), (y))
+#define	atomic_set_64(x, y)	InterlockedExchange64((x), (y))
 #elif	APL
 #define	atomic32_t		volatile int32_t
 #define	atomic_inc_32(x)	OSAtomicAdd32(1, (x))
 #define	atomic_dec_32(x)	OSAtomicAdd32(-1, (x))
+#define	atomic_add_32(x, y)	OSAtomicAdd32((y), (x))
+#define	atomic_set_32(x, y)	(x) = (y)	/* No such op on OSX */
 #define	atomic64_t		volatile int64_t
 #define	atomic_inc_64(x)	OSAtomicAdd64(1, (x))
 #define	atomic_dec_64(x)	OSAtomicAdd64(-1, (x))
+#define	atomic_add_64(x, y)	OSAtomicAdd64((y), (x))
+#define	atomic_set_64(x, y)	(x) = (y)	/* No such op on OSX */
 #else	/* LIN */
 #define	atomic32_t		volatile int32_t
 #define	atomic_inc_32(x)	__sync_add_and_fetch((x), 1)
 #define	atomic_dec_32(x)	__sync_add_and_fetch((x), -1)
+#define	atomic_add_32(x, y)	__sync_add_and_fetch((x), (y))
+#define	atomic_set_32(x, y)	__atomic_store_n((x), (y), __ATOMIC_RELAXED)
 #define	atomic64_t		volatile int64_t
 #define	atomic_inc_64(x)	__sync_add_and_fetch((x), 1)
 #define	atomic_dec_64(x)	__sync_add_and_fetch((x), -1)
+#define	atomic_add_64(x, y)	__sync_add_and_fetch((x), (y))
+#define	atomic_set_64(x, y)	__atomic_store_n((x), (y), __ATOMIC_RELAXED)
 #endif	/* LIN */
 
 #if	APL || LIN
