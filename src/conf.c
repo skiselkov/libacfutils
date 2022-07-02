@@ -78,7 +78,8 @@ typedef struct {
 
 static void conf_set_common(conf_t *conf, const char *key,
     const char *fmt, ...) PRINTF_ATTR(3);
-static bool_t conf_write_impl(const conf_t *conf, void *fp, bool_t compressed);
+static int conf_write_impl(const conf_t *conf, void *fp, size_t bufsz,
+    bool_t compressed, bool_t is_buf);
 
 static int
 conf_key_compar(const void *a, const void *b)
@@ -259,6 +260,79 @@ conf_read(FILE *fp, int *errline)
 	return (conf_read2(fp, errline, B_FALSE));
 }
 
+static bool_t
+conf_parse_line(char *line, conf_t *conf)
+{
+	char *sep;
+	conf_key_t srch;
+	conf_key_t *ck;
+	avl_index_t where;
+	conf_key_type_t type;
+	bool unescape = false;
+
+	ASSERT(line != NULL);
+	ASSERT(conf != NULL);
+
+	sep = strstr(line, "`");
+	if (sep != NULL) {
+		type = CONF_KEY_DATA;
+		sep[0] = '\0';
+	} else {
+		sep = strstr(line, "%=");
+		if (sep != NULL) {
+			type = CONF_KEY_STR;
+			sep[0] = '\0';
+			sep++;
+			sep[0] = '\0';
+			unescape = true;
+		} else {
+			sep = strstr(line, "=");
+			if (sep != NULL) {
+				sep[0] = '\0';
+				type = CONF_KEY_STR;
+			} else {
+				return (B_FALSE);
+			}
+		}
+	}
+	strip_space(line);
+	strip_space(&sep[1]);
+
+	srch.key = safe_malloc(strlen(line) + 1);
+	srch.type = type;
+	strcpy(srch.key, line);
+	strtolower(srch.key);	/* keys are case-insensitive */
+	ck = avl_find(&conf->tree, &srch, &where);
+	if (ck == NULL) {
+		/* if the key didn't exist yet, create a new one */
+		ck = safe_calloc(1, sizeof (*ck));
+		ck->key = srch.key;
+		avl_insert(&conf->tree, ck, where);
+	} else {
+		/* key already exists, free the search one */
+		free(srch.key);
+	}
+	ck_free_value(ck);
+	ck->type = type;
+	if (type == CONF_KEY_STR) {
+		ck->str = safe_malloc(strlen(&sep[1]) + 1);
+		strcpy(ck->str, &sep[1]);
+		if (unescape)
+			unescape_percent(ck->str);
+	} else {
+		size_t l = strlen(&sep[1]);
+		ssize_t sz_est = BASE64_DEC_SIZE(l);
+		ssize_t sz_dec;
+		ck->data.buf = safe_malloc(sz_est);
+		sz_dec = lacf_base64_decode((const uint8_t *)&sep[1],
+		    l, ck->data.buf);
+		if (sz_dec <= 0)
+			return (B_FALSE);
+		ck->data.sz = sz_dec;
+	}
+	return (B_TRUE);
+}
+
 /*
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
@@ -283,13 +357,6 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 
 	conf = conf_create_empty();
 	while (compressed ? !gzeof(gz_fp) : !feof(f_fp)) {
-		char *sep;
-		conf_key_t srch;
-		conf_key_t *ck;
-		avl_index_t where;
-		conf_key_type_t type;
-		bool unescape = false;
-
 		if (compressed) {
 			if (parser_get_next_gzline(gz_fp, &line, &linecap,
 			    &linenum) <= 0) {
@@ -301,73 +368,81 @@ conf_read2(void *fp, int *errline, bool_t compressed)
 				break;
 			}
 		}
-
-		sep = strstr(line, "`");
-		if (sep != NULL) {
-			type = CONF_KEY_DATA;
-			sep[0] = '\0';
-		} else {
-			sep = strstr(line, "%=");
-			if (sep != NULL) {
-				type = CONF_KEY_STR;
-				sep[0] = '\0';
-				sep++;
-				sep[0] = '\0';
-				unescape = true;
-			} else {
-				sep = strstr(line, "=");
-				if (sep != NULL) {
-					sep[0] = '\0';
-					type = CONF_KEY_STR;
-				} else {
-					goto errout;
-				}
-			}
-		}
-		strip_space(line);
-		strip_space(&sep[1]);
-
-		srch.key = safe_malloc(strlen(line) + 1);
-		srch.type = type;
-		strcpy(srch.key, line);
-		strtolower(srch.key);	/* keys are case-insensitive */
-		ck = avl_find(&conf->tree, &srch, &where);
-		if (ck == NULL) {
-			/* if the key didn't exist yet, create a new one */
-			ck = safe_calloc(1, sizeof (*ck));
-			ck->key = srch.key;
-			avl_insert(&conf->tree, ck, where);
-		} else {
-			/* key already exists, free the search one */
-			free(srch.key);
-		}
-		ck_free_value(ck);
-		ck->type = type;
-		if (type == CONF_KEY_STR) {
-			ck->str = safe_malloc(strlen(&sep[1]) + 1);
-			strcpy(ck->str, &sep[1]);
-			if (unescape)
-				unescape_percent(ck->str);
-		} else {
-			size_t l = strlen(&sep[1]);
-			ssize_t sz_est = BASE64_DEC_SIZE(l);
-			ssize_t sz_dec;
-			ck->data.buf = safe_malloc(sz_est);
-			sz_dec = lacf_base64_decode((const uint8_t *)&sep[1],
-			    l, ck->data.buf);
-			if (sz_dec <= 0)
-				goto errout;
-			ck->data.sz = sz_dec;
-		}
+		if (!conf_parse_line(line, conf))
+			goto errout;
 	}
 	free(line);
-
 	return (conf);
 errout:
 	free(line);
 	conf_free(conf);
 	if (errline != NULL)
 		*errline = linenum;
+	return (NULL);
+}
+
+/*
+ * Same as conf_read, but takes an in-memory buffer containing the text
+ * of the configuration. The buffer is in `buf' and is of length `cap'.
+ * The buffer DOESN'T need to be NUL-terminated.
+ */
+conf_t *
+conf_read_buf(const void *buf, size_t cap, int *errline)
+{
+	uint8_t *tmpbuf = NULL;
+	const char *instr;
+	conf_t *conf = conf_create_empty();
+	size_t n_lines;
+	char **lines;
+
+	ASSERT(buf != NULL);
+	ASSERT(cap != 0);
+	/*
+	 * Check if the input is NUL-terminated. If not, copy it into
+	 * tmpbuf and place a NUL byte at the end manually.
+	 */
+	if (((const uint8_t *)buf)[cap - 1] == '\0') {
+		instr = buf;
+	} else {
+		tmpbuf = safe_malloc(cap + 1);
+		memcpy(tmpbuf, buf, cap);
+		tmpbuf[cap] = '\0';
+		instr = (char *)tmpbuf;
+	}
+	/*
+	 * Split at line breaks. If the file uses \r\n line terminators,
+	 * a strip_space of each line gets rid of the trailing \r.
+	 */
+	lines = strsplit(instr, "\n", true, &n_lines);
+	for (size_t i = 0; i < n_lines; i++) {
+		char *comment;
+		/*
+		 * Strip away comments
+		 */
+		comment = strchr(lines[i], '#');
+		if (comment != NULL)
+			*comment = '\0';
+		comment = strstr(lines[i], "--");
+		if (comment != NULL)
+			*comment = '\0';
+		strip_space(lines[i]);
+		if (lines[i][0] != '\0') {
+			if (!conf_parse_line(lines[i], conf)) {
+				if (errline != NULL)
+					*errline = i + 1;
+				goto errout;
+			}
+		}
+	}
+	free_strlist(lines, n_lines);
+	if (tmpbuf != NULL)
+		free(tmpbuf);
+	return (conf);
+errout:
+	free_strlist(lines, n_lines);
+	if (tmpbuf != NULL)
+		free(tmpbuf);
+	conf_free(conf);
 	return (NULL);
 }
 
@@ -388,7 +463,7 @@ conf_write_file(const conf_t *conf, const char *filename)
 bool_t
 conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 {
-	bool_t res;
+	ssize_t res;
 	char *filename_tmp;
 	int rename_err = 0;
 
@@ -408,7 +483,7 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 			free(filename_tmp);
 			return (B_FALSE);
 		}
-		res = conf_write_impl(conf, fp, B_FALSE);
+		res = (conf_write_impl(conf, fp, 0, B_FALSE, B_FALSE) >= 0);
 		fclose(fp);
 	} else {
 		gzFile fp = gzopen(filename_tmp, "w");
@@ -417,7 +492,7 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 			free(filename_tmp);
 			return (B_FALSE);
 		}
-		res = conf_write_impl(conf, fp, B_TRUE);
+		res = (conf_write_impl(conf, fp, 0, B_TRUE, B_FALSE) >= 0);
 		gzclose(fp);
 	}
 	if (res) {
@@ -450,6 +525,12 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 	return (res);
 }
 
+size_t
+conf_write_buf(const conf_t *conf, void *buf, size_t cap)
+{
+	return (conf_write_impl(conf, buf, cap, B_FALSE, B_TRUE));
+}
+
 static bool_t
 needs_escape(const char *str)
 {
@@ -470,21 +551,33 @@ needs_escape(const char *str)
 	return (false);
 }
 
-static bool_t
-conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
+static int
+conf_write_impl(const conf_t *conf, void *fp, size_t bufsz,
+    bool_t compressed, bool_t is_buf)
 {
+#define	SNPRINTF_ADV(...) \
+	do { \
+		int req_here = snprintf(buf, (fp + bufsz) - buf, __VA_ARGS__); \
+		ASSERT3S(req_here, >=, 0); \
+		req_total += req_here; \
+		buf = MIN(buf + req_here, fp + bufsz); \
+	} while (0)
+
 	char *data_buf = NULL;
 	size_t cap = 0;
-	ASSERT(fp != NULL);
+	ASSERT(fp != NULL || (is_buf && bufsz == 0));
+	void *buf = (is_buf ? fp : NULL);
 	FILE *f_fp = compressed ? NULL : fp;
 	gzFile gz_fp = compressed ? fp : NULL;
+	size_t req_total = 0;
 	/* This is only used for generating escape sequences */
 	CURL *curl = curl_easy_init();
 	ASSERT(curl != NULL);
 
 	ASSERT(conf != NULL);
 
-	if (!compressed && fprintf(f_fp, "# libacfutils configuration file - "
+	if (!compressed && !is_buf &&
+	    fprintf(f_fp, "# libacfutils configuration file - "
 	    "DO NOT EDIT!\n") < 0) {
 		goto errout;
 	}
@@ -493,7 +586,10 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 		switch (ck->type) {
 		case CONF_KEY_STR:
 			if (!needs_escape(ck->str)) {
-				if ((compressed ?
+				if (is_buf) {
+					SNPRINTF_ADV("%s = %s\n",
+					    ck->key, ck->str);
+				} else if ((compressed ?
 				    gzprintf(gz_fp, "%s = %s\n", ck->key,
 				    ck->str) < 0 :
 				    fprintf(f_fp, "%s = %s\n", ck->key,
@@ -502,7 +598,10 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 				}
 			} else {
 				char *str = curl_easy_escape(curl, ck->str, 0);
-				if ((compressed ?
+				if (is_buf) {
+					SNPRINTF_ADV("%s %%= %s\n",
+					    ck->key, str);
+				} else if ((compressed ?
 				    gzprintf(gz_fp, "%s %%= %s\n", ck->key,
 				    str) < 0 :
 				    fprintf(f_fp, "%s %%= %s\n", ck->key,
@@ -524,7 +623,9 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 			act = lacf_base64_encode(ck->data.buf, ck->data.sz,
 			    (uint8_t*)data_buf);
 			data_buf[act] = '\0';
-			if (compressed) {
+			if (is_buf) {
+				SNPRINTF_ADV("%s`%s\n", ck->key, data_buf);
+			} else if (compressed) {
 				gzwrite(gz_fp, ck->key, strlen(ck->key));
 				gzwrite(gz_fp, "`", 1);
 				gzwrite(gz_fp, data_buf, strlen(data_buf));
@@ -540,11 +641,15 @@ conf_write_impl(const conf_t *conf, void *fp, bool_t compressed)
 	}
 	free(data_buf);
 	curl_easy_cleanup(curl);
-	return (B_TRUE);
+	/* Add room for the terminating NUL byte */
+	if (is_buf)
+		req_total++;
+	return (req_total);
 errout:
 	free(data_buf);
 	curl_easy_cleanup(curl);
-	return (B_FALSE);
+	return (-1);
+#undef	SNPRINTF_ADV
 }
 
 /*
@@ -554,7 +659,7 @@ errout:
 bool_t
 conf_write(const conf_t *conf, FILE *fp)
 {
-	return (conf_write_impl(conf, fp, B_FALSE));
+	return (conf_write_impl(conf, fp, 0, B_FALSE, B_TRUE));
 }
 
 /*
