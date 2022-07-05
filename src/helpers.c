@@ -788,6 +788,7 @@ path_last_comp_subst(const char *path, const char *replace)
 	lacf_strlcpy(tmp, path, last_sep - path + 1);
 	result = mkpathname(tmp, replace, NULL);
 	free(tmp);
+	path_normalize(result);
 
 	return (result);
 }
@@ -837,6 +838,52 @@ path_ext_subst(const char *path, const char *ext)
 	strlcpy(&str[l + 1], ext, k + 1);
 
 	return (str);
+}
+
+static char *
+find_prev_path_sep(char *path, char *elem)
+{
+	ASSERT(path != NULL);
+	ASSERT(elem != NULL);
+	for (elem--; elem >= path; elem--) {
+		if (*elem == DIRSEP)
+			return (elem);
+	}
+	return (NULL);
+}
+
+/*
+ * Locates all instances of '//', '\\', '..' and '.' and eliminates them from
+ * the path, resolving directory returns as necessary. This also first flips
+ * all path separators to the platform-appropriate type using fix_pathsep.
+ */
+void
+path_normalize(char *path)
+{
+	char *elem;
+
+	ASSERT(path != NULL);
+
+	fix_pathsep(path);
+	/* Eliminate duplicate '//' and '\\' */
+	for (elem = path; *elem != '\0';) {
+		if (elem[0] == DIRSEP && elem[1] == DIRSEP) {
+			/* Move the rest up one, to delete the duplicate */
+			memmove(elem, &elem[1], strlen(&elem[1]) + 1);
+		} else {
+			elem++;
+		}
+	}
+	/* Resolve directory returns */
+	while ((elem = strstr(path, DIRSEP_S ".." DIRSEP_S)) != NULL ||
+	    ((elem = strstr(path, DIRSEP_S "..")) != NULL && elem[3] == '\0')) {
+		char *prev_comp = find_prev_path_sep(path, elem);
+		if (prev_comp == NULL) {
+			/* Reached start of string - cannot remove anymore */
+			break;
+		}
+		memmove(prev_comp, &elem[3], strlen(&elem[3]) + 1);
+	}
 }
 
 char *

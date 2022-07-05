@@ -20,6 +20,11 @@
 # first.
 # On Linux also do "apt install libopenal-dev:x86_64 libopenal-dev:i386".
 
+if [[ "$(uname)" = Darwin ]]; then
+	echo "This is Mac, use build-mac instead!" 1>&2
+	exit 1
+fi
+
 # We'll try to build on N+1 CPUs we have available. The extra +1 is to allow
 # for one make instance to be blocking on disk.
 NCPUS=$(( $(grep 'processor[[:space:]]\+:' /proc/cpuinfo  | wc -l) + 1 ))

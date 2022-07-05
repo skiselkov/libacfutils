@@ -293,6 +293,8 @@ API_EXPORT char *path_last_comp_subst(const char *path, const char *replace);
 API_EXPORT char *path_last_comp(const char *path);
 #define	path_ext_subst			ACFSYM(path_ext_subst)
 API_EXPORT char *path_ext_subst(const char *path, const char *ext);
+#define	path_normalize		ACFSYM(path_normalize)
+API_EXPORT void path_normalize(char *path);
 
 #define	file2str			ACFSYM(file2str)
 API_EXPORT char *file2str(const char *comp, ...) SENTINEL_ATTR;
