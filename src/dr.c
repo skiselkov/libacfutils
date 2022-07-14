@@ -337,6 +337,10 @@ dr_setvf32_impl(const dr_t *dr, DR_DEBUG_VARS, float *ff, unsigned off,
 {
 	ASSERT(ff != NULL);
 	DR_WRITE_CHECK(VERIFY);
+	for (unsigned x = 0; x < num; x++) {
+		ASSERT_MSG(!isnan(ff[x]), "%s[%d]", dr->name, x);
+		ASSERT_MSG(isfinite(ff[x]), "%s[%d]", dr->name, x);
+	}
 	if (dr->type & xplmType_IntArray) {
 		int *i = safe_malloc(num * sizeof (*i));
 		for (unsigned x = 0; x < num; x++)
