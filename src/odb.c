@@ -88,6 +88,9 @@ struct odb_s {
 	bool_t		refresh_run;
 
 	time_t		refresh_times[NUM_ODB_REGIONS];
+
+	mutex_t		proxy_lock;
+	char		*proxy;
 };
 
 static void add_obst_to_odb(obst_type_t type, geo_pos3_t pos, float agl,
@@ -318,6 +321,8 @@ odb_init(const char *xpdir, const char *cainfo)
 
 	mutex_init(&odb->refresh_lock);
 
+	mutex_init(&odb->proxy_lock);
+
 	return (odb);
 }
 
@@ -339,6 +344,9 @@ odb_fini(odb_t *odb)
 
 	avl_destroy(&odb->tiles);
 	mutex_destroy(&odb->tiles_lock);
+
+	free(odb->proxy);
+	mutex_destroy(&odb->proxy_lock);
 
 	free(odb->cainfo);
 	free(odb->cache_dir);
@@ -541,6 +549,10 @@ odb_refresh_us(odb_t *odb)
 	curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, DL_TIMEOUT);
+	mutex_enter(&odb->proxy_lock);
+	if (odb->proxy != NULL)
+		curl_easy_setopt(curl, CURLOPT_PROXY, odb->proxy);
+	mutex_exit(&odb->proxy_lock);
 
 	res = curl_easy_perform(curl);
 
@@ -725,4 +737,37 @@ odb_get_obstacles(odb_t *odb, int lat, int lon, add_obst_cb_t cb,
 	mutex_exit(&odb->tiles_lock);
 
 	return (B_TRUE);
+}
+
+void
+odb_set_proxy(odb_t *odb, const char *proxy)
+{
+	ASSERT(odb != NULL);
+
+	mutex_enter(&odb->proxy_lock);
+	LACF_DESTROY(odb->proxy);
+	if (proxy != NULL)
+		odb->proxy = safe_strdup(proxy);
+	mutex_exit(&odb->proxy_lock);
+}
+
+size_t
+odb_get_proxy(odb_t *odb, char *proxy, size_t cap)
+{
+	size_t len;
+
+	ASSERT(odb != NULL);
+	ASSERT(proxy != NULL || cap == 0);
+
+	mutex_enter(&odb->proxy_lock);
+	if (odb->proxy != NULL) {
+		lacf_strlcpy(proxy, odb->proxy, cap);
+		len = strlen(odb->proxy) + 1;
+	} else {
+		lacf_strlcpy(proxy, "", cap);
+		len = 0;
+	}
+	mutex_exit(&odb->proxy_lock);
+
+	return (len);
 }

@@ -127,6 +127,9 @@ struct chartdb_s {
 	list_t		load_seq;
 	uint64_t	load_limit;
 
+	/* protected by `lock' */
+	char		*proxy;
+
 	chart_t		loader_cmd_purge;
 	chart_t		loader_cmd_metar;
 	chart_t		loader_cmd_taf;

@@ -771,6 +771,10 @@ chart_navigraph_init(chartdb_t *cdb)
 	curl_easy_setopt(nav->curl, CURLOPT_NOSIGNAL, 1L);
 	curl_easy_setopt(nav->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(nav->curl, CURLOPT_CAINFO, login->cainfo);
+	mutex_enter(&cdb->lock);
+	if (cdb->proxy != NULL)
+		curl_easy_setopt(nav->curl, CURLOPT_PROXY, cdb->proxy);
+	mutex_exit(&cdb->lock);
 	/*
 	 * Navigraph API rules disallow local caching.
 	 */

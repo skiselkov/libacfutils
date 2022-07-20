@@ -87,6 +87,9 @@ API_EXPORT bool_t chartdb_test_connection(const char *provider_name,
 API_EXPORT void chartdb_set_load_limit(chartdb_t *cdb, uint64_t bytes);
 API_EXPORT void chartdb_purge(chartdb_t *cdb);
 
+API_EXPORT void chartdb_set_proxy(chartdb_t *cdb, const char *proxy);
+API_EXPORT size_t chartdb_get_proxy(chartdb_t *cdb, char *proxy, size_t cap);
+
 API_EXPORT char **chartdb_get_chart_names(chartdb_t *cdb, const char *icao,
     chart_type_t type, size_t *num_charts);
 API_EXPORT void chartdb_free_str_list(char **l, size_t num);

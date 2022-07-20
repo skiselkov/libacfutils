@@ -159,6 +159,10 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 			curl_easy_setopt(curl, CURLOPT_PASSWORD,
 			    login->password);
 		}
+		mutex_enter(&cdb->lock);
+		if (cdb->proxy != NULL)
+			curl_easy_setopt(curl, CURLOPT_PROXY, cdb->proxy);
+		mutex_exit(&cdb->lock);
 		*curl_p = curl;
 	}
 

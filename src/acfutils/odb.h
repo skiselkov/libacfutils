@@ -63,6 +63,9 @@ API_EXPORT bool_t odb_refresh_cc(odb_t *odb, const char *cc);
 API_EXPORT bool_t odb_get_obstacles(odb_t *odb, int lat, int lon,
     add_obst_cb_t cb, void *userinfo);
 
+API_EXPORT void odb_set_proxy(odb_t *odb, const char *proxy);
+API_EXPORT size_t odb_get_proxy(odb_t *odb, char *proxy, size_t cap);
+
 #ifdef	__cplusplus
 }
 #endif

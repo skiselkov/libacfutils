@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -1275,6 +1275,7 @@ chartdb_fini(chartdb_t *cdb)
 	avl_destroy(&cdb->arpts);
 	mutex_destroy(&cdb->lock);
 
+	free(cdb->proxy);
 	free(cdb->path);
 	free(cdb->pdftoppm_path);
 	free(cdb->pdfinfo_path);
@@ -1317,6 +1318,39 @@ chartdb_purge(chartdb_t *cdb)
 	worker_wake_up(&cdb->loader);
 
 	mutex_exit(&cdb->lock);
+}
+
+void
+chartdb_set_proxy(chartdb_t *cdb, const char *proxy)
+{
+	ASSERT(cdb != NULL);
+
+	mutex_enter(&cdb->lock);
+	LACF_DESTROY(cdb->proxy);
+	if (proxy != NULL)
+		cdb->proxy = safe_strdup(proxy);
+	mutex_exit(&cdb->lock);
+}
+
+size_t
+chartdb_get_proxy(chartdb_t *cdb, char *proxy, size_t cap)
+{
+	size_t len;
+
+	ASSERT(cdb != NULL);
+	ASSERT(proxy != NULL || cap == 0);
+
+	mutex_enter(&cdb->lock);
+	if (cdb->proxy != NULL) {
+		len = strlen(cdb->proxy) + 1;
+		lacf_strlcpy(proxy, cdb->proxy, cap);
+	} else {
+		len = 0;
+		lacf_strlcpy(proxy, "", cap);
+	}
+	mutex_exit(&cdb->lock);
+
+	return (len);
 }
 
 char **
