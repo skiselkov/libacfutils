@@ -103,6 +103,14 @@ safe_append_realloc(char *buf, const char *str)
 		free(ptr); \
 	} while (0)
 
+#define	BZERO(data)	memset((data), 0, sizeof (*(data)))
+
+#define	SAFE_BZERO(data) \
+	do { \
+		if ((data) != NULL) \
+			BZERO(data); \
+	} while (0)
+
 #ifdef	__cplusplus
 }
 #endif
