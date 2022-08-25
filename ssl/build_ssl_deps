@@ -21,24 +21,24 @@
 OPENSSL="openssl-1.1.1i"
 
 function make_macOS_fat() {
-    PLATFORM="$1"
-    PLATFORM_ARM="$2"
-    
-    OUTDIR_ARM="$(pwd)/openssl-$PLATFORM_ARM"
-    OUTDIR="$(pwd)/openssl-$PLATFORM"
-    
-    if [[ $(lipo -archs "$OUTDIR/lib/libcrypto.a") =~ "arm64" ]]; then
-        lipo -remove arm64 "$OUTDIR/lib/libcrypto.a" -output "$OUTDIR/lib/libcrypto.a"
-    fi
-    
-    if [[ $(lipo -archs "$OUTDIR/lib/libssl.a") =~ "arm64" ]]; then
-        lipo -remove arm64 "$OUTDIR/lib/libssl.a" -output "$OUTDIR/lib/libssl.a"
-    fi
-    
-    lipo -create "$OUTDIR_ARM/lib/libcrypto.a" "$OUTDIR/lib/libcrypto.a" \
-        -output "$OUTDIR/lib/libcrypto.a"
-    lipo -create "$OUTDIR_ARM/lib/libssl.a" "$OUTDIR/lib/libssl.a" \
-        -output "$OUTDIR/lib/libssl.a"
+	PLATFORM="$1"
+	PLATFORM_ARM="$2"
+	
+	OUTDIR_ARM="$(pwd)/openssl-$PLATFORM_ARM"
+	OUTDIR="$(pwd)/openssl-$PLATFORM"
+	
+	if [[ $(lipo -archs "$OUTDIR/lib/libcrypto.a") =~ "arm64" ]]; then
+		lipo -remove arm64 "$OUTDIR/lib/libcrypto.a" -output "$OUTDIR/lib/libcrypto.a"
+	fi
+	
+	if [[ $(lipo -archs "$OUTDIR/lib/libssl.a") =~ "arm64" ]]; then
+		lipo -remove arm64 "$OUTDIR/lib/libssl.a" -output "$OUTDIR/lib/libssl.a"
+	fi
+	
+	lipo -create "$OUTDIR_ARM/lib/libcrypto.a" "$OUTDIR/lib/libcrypto.a" \
+		-output "$OUTDIR/lib/libcrypto.a"
+	lipo -create "$OUTDIR_ARM/lib/libssl.a" "$OUTDIR/lib/libssl.a" \
+		-output "$OUTDIR/lib/libssl.a"
 }
 
 function build_ssl() {
@@ -59,14 +59,14 @@ function build_ssl() {
 			rm -rf "$OUTDIR" "$OPENSSL"
 			tar xzf "${OPENSSL}.tar.gz" || exit 1
 			( cd "$OPENSSL" ;
-			    patch -p1 < ../atexit.patch ) || exit 1
+				patch -p1 < ../atexit.patch ) || exit 1
 			mkdir -p "$OUTDIR"
 			cd "$OPENSSL"
 			./Configure no-shared no-dso \
-			    --prefix="$OUTDIR" $CONFOPTS && \
-			    make clean && \
-			    make -j 8 && \
-			    make install
+				--prefix="$OUTDIR" $CONFOPTS && \
+				make clean && \
+				make -j 8 && \
+				make install
 		fi
 	)
 }
@@ -78,16 +78,16 @@ fi
 case `uname` in
 	Linux)
 		build_ssl linux-64 "-fPIC -fvisibility=hidden linux-x86_64" || \
-		    exit 1
+			exit 1
 		if [[ "$minimal" != 1 ]]; then
 			build_ssl win-64 \
-			    "--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
+				"--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
 		fi
 		;;
 	Darwin)
 		build_ssl "mac-64" "-fvisibility=hidden darwin64-x86_64-cc"
 		build_ssl "mac-64-arm" "-fvisibility=hidden darwin64-arm64-cc"
-        make_macOS_fat "mac-64" "mac-64-arm"
+		make_macOS_fat "mac-64" "mac-64-arm"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
