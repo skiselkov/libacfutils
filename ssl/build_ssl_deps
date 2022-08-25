@@ -86,8 +86,8 @@ case `uname` in
 		;;
 	Darwin)
 		build_ssl "mac-64" "-fvisibility=hidden darwin64-x86_64-cc"
-		build_ssl "mac-64-arm" "-fvisibility=hidden darwin64-arm64-cc"
-		make_macOS_fat "mac-64" "mac-64-arm"
+		build_ssl "mac-arm" "-fvisibility=hidden darwin64-arm64-cc"
+		make_macOS_fat "mac-64" "mac-arm"
 		;;
 	*)
 		echo "Unsupported build platform" >&2
