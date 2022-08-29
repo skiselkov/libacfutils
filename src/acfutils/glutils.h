@@ -68,6 +68,13 @@ API_EXPORT void glutils_disable_all_vtx_attrs(void);
 
 API_EXPORT GLuint glutils_make_quads_IBO(size_t num_vtx);
 
+static inline bool_t
+glutils_quads_inited(const glutils_quads_t *quads)
+{
+	ASSERT(quads != NULL);
+	return (quads->vbo != 0);
+}
+
 #define	glutils_init_2D_quads(__quads, __p, __t, __num_pts) \
 	glutils_init_2D_quads_impl((__quads), log_basename(__FILE__), \
 	    __LINE__, (__p), (__t), (__num_pts))
@@ -75,10 +82,24 @@ API_EXPORT void glutils_init_2D_quads_impl(glutils_quads_t *quads,
     const char *filename, int line, const vect2_t *p, const vect2_t *t,
     size_t num_pts);
 
+#define	glutils_update_2D_quads(__quads, __p, __t, __num_pts) \
+	glutils_update_2D_quads_impl((__quads), log_basename(__FILE__), \
+	    __LINE__, (__p), (__t), (__num_pts))
+API_EXPORT void glutils_update_2D_quads_impl(glutils_quads_t *quads,
+    const char *filename, int line, const vect2_t *p, const vect2_t *t,
+    size_t num_pts);
+
 #define	glutils_init_3D_quads(__quads, __p, __t, __num_pts) \
 	glutils_init_3D_quads_impl((__quads), log_basename(__FILE__), \
 	    __LINE__, (__p), (__t), (__num_pts))
 API_EXPORT void glutils_init_3D_quads_impl(glutils_quads_t *quads,
+    const char *filename, int line, const vect3_t *p, const vect2_t *t,
+    size_t num_pts);
+
+#define	glutils_update_3D_quads(__quads, __p, __t, __num_pts) \
+	glutils_update_3D_quads_impl((__quads), log_basename(__FILE__), \
+	    __LINE__, (__p), (__t), (__num_pts))
+API_EXPORT void glutils_update_3D_quads_impl(glutils_quads_t *quads,
     const char *filename, int line, const vect3_t *p, const vect2_t *t,
     size_t num_pts);
 

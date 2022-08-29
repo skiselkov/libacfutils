@@ -185,36 +185,38 @@ API_EXPORT void
 glutils_init_2D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect2_t *p, const vect2_t *t, size_t num_pts)
 {
-	vect3_t p_3d[num_pts];
+	vect3_t *p_3d = safe_malloc(num_pts * sizeof (*p_3d));
 
 	for (size_t i = 0; i < num_pts; i++)
 		p_3d[i] = VECT3(p[i].x, p[i].y, 0);
 
 	glutils_init_3D_quads_impl(quads, filename, line, p_3d, t, num_pts);
+	free(p_3d);
+}
+
+API_EXPORT void
+glutils_update_2D_quads_impl(glutils_quads_t *quads, const char *filename,
+    int line, const vect2_t *p, const vect2_t *t, size_t num_pts)
+{
+	vect3_t *p_3d = safe_malloc(num_pts * sizeof (*p_3d));
+
+	for (size_t i = 0; i < num_pts; i++)
+		p_3d[i] = VECT3(p[i].x, p[i].y, 0);
+
+	glutils_update_3D_quads_impl(quads, filename, line, p_3d, t, num_pts);
+	free(p_3d);
 }
 
 API_EXPORT void
 glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
 {
-	vtx_t vtx_data[num_pts];
 	GLint old_vao = 0;
 
 	ASSERT0(num_pts & 3);
 	ASSERT(p != NULL);
 
 	memset(quads, 0, sizeof (*quads));
-	memset(vtx_data, 0, sizeof (vtx_data));
-
-	for (size_t i = 0; i < num_pts; i++) {
-		vtx_data[i].pos[0] = p[i].x;
-		vtx_data[i].pos[1] = p[i].y;
-		vtx_data[i].pos[2] = p[i].z;
-		if (t != NULL) {
-			vtx_data[i].tex0[0] = t[i].x;
-			vtx_data[i].tex0[1] = t[i].y;
-		}
-	}
 
 	if (GLEW_VERSION_3_0 && curthread_id != main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
@@ -225,21 +227,50 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 	} else {
 		quads->vao = 0;
 	}
-
 	glGenBuffers(1, &quads->vbo);
 	VERIFY(quads->vbo != 0);
-	quads->num_vtx = num_pts;
-
-	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
-	glBufferData(GL_ARRAY_BUFFER, quads->num_vtx * sizeof (vtx_t),
-	    vtx_data, GL_STATIC_DRAW);
-	quads->ibo = glutils_make_quads_IBO(num_pts);
-
-	IF_TEXSZ(TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
-	    filename, line, quads->num_vtx * sizeof (vtx_t)));
+	glutils_update_3D_quads_impl(quads, filename, line, p, t, num_pts);
 
 	if (GLEW_VERSION_3_0 && curthread_id != main_thread)
 		glBindVertexArray(old_vao);
+}
+
+API_EXPORT void
+glutils_update_3D_quads_impl(glutils_quads_t *quads, const char *filename,
+    int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
+{
+	vtx_t *vtx_data = safe_calloc(num_pts, sizeof (*vtx_data));
+
+	ASSERT(quads != NULL);
+	ASSERT(p != NULL);
+	ASSERT(glutils_quads_inited(quads));
+
+	for (size_t i = 0; i < num_pts; i++) {
+		vtx_data[i].pos[0] = p[i].x;
+		vtx_data[i].pos[1] = p[i].y;
+		vtx_data[i].pos[2] = p[i].z;
+		if (t != NULL) {
+			vtx_data[i].tex0[0] = t[i].x;
+			vtx_data[i].tex0[1] = t[i].y;
+		}
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, quads->vbo);
+	glBufferData(GL_ARRAY_BUFFER, num_pts * sizeof (vtx_t), vtx_data,
+	    GL_STATIC_DRAW);
+	if (quads->num_vtx != num_pts || quads->ibo == 0) {
+		if (quads->ibo != 0)
+			glDeleteBuffers(1, &quads->ibo);
+		quads->ibo = glutils_make_quads_IBO(num_pts);
+	}
+	if (quads->num_vtx != num_pts) {
+		IF_TEXSZ(TEXSZ_FREE_BYTES_INSTANCE(glutils_quads_vbo, quads,
+		    quads->num_vtx * sizeof (vtx_t)));
+		IF_TEXSZ(TEXSZ_ALLOC_BYTES_INSTANCE(glutils_quads_vbo, quads,
+		    filename, line, num_pts * sizeof (vtx_t)));
+	}
+	quads->num_vtx = num_pts;
+
+	free(vtx_data);
 }
 
 API_EXPORT void
