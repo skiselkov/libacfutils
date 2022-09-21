@@ -802,7 +802,7 @@ dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
 void
 dr_delete(dr_t *dr)
 {
-	if (dr->value != NULL) {
+	if (dr->dr != NULL) {
 		XPLMUnregisterDataAccessor(dr->dr);
 		memset(dr, 0, sizeof (*dr));
 	}
