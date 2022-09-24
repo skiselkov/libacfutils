@@ -23,6 +23,10 @@ OPENSSL="openssl-1.1.1i"
 function make_macOS_fat() {
 	PLATFORM="$1"
 	PLATFORM_ARM="$2"
+    
+	if [[ "$do_clean" = 1 ]]; then
+		return
+	fi
 	
 	OUTDIR_ARM="$(pwd)/openssl-$PLATFORM_ARM"
 	OUTDIR="$(pwd)/openssl-$PLATFORM"
