@@ -40,6 +40,7 @@ esac
 if [[ "$do_clean" == "1" ]]; then
 	rm -rf "$GLEW-linux-64"
 	rm -rf "$GLEW-mac-64"
+    rm -rf "$GLEW-mac-arm"
 	rm -rf "$GLEW-win-64"
 	exit
 fi
