@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2022 Saso Kiselkov. All rights reserved.
  */
 
 #include <stddef.h>
@@ -38,6 +38,7 @@ typedef struct {
 } acf_prop_t;
 
 struct acf_file {
+	int		version;
 	avl_tree_t	props;
 };
 
@@ -84,13 +85,23 @@ acf_file_read(const char *filename)
 		char *name_end;
 		acf_prop_t *prop;
 		avl_index_t where;
+
+		strip_space(line);
 		if (line_num <= 3) {
-			if (line_num == 3 && strncmp(line, "ACF", 3) != 0) {
+			size_t n_comps;
+			char **comps = strsplit(line, " ", B_TRUE, &n_comps);
+
+			if (n_comps >= 2 && strcmp(comps[1], "Version") == 0) {
+				acf->version = atoi(comps[0]);
+			} else if (line_num == 3 &&
+			    strcmp(comps[0], "ACF") != 0) {
 				logMsg("Error reading acf file %s: missing "
 				    "file header. Are you sure this is an "
 				    "ACF file?", filename);
+				free_strlist(comps, n_comps);
 				goto errout;
 			}
+			free_strlist(comps, n_comps);
 			continue;
 		}
 		if (!parsing_props) {
@@ -103,7 +114,6 @@ acf_file_read(const char *filename)
 		if (strncmp(line, "P ", 2) != 0)
 			continue;
 
-		strip_space(line);
 		name_end = strchr(&line[2], ' ');
 		if (name_end == NULL) {
 			logMsg("Error reading acf file %s:%d: bad parameter "
@@ -174,4 +184,11 @@ acf_prop_find(const acf_file_t *acf, const char *prop_path)
 	if (prop == NULL)
 		return (NULL);
 	return (prop->value);
+}
+
+int
+acf_file_get_version(const acf_file_t *acf)
+{
+	ASSERT(acf != NULL);
+	return (acf->version);
 }
