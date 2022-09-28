@@ -33,10 +33,6 @@ QMAKE_DEL_FILE = rm -f
 
 TARGET = lzma
 
-win32 {
-#	DEFINES += _WIN32_WINNT=0x0600
-}
-
 HEADERS += $$files(../C/*.h)
 SOURCES += $$files(../C/*.c)
 

@@ -58,8 +58,8 @@ case `uname` in
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
 		CFLAGS="$OPUS_CFLAGS_COMMON" LDFLAGS="$LDFLAGS_COMMON" \
-		    build_dep "mac-64" "$OPUS_CONFOPTS_COMMON" \
-		    "$OPUS" "opus" ".libs/libopus.a"
+		    build_dep "mac-64" "$OPUS_CONFOPTS_COMMON \
+		    --disable-intrinsics" "$OPUS" "opus" ".libs/libopus.a"
 		;;
 	*)
 		echo "Unsupported build platform" >&2

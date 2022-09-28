@@ -58,7 +58,8 @@ fi
     ( cd ssl && ./build_ssl_deps ) && \
     ( cd curl && ./build_curl_deps ) && \
     ( [ $minimal -eq 1 ] || ( cd shapelib && ./build_shapelib_deps ) ) && \
-    ( [ $minimal -eq 1 ] || [ $no_tesseract -eq 1 ] || ( cd ocr && ./build_ocr_deps ) ) && \
+    ( [ $minimal -eq 1 ] || [ $no_tesseract -eq 1 ] || \
+    ( cd ocr && ./build_ocr_deps ) ) && \
     ( cd pcre2 && ./build_pcre2_deps ) && \
     ( [ $minimal -eq 1 ] || ( cd glew && ./build_glew_deps ) ) && \
     ( [ $minimal -eq 1 ] || ( cd openal-soft && ./build_openal ) ) && \
@@ -66,11 +67,15 @@ fi
     ( [ $minimal -eq 1 ] || ( cd geographiclib && ./build_geographiclib ) ) && \
     ( cd lzma/qmake && \
 	if [ $(uname) = Darwin ]; then \
-		if ! [ -f mac-64/liblzma.a ]; then
+		if [[ "$do_clean" == 1 ]]; then
+			rm -f mac-64/liblzma.a
+		elif ! [ -f mac-64/liblzma.a ]; then
 			./build-mac
 		fi
 	else
-		if ( ! [ -f win-64/liblzma.a ] && [ "$minimal" -eq 0 ] ) || \
+		if [[ "$do_clean" == 1 ]]; then
+			rm -f -f win-64/liblzma.a linux-64/liblzma.a
+		elif ( ! [ -f win-64/liblzma.a ] && [ "$minimal" -eq 0 ] ) || \
 		    ! [ -f linux-64/liblzma.a ];
 		    then
 			./build-win-lin

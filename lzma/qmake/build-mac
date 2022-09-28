@@ -33,7 +33,3 @@ qmake -spec macx-clang && make -j $NCPUS && mv "$LIB" mac-64
 if [ $? != 0 ] ; then
   exit
 fi
-
-# Don't bother with the 32-bit build.
-#make distclean > /dev/null
-#qmake -spec macx-clang-32 && make -j $NCPUS && mv "$LIB" mac-32
