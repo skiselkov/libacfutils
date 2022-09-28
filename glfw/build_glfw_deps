@@ -32,7 +32,7 @@ function build_platform() {
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
-		CFLAGS_ADDTL="-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9"
+		CFLAGS_ADDTL="-DCMAKE_C_FLAGS=-mmacosx-version-min=10.9 -DCMAKE_OSX_ARCHITECTURES=x86_64;arm64"
 		;;
 	esac
 

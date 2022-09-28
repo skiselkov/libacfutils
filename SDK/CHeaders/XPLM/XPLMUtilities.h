@@ -222,11 +222,11 @@ XPLM_API int        XPLMSaveDataFile(
 /*
  * XPLMHostApplicationID
  * 
- * While the plug-in SDK is currently only accessible to plugins running
- * inside X-Plane, the original authors considered extending the API to other
- * applications that shared basic infrastructure with X-Plane. These
- * enumerations defined some of those applications.  As of this writing, only
- * X-Plane is available as a host application.                                
+ * While the plug-in SDK is only accessible to plugins running inside X-Plane,
+ * the original authors considered extending the API to other applications
+ * that shared basic infrastructure with X-Plane. These enumerations are
+ * hold-overs from that original roadmap; all values other than X-Plane are
+ * deprecated. Your plugin should never need this enumeration.                
  *
  */
 enum {
@@ -234,18 +234,30 @@ enum {
 
     xplm_Host_XPlane                         = 1,
 
+#if defined(XPLM_DEPRECATED)
     xplm_Host_PlaneMaker                     = 2,
 
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM_DEPRECATED)
     xplm_Host_WorldMaker                     = 3,
 
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM_DEPRECATED)
     xplm_Host_Briefer                        = 4,
 
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM_DEPRECATED)
     xplm_Host_PartMaker                      = 5,
 
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM_DEPRECATED)
     xplm_Host_YoungsMod                      = 6,
 
+#endif /* XPLM_DEPRECATED */
+#if defined(XPLM_DEPRECATED)
     xplm_Host_XAuto                          = 7,
 
+#endif /* XPLM_DEPRECATED */
 
 };
 typedef int XPLMHostApplicationID;

@@ -57,7 +57,18 @@
 
 # for gcc
 CC = gcc
+LIB = ar
+ARFLAGS = cq
+
+UNAME=$(shell uname)
 FLAGS = -O3 -W -Wall -ansi
+
+ifeq ($(UNAME), Darwin)
+FLAGS += -arch x86_64 -arch arm64
+LDFLAGS += -arch x86_64 -arch arm64
+LIB = libtool
+ARFLAGS = -static
+endif
 #FLAGS = -g -W -Wall -ansi -DAUDIT -DMEM_DEBUG
 #FLAGS = -O3 -mcpu=pentiumpro -fomit-frame-pointer -W -Wall -ansi -DMEM_CHECK
 #FLAGS = -O -pg -W -Wall -ansi -DMEM_CHECK
@@ -91,7 +102,7 @@ COBJ = mem.o nhash.o cpp.o lexer.o assert.o macro.o eval.o
 CFLAGS = $(FLAGS)
 
 all: ucpp
-	@ar cq libucpp.a *.o
+	@$(LIB) $(LIBFLAGS) -o libucpp.a *.o
 
 clean:
 	@rm -f *.o ucpp core *.a

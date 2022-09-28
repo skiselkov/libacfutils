@@ -212,11 +212,11 @@ TYPE
    {
     XPLMHostApplicationID
     
-    While the plug-in SDK is currently only accessible to plugins running
-    inside X-Plane, the original authors considered extending the API to other
-    applications that shared basic infrastructure with X-Plane. These
-    enumerations defined some of those applications.  As of this writing, only
-    X-Plane is available as a host application.                                
+    While the plug-in SDK is only accessible to plugins running inside X-Plane,
+    the original authors considered extending the API to other applications
+    that shared basic infrastructure with X-Plane. These enumerations are
+    hold-overs from that original roadmap; all values other than X-Plane are
+    deprecated. Your plugin should never need this enumeration.                
    }
 TYPE
    XPLMHostApplicationID = (
@@ -224,17 +224,29 @@ TYPE
  
      ,xplm_Host_XPlane                         = 1
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_PlaneMaker                     = 2
+{$ENDIF XPLM_DEPRECATED}
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_WorldMaker                     = 3
+{$ENDIF XPLM_DEPRECATED}
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_Briefer                        = 4
+{$ENDIF XPLM_DEPRECATED}
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_PartMaker                      = 5
+{$ENDIF XPLM_DEPRECATED}
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_YoungsMod                      = 6
+{$ENDIF XPLM_DEPRECATED}
  
+{$IFDEF XPLM_DEPRECATED}
      ,xplm_Host_XAuto                          = 7
+{$ENDIF XPLM_DEPRECATED}
  
    );
    PXPLMHostApplicationID = ^XPLMHostApplicationID;

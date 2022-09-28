@@ -85,6 +85,7 @@ ocr/tesseract-win-64
 ssl/openssl-1.1.1i
 ssl/openssl-win-64
 ssl/openssl-mac-64
+ssl/openssl-mac-arm
 ssl/openssl-linux-64
 
 cglm/cglm-0.7.9
@@ -116,6 +117,7 @@ glfw/glfw-win-64
 glew/glew-1.13.0-linux-64
 glew/glew-1.13.0-mac-64
 glew/glew-1.13.0-win-64
+glew/glew-1.13.0-mac-arm
 
 cairo/cairo-1.16.0
 cairo/pixman-0.36.0

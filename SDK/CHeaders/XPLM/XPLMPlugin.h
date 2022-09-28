@@ -264,6 +264,20 @@ XPLM_API void       XPLMReloadPlugins(void);
 #define XPLM_MSG_EXITING_VR  110
 #endif /* XPLM301 */
 
+#if defined(XPLM303)
+/* Sent to your plugin if another plugin wants to take over AI planes. If you *
+ * are a synthetic traffic provider,  that probably means a plugin for an     *
+ * online network has connected and wants to supply aircraft flown by real    *
+ * humans and you should cease to provide synthetic traffic. If however you   *
+ * are providing online traffic from real humans,  you probably don't want to *
+ * disconnect, in which case you just ignore this message. The sender is the  *
+ * plugin ID of the plugin asking for control of the planes now. You can use  *
+ * it to find out who is requesting and whether you should yield to them.     *
+ * Synthetic traffic providers should always yield to online networks. The    *
+ * parameter is unused and should be ignored.                                 */
+#define XPLM_MSG_RELEASE_PLANES 111
+#endif /* XPLM303 */
+
 /*
  * XPLMSendMessageToPlugin
  * 

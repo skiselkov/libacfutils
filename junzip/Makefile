@@ -13,6 +13,11 @@ else
 	TEST=junzip_test
 endif
 
+UNAME = $(shell uname)
+ifeq ($(UNAME), Darwin)
+CFLAGS += -arch x86_64 -arch arm64
+endif
+
 all: $(DEMO)
 
 run: $(DEMO)

@@ -51,9 +51,9 @@ function build_dep() {
 		;;
 	Darwin)
 		NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
-		CFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64"
-		CXXFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64"
-		LDFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64"
+		CFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64\ -arch\ arm64"
+		CXXFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64\ -arch\ arm64"
+		LDFLAGS_ADDTL="-mmacosx-version-min=10.9\ -arch\ x86_64\ -arch\ arm64"
 		;;
 	esac
 	if [ -n "$BUILD_SINGLE_THREADED" ]; then
