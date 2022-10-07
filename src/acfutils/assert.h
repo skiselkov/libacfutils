@@ -110,10 +110,10 @@ extern "C" {
 #define	ASSERT_MSG(x, fmt, ...)	VERIFY_MSG(x, fmt, __VA_ARGS__)
 #else	/* !DEBUG */
 #define	ASSERT(x)		UNUSED(x)
-#define	ASSERT3S(x, op, y)	UNUSED((x) op (y))
-#define	ASSERT3U(x, op, y)	UNUSED((x) op (y))
-#define	ASSERT3F(x, op, y)	UNUSED((x) op (y))
-#define	ASSERT3P(x, op, y)	UNUSED((x) op (y))
+#define	ASSERT3S(x, op, y)	do { UNUSED(x); UNUSED(y); } while (0)
+#define	ASSERT3U(x, op, y)	do { UNUSED(x); UNUSED(y); } while (0)
+#define	ASSERT3F(x, op, y)	do { UNUSED(x); UNUSED(y); } while (0)
+#define	ASSERT3P(x, op, y)	do { UNUSED(x); UNUSED(y); } while (0)
 #define	ASSERT0(x)		UNUSED(x)
 #define	ASSERT_MSG(x, fmt, ...)	UNUSED(x)
 #endif	/* !DEBUG */
