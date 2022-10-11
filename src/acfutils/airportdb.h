@@ -147,6 +147,8 @@ struct airport {
 	char		iata[AIRPORTDB_IATA_LEN];
 	/* 2-letter ICAO country/region code, nul terminated */
 	char		cc[AIRPORTDB_CC_LEN];
+	/* 3-letter ISO-3166 country code, uppercase, nul terminated */
+	char		cc3[AIRPORTDB_CC_LEN];
 	char		name[24];	/* Airport name, nul terminated */
 	char		*name_orig;	/* Non-normalized version of name */
 	char		*country;	/* Country name, nul terminated */

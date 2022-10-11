@@ -152,7 +152,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		18
+#define	ARPTDB_CACHE_VERSION		19
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -194,6 +194,261 @@ typedef struct {
 	list_node_t	node;
 	char		*fname;
 } apt_dats_entry_t;
+
+static struct {
+	const char	*code;
+	const char	*name;
+} iso3166_codes[] = {
+    { "AFG",	"Afghanistan" },
+    { "ALA",	"Åland Islands" },
+    { "ALB",	"Albania" },
+    { "DZA",	"Algeria" },
+    { "ASM",	"American Samoa" },
+    { "AND",	"Andorra" },
+    { "AGO",	"Angola" },
+    { "AIA",	"Anguilla" },
+    { "ATA",	"Antarctica" },
+    { "ATG",	"Antigua and Barbuda" },
+    { "ARG",	"Argentina" },
+    { "ARM",	"Armenia" },
+    { "ABW",	"Aruba" },
+    { "AUS",	"Australia" },
+    { "AUT",	"Austria" },
+    { "AZE",	"Azerbaijan" },
+    { "BHS",	"Bahamas" },
+    { "BHR",	"Bahrain" },
+    { "BGD",	"Bangladesh" },
+    { "BRB",	"Barbados" },
+    { "BLR",	"Belarus" },
+    { "BEL",	"Belgium" },
+    { "BLZ",	"Belize" },
+    { "BEN",	"Benin" },
+    { "BMU",	"Bermuda" },
+    { "BTN",	"Bhutan" },
+    { "BOL",	"Bolivia" },
+    { "BES",	"Bonaire, Sint Eustatius and Saba" },
+    { "BIH",	"Bosnia and Herzegovina" },
+    { "BWA",	"Botswana" },
+    { "BVT",	"Bouvet Island" },
+    { "BRA",	"Brazil" },
+    { "IOT",	"British Indian Ocean Territory" },
+    { "BRN",	"Brunei Darussalam" },
+    { "BGR",	"Bulgaria" },
+    { "BFA",	"Burkina Faso" },
+    { "BDI",	"Burundi" },
+    { "CPV",	"Cabo Verde" },
+    { "KHM",	"Cambodia" },
+    { "CMR",	"Cameroon" },
+    { "CAN",	"Canada" },
+    { "CYM",	"Cayman Islands" },
+    { "CAF",	"Central African Republic" },
+    { "TCD",	"Chad" },
+    { "CHL",	"Chile" },
+    { "CHN",	"China" },
+    { "CXR",	"Christmas Island" },
+    { "CCK",	"Cocos Islands" },
+    { "COL",	"Colombia" },
+    { "COM",	"Comoros" },
+    { "COD",	"Democratic Republic of the Congo" },
+    { "COG",	"Congo" },
+    { "COK",	"Cook Islands" },
+    { "CRI",	"Costa Rica" },
+    { "CIV",	"Côte d'Ivoire" },
+    { "HRV",	"Croatia" },
+    { "CUB",	"Cuba" },
+    { "CUW",	"Curaçao" },
+    { "CYP",	"Cyprus" },
+    { "CZE",	"Czechia" },
+    { "DNK",	"Denmark" },
+    { "DJI",	"Djibouti" },
+    { "DMA",	"Dominica" },
+    { "DOM",	"Dominican Republic" },
+    { "ECU",	"Ecuador" },
+    { "EGY",	"Egypt" },
+    { "SLV",	"El Salvador" },
+    { "GNQ",	"Equatorial Guinea" },
+    { "ERI",	"Eritrea" },
+    { "EST",	"Estonia" },
+    { "SWZ",	"Eswatini" },
+    { "ETH",	"Ethiopia" },
+    { "FLK",	"Falkland Islands" },
+    { "FRO",	"Faroe Islands" },
+    { "FJI",	"Fiji" },
+    { "FIN",	"Finland" },
+    { "FRA",	"France" },
+    { "GUF",	"French Guiana" },
+    { "PYF",	"French Polynesia" },
+    { "ATF",	"French Southern Territories" },
+    { "GAB",	"Gabon" },
+    { "GMB",	"Gambia" },
+    { "GEO",	"Georgia" },
+    { "DEU",	"Germany" },
+    { "GHA",	"Ghana" },
+    { "GIB",	"Gibraltar" },
+    { "GRC",	"Greece" },
+    { "GRL",	"Greenland" },
+    { "GRD",	"Grenada" },
+    { "GLP",	"Guadeloupe" },
+    { "GUM",	"Guam" },
+    { "GTM",	"Guatemala" },
+    { "GGY",	"Guernsey" },
+    { "GIN",	"Guinea" },
+    { "GNB",	"Guinea-Bissau" },
+    { "GUY",	"Guyana" },
+    { "HTI",	"Haiti" },
+    { "HMD",	"Heard Island and McDonald Islands" },
+    { "VAT",	"Holy See" },
+    { "HND",	"Honduras" },
+    { "HKG",	"Hong Kong" },
+    { "HUN",	"Hungary" },
+    { "ISL",	"Iceland" },
+    { "IND",	"India" },
+    { "IDN",	"Indonesia" },
+    { "IRN",	"Iran" },
+    { "IRQ",	"Iraq" },
+    { "IRL",	"Ireland" },
+    { "IMN",	"Isle of Man" },
+    { "ISR",	"Israel" },
+    { "ITA",	"Italy" },
+    { "JAM",	"Jamaica" },
+    { "JPN",	"Japan" },
+    { "JEY",	"Jersey" },
+    { "JOR",	"Jordan" },
+    { "KAZ",	"Kazakhstan" },
+    { "KEN",	"Kenya" },
+    { "KIR",	"Kiribati" },
+    { "PRK",	"Democratic People's Republic of Korea" },
+    { "KOR",	"Republic of Korea" },
+    { "KWT",	"Kuwait" },
+    { "KGZ",	"Kyrgyzstan" },
+    { "LAO",	"Laos" },
+    { "LVA",	"Latvia" },
+    { "LBN",	"Lebanon" },
+    { "LSO",	"Lesotho" },
+    { "LBR",	"Liberia" },
+    { "LBY",	"Libya" },
+    { "LIE",	"Liechtenstein" },
+    { "LTU",	"Lithuania" },
+    { "LUX",	"Luxembourg" },
+    { "MAC",	"Macao" },
+    { "MKD",	"Republic of North Macedonia" },
+    { "MDG",	"Madagascar" },
+    { "MWI",	"Malawi" },
+    { "MYS",	"Malaysia" },
+    { "MDV",	"Maldives" },
+    { "MLI",	"Mali" },
+    { "MLT",	"Malta" },
+    { "MHL",	"Marshall Islands" },
+    { "MTQ",	"Martinique" },
+    { "MRT",	"Mauritania" },
+    { "MUS",	"Mauritius" },
+    { "MYT",	"Mayotte" },
+    { "MEX",	"Mexico" },
+    { "FSM",	"Micronesia" },
+    { "MDA",	"Moldova" },
+    { "MCO",	"Monaco" },
+    { "MNG",	"Mongolia" },
+    { "MNE",	"Montenegro" },
+    { "MSR",	"Montserrat" },
+    { "MAR",	"Morocco" },
+    { "MOZ",	"Mozambique" },
+    { "MMR",	"Myanmar" },
+    { "NAM",	"Namibia" },
+    { "NRU",	"Nauru" },
+    { "NPL",	"Nepal" },
+    { "NLD",	"Netherlands" },
+    { "NCL",	"New Caledonia" },
+    { "NZL",	"New Zealand" },
+    { "NIC",	"Nicaragua" },
+    { "NER",	"Niger" },
+    { "NGA",	"Nigeria" },
+    { "NIU",	"Niue" },
+    { "NFK",	"Norfolk Island" },
+    { "MNP",	"Northern Mariana Islands" },
+    { "NOR",	"Norway" },
+    { "OMN",	"Oman" },
+    { "PAK",	"Pakistan" },
+    { "PLW",	"Palau" },
+    { "PSE",	"Palestine, State of" },
+    { "PAN",	"Panama" },
+    { "PNG",	"Papua New Guinea" },
+    { "PRY",	"Paraguay" },
+    { "PER",	"Peru" },
+    { "PHL",	"Philippines" },
+    { "PCN",	"Pitcairn" },
+    { "POL",	"Poland" },
+    { "PRT",	"Portugal" },
+    { "PRI",	"Puerto Rico" },
+    { "QAT",	"Qatar" },
+    { "REU",	"Réunion" },
+    { "ROU",	"Romania" },
+    { "RUS",	"Russian Federation" },
+    { "RWA",	"Rwanda" },
+    { "BLM",	"Saint Barthélemy" },
+    { "SHN",	"Saint Helena" },
+    { "KNA",	"Saint Kitts and Nevis" },
+    { "LCA",	"Saint Lucia" },
+    { "MAF",	"Saint Martin" },
+    { "SPM",	"Saint Pierre and Miquelon" },
+    { "VCT",	"Saint Vincent and the Grenadines" },
+    { "WSM",	"Samoa" },
+    { "SMR",	"San Marino" },
+    { "STP",	"Sao Tome and Principe" },
+    { "SAU",	"Saudi Arabia" },
+    { "SEN",	"Senegal" },
+    { "SRB",	"Serbia" },
+    { "SYC",	"Seychelles" },
+    { "SLE",	"Sierra Leone" },
+    { "SGP",	"Singapore" },
+    { "SXM",	"Sint Maarten" },
+    { "SVK",	"Slovakia" },
+    { "SVN",	"Slovenia" },
+    { "SLB",	"Solomon Islands" },
+    { "SOM",	"Somalia" },
+    { "ZAF",	"South Africa" },
+    { "SGS",	"South Georgia and the South Sandwich Islands" },
+    { "SSD",	"South Sudan" },
+    { "ESP",	"Spain" },
+    { "LKA",	"Sri Lanka" },
+    { "SDN",	"Sudan" },
+    { "SUR",	"Suriname" },
+    { "SJM",	"Svalbard and Jan Mayen" },
+    { "SWE",	"Sweden" },
+    { "CHE",	"Switzerland" },
+    { "SYR",	"Syrian Arab Republic" },
+    { "TWN",	"Taiwan" },
+    { "TJK",	"Tajikistan" },
+    { "TZA",	"Tanzania" },
+    { "THA",	"Thailand" },
+    { "TLS",	"Timor-Leste" },
+    { "TGO",	"Togo" },
+    { "TKL",	"Tokelau" },
+    { "TON",	"Tonga" },
+    { "TTO",	"Trinidad and Tobago" },
+    { "TUN",	"Tunisia" },
+    { "TUR",	"Turkey" },
+    { "TKM",	"Turkmenistan" },
+    { "TCA",	"Turks and Caicos Islands" },
+    { "TUV",	"Tuvalu" },
+    { "UGA",	"Uganda" },
+    { "UKR",	"Ukraine" },
+    { "ARE",	"United Arab Emirates" },
+    { "GBR",	"UK" },
+    { "UMI",	"United States Minor Outlying Islands" },
+    { "USA",	"United States of America" },
+    { "URY",	"Uruguay" },
+    { "UZB",	"Uzbekistan" },
+    { "VUT",	"Vanuatu" },
+    { "VEN",	"Venezuela" },
+    { "VNM",	"Viet Nam" },
+    { "VGB",	"British Virgin Islands" },
+    { "VIR",	"U.S. Virgin Islands" },
+    { "WLF",	"Wallis and Futuna" },
+    { "ESH",	"Western Sahara" },
+    { "YEM",	"Yemen" },
+    { "ZMB",	"Zambia" },
+    { "ZWE",	"Zimbabwe" }
+};
 
 static airport_t *apt_dat_lookup(airportdb_t *db, const char *ident);
 static void apt_dat_insert(airportdb_t *db, airport_t *arpt);
@@ -1292,6 +1547,41 @@ fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
 	}
 }
 
+static char *
+iso3166_cc3_to_name(const char *cc3)
+{
+	ASSERT(cc3 != NULL);
+
+	for (size_t i = 0; i < ARRAY_NUM_ELEM(iso3166_codes); i++) {
+		if (strcmp(cc3, iso3166_codes[i].code) == 0)
+			return (safe_strdup(iso3166_codes[i].name));
+	}
+	return (NULL);
+}
+
+static void
+parse_attr_country(char **comps, size_t n_comps, int version, airport_t *arpt)
+{
+	ASSERT(comps != NULL);
+	ASSERT(arpt != NULL);
+
+	LACF_DESTROY(arpt->country);
+	arpt->cc3[0] = '\0';
+
+	if (n_comps == 0)
+		return;
+	if (version < 1200) {
+		arpt->country = concat_comps(comps, n_comps);
+	} else {
+		if (strlen(comps[0]) == 3 && isupper(comps[0][0]) &&
+		    isupper(comps[0][1]) && isupper(comps[0][2])) {
+			arpt->country = iso3166_cc3_to_name(comps[0]);
+		}
+		if (arpt->country == NULL)
+			arpt->country = concat_comps(comps, n_comps);
+	}
+}
+
 /*
  * Parses an apt.dat (either from regular scenery or from CACHE_DIR) to
  * cache the airports contained in it.
@@ -1304,7 +1594,7 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 	airport_t *arpt = NULL, *dup_arpt = NULL;
 	char *line = NULL;
 	size_t linecap = 0;
-	int line_num = 0;
+	int line_num = 0, version = 0;
 	char **comps;
 	size_t ncomps;
 
@@ -1329,6 +1619,11 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 
 		if (sscanf(line, "%d", &row_code) != 1)
 			continue;
+		/* Read the version header */
+		if (line_num == 2) {
+			version = row_code;
+			continue;
+		}
 		/*
 		 * Finish the current airport on an empty line or a new
 		 * airport line.
@@ -1393,9 +1688,8 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				lacf_strlcpy(arpt->iata, comps[2],
 				    sizeof (arpt->iata));
 			} else if (strcmp(comps[1], "country") == 0) {
-				LACF_DESTROY(arpt->country);
-				arpt->country = concat_comps(&comps[2],
-				    ncomps - 2);
+				parse_attr_country(&comps[2], ncomps - 2,
+				    version, arpt);
 			} else if (strcmp(comps[1], "city") == 0) {
 				LACF_DESTROY(arpt->city);
 				arpt->city = concat_comps(&comps[2],
@@ -1448,6 +1742,7 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	char *fname;
 	FILE *fp;
 	geo_pos2_t p;
+	bool_t exists;
 
 	ASSERT(db != NULL);
 	ASSERT(arpt != NULL);
@@ -1456,12 +1751,17 @@ write_apt_dat(const airportdb_t *db, const airport_t *arpt)
 	snprintf(lat_lon, sizeof (lat_lon), TILE_NAME_FMT, p.lat, p.lon);
 	fname = apt_dat_cache_dir(db, GEO3_TO_GEO2(arpt->refpt), lat_lon);
 
+	exists = file_exists(fname, NULL);
 	fp = fopen(fname, "a");
 	if (fp == NULL) {
 		logMsg("Error writing file %s: %s", fname, strerror(errno));
 		return (B_FALSE);
 	}
-
+	if (!exists) {
+		fprintf(fp, "I\n"
+		    "1200 libacfutils airportdb version %d\n"
+		    "\n", ARPTDB_CACHE_VERSION);
+	}
 	ASSERT(!IS_NULL_GEO_POS(arpt->refpt));
 
 	fprintf(fp, "1 %.0f 0 0 %s %s\n"
