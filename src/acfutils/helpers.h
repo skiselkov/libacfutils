@@ -113,13 +113,17 @@ API_EXPORT double rel_hdg_impl(double hdg1, double hdg2, const char *file,
 static inline double
 normalize_hdg(double hdg)
 {
-	while (hdg < 0.0)
+	hdg = fmod(hdg, 360);
+	/* Flip negative into positive */
+	if (hdg < 0.0)
 		hdg += 360.0;
-	while (hdg >= 360.0)
-		hdg -= 360.0;
 	/* Necessary to avoid FP rounding errors */
-	if (hdg < 0.0 || hdg > 360.0)
+	if (hdg <= 0.0 || hdg > 360.0) {
 		hdg = clamp(hdg, 0, 360);
+		/* Avoid negative zero */
+		if (hdg == -0.0)
+			hdg = 0.0;
+	}
 	return (hdg);
 }
 
