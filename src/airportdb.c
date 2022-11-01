@@ -2165,7 +2165,8 @@ airportdb_xp11_airac_cycle(const char *xpdir, int *cycle)
 			break;
 		if (getline(&line, &linecap, fp) <= 0 ||
 		    (strstr(line, "1100 ") != line &&
-		    strstr(line, "1150 ") != line) ||
+		    strstr(line, "1150 ") != line &&
+		    strstr(line, "1200 ") != line) ||
 		    (word_start = strstr(line, " data cycle ")) == NULL) {
 			continue;
 		}
