@@ -449,10 +449,11 @@ chart_autorouter_arpt_lazyload(chart_arpt_t *arpt)
 }
 
 bool_t
-chart_autorouter_test_conn(const chart_prov_info_login_t *creds)
+chart_autorouter_test_conn(const chart_prov_info_login_t *creds,
+    const char *proxy)
 {
 	CURL *curl = NULL;
-	bool_t result = chart_download_multi(&curl, NULL,
+	bool_t result = chart_download_multi2(&curl, proxy,
 	    BASE_URL INDEX_URL_PATH, NULL, "PROPFIND", creds, 5,
 	    "Error testing chart connection", NULL);
 	if (curl != NULL)

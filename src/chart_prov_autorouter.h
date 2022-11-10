@@ -38,7 +38,8 @@ bool_t chart_autorouter_init(chartdb_t *cdb);
 void chart_autorouter_fini(chartdb_t *cdb);
 bool_t chart_autorouter_get_chart(chart_t *chart);
 void chart_autorouter_arpt_lazyload(chart_arpt_t *arpt);
-bool_t chart_autorouter_test_conn(const chart_prov_info_login_t *creds);
+bool_t chart_autorouter_test_conn(const chart_prov_info_login_t *creds,
+    const char *proxy);
 
 #ifdef	__cplusplus
 }

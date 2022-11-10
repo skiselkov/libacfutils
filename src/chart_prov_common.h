@@ -48,6 +48,10 @@ bool_t chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
     const char *filepath, const char *method,
     const chart_prov_info_login_t *login, int timeout,
     const char *error_prefix, chart_dl_info_t *raw_output);
+bool_t chart_download_multi2(CURL **curl_p, const char *proxy, const char *url,
+    const char *filepath, const char *method,
+    const chart_prov_info_login_t *login, int timeout,
+    const char *error_prefix, chart_dl_info_t *raw_output);
 bool_t chart_download(chartdb_t *cdb, const char *url, const char *filepath,
     const chart_prov_info_login_t *login, const char *error_prefix,
     chart_dl_info_t *raw_output);

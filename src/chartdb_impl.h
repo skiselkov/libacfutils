@@ -144,7 +144,8 @@ typedef struct {
 	    cairo_surface_t *surf);
 	chart_arpt_t 	*(*arpt_lazy_discover)(chartdb_t *cdb, const char *icao);
 	void		(*arpt_lazyload)(chart_arpt_t *arpt);
-	bool_t		(*test_conn)(const chart_prov_info_login_t *creds);
+	bool_t		(*test_conn)(const chart_prov_info_login_t *creds,
+	    const char *proxy);
 	bool_t		(*pending_ext_account_setup)(chartdb_t *cdb);
 } chart_prov_t;
 

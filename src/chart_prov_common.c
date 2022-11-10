@@ -130,6 +130,28 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
     const chart_prov_info_login_t *login, int timeout,
     const char *error_prefix, chart_dl_info_t *raw_output)
 {
+	char *proxy = NULL;
+	bool_t res;
+
+	if (cdb != NULL) {
+		mutex_enter(&cdb->lock);
+		if (cdb->proxy != NULL)
+			proxy = safe_strdup(cdb->proxy);
+		mutex_exit(&cdb->lock);
+	}
+	res = chart_download_multi2(curl_p, proxy, url, filepath, method,
+	    login, timeout, error_prefix, raw_output);
+	LACF_DESTROY(proxy);
+
+	return (res);
+}
+
+bool_t
+chart_download_multi2(CURL **curl_p, const char *proxy, const char *url,
+    const char *filepath, const char *method,
+    const chart_prov_info_login_t *login, int timeout,
+    const char *error_prefix, chart_dl_info_t *raw_output)
+{
 	CURL *curl;
 	struct curl_slist *hdrs = NULL;
 	chart_dl_info_t dl_info = { .cdb = NULL };
@@ -137,7 +159,15 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 	long code = 0;
 	bool_t result = B_TRUE;
 
-	dl_info.cdb = cdb;
+	ASSERT(curl_p != NULL);
+	/* cdb can be NULL */
+	ASSERT(url != NULL);
+	/* filepath can be NULL */
+	/* method can be NULL */
+	/* login can be NULL */
+	ASSERT(error_prefix != NULL);
+	/* raw_output can be NULL */
+
 	dl_info.url = url;
 
 	if (*curl_p != NULL) {
@@ -159,10 +189,8 @@ chart_download_multi(CURL **curl_p, chartdb_t *cdb, const char *url,
 			curl_easy_setopt(curl, CURLOPT_PASSWORD,
 			    login->password);
 		}
-		mutex_enter(&cdb->lock);
-		if (cdb->proxy != NULL)
-			curl_easy_setopt(curl, CURLOPT_PROXY, cdb->proxy);
-		mutex_exit(&cdb->lock);
+		if (proxy != NULL)
+			curl_easy_setopt(curl, CURLOPT_PROXY, proxy);
 		*curl_p = curl;
 	}
 

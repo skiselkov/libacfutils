@@ -1286,11 +1286,22 @@ bool_t
 chartdb_test_connection(const char *provider_name,
     const chart_prov_info_login_t *creds)
 {
+	return (chartdb_test_connection2(provider_name, creds, NULL));
+}
+
+bool_t
+chartdb_test_connection2(const char *provider_name,
+    const chart_prov_info_login_t *creds, const char *proxy)
+{
+	ASSERT(provider_name != NULL);
+	/* creds can be NULL */
+	/* proxy can be NULL */
+
 	for (chart_prov_id_t pid = 0; pid < NUM_PROVIDERS; pid++) {
 		if (strcmp(provider_name, prov[pid].name) == 0) {
 			if (prov[pid].test_conn == NULL)
 				return (B_TRUE);
-			return (prov[pid].test_conn(creds));
+			return (prov[pid].test_conn(creds, proxy));
 		}
 	}
 	return (B_FALSE);
