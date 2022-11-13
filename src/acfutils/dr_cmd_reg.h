@@ -56,6 +56,11 @@ API_EXPORT XPLMCommandRef dcr_create_cmd(const char *cmdname,
 API_EXPORT void *dcr_alloc_rdr(void);
 API_EXPORT dr_t *dcr_get_dr(void *token);
 API_EXPORT void dcr_insert_rdr(void *token);
+#ifdef	__clang
+#pragma	GCC	diagnostic	push
+#pragma	GCC	diagnostic	ignored "-Wnull-dereference"
+#endif
+
 #define	DCR_CREATE_COMMON(type, dr_ptr, ...) \
 	do { \
 		void *__rdr = dcr_alloc_rdr(); \
@@ -85,6 +90,10 @@ API_EXPORT void dcr_insert_rdr(void *token);
 	DCR_CREATE_COMMON(vf64_autoscalar, dr_p, __VA_ARGS__)
 #define	DCR_CREATE_B(dr_p, ...)		\
 	DCR_CREATE_COMMON(b, dr_p, __VA_ARGS__)
+
+#ifdef	__clang
+#pragma	GCC	diagnostic	pop
+#endif
 
 #ifdef	__cplusplus
 }
