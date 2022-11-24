@@ -502,12 +502,14 @@ chartdb_pdf_count_pages_direct(const char *pdfinfo_path, const uint8_t *buf,
 			break;
 		}
 		fill += n;
+#if	IBM
 		/*
 		 * On windows, a short byte count indicates an EOF, so
 		 * we need to exit now, or else we'll block indefinitely.
 		 */
 		if (n < to_read)
 			break;
+#endif	/* IBM */
 	}
 	close(fd_out);
 	fd_out = -1;
@@ -837,8 +839,14 @@ chartdb_pdf_convert_direct(const char *pdftoppm_path, const uint8_t *pdf_data,
 		if (n <= 0)
 			break;
 		png_buf_fill += n;
+#if	IBM
+		/*
+		 * On windows, a short byte count indicates an EOF, so
+		 * we need to exit now, or else we'll block indefinitely.
+		 */
 		if (n < to_read)
 			break;
+#endif	/* IBM */
 	}
 	close(fd_out);
 	fd_out = -1;
