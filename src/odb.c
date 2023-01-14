@@ -259,7 +259,7 @@ odb_proc_us_dof_impl(const char *buf, size_t len, add_obst_cb_t cb,
 		pos.elev = amsl - agl;
 
 		if (!is_valid_lat(pos.lat) || !is_valid_lon(pos.lon) ||
-		    agl < 0 || !is_valid_alt(agl) || !is_valid_alt(amsl) ||
+		    agl < 0 || !is_valid_alt_m(agl) || !is_valid_alt_m(amsl) ||
 		    quant == 0)
 			goto next;
 

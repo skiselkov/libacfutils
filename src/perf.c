@@ -2015,7 +2015,7 @@ perf_crz2burn(double isadev, double tp_alt, double qnh, double alt_ft,
 	vect2_t fltdir;
 	double burn = 0;
 
-	ASSERT(is_valid_alt(alt_ft));
+	ASSERT(is_valid_alt_ft(alt_ft));
 	ASSERT3F(spd, >, 0);
 	ASSERT3F(spd, <, 1000);
 	ASSERT(is_valid_hdg(hdg));
@@ -2070,11 +2070,11 @@ perf_des2burn(const flt_perf_t *flt, const acft_perf_t *acft,
 	ASSERT(is_valid_hdg(hdgt));
 	ASSERT3F(dist_nm, >=, 0);
 	ASSERT3F(mach_lim, >=, 0);
-	ASSERT(is_valid_alt(alt1_ft));
+	ASSERT(is_valid_alt_ft(alt1_ft));
 	ASSERT3F(kcas1, >, 0);
 	ASSERT3F(kcas1, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind1));
-	ASSERT(is_valid_alt(alt2_ft));
+	ASSERT(is_valid_alt_ft(alt2_ft));
 	ASSERT3F(kcas2, >, 0);
 	ASSERT3F(kcas2, <, 1000);
 	ASSERT(!IS_NULL_VECT(wind2));

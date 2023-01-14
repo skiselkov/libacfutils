@@ -87,10 +87,21 @@ is_valid_elev(double elev)
 	return (!isnan(elev) && elev >= MIN_ELEV && elev <= MAX_ELEV);
 }
 
+#ifdef	LACF_ENABLE_LEGACY_IS_VALID_ALT
+#define	is_valid_alt(alt)	is_valid_alt_ft(alt)
+#endif
+
 static inline bool_t
-is_valid_alt(double alt)
+is_valid_alt_ft(double alt_ft)
 {
-	return (!isnan(alt) && alt >= MIN_ALT && alt <= MAX_ALT);
+	return (!isnan(alt_ft) && alt_ft >= MIN_ALT && alt_ft <= MAX_ALT);
+}
+
+static inline bool_t
+is_valid_alt_m(double alt_m)
+{
+	return (!isnan(alt_m) && alt_m >= MIN_ALT / 3.2808398950131 &&
+	    alt_m <= MAX_ALT / 3.2808398950131);
 }
 
 static inline bool_t
