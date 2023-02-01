@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_PID_CTL_H_
@@ -364,6 +364,17 @@ pid_ctl_get_deriv(const pid_ctl_t *pid)
 {
 	ASSERT(pid != NULL);
 	return (pid->deriv);
+}
+
+/*
+ * Sets all 3 gain values in one call.
+ */
+static inline void
+pid_ctl_set_gain(pid_ctl_t *pid, double gain)
+{
+	pid_ctl_set_k_p_gain(pid, gain);
+	pid_ctl_set_k_d_gain(pid, gain);
+	pid_ctl_set_k_i_gain(pid, gain);
 }
 
 #define	PID_CTL_DEBUG(pid_ptr) \
