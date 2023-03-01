@@ -528,6 +528,14 @@ floormul(double x, double y)
 	return (floor(x / y) * y);
 }
 
+#define	SET_BITFIELD_1(out_var, bit_mask, bit_value) \
+	do { \
+		if (bit_value) \
+			(out_var) |= (bit_mask); \
+		else \
+			(out_var) &= ~(bit_mask); \
+	} while (0)
+
 /* file/directory manipulation */
 #define	file_eixsts			ACFSYM(file_exists)
 API_EXPORT bool_t file_exists(const char *path, bool_t *isdir);

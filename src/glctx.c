@@ -43,6 +43,7 @@
 #include "acfutils/assert.h"
 #include "acfutils/dr.h"
 #include "acfutils/glctx.h"
+#include "acfutils/glutils_zink.h"
 #include "acfutils/log.h"
 #include "acfutils/safe_alloc.h"
 #include "acfutils/thread.h"
@@ -55,7 +56,6 @@ struct glctx_s {
 #if	LIN
 	Display		*dpy;
 	GLXContext	glc;
-	GLXPbuffer	pbuf;
 #elif	IBM
 	char		win_cls_name[32];
 	HWND		win;
@@ -76,10 +76,12 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 {
 	typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*,
 	    GLXFBConfig, GLXContext, Bool, const int*);
-	typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
-	    GLXDrawable, GLXDrawable, GLXContext);
-	static glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
-	static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
+	typedef GLXFBConfig *(*glXChooseFBConfigARBProc)(Display *, int,
+	    const int *, int *);
+
+	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = NULL;
+	glXChooseFBConfigARBProc glXChooseFBConfigARB = NULL;
+
 	static int visual_attribs[] = { None };
 	int context_attribs[] = {
 	    GLX_CONTEXT_MAJOR_VERSION_ARB, major_ver,
@@ -87,11 +89,6 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	    GLX_CONTEXT_FLAGS_ARB,
 	        (fwd_compat ? GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB : 0) |
 	        (debug ? GLX_CONTEXT_DEBUG_BIT_ARB : 0),
-	    None
-	};
-	int pbuffer_attribs[] = {
-	    GLX_PBUFFER_WIDTH, 16,
-	    GLX_PBUFFER_HEIGHT, 16,
 	    None
 	};
 	int fbcount = 0;
@@ -104,47 +101,39 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 
 	/* open display */
 	ctx->dpy = XOpenDisplay(win_ptr);
-	if (ctx->dpy == NULL){
+	if (ctx->dpy == NULL) {
 		logMsg("Failed to open display");
 		goto errout;
 	}
-
+	/* Get the function pointers */
+	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
+	    glXGetProcAddressARB((GLubyte *)"glXCreateContextAttribsARB");
+	glXChooseFBConfigARB = (glXChooseFBConfigARBProc)
+	    glXGetProcAddress((GLubyte *)"glXChooseFBConfig");
+	if (glXCreateContextAttribsARB == NULL ||
+	    glXChooseFBConfigARB == NULL) {
+		logMsg("Missing support for GLX_ARB_create_context");
+		goto errout;
+	}
 	/*
 	 * get framebuffer configs, any is usable (might want to add proper
 	 * attribs)
 	 */
-	fbc = glXChooseFBConfig(ctx->dpy, DefaultScreen(ctx->dpy),
+	fbc = glXChooseFBConfigARB(ctx->dpy, DefaultScreen(ctx->dpy),
 	    visual_attribs, &fbcount);
-	if (fbc == NULL){
+	if (fbc == NULL) {
 		logMsg("Failed to get FBConfig");
 		goto errout;
 	}
-
-	/* Get the required extensions */
-	glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
-	    glXGetProcAddressARB((GLubyte *)"glXCreateContextAttribsARB");
-	glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc)
-	    glXGetProcAddressARB((GLubyte *)"glXMakeContextCurrent");
-	if (glXCreateContextAttribsARB == NULL ||
-	    glXMakeContextCurrentARB == NULL) {
-		logMsg("Missing support for GLX_ARB_create_context");
-		goto errout;
-	}
-
 	/* Create a context using glXCreateContextAttribsARB */
 	ctx->glc = glXCreateContextAttribsARB(ctx->dpy, fbc[0],
 	    share_ctx != NULL ? share_ctx->glc : NULL, True, context_attribs);
-	if (ctx->glc == NULL){
+	if (ctx->glc == NULL) {
 		logMsg("Failed to create opengl context");
 		goto errout;
 	}
-
-	/* Create a temporary pbuffer */
-	ctx->pbuf = glXCreatePbuffer(ctx->dpy, fbc[0], pbuffer_attribs);
-
 	XFree(fbc);
 	fbc = NULL;
-	XSync(ctx->dpy, False);
 
 	return (ctx);
 errout:
@@ -385,7 +374,7 @@ glctx_get_current(void)
 #if	LIN
 	/* open display */
 	ctx->dpy = XOpenDisplay(0);
-	if (ctx->dpy == NULL){
+	if (ctx->dpy == NULL) {
 		logMsg("Failed to open display");
 		goto errout;
 	}
@@ -451,36 +440,54 @@ bool_t
 glctx_make_current(glctx_t *ctx)
 {
 #if	LIN
+	typedef Bool (*glXMakeContextCurrentARBProc)(Display*,
+	    GLXDrawable, GLXDrawable, GLXContext);
+	static glXMakeContextCurrentARBProc glXMakeContextCurrentARB = NULL;
+
+	if (glXMakeContextCurrentARB == NULL) {
+		glXMakeContextCurrentARB = (glXMakeContextCurrentARBProc)
+		    glXGetProcAddressARB((GLubyte *)"glXMakeContextCurrent");
+		/*
+		 * We should never have gotten here without a working
+		 * GLX_ARB_create_context.
+		 */
+		VERIFY(glXMakeContextCurrentARB != NULL);
+	}
 	if (ctx != NULL) {
+		GLXDrawable tgt = (glutils_in_zink_mode() ? None :
+		    DefaultRootWindow(ctx->dpy));
 		ASSERT(ctx->dpy != NULL);
 		ASSERT(ctx->glc != NULL);
-		if (!glXMakeContextCurrent(ctx->dpy, ctx->pbuf, ctx->pbuf,
-		    ctx->glc)) {
-			/*
-			 * Some drivers doesn't like contexts without a default
-			 * framebuffer, so fallback on using the default window.
-			 */
-			if (!glXMakeContextCurrent(ctx->dpy,
-			    DefaultRootWindow(ctx->dpy),
-			    DefaultRootWindow(ctx->dpy), ctx->glc)) {
-				logMsg("Failed to make context current");
-				return (B_FALSE);
-			}
+		if (!glXMakeContextCurrentARB(ctx->dpy, tgt, tgt, ctx->glc)) {
+			logMsg("Failed to make context current");
+			return (B_FALSE);
 		}
 	} else {
-		glXMakeContextCurrent(NULL, None, None, NULL);
+		glXMakeContextCurrentARB(NULL, None, None, NULL);
 	}
 #elif	IBM
+	typedef BOOL (*wglMakeCurrentARBProc)(HDC, HGLRC);
+	static wglMakeCurrentARBProc wglMakeCurrentARB = NULL;
+
+	if (wglMakeCurrentARB == NULL) {
+		wglMakeCurrentARB = (wglMakeCurrentARBProc)
+		    wglGetProcAddress("wglMakeCurrent");
+		/*
+		 * We should never have gotten here without a working
+		 * WGL_ARB_create_context.
+		 */
+		VERIFY(wglMakeCurrentARB != NULL);
+	}
 	if (ctx != NULL) {
 		ASSERT(ctx->dc != NULL);
 		ASSERT(ctx->hgl != NULL);
-		if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
+		if (!wglMakeCurrentARB(ctx->dc, ctx->hgl)) {
 			win_perror(GetLastError(),
 			    "Failed to make context current");
 			return (B_FALSE);
 		}
 	} else {
-		wglMakeCurrent(NULL, NULL);
+		wglMakeCurrentARB(NULL, NULL);
 	}
 #else	/* APL */
 	if (ctx != NULL) {
@@ -524,8 +531,6 @@ glctx_destroy(glctx_t *ctx)
 	if (ctx->created) {
 		if (ctx->glc != NULL)
 			glXDestroyContext(ctx->dpy, ctx->glc);
-		if (ctx->pbuf != 0)
-			glXDestroyPbuffer(ctx->dpy, ctx->pbuf);
 	}
 	if (ctx->dpy != NULL)
 		XCloseDisplay(ctx->dpy);

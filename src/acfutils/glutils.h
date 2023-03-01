@@ -31,6 +31,7 @@
 #include "assert.h"
 #include "geom.h"
 #include "glew.h"
+#include "glutils_zink.h"
 #include "log.h"
 #include "safe_alloc.h"
 #include "sysmacros.h"

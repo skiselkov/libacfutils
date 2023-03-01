@@ -96,12 +96,20 @@ struct glutils_cache_s {
 	size_t		cap;
 };
 
+static bool_t inited = B_FALSE;
 static thread_id_t main_thread;
+static bool_t in_zink_mode = B_FALSE;
 
 void
 glutils_sys_init(void)
 {
-	main_thread = curthread_id;
+	if (!inited) {
+		inited = B_TRUE;
+		main_thread = curthread_id;
+		in_zink_mode = (strcmp((char *)glGetString(GL_VENDOR), "Mesa")
+		    == 0 &&
+		    strncmp((char *)glGetString(GL_RENDERER), "zink", 4) == 0);
+	}
 }
 
 /*
@@ -1139,3 +1147,14 @@ glutils_png2gltexfmt(int png_color_type, int png_bit_depth,
 		return (B_FALSE);
 	}
 }
+
+#if	IBM || LIN
+
+bool_t
+glutils_in_zink_mode(void)
+{
+	glutils_sys_init();
+	return (in_zink_mode);
+}
+
+#endif	/* IBM || LIN */

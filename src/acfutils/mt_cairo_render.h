@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_MT_CAIRO_RENDER_H_
@@ -41,7 +41,7 @@
 extern "C" {
 #endif
 
-API_EXPORT void mt_cairo_render_glob_init(void);
+API_EXPORT void mt_cairo_render_glob_init(bool_t want_coherent_mem);
 
 typedef bool_t (*mt_cairo_init_cb_t)(cairo_t *cr, void *userinfo);
 typedef void (*mt_cairo_fini_cb_t)(cairo_t *cr, void *userinfo);
@@ -104,8 +104,6 @@ typedef struct {
 	unsigned	x, y;
 	unsigned	w, h;
 } mtcr_rect_t;
-API_EXPORT void mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
-    mtcr_rect_t *rects, size_t num);
 
 API_EXPORT void mt_cairo_render_rounded_rectangle(cairo_t *cr, double x,
     double y, double w, double h, double radius);
