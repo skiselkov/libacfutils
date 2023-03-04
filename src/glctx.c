@@ -466,28 +466,16 @@ glctx_make_current(glctx_t *ctx)
 		glXMakeContextCurrentARB(NULL, None, None, NULL);
 	}
 #elif	IBM
-	typedef BOOL (*wglMakeCurrentARBProc)(HDC, HGLRC);
-	static wglMakeCurrentARBProc wglMakeCurrentARB = NULL;
-
-	if (wglMakeCurrentARB == NULL) {
-		wglMakeCurrentARB = (wglMakeCurrentARBProc)
-		    wglGetProcAddress("wglMakeCurrent");
-		/*
-		 * We should never have gotten here without a working
-		 * WGL_ARB_create_context.
-		 */
-		VERIFY(wglMakeCurrentARB != NULL);
-	}
 	if (ctx != NULL) {
 		ASSERT(ctx->dc != NULL);
 		ASSERT(ctx->hgl != NULL);
-		if (!wglMakeCurrentARB(ctx->dc, ctx->hgl)) {
+		if (!wglMakeCurrent(ctx->dc, ctx->hgl)) {
 			win_perror(GetLastError(),
 			    "Failed to make context current");
 			return (B_FALSE);
 		}
 	} else {
-		wglMakeCurrentARB(NULL, NULL);
+		wglMakeCurrent(NULL, NULL);
 	}
 #else	/* APL */
 	if (ctx != NULL) {
