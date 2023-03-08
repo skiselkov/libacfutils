@@ -1046,14 +1046,10 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	ASSERT(mtcr->mtul == NULL || rs->tex != 0);
 
 	glActiveTexture(GL_TEXTURE0);
-	if (mtcr->mtul == NULL) {
-		if (rs->dirty) {
-			rs_tex_alloc(mtcr, rs);
-			rs_upload(mtcr, rs);
-			rs->dirty = B_FALSE;
-		}
-	} else {
-		ASSERT(!rs->dirty);
+	if (rs->dirty && mtcr->mtul == NULL) {
+		rs_tex_alloc(mtcr, rs);
+		rs_upload(mtcr, rs);
+		rs->dirty = B_FALSE;
 	}
 	/* NOW we can safely update the texture */
 	rs_tex_apply(mtcr, rs, B_TRUE);
