@@ -1329,7 +1329,7 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 
 		mtcr->present_rs = mtcr->ready_rs;
 		/* Upload & apply the texture if it has changed */
-		if (rs->dirty) {
+		if (rs->dirty && mtcr->mtul == NULL) {
 			rs_tex_alloc(mtcr, rs);
 			rs_upload(mtcr, rs);
 			rs->dirty = B_FALSE;
