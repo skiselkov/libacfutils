@@ -72,7 +72,7 @@ typedef struct {
 } vtx_t;
 
 typedef	struct {
-	bool_t		chg;	/* renderer has changed the surface, reupload */
+	bool_t		dirty;	/* renderer has changed the surface, reupload */
 	bool_t		texed;	/* has glTexImage2D been applied? */
 	bool_t		monochrome;	/* uses 8-bit alpha-only texture? */
 	GLuint		tex;
@@ -258,6 +258,58 @@ render_done_rs_swap(mt_cairo_render_t *mtcr)
 	}
 }
 
+static void
+mtul_submit_mtcr(mt_cairo_uploader_t *mtul, mt_cairo_render_t *mtcr,
+    render_surf_t *rs)
+{
+	ASSERT(mtul != NULL);
+	ASSERT(mtcr != NULL);
+	ASSERT(rs != NULL);
+
+	mutex_enter(&mtcr->mtul->lock);
+	if (!list_link_active(&mtcr->mtul_queue_node)) {
+		list_insert_tail(&mtcr->mtul->queue, mtcr);
+		cv_broadcast(&mtcr->mtul->cv_queue);
+	}
+	while (rs->dirty)
+		cv_wait(&mtcr->mtul->cv_done, &mtcr->mtul->lock);
+	/* render_done_cv will be signalled by the uploader */
+	mutex_exit(&mtcr->mtul->lock);
+}
+
+static void
+worker_render_once(mt_cairo_render_t *mtcr)
+{
+	render_surf_t *rs;
+	mt_cairo_uploader_t *mtul;
+
+	ASSERT(mtcr != NULL);
+	ASSERT(mtcr->render_rs != -1);
+	ASSERT_MUTEX_HELD(&mtcr->lock);
+
+	rs = &mtcr->rs[mtcr->render_rs];
+
+	mutex_exit(&mtcr->lock);
+
+	mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
+	cairo_surface_flush(rs->surf);
+
+	mutex_enter(&mtcr->lock);
+	rs->dirty = B_TRUE;
+	render_done_rs_swap(mtcr);
+
+	mtul = mtcr->mtul;
+	if (mtul != NULL) {
+		ASSERT(!coherent);
+		mutex_exit(&mtcr->lock);
+		/* render_done_cv will be signalled by the uploader */
+		mtul_submit_mtcr(mtul, mtcr, rs);
+		mutex_enter(&mtcr->lock);
+	} else {
+		cv_broadcast(&mtcr->render_done_cv);
+	}
+}
+
 /*
  * Main mt_cairo_render_t worker thread. Simply waits around for the
  * required interval and fires off the rendering callback. This performs
@@ -274,30 +326,21 @@ worker(void *arg)
 
 	ASSERT(arg != NULL);
 	mtcr = arg;
+	ASSERT(mtcr->render_cb != NULL);
 
 	strlcpy(shortname, mtcr->init_filename, sizeof (shortname));
 	snprintf(name, sizeof (name), "mtcr:%s:%d", shortname, mtcr->init_line);
 	thread_set_name(name);
 
-	ASSERT(mtcr->render_cb != NULL);
-	if (mtcr->fps > 0) {
-		/*
-		 * Render the first frame immediately to make sure we have
-		 * something to show ASAP.
-		 */
-		next_time = recalc_sleep_time(mtcr);
-		mtcr->render_cb(mtcr->rs[0].cr, mtcr->w, mtcr->h,
-		    mtcr->userinfo);
-	}
-	mtcr->rs[0].chg = B_TRUE;
-
 	mutex_enter(&mtcr->lock);
 	mtcr->render_rs = 0;
-
+	/*
+	 * Render the first frame immediately to make sure we have something
+	 * to show ASAP.
+	 */
+	if (mtcr->fps > 0)
+		worker_render_once(mtcr);
 	while (!mtcr->shutdown) {
-		render_surf_t *rs;
-		mt_cairo_uploader_t *mtul;
-
 		if (!mtcr->one_shot_block) {
 			if (mtcr->fps > 0) {
 				if (next_time == 0) {
@@ -323,38 +366,7 @@ worker(void *arg)
 		}
 		if (mtcr->shutdown)
 			break;
-
-		rs = &mtcr->rs[mtcr->render_rs];
-
-		mutex_exit(&mtcr->lock);
-
-		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
-		cairo_surface_flush(rs->surf);
-
-		mutex_enter(&mtcr->lock);
-		rs->chg = B_TRUE;
-		mtul = mtcr->mtul;
-		mutex_exit(&mtcr->lock);
-
-		if (mtul != NULL) {
-			ASSERT(!coherent);
-
-			mutex_enter(&mtul->lock);
-			if (!list_link_active(&mtcr->mtul_queue_node)) {
-				list_insert_tail(&mtul->queue, mtcr);
-				cv_broadcast(&mtul->cv_queue);
-			}
-			while (rs->chg)
-				cv_wait(&mtul->cv_done, &mtul->lock);
-			/* render_done_cv will be signalled by the uploader */
-			mutex_exit(&mtul->lock);
-
-			mutex_enter(&mtcr->lock);
-		} else {
-			mutex_enter(&mtcr->lock);
-			render_done_rs_swap(mtcr);
-			cv_broadcast(&mtcr->render_done_cv);
-		}
+		worker_render_once(mtcr);
 	}
 	mutex_exit(&mtcr->lock);
 }
@@ -809,34 +821,13 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtcr != NULL);
 	if (mtcr->fg_mode) {
-		render_surf_t *rs;
+		ASSERT(mtcr->render_cb != NULL);
 
 		mutex_enter(&mtcr->lock);
-		rs = &mtcr->rs[mtcr->render_rs];
+		if (mtcr->render_rs == -1)
+			mtcr->render_rs = 0;
+		worker_render_once(mtcr);
 		mutex_exit(&mtcr->lock);
-
-		ASSERT(mtcr->render_cb != NULL);
-		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
-		rs->chg = B_TRUE;
-
-		if (mtcr->mtul != NULL) {
-			mutex_enter(&mtcr->mtul->lock);
-			if (!list_link_active(&mtcr->mtul_queue_node)) {
-				list_insert_tail(&mtcr->mtul->queue, mtcr);
-				cv_broadcast(&mtcr->mtul->cv_queue);
-			}
-			while (rs->chg) {
-				cv_wait(&mtcr->mtul->cv_done,
-				    &mtcr->mtul->lock);
-			}
-			/* render_done_cv will be signalled by the uploader */
-			mutex_exit(&mtcr->mtul->lock);
-		} else {
-			mutex_enter(&mtcr->lock);
-			render_done_rs_swap(mtcr);
-			cv_broadcast(&mtcr->render_done_cv);
-			mutex_exit(&mtcr->lock);
-		}
 	} else {
 		mutex_enter(&mtcr->lock);
 		mtcr->one_shot_block = B_TRUE;
@@ -1044,22 +1035,25 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	/* Nothing ready for present yet */
 	if (mtcr->ready_rs == -1)
 		return (B_FALSE);
-	mtcr->present_rs = mtcr->ready_rs;
+	/* If ready_rs is done async uploading, switch to it */
+	if (mtcr->mtul == NULL || !mtcr->rs[mtcr->ready_rs].dirty)
+		mtcr->present_rs = mtcr->ready_rs;
+	if (mtcr->present_rs == -1)
+		return (B_FALSE);
 	rs = &mtcr->rs[mtcr->present_rs];
 
-	/* Uploader will allocate & populate the texture, so just wait */
-	if (mtcr->mtul != NULL && rs->tex == 0)
-		return (B_FALSE);
+	/* Uploader must have allocated & populated the texture */
+	ASSERT(mtcr->mtul == NULL || rs->tex != 0);
 
 	glActiveTexture(GL_TEXTURE0);
 	if (mtcr->mtul == NULL) {
-		if (rs->chg) {
+		if (rs->dirty) {
 			rs_tex_alloc(mtcr, rs);
 			rs_upload(mtcr, rs);
-			rs->chg = B_FALSE;
+			rs->dirty = B_FALSE;
 		}
 	} else {
-		ASSERT0(rs->chg);
+		ASSERT(!rs->dirty);
 	}
 	/* NOW we can safely update the texture */
 	rs_tex_apply(mtcr, rs, B_TRUE);
@@ -1339,10 +1333,10 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 
 		mtcr->present_rs = mtcr->ready_rs;
 		/* Upload & apply the texture if it has changed */
-		if (rs->chg) {
+		if (rs->dirty) {
 			rs_tex_alloc(mtcr, rs);
 			rs_upload(mtcr, rs);
-			rs->chg = B_FALSE;
+			rs->dirty = B_FALSE;
 		}
 		rs_tex_apply(mtcr, rs, B_FALSE);
 		tex = rs->tex;
@@ -1402,9 +1396,16 @@ mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 	mutex_enter(&mtcr->lock);
 
 	ASSERT(!coherent);
-	ASSERT(mtcr->render_rs != -1);
-	rs = &mtcr->rs[mtcr->render_rs];
-	if (rs->chg) {
+	if (mtcr->ready_rs == -1) {
+		/*
+		 * No frame ready, this happens if we got added to the
+		 * uploader's work queue in mt_cairo_render_set_uploader.
+		 */
+		mutex_exit(&mtcr->lock);
+		return;
+	}
+	rs = &mtcr->rs[mtcr->ready_rs];
+	if (rs->dirty) {
 		rs_tex_alloc(mtcr, rs);
 		rs_upload(mtcr, rs);
 		ASSERT3P(rs->sync, ==, NULL);
@@ -1433,7 +1434,7 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 	}
 	/*
 	 * We need to remove the surface from the ul_inprog_list BEFORE
-	 * resetting rs->chg, otherwise the mtcr could attempt to emit
+	 * resetting rs->dirty, otherwise the mtcr could attempt to emit
 	 * another frame. This could try to double-add the surface while
 	 * it's still active on the ul_inprog_list.
 	 */
@@ -1447,8 +1448,8 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 
 	glDeleteSync(rs->sync);
 	rs->sync = NULL;
-	ASSERT(rs->chg);
-	rs->chg = B_FALSE;
+	ASSERT(rs->dirty);
+	rs->dirty = B_FALSE;
 	if (rs == &mtcr->rs[0]) {
 		mtcr->ready_rs = 0;
 		mtcr->render_rs = 1;
@@ -1484,7 +1485,6 @@ mtul_drain_queue(mt_cairo_uploader_t *mtul)
 			mutex_exit(&mtul->lock);
 			mtul_upload(mtcr, &ul_inprog_list);
 			mutex_enter(&mtul->lock);
-			GLUTILS_ASSERT_NO_ERROR();
 		}
 		/*
 		 * No more uploads pending for start. Now see if we can
@@ -1504,7 +1504,6 @@ mtul_drain_queue(mt_cairo_uploader_t *mtul)
 				 */
 				cv_broadcast(&mtul->cv_done);
 			}
-			GLUTILS_ASSERT_NO_ERROR();
 		}
 	} while (list_count(&ul_inprog_list) != 0);
 
