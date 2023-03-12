@@ -232,12 +232,15 @@ shader_from_spirv(GLenum shader_type, const char *filename,
 
 	/*
 	 * AMD's SPIR-V loader is b0rked AF (crashes in glSpecializeShader).
+	 * Zink declares SPIR-V support, but the resultant shader doesn't
+	 * actually work.
 	 * When running under Nvidia Nsight, avoid loading binary shaders.
 	 * That way, we can see the source in the source explorer.
 	 */
 	if (!GLEW_ARB_gl_spirv ||
 	    !have_shader_binary_format(GL_SHADER_BINARY_FORMAT_SPIR_V) ||
-	    is_amd() || (glutils_nsight_debugger_present() && !force_spv())) {
+	    is_amd() || glutils_in_zink_mode() ||
+	    (glutils_nsight_debugger_present() && !force_spv())) {
 		/* SPIR-V shaders not supported. Try fallback shader. */
 		return (shader_from_spirv_fallback(shader_type, filename,
 		    spec_const));

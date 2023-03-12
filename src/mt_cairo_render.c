@@ -580,7 +580,8 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	mt_cairo_render_set_shader(mtcr, 0);
 
 	setup_vao(mtcr);
-	mtcr->create_ctx = glctx_get_current();
+	if (!glutils_in_zink_mode())
+		mtcr->create_ctx = glctx_get_current();
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -1290,8 +1291,8 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	}
 	mutex_exit(&mtcr->lock);
 
-	use_vao = (mtcr->vao != 0 &&
-	    (!mtcr->ctx_checking || glctx_is_current(mtcr->create_ctx)));
+	use_vao = (mtcr->vao != 0 && (!mtcr->ctx_checking ||
+	    (mtcr->create_ctx != NULL && glctx_is_current(mtcr->create_ctx))));
 
 	if (use_vao) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
