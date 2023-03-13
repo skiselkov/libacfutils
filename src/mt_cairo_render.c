@@ -1067,8 +1067,8 @@ rs_tex_apply(const mt_cairo_render_t *mtcr, render_surf_t *rs, bool_t bind)
 	}
 }
 
-static bool_t
-bind_cur_tex_coherent(mt_cairo_render_t *mtcr)
+static GLuint
+bind_cur_tex_coherent(mt_cairo_render_t *mtcr, bool_t bind)
 {
 	render_surf_t *rs;
 
@@ -1078,7 +1078,7 @@ bind_cur_tex_coherent(mt_cairo_render_t *mtcr)
 	ASSERT3U(mtcr->n_rs, ==, 3);
 
 	if (mtcr->render_rs == -1)
-		return (B_FALSE);
+		return (0);
 	/*
 	 * If a previous rs has completed upload, start using it for present.
 	 */
@@ -1115,12 +1115,13 @@ bind_cur_tex_coherent(mt_cairo_render_t *mtcr)
 		    mtcr->render_rs == mtcr->present_rs);
 	}
 	if (mtcr->present_rs == -1)
-		return (B_FALSE);
+		return (0);
 	rs = &mtcr->rs[mtcr->present_rs];
 	ASSERT(rs->tex != 0);
-	glBindTexture(GL_TEXTURE_2D, rs->tex);
+	if (bind)
+		glBindTexture(GL_TEXTURE_2D, rs->tex);
 
-	return (B_TRUE);
+	return (rs->tex);
 }
 
 /*
@@ -1140,7 +1141,7 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 	ASSERT_MUTEX_HELD(&mtcr->lock);
 
 	if (coherent)
-		return (bind_cur_tex_coherent(mtcr));
+		return (bind_cur_tex_coherent(mtcr, B_TRUE) != 0);
 	/* Nothing ready for present yet */
 	if (mtcr->ready_rs == -1)
 		return (B_FALSE);
@@ -1434,7 +1435,9 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 
 	mutex_enter(&mtcr->lock);
 
-	if (mtcr->ready_rs != -1) {
+	if (coherent) {
+		tex = bind_cur_tex_coherent(mtcr, B_FALSE);
+	} else if (mtcr->ready_rs != -1) {
 		render_surf_t *rs = &mtcr->rs[mtcr->ready_rs];
 
 		mtcr->present_rs = mtcr->ready_rs;
