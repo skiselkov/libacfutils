@@ -1148,13 +1148,9 @@ glutils_png2gltexfmt(int png_color_type, int png_bit_depth,
 	}
 }
 
-#if	IBM || LIN
-
 bool_t
 glutils_in_zink_mode(void)
 {
 	glutils_sys_init();
 	return (in_zink_mode);
 }
-
-#endif	/* IBM || LIN */
