@@ -24,10 +24,10 @@
  */
 /*
  * mt_cairo_render is a multi-threaded cairo rendering surface with
- * built-in double-buffering and OpenGL compositing. You only need to
- * provide a callback that renders into the surface using a passed
- * cairo_t and then call mt_cairo_render_draw at regular intervals to
- * display the rendered result.
+ * built-in buffering and OpenGL compositing. You only need to provide
+ * a callback that renders into the surface using a passed cairo_t and
+ * then call mt_cairo_render_draw at regular intervals to display the
+ * rendered result.
  */
 
 #include <XPLMGraphics.h>
@@ -71,18 +71,9 @@ typedef struct {
 	GLfloat		tex0[2];
 } vtx_t;
 
-typedef	struct {
-	bool_t		dirty;	/* renderer has changed the surface, reupload */
-	bool_t		texed;	/* has glTexImage2D been applied? */
-	bool_t		monochrome;	/* uses 8-bit alpha-only texture? */
-	GLuint		tex;
-	GLuint		pbo;
-	cairo_surface_t	*surf;
-	cairo_t		*cr;
-	void		*coherent_data;
-	GLsync		sync;
-	list_node_t	ul_inprog_node;
-	mt_cairo_render_t *owner;
+typedef struct {
+	cairo_t			*cr;
+	cairo_surface_t		*surf;
 } render_surf_t;
 
 struct mt_cairo_render_s {
@@ -94,7 +85,6 @@ struct mt_cairo_render_s {
 	mt_cairo_uploader_t	*mtul;
 	list_node_t		mtul_queue_node;
 
-	GLenum			tex_filter;
 	unsigned		w, h;
 	double			fps;
 	mt_cairo_render_cb_t	render_cb;
@@ -103,13 +93,16 @@ struct mt_cairo_render_s {
 	void			*userinfo;
 
 	int			render_rs;
-	int			ready_rs;
 	int			present_rs;
-
-	unsigned		n_rs;
-	render_surf_t		rs[3];
-	cairo_t			*cr_coherent;
-	cairo_surface_t		*surf_coherent;
+	render_surf_t		rs[2];
+	bool_t			dirty;	/* changed the surface, reupload */
+	bool_t			texed;	/* has glTexImage2D been applied? */
+	GLuint			tex;
+	GLuint			pbo;
+	GLint			filter;
+	list_node_t		ul_inprog_node;
+	GLsync			sync;
+	void			*coherent_data;
 
 	thread_t		thr;
 	condvar_t		cv;
@@ -221,43 +214,51 @@ static struct {
 	dr_t	draw_call_type;
 } drs;
 
-static void rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs);
-static void rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs);
-static void rs_gl_formats(const render_surf_t *rs, GLint *intfmt,
+static void mtcr_gl_formats(const mt_cairo_render_t *mtcr, GLint *intfmt,
     GLint *format);
 
 static bool_t
-cr_init(mt_cairo_render_t *mtcr, cairo_t *cr)
+cr_init(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
-	ASSERT(mtcr != NULL);
-	ASSERT(cr != NULL);
-	/* The init_cb call MUST succeed here */
-	if (mtcr->init_cb != NULL && !mtcr->init_cb(cr, mtcr->userinfo))
-		return (B_FALSE);
-	cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
-	cairo_paint(cr);
-	cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+	cairo_format_t cr_fmt;
 
+	ASSERT(mtcr != NULL);
+	ASSERT(rs != NULL);
+
+	cr_fmt = (!IS_NULL_VECT(mtcr->monochrome) ? CAIRO_FORMAT_A8 :
+	    CAIRO_FORMAT_ARGB32);
+	rs->surf = cairo_image_surface_create(cr_fmt, mtcr->w, mtcr->h);
+	rs->cr = cairo_create(rs->surf);
+	if (mtcr->init_cb != NULL && !mtcr->init_cb(rs->cr, mtcr->userinfo))
+		goto errout;
+	cairo_set_operator(rs->cr, CAIRO_OPERATOR_CLEAR);
+	cairo_paint(rs->cr);
+	cairo_set_operator(rs->cr, CAIRO_OPERATOR_OVER);
 	return (B_TRUE);
+errout:
+	cairo_destroy(rs->cr);
+	rs->cr = NULL;
+	cairo_surface_destroy(rs->surf);
+	rs->surf = NULL;
+	return (B_FALSE);
 }
 
 static void
-cr_destroy(mt_cairo_render_t *mtcr, cairo_t **cr_p, cairo_surface_t **surf_p)
+cr_destroy(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	ASSERT(mtcr != NULL);
-	ASSERT(cr_p != NULL);
-	ASSERT(surf_p != NULL);
+	ASSERT(rs != NULL);
 
-	if (*cr_p == NULL)
+	if (rs->cr == NULL)
 		return;
-	ASSERT(*surf_p != NULL);
+	ASSERT(rs->surf != NULL);
 
 	if (mtcr->fini_cb != NULL)
-		mtcr->fini_cb(*cr_p, mtcr->userinfo);
-	cairo_destroy(*cr_p);
-	*cr_p = NULL;
-	cairo_surface_destroy(*surf_p);
-	*surf_p = NULL;
+		mtcr->fini_cb(rs->cr, mtcr->userinfo);
+	cairo_destroy(rs->cr);
+	rs->cr = NULL;
+	cairo_surface_destroy(rs->surf);
+	rs->surf = NULL;
 }
 
 /*
@@ -277,22 +278,31 @@ recalc_sleep_time(mt_cairo_render_t *mtcr)
 }
 
 static void
-mtul_submit_mtcr(mt_cairo_uploader_t *mtul, mt_cairo_render_t *mtcr,
-    render_surf_t *rs)
+mtul_submit_mtcr(mt_cairo_uploader_t *mtul, mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtul != NULL);
 	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
+	ASSERT(mtcr->dirty);
 
 	mutex_enter(&mtul->lock);
 	if (!list_link_active(&mtcr->mtul_queue_node)) {
 		list_insert_tail(&mtul->queue, mtcr);
 		cv_broadcast(&mtul->cv_queue);
 	}
-	while (rs->dirty)
+	while (mtcr->dirty)
 		cv_wait(&mtul->cv_done, &mtul->lock);
 	/* render_done_cv will be signalled by the uploader */
 	mutex_exit(&mtul->lock);
+}
+
+static size_t
+mtcr_get_surf_sz(const mt_cairo_render_t *mtcr)
+{
+	cairo_format_t cr_fmt;
+	ASSERT(mtcr != NULL);
+	cr_fmt = (!IS_NULL_VECT(mtcr->monochrome) ? CAIRO_FORMAT_A8 :
+	    CAIRO_FORMAT_ARGB32);
+	return (cairo_format_stride_for_width(cr_fmt, mtcr->w) * mtcr->h);
 }
 
 static void
@@ -305,49 +315,47 @@ worker_render_once(mt_cairo_render_t *mtcr)
 	ASSERT(mtcr->render_rs != -1);
 	ASSERT_MUTEX_HELD(&mtcr->lock);
 
-	if (coherent) {
-		cairo_format_t cr_fmt = (mtcr->rs[0].monochrome ?
-		    CAIRO_FORMAT_A8 : CAIRO_FORMAT_ARGB32);
-		int stride = cairo_format_stride_for_width(cr_fmt, mtcr->w);
-		size_t sz = stride * mtcr->h;
+	if (mtcr->coherent_data != NULL) {
+		size_t sz = mtcr_get_surf_sz(mtcr);
 
-		mutex_exit(&mtcr->lock);
-
-		mtcr->render_cb(mtcr->cr_coherent, mtcr->w, mtcr->h,
-		    mtcr->userinfo);
-		cairo_surface_flush(mtcr->surf_coherent);
-
-		mutex_enter(&mtcr->lock);
-		rs = &mtcr->rs[mtcr->render_rs];
-		ASSERT(rs->coherent_data != NULL);
-		memcpy(rs->coherent_data,
-		    cairo_image_surface_get_data(mtcr->surf_coherent), sz);
-		rs->dirty = B_TRUE;
-		rs->texed = B_FALSE;
-		cv_broadcast(&mtcr->render_done_cv);
-	} else {
-		rs = &mtcr->rs[mtcr->render_rs];
-		rs->dirty = B_FALSE;
+		rs = &mtcr->rs[0];
 		mutex_exit(&mtcr->lock);
 
 		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
 		cairo_surface_flush(rs->surf);
 
 		mutex_enter(&mtcr->lock);
-		rs->dirty = B_TRUE;
-		mtcr->ready_rs = mtcr->render_rs;
-		mtcr->render_rs = !mtcr->render_rs;
+		ASSERT(mtcr->coherent_data != NULL);
+		memcpy(mtcr->coherent_data,
+		    cairo_image_surface_get_data(rs->surf), sz);
+		mtcr->dirty = B_TRUE;
+		mtcr->texed = B_FALSE;
+		mtcr->present_rs = mtcr->render_rs;
+		cv_broadcast(&mtcr->render_done_cv);
+	} else {
+		ASSERT3S(mtcr->render_rs, >=, 0);
+		ASSERT3S(mtcr->render_rs, <, ARRAY_NUM_ELEM(mtcr->rs));
+		rs = &mtcr->rs[mtcr->render_rs];
+		mutex_exit(&mtcr->lock);
+
+		mtcr->render_cb(rs->cr, mtcr->w, mtcr->h, mtcr->userinfo);
+		cairo_surface_flush(rs->surf);
+
+		mutex_enter(&mtcr->lock);
+		mtcr->dirty = B_TRUE;
 
 		mtul = mtcr->mtul;
 		if (mtul != NULL) {
 			ASSERT(!coherent);
 			mutex_exit(&mtcr->lock);
 			/* render_done_cv will be signalled by the uploader */
-			mtul_submit_mtcr(mtul, mtcr, rs);
+			mtul_submit_mtcr(mtul, mtcr);
 			mutex_enter(&mtcr->lock);
 		} else {
+			mtcr->present_rs = !mtcr->render_rs;
 			cv_broadcast(&mtcr->render_done_cv);
 		}
+		mtcr->render_rs = !mtcr->render_rs;
 	}
 }
 
@@ -430,15 +438,27 @@ mt_cairo_render_glob_init(bool_t want_coherent_mem)
 	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
 	fdr_find(&drs.mv_matrix, "sim/graphics/view/modelview_matrix");
 	fdr_find(&drs.draw_call_type, "sim/graphics/view/draw_call_type");
-	coherent = (want_coherent_mem && GLEW_ARB_buffer_storage);
+	/*
+	 * Important caveat: in Zink mode we MUST utilize coherent memory
+	 * (or just avoid using an uploader). The uploader tries to map
+	 * a buffer using glMapBuffer while holding the mtcr->lock. This
+	 * can cause a deadlock, because Zink's internal architecture seems
+	 * to sometimes require main thread progress before a background
+	 * thread's buffer mapping request can succeed.
+	 */
+	coherent = ((want_coherent_mem || glutils_in_zink_mode()) &&
+	    GLEW_ARB_buffer_storage);
 	glob_inited = B_TRUE;
 }
 
 static void
-setup_vao(mt_cairo_render_t *mtcr)
+mtcr_gl_init(mt_cairo_render_t *mtcr)
 {
 	GLint old_vao = 0;
 	bool_t on_main_thread = (curthread_id == mtcr_main_thread);
+	GLint intfmt, gl_fmt;
+
+	ASSERT(mtcr != NULL);
 
 	if (GLEW_VERSION_3_0 && !on_main_thread) {
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
@@ -461,48 +481,98 @@ setup_vao(mt_cairo_render_t *mtcr)
 	if (GLEW_VERSION_3_0 && !on_main_thread)
 		glBindVertexArray(old_vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
 
-static bool_t
-rs_create(mt_cairo_render_t *mtcr, render_surf_t *rs)
-{
-	cairo_format_t cr_fmt;
+	ASSERT0(mtcr->pbo);
+	glGenBuffers(1, &mtcr->pbo);
+	ASSERT(mtcr->pbo != 0);
+	mtcr_gl_formats(mtcr, &intfmt, &gl_fmt);
+	IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo,
+	    mtcr, mtcr->init_filename, mtcr->init_line, gl_fmt,
+	    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
 
-	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
-	ASSERT3P(rs->cr, ==, NULL);
-	ASSERT3P(rs->surf, ==, NULL);
-
-	cr_fmt = (rs->monochrome ? CAIRO_FORMAT_A8 : CAIRO_FORMAT_ARGB32);
 	if (coherent) {
 		const GLuint flags = (GL_MAP_WRITE_BIT |
 		    GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		int stride = cairo_format_stride_for_width(cr_fmt, mtcr->w);
-		GLint intfmt, gl_fmt;
-		size_t sz;
+		size_t sz = mtcr_get_surf_sz(mtcr);;
 
-		rs_gl_formats(rs, &intfmt, &gl_fmt);
-
-		ASSERT0(rs->pbo);
-		glGenBuffers(1, &rs->pbo);
-		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo,
-		    mtcr, mtcr->init_filename, mtcr->init_line, gl_fmt,
-		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
-
-		sz = stride * mtcr->h;
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
 		glBufferStorage(GL_PIXEL_UNPACK_BUFFER, sz, 0, flags);
-		rs->coherent_data = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0,
-		    sz, flags);
-
+		mtcr->coherent_data = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
+		    0, sz, flags);
+		if (mtcr->coherent_data == NULL) {
+			logMsg("WARNING: cannot grab coherent memory buffer "
+			    "with glMapBufferRange(). You may be running out "
+			    "of VRAM. Switching to non-coherent mode for this "
+			    "renderer (%s:%d).", mtcr->init_filename,
+			    mtcr->init_line);
+		}
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-	} else {
-		rs->surf = cairo_image_surface_create(cr_fmt, mtcr->w, mtcr->h);
-		rs->cr = cairo_create(rs->surf);
-		if (!cr_init(mtcr, rs->cr))
-			return (B_FALSE);
 	}
-	return (B_TRUE);
+	glGenTextures(1, &mtcr->tex);
+	ASSERT(mtcr->tex != 0);
+	glBindTexture(GL_TEXTURE_2D, mtcr->tex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mtcr->filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mtcr->filter);
+	XPLMBindTexture2d(0, 0);
+
+	IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
+	    mtcr->init_filename, mtcr->init_line, gl_fmt,
+	    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+	mtcr->texed = B_FALSE;
+}
+
+/*
+ * Frees a texture & PBO previously allocated using rs_tex_alloc. If the
+ * texture or PBO have already been freed, this function does nothing.
+ * The targets of the `tex' and `pbo' arguments are set to 0 after freeing.
+ */
+static void
+mtcr_gl_fini(mt_cairo_render_t *mtcr)
+{
+	GLint intfmt, format;
+
+	ASSERT(mtcr != NULL);
+
+	if (mtcr->vao != 0) {
+		glDeleteVertexArrays(1, &mtcr->vao);
+		mtcr->vao = 0;
+	}
+	if (mtcr->vtx_buf != 0) {
+		glDeleteBuffers(1, &mtcr->vtx_buf);
+		mtcr->vtx_buf = 0;
+		mtcr->last_draw.pos = NULL_VECT2;
+	}
+	if (mtcr->idx_buf != 0) {
+		glDeleteBuffers(1, &mtcr->idx_buf);
+		mtcr->idx_buf = 0;
+	}
+	mtcr_gl_formats(mtcr, &intfmt, &format);
+	if (mtcr->tex != 0) {
+		glDeleteTextures(1, &mtcr->tex);
+		mtcr->tex = 0;
+		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
+		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+	}
+	if (mtcr->pbo != 0) {
+		if (mtcr->coherent_data) {
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			mtcr->coherent_data = NULL;
+		}
+		glDeleteBuffers(1, &mtcr->pbo);
+		mtcr->pbo = 0;
+		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
+		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
+	}
+	if (mtcr->sync != NULL) {
+		glDeleteSync(mtcr->sync);
+		mtcr->sync = NULL;
+	}
+	if (mtcr->shader != 0 && !mtcr->shader_is_custom) {
+		glDeleteProgram(mtcr->shader);
+		mtcr->shader = 0;
+	}
 }
 
 /*
@@ -542,44 +612,29 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	mtcr->w = w;
 	mtcr->h = h;
 	mtcr->render_rs = -1;
-	mtcr->ready_rs = -1;
 	mtcr->present_rs = -1;
 	mtcr->render_cb = render_cb;
 	mtcr->init_cb = init_cb;
 	mtcr->fini_cb = fini_cb;
 	mtcr->userinfo = userinfo;
 	mtcr->fps = fps;
-	mtcr->tex_filter = GL_LINEAR;
 	mtcr->monochrome = NULL_VECT3;
+	mtcr->filter = GL_LINEAR;
+	mtcr->last_draw.pos = NULL_VECT2;
 
 	mutex_init(&mtcr->lock);
 	cv_init(&mtcr->cv);
 	cv_init(&mtcr->render_done_cv);
 
-	mtcr->n_rs = (coherent ? 3 : 2);
-	for (unsigned i = 0; i < mtcr->n_rs; i++) {
-		render_surf_t *rs = &mtcr->rs[i];
-
-		rs->owner = mtcr;
-		if (!rs_create(mtcr, rs)) {
-			mt_cairo_render_fini(mtcr);
-			return (NULL);
-		}
+	mtcr_gl_init(mtcr);
+	if (!cr_init(mtcr, &mtcr->rs[0])) {
+		mt_cairo_render_fini(mtcr);
+		return (NULL);
 	}
-	if (coherent) {
-		mtcr->surf_coherent = cairo_image_surface_create(
-		    CAIRO_FORMAT_ARGB32, mtcr->w, mtcr->h);
-		mtcr->cr_coherent = cairo_create(mtcr->surf_coherent);
-		if (!cr_init(mtcr, mtcr->cr_coherent)) {
-			mt_cairo_render_fini(mtcr);
-			return (NULL);
-		}
-	}
-
-	mtcr->last_draw.pos = NULL_VECT2;
+	if (mtcr->coherent_data == NULL)
+		VERIFY(cr_init(mtcr, &mtcr->rs[1]));
 	mt_cairo_render_set_shader(mtcr, 0);
 
-	setup_vao(mtcr);
 	if (!glutils_in_zink_mode())
 		mtcr->create_ctx = glctx_get_current();
 
@@ -607,34 +662,9 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 			list_remove(&mtcr->mtul->queue, mtcr);
 		mutex_exit(&mtcr->mtul->lock);
 	}
-	if (mtcr->vao != 0)
-		glDeleteVertexArrays(1, &mtcr->vao);
-	if (mtcr->vtx_buf != 0)
-		glDeleteBuffers(1, &mtcr->vtx_buf);
-	if (mtcr->idx_buf != 0)
-		glDeleteBuffers(1, &mtcr->idx_buf);
-
-	if (mtcr->cr_coherent != NULL) {
-		if (mtcr->fini_cb != NULL)
-			mtcr->fini_cb(mtcr->cr_coherent, mtcr->userinfo);
-		cairo_destroy(mtcr->cr_coherent);
-		cairo_surface_destroy(mtcr->surf_coherent);
-	}
-	for (unsigned i = 0; i < mtcr->n_rs; i++) {
-		render_surf_t *rs = &mtcr->rs[i];
-
-		if (rs->cr != NULL) {
-			if (mtcr->fini_cb != NULL)
-				mtcr->fini_cb(rs->cr, mtcr->userinfo);
-			cairo_destroy(rs->cr);
-			cairo_surface_destroy(rs->surf);
-		}
-		rs_tex_free(mtcr, rs);
-		if (rs->sync != NULL)
-			glDeleteSync(rs->sync);
-	}
-	if (mtcr->shader != 0 && !mtcr->shader_is_custom)
-		glDeleteProgram(mtcr->shader);
+	for (size_t i = 0; i < ARRAY_NUM_ELEM(mtcr->rs); i++)
+		cr_destroy(mtcr, &mtcr->rs[i]);
+	mtcr_gl_fini(mtcr);
 
 	free(mtcr->init_filename);
 
@@ -682,7 +712,7 @@ mt_cairo_render_enable_fg_mode(mt_cairo_render_t *mtcr)
 	mutex_exit(&mtcr->lock);
 	thread_join(&mtcr->thr);
 
-	mtcr->fg_mode = true;
+	mtcr->fg_mode = B_TRUE;
 	mtcr->started = B_FALSE;
 }
 
@@ -690,14 +720,13 @@ void
 mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
     unsigned gl_filter_enum)
 {
-	/*
-	 * Must be called before any drawing was done, otherwise
-	 * the filtering won't be applied.
-	 */
 	ASSERT(mtcr != NULL);
-	for (unsigned i = 0; i < mtcr->n_rs; i++)
-		ASSERT0(mtcr->rs[i].tex);
-	mtcr->tex_filter = gl_filter_enum;
+	ASSERT(mtcr->tex != 0);
+	glBindTexture(GL_TEXTURE_2D, mtcr->tex);
+	mtcr->filter = gl_filter_enum;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_enum);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_enum);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 static void
@@ -782,7 +811,6 @@ mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
 		mtcr->monochrome = color;
 		return;
 	}
-	mtcr->monochrome = color;
 	/*
 	 * Stop the worker thread.
 	 */
@@ -793,35 +821,18 @@ mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
 		mutex_exit(&mtcr->lock);
 		thread_join(&mtcr->thr);
 	}
-	if (coherent) {
-		cairo_format_t cr_fmt = (!IS_NULL_VECT(mtcr->monochrome) ?
-		    CAIRO_FORMAT_A8 : CAIRO_FORMAT_ARGB32);
+	for (size_t i = 0; i < ARRAY_NUM_ELEM(mtcr->rs); i++)
+		cr_destroy(mtcr, &mtcr->rs[i]);
+	mtcr_gl_fini(mtcr);
 
-		ASSERT(mtcr->cr_coherent != NULL);
-		cr_destroy(mtcr, &mtcr->cr_coherent, &mtcr->surf_coherent);
+	mtcr->monochrome = color;
+	mtcr->render_rs = -1;
+	mtcr->present_rs = -1;
 
-		mtcr->surf_coherent = cairo_image_surface_create(cr_fmt,
-		    mtcr->w, mtcr->h);
-		mtcr->cr_coherent = cairo_create(mtcr->surf_coherent);
-		VERIFY(cr_init(mtcr, mtcr->cr_coherent));
-	}
-	/*
-	 * Reconstruct the Cairo surfaces in the new format.
-	 */
-	for (unsigned i = 0; i < mtcr->n_rs; i++) {
-		render_surf_t *rs = &mtcr->rs[i];
-
-		if (!coherent)
-			cr_destroy(mtcr, &rs->cr, &rs->surf);
-		/*
-		 * Free the texture data, it will be reallocated with the
-		 * proper format later.
-		 */
-		rs_tex_free(mtcr, rs);
-
-		rs->monochrome = !IS_NULL_VECT(mtcr->monochrome);
-		VERIFY(rs_create(mtcr, rs));
-	}
+	mtcr_gl_init(mtcr);
+	VERIFY(cr_init(mtcr, &mtcr->rs[0]));
+	if (mtcr->coherent_data == NULL)
+		VERIFY(cr_init(mtcr, &mtcr->rs[1]));
 	/*
 	 * If we were set up to use our own shader, reload it to switch
 	 * to the monochrome version.
@@ -890,13 +901,13 @@ mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
 }
 
 static void
-rs_gl_formats(const render_surf_t *rs, GLint *intfmt, GLint *format)
+mtcr_gl_formats(const mt_cairo_render_t *mtcr, GLint *intfmt, GLint *format)
 {
-	ASSERT(rs != NULL);
+	ASSERT(mtcr != NULL);
 	ASSERT(intfmt != NULL);
 	ASSERT(format != NULL);
 
-	if (rs->monochrome) {
+	if (!IS_NULL_VECT(mtcr->monochrome)) {
 		*intfmt = GL_R8;
 		*format = GL_RED;
 	} else {
@@ -906,106 +917,33 @@ rs_gl_formats(const render_surf_t *rs, GLint *intfmt, GLint *format)
 }
 
 /*
- * Allocates a texture & PBO needed to upload a finished cairo rendering.
- * The texture & PBO IDs are placed in `tex' and `pbo' respectively.
- */
-static void
-rs_tex_alloc(const mt_cairo_render_t *mtcr, render_surf_t *rs)
-{
-	GLint intfmt, format;
-
-	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
-
-	rs_gl_formats(rs, &intfmt, &format);
-
-	if (rs->tex == 0) {
-		glGenTextures(1, &rs->tex);
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-		    mtcr->tex_filter);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		    mtcr->tex_filter);
-		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
-		    mtcr->init_filename, mtcr->init_line, format,
-		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-		/* Texture data assignment will be done in bind_cur_tex */
-	}
-	if (rs->pbo == 0) {
-		/* In coherent mode, PBO must already pre-exist */
-		ASSERT(!coherent);
-		glGenBuffers(1, &rs->pbo);
-		IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_pbo, mtcr,
-		    mtcr->init_filename, mtcr->init_line, format,
-		    GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-		/* Buffer specification will take place in rs_upload */
-	}
-}
-
-/*
- * Frees a texture & PBO previously allocated using rs_tex_alloc. If the
- * texture or PBO have already been freed, this function does nothing.
- * The targets of the `tex' and `pbo' arguments are set to 0 after freeing.
- */
-static void
-rs_tex_free(const mt_cairo_render_t *mtcr, render_surf_t *rs)
-{
-	GLint intfmt, format;
-
-	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
-
-	rs_gl_formats(rs, &intfmt, &format);
-	if (rs->tex != 0) {
-		glDeleteTextures(1, &rs->tex);
-		rs->tex = 0;
-		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_tex, mtcr,
-		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-	}
-	if (rs->pbo != 0) {
-		if (coherent) {
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
-			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-		}
-		glDeleteBuffers(1, &rs->pbo);
-		rs->pbo = 0;
-		IF_TEXSZ(TEXSZ_FREE_INSTANCE(mt_cairo_render_pbo, mtcr,
-		    format, GL_UNSIGNED_BYTE, mtcr->w, mtcr->h));
-	}
-}
-
-/*
  * Uploads a finished cairo surface render to the provided texture & PBO.
  * The upload is normally done async via the PBO, but if that fails, the
  * upload is performed synchronously.
  */
 static void
-rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
+rs_upload(mt_cairo_render_t *mtcr, render_surf_t *rs)
 {
 	void *src, *dest;
 	size_t sz;
 
-	if (coherent)
+	if (mtcr->coherent_data != NULL)
 		return;
 
 	ASSERT(mtcr != NULL);
 	ASSERT(rs != NULL);
 	ASSERT(rs->surf != NULL);
-	ASSERT(rs->tex != 0);
-	ASSERT(rs->pbo != 0);
+	ASSERT(mtcr->tex != 0);
+	ASSERT(mtcr->pbo != 0);
 
-	sz = mtcr->w * mtcr->h * 4;
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+	sz = mtcr_get_surf_sz(mtcr);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
 	/* Buffer respecification - makes sure to orphan the old buffer! */
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, sz, NULL, GL_STREAM_DRAW);
 	src = cairo_image_surface_get_data(rs->surf);
 	dest = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 	if (dest != NULL) {
-		if (rs->monochrome)
-			memcpy(dest, src, mtcr->w * mtcr->h);
-		else
-			memcpy(dest, src, mtcr->w * mtcr->h * 4);
+		memcpy(dest, src, sz);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 		/*
 		 * We MUSTN'T call glTexImage2D yet, because if we're running
@@ -1016,18 +954,18 @@ rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
 		 * on the rendering thread. That seems to pick up the buffer
 		 * orphaning operation correctly.
 		 */
-		rs->texed = B_FALSE;
+		mtcr->texed = B_FALSE;
 	} else {
 		GLint intfmt, format;
 
-		rs_gl_formats(rs, &intfmt, &format);
+		mtcr_gl_formats(mtcr, &intfmt, &format);
 		logMsg("Error asynchronously updating mt_cairo_render "
 		    "surface %p(%s:%d): glMapBuffer returned NULL",
 		    mtcr, mtcr->init_filename, mtcr->init_line);
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
+		glBindTexture(GL_TEXTURE_2D, mtcr->tex);
 		glTexImage2D(GL_TEXTURE_2D, 0, intfmt, mtcr->w, mtcr->h, 0,
 		    format, GL_UNSIGNED_BYTE, src);
-		rs->texed = B_TRUE;
+		mtcr->texed = B_TRUE;
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -1045,83 +983,27 @@ rs_upload(const mt_cairo_render_t *mtcr, render_surf_t *rs)
  * around.
  */
 static void
-rs_tex_apply(const mt_cairo_render_t *mtcr, render_surf_t *rs, bool_t bind)
+mtcr_tex_apply(mt_cairo_render_t *mtcr, bool_t bind)
 {
 	ASSERT(mtcr != NULL);
-	ASSERT(rs != NULL);
 
-	if (!rs->texed) {
+	if (!mtcr->texed) {
 		GLint intfmt, format;
 
-		rs_gl_formats(rs, &intfmt, &format);
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, rs->pbo);
+		mtcr_gl_formats(mtcr, &intfmt, &format);
+		ASSERT(mtcr->tex != 0);
+		glBindTexture(GL_TEXTURE_2D, mtcr->tex);
+		ASSERT(mtcr->pbo != 0);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, mtcr->pbo);
 		glTexImage2D(GL_TEXTURE_2D, 0, intfmt, mtcr->w, mtcr->h, 0,
 		    format, GL_UNSIGNED_BYTE, NULL);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-		rs->texed = B_TRUE;
+		mtcr->texed = B_TRUE;
 		if (!bind)
 			glBindTexture(GL_TEXTURE_2D, 0);
 	} else if (bind) {
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
+		glBindTexture(GL_TEXTURE_2D, mtcr->tex);
 	}
-}
-
-static GLuint
-bind_cur_tex_coherent(mt_cairo_render_t *mtcr, bool_t bind)
-{
-	render_surf_t *rs;
-
-	ASSERT(coherent);
-	ASSERT(mtcr != NULL);
-	ASSERT_MUTEX_HELD(&mtcr->lock);
-	ASSERT3U(mtcr->n_rs, ==, 3);
-
-	if (mtcr->render_rs == -1)
-		return (0);
-	/*
-	 * If a previous rs has completed upload, start using it for present.
-	 */
-	if (mtcr->ready_rs != -1) {
-		rs = &mtcr->rs[mtcr->ready_rs];
-		ASSERT(rs->tex != 0);
-		if (rs->sync != NULL && glClientWaitSync(rs->sync,
-		    GL_SYNC_FLUSH_COMMANDS_BIT, 0) != GL_TIMEOUT_EXPIRED) {
-			mtcr->present_rs = mtcr->ready_rs;
-			glDeleteSync(rs->sync);
-			rs->sync = NULL;
-		}
-	}
-	rs = &mtcr->rs[mtcr->render_rs];
-	if (rs->dirty &&
-	    /* Wait for a previous upload to finish before starting another */
-	    (mtcr->ready_rs == -1 || mtcr->rs[mtcr->ready_rs].sync == NULL)) {
-		/*
-		 * Render completed, schedule for upload.
-		 */
-		rs_tex_alloc(mtcr, rs);
-		rs_upload(mtcr, rs);
-		rs_tex_apply(mtcr, rs, B_FALSE);
-		ASSERT3P(rs->sync, ==, NULL);
-		rs->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		rs->dirty = B_FALSE;
-		/*
-		 * Retag the rs as ready and pick a new render_rs.
-		 */
-		mtcr->ready_rs = mtcr->render_rs;
-		do {
-			mtcr->render_rs = ((mtcr->render_rs + 1) % mtcr->n_rs);
-		} while (mtcr->render_rs == mtcr->ready_rs ||
-		    mtcr->render_rs == mtcr->present_rs);
-	}
-	if (mtcr->present_rs == -1)
-		return (0);
-	rs = &mtcr->rs[mtcr->present_rs];
-	ASSERT(rs->tex != 0);
-	if (bind)
-		glBindTexture(GL_TEXTURE_2D, rs->tex);
-
-	return (rs->tex);
 }
 
 /*
@@ -1135,35 +1017,19 @@ bind_cur_tex_coherent(mt_cairo_render_t *mtcr, bool_t bind)
 static bool_t
 bind_cur_tex(mt_cairo_render_t *mtcr)
 {
-	render_surf_t *rs, *rs_ready;
-
 	ASSERT(mtcr != NULL);
 	ASSERT_MUTEX_HELD(&mtcr->lock);
 
-	if (coherent)
-		return (bind_cur_tex_coherent(mtcr, B_TRUE) != 0);
 	/* Nothing ready for present yet */
-	if (mtcr->ready_rs == -1)
-		return (B_FALSE);
-	/* If ready_rs is done async uploading, switch to it */
-	rs_ready = &mtcr->rs[mtcr->ready_rs];
-	if (mtcr->mtul == NULL || !rs_ready->dirty)
-		mtcr->present_rs = mtcr->ready_rs;
 	if (mtcr->present_rs == -1)
 		return (B_FALSE);
-	rs = &mtcr->rs[mtcr->present_rs];
-
-	/* Uploader must have allocated & populated the texture */
-	ASSERT(mtcr->mtul == NULL || rs->tex != 0);
-
 	glActiveTexture(GL_TEXTURE0);
-	if (rs->dirty && mtcr->mtul == NULL) {
-		rs_tex_alloc(mtcr, rs);
-		rs_upload(mtcr, rs);
-		rs->dirty = B_FALSE;
+	if (mtcr->dirty && mtcr->mtul == NULL) {
+		rs_upload(mtcr, &mtcr->rs[mtcr->present_rs]);
+		mtcr->dirty = B_FALSE;
 	}
 	/* NOW we can safely update the texture */
-	rs_tex_apply(mtcr, rs, B_TRUE);
+	mtcr_tex_apply(mtcr, B_TRUE);
 
 	return (B_TRUE);
 }
@@ -1435,20 +1301,14 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 
 	mutex_enter(&mtcr->lock);
 
-	if (coherent) {
-		tex = bind_cur_tex_coherent(mtcr, B_FALSE);
-	} else if (mtcr->ready_rs != -1) {
-		render_surf_t *rs = &mtcr->rs[mtcr->ready_rs];
-
-		mtcr->present_rs = mtcr->ready_rs;
+	if (mtcr->present_rs != -1) {
 		/* Upload & apply the texture if it has changed */
-		if (rs->dirty && mtcr->mtul == NULL) {
-			rs_tex_alloc(mtcr, rs);
-			rs_upload(mtcr, rs);
-			rs->dirty = B_FALSE;
+		if (mtcr->dirty && mtcr->mtul == NULL) {
+			rs_upload(mtcr, &mtcr->rs[!mtcr->present_rs]);
+			mtcr->dirty = B_FALSE;
 		}
-		rs_tex_apply(mtcr, rs, B_FALSE);
-		tex = rs->tex;
+		mtcr_tex_apply(mtcr, B_FALSE);
+		tex = mtcr->tex;
 	} else {
 		/* No texture ready yet */
 		tex = 0;
@@ -1497,15 +1357,13 @@ mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr)
 static void
 mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 {
-	render_surf_t *rs;
-
 	ASSERT(mtcr != NULL);
 	ASSERT(ul_inprog_list != NULL);
 
 	mutex_enter(&mtcr->lock);
 
 	ASSERT(!coherent);
-	if (mtcr->ready_rs == -1) {
+	if (mtcr->render_rs == -1) {
 		/*
 		 * No frame ready, this happens if we got added to the
 		 * uploader's work queue in mt_cairo_render_set_uploader.
@@ -1513,31 +1371,27 @@ mtul_upload(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 		mutex_exit(&mtcr->lock);
 		return;
 	}
-	rs = &mtcr->rs[mtcr->ready_rs];
-	if (rs->dirty) {
-		rs_tex_alloc(mtcr, rs);
+	if (mtcr->dirty) {
+		render_surf_t *rs = &mtcr->rs[mtcr->render_rs];
 		rs_upload(mtcr, rs);
-		ASSERT3P(rs->sync, ==, NULL);
-		rs->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-		ASSERT(!list_link_active(&rs->ul_inprog_node));
-		list_insert_tail(ul_inprog_list, rs);
+		ASSERT3P(mtcr->sync, ==, NULL);
+		mtcr->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		ASSERT(!list_link_active(&mtcr->ul_inprog_node));
+		list_insert_tail(ul_inprog_list, mtcr);
 	}
-
 	mutex_exit(&mtcr->lock);
 }
 
 static bool_t
-mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
+mtul_try_complete_ul(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 {
-	mt_cairo_render_t *mtcr;
-
 	enum { UL_TIMEOUT = 500000 /* ns */ };
 
-	ASSERT(rs != NULL);
-	ASSERT(rs->sync != NULL);
+	ASSERT(mtcr != NULL);
+	ASSERT(mtcr->sync != NULL);
 	ASSERT(ul_inprog_list != NULL);
 
-	if (glClientWaitSync(rs->sync, GL_SYNC_FLUSH_COMMANDS_BIT,
+	if (glClientWaitSync(mtcr->sync, GL_SYNC_FLUSH_COMMANDS_BIT,
 	    UL_TIMEOUT) == GL_TIMEOUT_EXPIRED) {
 		return (B_FALSE);
 	}
@@ -1547,26 +1401,17 @@ mtul_try_complete_ul(render_surf_t *rs, list_t *ul_inprog_list)
 	 * another frame. This could try to double-add the surface while
 	 * it's still active on the ul_inprog_list.
 	 */
-	list_remove(ul_inprog_list, rs);
-	mtcr = rs->owner;
-	ASSERT(mtcr != NULL);
+	list_remove(ul_inprog_list, mtcr);
 	ASSERT(!coherent);
-	ASSERT3U(mtcr->n_rs, ==, 2);
 
 	mutex_enter(&mtcr->lock);
 
-	glDeleteSync(rs->sync);
-	rs->sync = NULL;
-	ASSERT(rs->dirty);
-	rs->dirty = B_FALSE;
-	if (rs == &mtcr->rs[0]) {
-		mtcr->ready_rs = 0;
-		mtcr->render_rs = 1;
-	} else {
-		ASSERT3P(rs, ==, &mtcr->rs[1]);
-		mtcr->ready_rs = 1;
-		mtcr->render_rs = 0;
-	}
+	glDeleteSync(mtcr->sync);
+	mtcr->sync = NULL;
+	ASSERT(mtcr->dirty);
+	mtcr->dirty = B_FALSE;
+	mtcr->texed = B_FALSE;
+	mtcr->present_rs = !mtcr->render_rs;
 	cv_broadcast(&mtcr->render_done_cv);
 	mutex_exit(&mtcr->lock);
 
@@ -1581,12 +1426,11 @@ mtul_drain_queue(mt_cairo_uploader_t *mtul)
 	ASSERT(mtul != NULL);
 	ASSERT_MUTEX_HELD(&mtul->lock);
 
-	list_create(&ul_inprog_list, sizeof (render_surf_t),
-	    offsetof(render_surf_t, ul_inprog_node));
+	list_create(&ul_inprog_list, sizeof (mt_cairo_render_t),
+	    offsetof(mt_cairo_render_t, ul_inprog_node));
 
 	do {
 		mt_cairo_render_t *mtcr;
-		render_surf_t *rs;
 		/*
 		 * Dequeue new work assignments and start the upload.
 		 */
@@ -1599,12 +1443,12 @@ mtul_drain_queue(mt_cairo_uploader_t *mtul)
 		 * No more uploads pending for start. Now see if we can
 		 * complete an upload.
 		 */
-		rs = list_head(&ul_inprog_list);
-		if (rs != NULL) {
+		mtcr = list_head(&ul_inprog_list);
+		if (mtcr != NULL) {
 			bool_t ul_done;
 
 			mutex_exit(&mtul->lock);
-			ul_done = mtul_try_complete_ul(rs, &ul_inprog_list);
+			ul_done = mtul_try_complete_ul(mtcr, &ul_inprog_list);
 			mutex_enter(&mtul->lock);
 			if (ul_done) {
 				/*
