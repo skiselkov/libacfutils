@@ -325,7 +325,6 @@ worker_render_once(mt_cairo_render_t *mtcr)
 		cairo_surface_flush(rs->surf);
 
 		mutex_enter(&mtcr->lock);
-		ASSERT(mtcr->coherent_data != NULL);
 		memcpy(mtcr->coherent_data,
 		    cairo_image_surface_get_data(rs->surf), sz);
 		mtcr->dirty = B_TRUE;
