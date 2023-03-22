@@ -1553,7 +1553,7 @@ mtul_worker(void *arg)
  *	mt_cairo_render_fini(mtcr3);
  *	mt_cairo_render_fini(mtcr2);
  *	mt_cairo_render_fini(mtcr1);
- *	mt_cairo_uploader_destroy(uploader);	<- uploader fini must go last
+ *	mt_cairo_uploader_fini(uploader);	<- uploader fini must go last
  */
 mt_cairo_uploader_t *
 mt_cairo_uploader_init(void)
