@@ -512,7 +512,8 @@ mtcr_gl_init(mt_cairo_render_t *mtcr)
 	glBindTexture(GL_TEXTURE_2D, mtcr->tex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mtcr->filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mtcr->filter);
-	XPLMBindTexture2d(0, 0);
+	if (on_main_thread)
+		XPLMBindTexture2d(0, 0);
 
 	IF_TEXSZ(TEXSZ_ALLOC_INSTANCE(mt_cairo_render_tex, mtcr,
 	    mtcr->init_filename, mtcr->init_line, gl_fmt,
