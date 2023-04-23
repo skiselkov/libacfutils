@@ -145,14 +145,26 @@ struct mt_cairo_uploader_s {
 	thread_t	worker;
 };
 
+/*
+ * Due to a bug in AMD's drivers on Windows (at least as of 23.04.2), when
+ * running in XP12 on top of Zink, we cannot utilize the vtx_tex0 input
+ * attribute. This results in badly flipped UVs for the second triangle
+ * forming our surface. This nasty workaround uses a hardcoded const UV
+ * array instead.
+ */
 static const char *vert_shader =
     "#version 120\n"
     "uniform mat4	pvm;\n"
     "attribute vec3	vtx_pos;\n"
-    "attribute vec2	vtx_tex0;\n"
     "varying vec2	tex_coord;\n"
+    "const vec2 tex_coords[4] = vec2[](\n"
+    "  vec2(0.0f, 1.0f),\n"
+    "  vec2(0.0f, 0.0f),\n"
+    "  vec2(1.0f, 0.0f),\n"
+    "  vec2(1.0f, 1.0f)\n"
+    ");\n"
     "void main() {\n"
-    "	tex_coord = vtx_tex0;\n"
+    "	tex_coord = tex_coords[gl_VertexID];\n"
     "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
     "}\n";
 
@@ -177,10 +189,15 @@ static const char *vert_shader410 =
     "#version 410\n"
     "uniform mat4			pvm;\n"
     "layout(location = %d) in vec3	vtx_pos;\n"
-    "layout(location = %d) in vec2	vtx_tex0;\n"
     "layout(location = 0) out vec2	tex_coord;\n"
+    "const vec2 tex_coords[4] = vec2[](\n"
+    "  vec2(0.0f, 1.0f),\n"
+    "  vec2(0.0f, 0.0f),\n"
+    "  vec2(1.0f, 0.0f),\n"
+    "  vec2(1.0f, 1.0f)\n"
+    ");\n"
     "void main() {\n"
-    "	tex_coord = vtx_tex0;\n"
+    "	tex_coord = tex_coords[gl_VertexID];\n"
     "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
     "}\n";
 
