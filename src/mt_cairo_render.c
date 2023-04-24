@@ -154,6 +154,7 @@ struct mt_cairo_uploader_s {
  */
 static const char *vert_shader =
     "#version 120\n"
+    "#extension GL_EXT_gpu_shader4 : require\n"
     "uniform mat4	pvm;\n"
     "attribute vec3	vtx_pos;\n"
     "varying vec2	tex_coord;\n"
