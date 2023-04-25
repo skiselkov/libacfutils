@@ -81,6 +81,7 @@ struct mt_cairo_render_s {
 	int			init_line;
 	bool_t			debug;
 	vect3_t			monochrome;
+	bool_t			use_ffp;
 
 	mt_cairo_uploader_t	*mtul;
 	list_node_t		mtul_queue_node;
@@ -145,28 +146,16 @@ struct mt_cairo_uploader_s {
 	thread_t	worker;
 };
 
-/*
- * Due to a bug in AMD's drivers on Windows (at least as of 23.04.2), when
- * running in XP12 on top of Zink, we cannot utilize the vtx_tex0 input
- * attribute. This results in badly flipped UVs for the second triangle
- * forming our surface. This nasty workaround uses a hardcoded const UV
- * array instead.
- */
 static const char *vert_shader =
     "#version 120\n"
     "#extension GL_EXT_gpu_shader4 : require\n"
     "uniform mat4	pvm;\n"
     "attribute vec3	vtx_pos;\n"
+    "attribute vec2	vtx_tex0;\n"
     "varying vec2	tex_coord;\n"
-    "const vec2 tex_coords[4] = vec2[](\n"
-    "  vec2(0.0f, 1.0f),\n"
-    "  vec2(0.0f, 0.0f),\n"
-    "  vec2(1.0f, 0.0f),\n"
-    "  vec2(1.0f, 1.0f)\n"
-    ");\n"
     "void main() {\n"
-    "	tex_coord = tex_coords[gl_VertexID];\n"
-    "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "	tex_coord = vtx_tex0;\n"
+    "	gl_Position = pvm * vec4(vtx_pos, 1.0f);\n"
     "}\n";
 
 static const char *frag_shader =
@@ -189,17 +178,12 @@ static const char *frag_shader_mono =
 static const char *vert_shader410 =
     "#version 410\n"
     "uniform mat4			pvm;\n"
-    "layout(location = %d) in vec3	vtx_pos;\n"
+    "layout(location = 0) in vec3	vtx_pos;\n"
+    "layout(location = 1) in vec2	vtx_tex0;\n"
     "layout(location = 0) out vec2	tex_coord;\n"
-    "const vec2 tex_coords[4] = vec2[](\n"
-    "  vec2(0.0f, 1.0f),\n"
-    "  vec2(0.0f, 0.0f),\n"
-    "  vec2(1.0f, 0.0f),\n"
-    "  vec2(1.0f, 1.0f)\n"
-    ");\n"
     "void main() {\n"
-    "	tex_coord = tex_coords[gl_VertexID];\n"
-    "	gl_Position = pvm * vec4(vtx_pos, 1.0);\n"
+    "	tex_coord = vtx_tex0;\n"
+    "	gl_Position = pvm * vec4(vtx_pos, 1.0f);\n"
     "}\n";
 
 static const char *frag_shader410 =
@@ -594,6 +578,24 @@ mtcr_gl_fini(mt_cairo_render_t *mtcr)
 }
 
 /*
+ * Due to a bug in AMD's drivers on Windows (at least as of 23.04.2), when
+ * running in XP12 on top of Zink, we cannot utilize shader rendering,
+ * because texture coordinates get flipped on input to the vertex shader for
+ * the second triangle. So for that specific platform, we need to revert to
+ * the fixed-function pipeline (which doesn't seem to exhibit this bug).
+ * This will only work when using our own built-in shader.
+ */
+static bool_t
+check_use_ffp(const mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (IBM && !mtcr->shader_is_custom &&
+	    IS_NULL_VECT(mtcr->monochrome) &&
+	    curthread_id == mtcr_main_thread && glutils_in_zink_mode() &&
+	    strstr((const char *)glGetString(GL_RENDERER), "Radeon") != NULL);
+}
+
+/*
  * Creates a new mt_cairo_render_t surface.
  * @param w Width of the rendered surface (in pixels).
  * @param h Height of the rendered surface (in pixels).
@@ -655,6 +657,7 @@ mt_cairo_render_init_impl(const char *filename, int line,
 
 	if (!glutils_in_zink_mode())
 		mtcr->create_ctx = glctx_get_current();
+	mtcr->use_ffp = check_use_ffp(mtcr);
 
 	VERIFY(thread_create(&mtcr->thr, worker, mtcr));
 	mtcr->started = B_TRUE;
@@ -765,16 +768,13 @@ set_shader_impl(mt_cairo_render_t *mtcr, unsigned prog, bool_t force)
 		/* Reinstall our standard shader */
 		mtcr->shader_is_custom = B_FALSE;
 		if (GLEW_VERSION_4_1) {
-			char *vert_shader_text = sprintf_alloc(vert_shader410,
-			    VTX_ATTRIB_POS, VTX_ATTRIB_TEX0);
 			const char *frag_shader_text = (IS_NULL_VECT(
 			    mtcr->monochrome) ? frag_shader410 :
 			    frag_shader410_mono);
 
 			mtcr->shader = shader_prog_from_text(
 			    "mt_cairo_render_shader",
-			    vert_shader_text, frag_shader_text, NULL);
-			free(vert_shader_text);
+			    vert_shader410, frag_shader_text, NULL);
 		} else {
 			const char *frag_shader_text = (IS_NULL_VECT(
 			    mtcr->monochrome) ? frag_shader :
@@ -782,9 +782,7 @@ set_shader_impl(mt_cairo_render_t *mtcr, unsigned prog, bool_t force)
 
 			mtcr->shader = shader_prog_from_text(
 			    "mt_cairo_render_shader",
-			    vert_shader, frag_shader_text,
-			    "vtx_pos", VTX_ATTRIB_POS,
-			    "vtx_tex0", VTX_ATTRIB_TEX0, NULL);
+			    vert_shader, frag_shader_text, NULL);
 		}
 	}
 	VERIFY(mtcr->shader != 0);
@@ -796,6 +794,7 @@ set_shader_impl(mt_cairo_render_t *mtcr, unsigned prog, bool_t force)
 	mtcr->shader_loc_tex = glGetUniformLocation(mtcr->shader, "tex");
 	mtcr->shader_loc_color_in =
 	    glGetUniformLocation(mtcr->shader, "color_in");
+	mtcr->use_ffp = check_use_ffp(mtcr);
 }
 
 void
@@ -1054,18 +1053,18 @@ bind_cur_tex(mt_cairo_render_t *mtcr)
 
 static void
 prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
-    double x1, double x2, double y1, double y2)
+    double x1, double x2, double y1, double y2, vtx_t buf[4])
 {
-	vtx_t buf[4];
-
 	ASSERT(mtcr != NULL);
+	ASSERT(buf != NULL);
 
 	if (VECT2_EQ(mtcr->last_draw.pos, pos) &&
 	    VECT2_EQ(mtcr->last_draw.size, size) &&
 	    mtcr->last_draw.x1 == x1 && mtcr->last_draw.x2 == x2 &&
-	    mtcr->last_draw.y1 == y1 && mtcr->last_draw.y2 == y2)
+	    mtcr->last_draw.y1 == y1 && mtcr->last_draw.y2 == y2 &&
+	    !mtcr->use_ffp) {
 		return;
-
+	}
 	buf[0].pos[0] = pos.x;
 	buf[0].pos[1] = pos.y;
 	buf[0].pos[2] = 0;
@@ -1090,10 +1089,19 @@ prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
 	buf[3].tex0[0] = x2;
 	buf[3].tex0[1] = y2;
 
-	ASSERT(mtcr->vtx_buf != 0);
-	glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
-	glBufferData(GL_ARRAY_BUFFER, sizeof (buf), buf, GL_STATIC_DRAW);
-
+	if (!mtcr->use_ffp) {
+		ASSERT(mtcr->vtx_buf != 0);
+		glBindBuffer(GL_ARRAY_BUFFER, mtcr->vtx_buf);
+		glBufferData(GL_ARRAY_BUFFER, 4 * sizeof (vtx_t), buf,
+		    GL_STATIC_DRAW);
+	} else {
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(vtx_t),
+		    ((void *)buf) + offsetof(vtx_t, pos));
+		glTexCoordPointer(2, GL_FLOAT, sizeof(vtx_t),
+		    ((void *)buf) + offsetof(vtx_t, tex0));
+	}
 	mtcr->last_draw.pos = pos;
 	mtcr->last_draw.size = size;
 	mtcr->last_draw.x1 = x1;
@@ -1168,6 +1176,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	double x1 = src_pos.x, x2 = src_pos.x + src_sz.x;
 	double y1 = src_pos.y, y2 = src_pos.y + src_sz.y;
 	bool cull_front = false;
+	vtx_t vtx_buf[4] = {};
 
 	mutex_enter(&mtcr->lock);
 	if (!bind_cur_tex(mtcr)) {
@@ -1184,6 +1193,17 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 		glBindVertexArray(mtcr->vao);
 		glEnable(GL_BLEND);
+	} else if (mtcr->use_ffp) {
+		XPLMSetGraphicsState(0, 1, 0, 1, 1, 0, 0);
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadMatrixf(pvm);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glUseProgram(0);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mtcr->idx_buf);
 	} else {
 #if	APL
 		/*
@@ -1201,18 +1221,19 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glutils_enable_vtx_attr_ptr(mtcr->shader_loc_vtx_tex0, 2,
 		    GL_FLOAT, GL_FALSE, sizeof (vtx_t), offsetof(vtx_t, tex0));
 	}
+	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2, vtx_buf);
+	if (!mtcr->use_ffp) {
+		ASSERT(mtcr->shader != 0);
+		glUseProgram(mtcr->shader);
 
-	ASSERT(mtcr->shader != 0);
-	glUseProgram(mtcr->shader);
-
-	prepare_vtx_buffer(mtcr, pos, size, x1, x2, y1, y2);
-
-	glUniformMatrix4fv(mtcr->shader_loc_pvm,
-	    1, GL_FALSE, (const GLfloat *)pvm);
-	glUniform1i(mtcr->shader_loc_tex, 0);
-	if (!IS_NULL_VECT(mtcr->monochrome)) {
-		glUniform3f(mtcr->shader_loc_color_in, mtcr->monochrome.x,
-		    mtcr->monochrome.y, mtcr->monochrome.z);
+		glUniformMatrix4fv(mtcr->shader_loc_pvm,
+		    1, GL_FALSE, (const GLfloat *)pvm);
+		glUniform1i(mtcr->shader_loc_tex, 0);
+		if (!IS_NULL_VECT(mtcr->monochrome)) {
+			glUniform3f(mtcr->shader_loc_color_in,
+			    mtcr->monochrome.x, mtcr->monochrome.y,
+			    mtcr->monochrome.z);
+		}
 	}
 	if ((size.x < 0 && size.y >= 0) || (size.x >= 0 && size.y < 0)) {
 		glCullFace(GL_FRONT);
@@ -1228,6 +1249,13 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 
 	if (use_vao) {
 		glBindVertexArray(old_vao);
+	} else if (mtcr->use_ffp) {
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+		XPLMBindTexture2d(0, 0);
 	} else {
 		glDisableVertexAttribArray(mtcr->shader_loc_vtx_pos);
 		glDisableVertexAttribArray(mtcr->shader_loc_vtx_tex0);
