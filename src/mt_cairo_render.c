@@ -1257,8 +1257,8 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glDisableClientState(GL_COLOR_ARRAY);
 		XPLMBindTexture2d(0, 0);
 	} else {
-		glDisableVertexAttribArray(mtcr->shader_loc_vtx_pos);
-		glDisableVertexAttribArray(mtcr->shader_loc_vtx_tex0);
+		glutils_disable_vtx_attr_ptr(mtcr->shader_loc_vtx_pos);
+		glutils_disable_vtx_attr_ptr(mtcr->shader_loc_vtx_tex0);
 		/*
 		 * X-Plane needs to know that we have unbound the texture
 		 * previously bound in slot #0. Otherwise we can cause
