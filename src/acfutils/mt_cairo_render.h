@@ -67,6 +67,7 @@ API_EXPORT void mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
     unsigned gl_filter_enum);
 API_EXPORT void mt_cairo_render_set_shader(mt_cairo_render_t *mtcr,
     unsigned prog);
+unsigned mt_cairo_render_get_shader(mt_cairo_render_t *mtcr);
 API_EXPORT void mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr,
     vect3_t color);
 API_EXPORT vect3_t mt_cairo_render_get_monochrome(

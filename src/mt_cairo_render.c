@@ -804,6 +804,13 @@ mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 	set_shader_impl(mtcr, prog, B_FALSE);
 }
 
+unsigned
+mt_cairo_render_get_shader(mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (mtcr->shader_is_custom ? mtcr->shader : 0);
+}
+
 /*
  * Enables or disables monochrome rendering mode. The default is disabled
  * (i.e. the image is rendered in RGBA mode). Monochrome rendering in
