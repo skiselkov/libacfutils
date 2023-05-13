@@ -1555,6 +1555,30 @@ chartdb_get_chart_georef(chartdb_t *cdb, const char *icao,
 	return (georef);
 }
 
+chart_bbox_t
+chartdb_get_chart_view(chartdb_t *cdb, const char *icao,
+    const char *chart_name, chart_view_t view)
+{
+	chart_t *chart;
+	chart_bbox_t bbox;
+
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+	ASSERT3U(view, <, ARRAY_NUM_ELEM(chart->views));
+
+	mutex_enter(&cdb->lock);
+	chart = chart_find(cdb, icao, chart_name);
+	if (chart == NULL || chart->load_error) {
+		mutex_exit(&cdb->lock);
+		return ((chart_bbox_t){});
+	}
+	bbox = chart->views[view];
+	mutex_exit(&cdb->lock);
+
+	return (bbox);
+}
+
 chart_procs_t
 chartdb_get_chart_procs(chartdb_t *cdb, const char *icao,
     const char *chart_name)

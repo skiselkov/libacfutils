@@ -64,6 +64,10 @@ typedef struct {
 	vect2_t		pts[2];
 } chart_bbox_t;
 
+/*
+ * Geo-referencing data, zero is the top left, X increasing right
+ * and Y increasing down.
+ */
 typedef struct {
 	bool_t		present;
 	vect2_t		pixels[2];
@@ -71,6 +75,18 @@ typedef struct {
 	size_t		n_insets;
 	chart_bbox_t	insets[MAX_CHART_INSETS];
 } chart_georef_t;
+
+/*
+ * Bounding boxes for various pre-defined chart views.
+ * Zero is referenced to the top left.
+ */
+typedef enum {
+    CHART_VIEW_HEADER,
+    CHART_VIEW_PLANVIEW,
+    CHART_VIEW_PROFILE,
+    CHART_VIEW_MINIMUMS,
+    NUM_CHART_VIEWS
+} chart_view_t;
 
 typedef struct {
 	size_t		n_procs;
@@ -102,6 +118,8 @@ API_EXPORT chart_type_t chartdb_get_chart_type(chartdb_t *cdb,
     const char *icao, const char *chart_name);
 API_EXPORT chart_georef_t chartdb_get_chart_georef(chartdb_t *cdb,
     const char *icao, const char *chart_name);
+API_EXPORT chart_bbox_t chartdb_get_chart_view(chartdb_t *cdb,
+    const char *icao, const char *chart_name, chart_view_t view);
 API_EXPORT chart_procs_t chartdb_get_chart_procs(chartdb_t *cdb,
     const char *icao, const char *chart_name);
 

@@ -55,6 +55,7 @@ struct chart_s {
 	chart_procs_t	procs;
 
 	chart_georef_t	georef;
+	chart_bbox_t	views[NUM_CHART_VIEWS];
 
 	chart_load_cb_t	load_cb;
 
