@@ -20,8 +20,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_ACF_UTILS_APPS_H_
 #define	_ACF_UTILS_APPS_H_

@@ -13,8 +13,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2022 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -27,19 +28,23 @@
 #include <acfutils/log.h>
 #include <acfutils/safe_alloc.h>
 
-/*
- * This code provides functionality to read the .acf file of X-Plane.
+/**
+ * A single property entry of an ACF file.
  */
-
 typedef struct {
-	char		*name;
-	char		*value;
+	char		*name;	/**< Property name. */
+	char		*value;	/**< Property value. */
 	avl_node_t	node;
 } acf_prop_t;
 
+/**
+ * This provides functionality to read and inspect the contents of an
+ * .acf file of X-Plane. Use acf_file_read() to generate this structure
+ * from an .acf file, and acf_file_free() to release it after use.
+ */
 struct acf_file {
-	int		version;
-	avl_tree_t	props;
+	int		version;	/**< Version number of the file. */
+	avl_tree_t	props;		/**< Tree of \ref acf_prop_t's. */
 };
 
 static int
@@ -54,7 +59,7 @@ acf_prop_compar(const void *a, const void *b)
 	return (1);
 }
 
-/*
+/**
  * Reads an X-Plane .acf file and returns a structure which can be used
  * to access its properties.
  *
@@ -146,8 +151,8 @@ errout:
 	return (NULL);
 }
 
-/*
- * Frees the structured returned by acf_file_read.
+/**
+ * Frees the structured returned by acf_file_read().
  */
 void
 acf_file_free(acf_file_t *acf)
@@ -164,7 +169,7 @@ acf_file_free(acf_file_t *acf)
 	free(acf);
 }
 
-/*
+/**
  * Locates a property in a parsed .acf file and returns its contents.
  *
  * @param acf The parsed acf file structure.
@@ -186,6 +191,9 @@ acf_prop_find(const acf_file_t *acf, const char *prop_path)
 	return (prop->value);
 }
 
+/**
+ * Returns the version number of an ACF file read by acf_file_read().
+ */
 int
 acf_file_get_version(const acf_file_t *acf)
 {
