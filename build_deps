@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2021 Saso Kiselkov. All rights reserved.
+# Copyright 2023 Saso Kiselkov. All rights reserved.
 
 # Prior to building the included dependencies, make sure the following
 # packages are installed (tested on Ubuntu 18.04):
@@ -22,17 +22,17 @@
 #	pkg-config qt5-default qt5-qmake unzip
 
 export minimal=0
-export no_tesseract=0
+export build_ocr=0
 
-while getopts "cdmn" opt; do
+while getopts "cdmo" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
-	n) export no_tesseract=1 ;;
 	m)
 		export minimal=1
 		touch .minimal-deps
 		;;
+	o) export build_ocr=1 ;;
 	esac
 done
 
@@ -47,25 +47,35 @@ if [[ "$do_clean" != 1 ]]; then
 fi
 
 ( cd zlib && ./build_zlib_deps ) && \
-    ( cd libiconv && ./build_libiconv_deps ) && \
-    ( cd libclipboard && ./build_libclipboard_deps ) && \
-    ( [ $minimal -eq 1 ] || ( cd libpng && ./build_libpng_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd libjpeg && ./build_libjpeg_deps ) ) && \
-    ( cd libxml2 && ./build_libxml2_deps ) && \
-    ( [ $minimal -eq 1 ] || ( cd freetype && ./build_freetype_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd cairo && ./build_cairo_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd opus && ./build_opus_deps ) ) && \
-    ( cd ssl && ./build_ssl_deps ) && \
-    ( cd curl && ./build_curl_deps ) && \
-    ( [ $minimal -eq 1 ] || ( cd shapelib && ./build_shapelib_deps ) ) && \
-    ( [ $minimal -eq 1 ] || [ $no_tesseract -eq 1 ] || \
-    ( cd ocr && ./build_ocr_deps ) ) && \
-    ( cd pcre2 && ./build_pcre2_deps ) && \
-    ( [ $minimal -eq 1 ] || ( cd glew && ./build_glew_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd openal-soft && ./build_openal ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd cglm && ./build_cglm ) ) && \
-    ( [ $minimal -eq 1 ] || ( cd geographiclib && ./build_geographiclib ) ) && \
-    ( cd lzma/qmake && \
+    ( echo "Building libiconv ..."; cd libiconv && ./build_libiconv_deps ) && \
+    ( echo "Building libclipboard ..."; \
+    cd libclipboard && ./build_libclipboard_deps ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building libpng ..."; \
+    cd libpng && ./build_libpng_deps ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building libjpeg ..."; \
+    cd libjpeg && ./build_libjpeg_deps ) ) && \
+    ( echo "Building libxml2 ..."; cd libxml2 && ./build_libxml2_deps ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building Freetype ..."; \
+    cd freetype && ./build_freetype_deps ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building Cairo ..."; \
+    cd cairo && ./build_cairo_deps ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building Opus ..."; \
+    cd opus && ./build_opus_deps ) ) && \
+    ( echo "Building OpenSSL ..."; cd ssl && ./build_ssl_deps ) && \
+    ( echo "Building cURL ..."; cd curl && ./build_curl_deps ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building shapelib ..."; \
+    cd shapelib && ./build_shapelib_deps ) ) && \
+    ( [ $minimal -eq 1 ] || [ $build_ocr -eq 0 ] || \
+    ( echo "Building OCR ..."; cd ocr && ./build_ocr_deps ) ) && \
+    ( echo "Building PCRE2 ..."; cd pcre2 && ./build_pcre2_deps ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building GLEW ..."; \
+    cd glew && ./build_glew_deps ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building OpenAL ..."; \
+    cd openal-soft && ./build_openal ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building cglm ..."; cd cglm && ./build_cglm ) ) && \
+    ( [ $minimal -eq 1 ] || ( echo "Building geographiclib ..."; \
+    cd geographiclib && ./build_geographiclib ) ) && \
+    ( echo "Building LZMA ..."; cd lzma/qmake && \
 	if [ $(uname) = Darwin ]; then \
 		if [[ "$do_clean" == 1 ]]; then
 			rm -f mac-64/liblzma.a

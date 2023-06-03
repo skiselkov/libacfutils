@@ -121,6 +121,7 @@ typedef struct {
  * @param points Input points that the interpolator needs to pass through.
  * @param npts Number points in `points'. This must be GREATER than 0.
  */
+#define	pn_interp_init	ACFSYM(pn_interp_init)
 API_EXPORT void pn_interp_init(pn_interp_t *interp, const vect2_t *points,
     unsigned npts);
 

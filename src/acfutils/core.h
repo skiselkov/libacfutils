@@ -48,9 +48,9 @@ extern "C" {
 #if	IBM && (!defined(__MINGW32__) || defined(ACFUTILS_DLL))
 #define	API_EXPORT	__declspec(dllexport)
 #ifdef	ACFUTILS_BUILD
-#define	API_EXPORT_DATA	__declspec(dllexport)
+#define	API_EXPORT_DATA	__declspec(dllexport) extern
 #else
-#define	API_EXPORT_DATA	__declspec(dllimport)
+#define	API_EXPORT_DATA	__declspec(dllimport) extern
 #endif
 #else	/* !IBM || (defined(__MINGW32__) && !defined(ACFUTILS_DLL)) */
 #define	API_EXPORT

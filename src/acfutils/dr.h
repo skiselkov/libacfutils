@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACFUTILS_DR_H_

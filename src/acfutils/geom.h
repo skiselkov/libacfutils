@@ -228,78 +228,131 @@ API_EXPORT bool_t is_on_arc(double angle_x, double angle1, double angle2,
 /*
  * Angle util functions.
  */
+#define	rel_angle	ACFSYM(rel_angle)
 API_EXPORT double rel_angle(double a1, double a2) PURE_ATTR;
 
 /*
  * Vector math.
  */
+#define	vect3_abs	ACFSYM(vect3_abs)
 API_EXPORT double vect3_abs(vect3_t a) PURE_ATTR;
+#define	vect3l_abs	ACFSYM(vect3l_abs)
 API_EXPORT long double vect3l_abs(vect3l_t a) PURE_ATTR;
+#define	vect3_dist	ACFSYM(vect3_dist)
 API_EXPORT double vect3_dist(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_dist	ACFSYM(vect3l_dist)
 API_EXPORT long double vect3l_dist(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_abs	ACFSYM(vect2_abs)
 API_EXPORT double vect2_abs(vect2_t a) PURE_ATTR;
+#define	vect2_dist	ACFSYM(vect2_dist)
 API_EXPORT double vect2_dist(vect2_t a, vect2_t b) PURE_ATTR;
+#define	vect3_set_abs	ACFSYM(vect3_set_abs)
 API_EXPORT vect3_t vect3_set_abs(vect3_t a, double abs) PURE_ATTR;
+#define	vect3l_set_abs	ACFSYM(vect3l_set_abs)
 API_EXPORT vect3l_t vect3l_set_abs(vect3l_t a, long double abs) PURE_ATTR;
+#define	vect2_set_abs	ACFSYM(vect2_set_abs)
 API_EXPORT vect2_t vect2_set_abs(vect2_t a, double abs) PURE_ATTR;
+#define	vect3_unit	ACFSYM(vect3_unit)
 API_EXPORT vect3_t vect3_unit(vect3_t a, double *l);
+#define	vect2_unit	ACFSYM(vect2_unit)
 API_EXPORT vect2_t vect2_unit(vect2_t a, double *l);
 
+#define	vect3_add	ACFSYM(vect3_add)
 API_EXPORT vect3_t vect3_add(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_add	ACFSYM(vect3l_add)
 API_EXPORT vect3l_t vect3l_add(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_add	ACFSYM(vect2_add)
 API_EXPORT vect2_t vect2_add(vect2_t a, vect2_t b) PURE_ATTR;
+#define	vect3_sub	ACFSYM(vect3_sub)
 API_EXPORT vect3_t vect3_sub(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_sub	ACFSYM(vect3l_sub)
 API_EXPORT vect3l_t vect3l_sub(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_sub	ACFSYM(vect2_sub)
 API_EXPORT vect2_t vect2_sub(vect2_t a, vect2_t b) PURE_ATTR;
+#define	vect3_mul	ACFSYM(vect3_mul)
 API_EXPORT vect3_t vect3_mul(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_mul	ACFSYM(vect3l_mul)
 API_EXPORT vect3l_t vect3l_mul(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_mul	ACFSYM(vect2_mul)
 API_EXPORT vect2_t vect2_mul(vect2_t a, vect2_t b) PURE_ATTR;
+#define	vect3_scmul	ACFSYM(vect3_scmul)
 API_EXPORT vect3_t vect3_scmul(vect3_t a, double b) PURE_ATTR;
+#define	vect3l_scmul	ACFSYM(vect3l_scmul)
 API_EXPORT vect3l_t vect3l_scmul(vect3l_t a, long double b) PURE_ATTR;
+#define	vect2_scmul	ACFSYM(vect2_scmul)
 API_EXPORT vect2_t vect2_scmul(vect2_t a, double b) PURE_ATTR;
+#define	vect3_dotprod	ACFSYM(vect3_dotprod)
 API_EXPORT double vect3_dotprod(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_dotprod	ACFSYM(vect3l_dotprod)
 API_EXPORT long double vect3l_dotprod(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_dotprod	ACFSYM(vect2_dotprod)
 API_EXPORT double vect2_dotprod(vect2_t a, vect2_t b) PURE_ATTR;
+#define	vect3_xprod	ACFSYM(vect3_xprod)
 API_EXPORT vect3_t vect3_xprod(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_xprod	ACFSYM(vect3l_xprod)
 API_EXPORT vect3l_t vect3l_xprod(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect3_mean	ACFSYM(vect3_mean)
 API_EXPORT vect3_t vect3_mean(vect3_t a, vect3_t b) PURE_ATTR;
+#define	vect3l_mean	ACFSYM(vect3l_mean)
 API_EXPORT vect3l_t vect3l_mean(vect3l_t a, vect3l_t b) PURE_ATTR;
+#define	vect2_mean	ACFSYM(vect2_mean)
 API_EXPORT vect2_t vect2_mean(vect2_t a, vect2_t b) PURE_ATTR;
 
+#define	vect2_norm	ACFSYM(vect2_norm)
 API_EXPORT vect2_t vect2_norm(vect2_t v, bool_t right) PURE_ATTR;
+#define	vect3_rot	ACFSYM(vect3_rot)
 API_EXPORT vect3_t vect3_rot(vect3_t v, double angle, unsigned axis) PURE_ATTR;
+#define	vect3l_rot	ACFSYM(vect3l_rot)
 API_EXPORT vect3l_t vect3l_rot(vect3l_t v, long double angle, unsigned axis)
     PURE_ATTR;
+#define	vect2_rot	ACFSYM(vect2_rot)
 API_EXPORT vect2_t vect2_rot(vect2_t v, double angle) PURE_ATTR;
+#define	vect2_rot_inv_y	ACFSYM(vect2_rot_inv_y)
 API_EXPORT vect2_t vect2_rot_inv_y(vect2_t v, double angle) PURE_ATTR;
+#define	vect3_neg	ACFSYM(vect3_neg)
 API_EXPORT vect3_t vect3_neg(vect3_t v) PURE_ATTR;
+#define	vect3l_neg	ACFSYM(vect3l_neg)
 API_EXPORT vect3l_t vect3l_neg(vect3l_t v) PURE_ATTR;
+#define	vect2_neg	ACFSYM(vect2_neg)
 API_EXPORT vect2_t vect2_neg(vect2_t v) PURE_ATTR;
 
+#define	vect3_local2acf	ACFSYM(vect3_local2acf)
 API_EXPORT vect3_t vect3_local2acf(vect3_t v, double roll, double pitch,
     double hdgt) PURE_ATTR;
+#define	vect3_acf2local	ACFSYM(vect3_acf2local)
 API_EXPORT vect3_t vect3_acf2local(vect3_t v, double roll, double pitch,
     double hdgt) PURE_ATTR;
 
 /*
  * Spherical, geodesic, ECEF and ECmI coordinate conversion.
  */
+#define	ellip_init	ACFSYM(ellip_init)
 API_EXPORT ellip_t ellip_init(double semi_major, double semi_minor,
     double flattening);
+#define	geo2sph		ACFSYM(geo2sph)
 API_EXPORT geo_pos3_t geo2sph(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+#define	geo2ecef_mtr	ACFSYM(geo2ecef_mtr)
 API_EXPORT vect3_t geo2ecef_mtr(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+#define	geo2ecef_ft	ACFSYM(geo2ecef_ft)
 API_EXPORT vect3_t geo2ecef_ft(geo_pos3_t pos, const ellip_t *ellip) PURE_ATTR;
+#define	ecef2geo	ACFSYM(ecef2geo)
 API_EXPORT geo_pos3_t ecef2geo(vect3_t pos, const ellip_t *ellip) PURE_ATTR;
+#define	ecef2sph	ACFSYM(ecef2sph)
 API_EXPORT geo_pos3_t ecef2sph(vect3_t v) PURE_ATTR;
+#define	sph2ecef	ACFSYM(sph2ecef)
 API_EXPORT vect3_t sph2ecef(geo_pos3_t pos) PURE_ATTR;
 /*
  * Converts between ECEF/ECMI coordinates and OpenGL coordinates. OpenGL
  * uses X to represent the lateral aixs, Y to represent the vertical axis
  * and Z to represent the axis going towards the camera.
  */
+#define	ecef2gl		ACFSYM(ecef2gl)
 API_EXPORT vect3_t ecef2gl(vect3_t ecmi) PURE_ATTR;
+#define	gl2ecef		ACFSYM(gl2ecef)
 API_EXPORT vect3_t gl2ecef(vect3_t opengl) PURE_ATTR;
+#define	ecef2gl_l	ACFSYM(ecef2gl_l)
 API_EXPORT vect3l_t ecef2gl_l(vect3l_t ecmi) PURE_ATTR;
+#define	gl2ecef_l	ACFSYM(gl2ecef_l)
 API_EXPORT vect3l_t gl2ecef_l(vect3l_t opengl) PURE_ATTR;
 /*
  * ECmI stands for Earth-Centered-modified-Inertial. Unlike ECEF, it is
@@ -313,30 +366,43 @@ API_EXPORT vect3l_t gl2ecef_l(vect3l_t opengl) PURE_ATTR;
  * geographic or ECEF coordinates and ECmI, we need to know the exact time
  * as a delta from the reference time (which can be arbitrary).
  */
+#define	geo2ecmi		ACFSYM(geo2ecmi)
 API_EXPORT vect3_t geo2ecmi(geo_pos3_t pos, double delta_t,
     const ellip_t *ellip) PURE_ATTR;
+#define	ecmi2geo		ACFSYM(ecmi2geo)
 API_EXPORT geo_pos3_t ecmi2geo(vect3_t pos, double delta_t,
     const ellip_t *ellip) PURE_ATTR;
+#define	sph2ecmi		ACFSYM(sph2ecmi)
 API_EXPORT vect3_t sph2ecmi(geo_pos3_t pos, double delta_t) PURE_ATTR;
+#define	ecmi2sph		ACFSYM(ecmi2sph)
 API_EXPORT geo_pos3_t ecmi2sph(vect3_t pos, double delta_t) PURE_ATTR;
+#define	ecef2ecmi		ACFSYM(ecef2ecmi)
 API_EXPORT vect3_t ecef2ecmi(vect3_t ecef, double delta_t) PURE_ATTR;
+#define	ecmi2ecef		ACFSYM(ecmi2ecef)
 API_EXPORT vect3_t ecmi2ecef(vect3_t ecmi, double delta_t) PURE_ATTR;
 
 /*
  * Interesections.
  */
+#define	vect2sph_isect		ACFSYM(vect2sph_isect)
 API_EXPORT unsigned vect2sph_isect(vect3_t v, vect3_t o, vect3_t c, double r,
     bool_t confined, vect3_t i[2]);
+#define	vect2circ_isect		ACFSYM(vect2circ_isect)
 API_EXPORT unsigned vect2circ_isect(vect2_t v, vect2_t o, vect2_t c, double r,
     bool_t confined, vect2_t i[2]);
+#define	vect2vect_isect		ACFSYM(vect2vect_isect)
 API_EXPORT vect2_t vect2vect_isect(vect2_t da, vect2_t oa, vect2_t db,
     vect2_t ob, bool_t confined) PURE_ATTR;
+#define	circ2circ_isect		ACFSYM(circ2circ_isect)
 API_EXPORT unsigned circ2circ_isect(vect2_t ca, double ra, vect2_t cb,
     double rb, vect2_t i[2]);
+#define	vect2poly_isect_get	ACFSYM(vect2poly_isect_get)
 API_EXPORT unsigned vect2poly_isect_get(vect2_t a, vect2_t oa,
     const vect2_t *poly, vect2_t *isects, unsigned cap);
+#define	vect2poly_isect		ACFSYM(vect2poly_isect)
 API_EXPORT unsigned vect2poly_isect(vect2_t a, vect2_t oa, const vect2_t *poly)
     PURE_ATTR;
+#define	point_in_poly		ACFSYM(point_in_poly)
 API_EXPORT bool_t point_in_poly(vect2_t pt, const vect2_t *poly) PURE_ATTR;
 
 /*
@@ -350,16 +416,20 @@ API_EXPORT double dir2hdg(vect2_t dir) PURE_ATTR;
 /*
  * Calculating coordinate displacement & radial intersection.
  */
+#define	geo_displace		ACFSYM(geo_displace)
 API_EXPORT geo_pos2_t geo_displace(const ellip_t *ellip, geo_pos2_t pos,
     double truehdg, double dist) PURE_ATTR;
+#define	geo_displace_dir	ACFSYM(geo_displace_dir)
 API_EXPORT geo_pos2_t geo_displace_dir(const ellip_t *ellip, geo_pos2_t pos,
     vect2_t dir, double dist) PURE_ATTR;
 
 /*
  * Geometry parser & validator helpers.
  */
+#define	geo_pos2_from_str	ACFSYM(geo_pos2_from_str)
 API_EXPORT bool_t geo_pos2_from_str(const char *lat, const char *lon,
     geo_pos2_t *pos);
+#define	geo_pos3_from_str	ACFSYM(geo_pos3_from_str)
 API_EXPORT bool_t geo_pos3_from_str(const char *lat, const char *lon,
     const char *elev, geo_pos3_t *pos);
 
@@ -372,10 +442,13 @@ typedef struct {
 	bool_t	inv;
 } sph_xlate_t;
 
+#define	sph_xlate_init	ACFSYM(sph_xlate_init)
 API_EXPORT sph_xlate_t sph_xlate_init(geo_pos2_t displacement,
     double rotation, bool_t inv);
+#define	sph_xlate	ACFSYM(sph_xlate)
 API_EXPORT geo_pos2_t sph_xlate(geo_pos2_t pos, const sph_xlate_t *xlate)
     PURE_ATTR;
+#define	sph_xlate_vect	ACFSYM(sph_xlate_vect)
 API_EXPORT vect3_t sph_xlate_vect(vect3_t pos, const sph_xlate_t *xlate)
     PURE_ATTR;
 
@@ -399,17 +472,25 @@ typedef struct {
 	vect2_t		scale;
 } fpp_t;
 
+#define	fpp_init	ACFSYM(fpp_init)
 API_EXPORT fpp_t fpp_init(geo_pos2_t center, double rot, double dist,
     const ellip_t *ellip, bool_t allow_inv);
+#define	ortho_fpp_init	ACFSYM(ortho_fpp_init)
 API_EXPORT fpp_t ortho_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
+#define	gnomo_fpp_init	ACFSYM(gnomo_fpp_init)
 API_EXPORT fpp_t gnomo_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
+#define	stereo_fpp_init	ACFSYM(stereo_fpp_init)
 API_EXPORT fpp_t stereo_fpp_init(geo_pos2_t center, double rot,
     const ellip_t *ellip, bool_t allow_inv);
+#define	geo2fpp		ACFSYM(geo2fpp)
 API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp) PURE_ATTR;
+#define	fpp2geo		ACFSYM(fpp2geo)
 API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp) PURE_ATTR;
+#define	fpp_set_scale	ACFSYM(fpp_set_scale)
 API_EXPORT void fpp_set_scale(fpp_t *fpp, vect2_t scale);
+#define	fpp_get_scale	ACFSYM(fpp_get_scale)
 API_EXPORT vect2_t fpp_get_scale(const fpp_t *fpp);
 
 /*
@@ -423,16 +504,22 @@ typedef struct {
 	double	rho0;
 } lcc_t;
 
+#define	lcc_init	ACFSYM(lcc_init)
 API_EXPORT lcc_t lcc_init(double reflat, double reflon, double stdpar1,
     double stdpar2);
+#define	geo2lcc		ACFSYM(geo2lcc)
 API_EXPORT vect2_t geo2lcc(geo_pos2_t pos, const lcc_t *lcc) PURE_ATTR;
 
 /*
  *  Bezier curve functions.
  */
+#define	bezier_alloc		ACFSYM(bezier_alloc)
 API_EXPORT bezier_t *bezier_alloc(size_t num_pts);
+#define	bezier_free		ACFSYM(bezier_free)
 API_EXPORT void bezier_free(bezier_t *curve);
+#define	quad_bezier_func	ACFSYM(quad_bezier_func)
 API_EXPORT double quad_bezier_func(double x, const bezier_t *func);
+#define	quad_bezier_func_inv	ACFSYM(quad_bezier_func_inv)
 API_EXPORT double *quad_bezier_func_inv(double y, const bezier_t *func,
     size_t *n_xs);
 
@@ -452,7 +539,9 @@ typedef struct {
 #define	MAT4_DATA(mat)		((mat)->_mat4_data)
 #define	MAT3_DATA(mat)		((mat)->_mat3_data)
 
+#define	mat4_ident		ACFSYM(mat4_ident)
 API_EXPORT void mat4_ident(mat4_t *mat);
+#define	mat3_ident		ACFSYM(mat3_ident)
 API_EXPORT void mat3_ident(mat3_t *mat);
 
 #ifdef	__cplusplus

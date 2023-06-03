@@ -68,7 +68,9 @@ API_EXPORT XPWidgetID create_widget_rel2(int x, int y, bool_t y_from_bottom,
     int width, int height, int visible, const char *descr, int root,
     XPWidgetID container, XPWidgetID coord_ref, XPWidgetClass cls);
 
+#define	widget_win_center	ACFSYM(widget_win_center)
 API_EXPORT void widget_win_center(XPWidgetID window);
+#define	classic_win_center	ACFSYM(classic_win_center)
 API_EXPORT void classic_win_center(XPLMWindowID window);
 API_EXPORT monitor_t lacf_get_first_monitor_bounds(void);
 
