@@ -21,22 +21,28 @@
 
 #include <stdlib.h>
 
-/*
+/**
  * A string holding the current build version of libacfutils.
  * It's just a 7-character git revision number.
  */
 const char *libacfutils_version = LIBACFUTILS_VERSION;
 
+/**
+ * Allocates `n' bytes of memory using libacfutils' allocator. This is mostly to
+ * complete the functionality of `lacf_free'. In general, you won't ever need to
+ * call this function.
+ */
 void *
 lacf_malloc(size_t n)
 {
 	return (safe_malloc(n));
 }
 
-/*
- * Whenever libacfutils returns an allocated object that you must free,
- * use lacf_free to do so. Otherwise you risk running into troubles with
- * different allocators being used between compilers (thanks Windows!).
+/**
+ * Whenever libacfutils returns an allocated object (except for the safe_*alloc
+ * functions) that you must free, use lacf_free to do so. Otherwise you risk
+ * running into troubles with different allocators being used between compilers
+ * (thanks Windows!).
  */
 void
 lacf_free(void *buf)

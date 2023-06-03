@@ -136,3 +136,5 @@ geographiclib/GeographicLib-1.51/
 geographiclib/geographiclib-linux-64
 geographiclib/geographiclib-mac-64
 geographiclib/geographiclib-win-64
+
+doc/html
