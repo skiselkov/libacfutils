@@ -14,6 +14,7 @@
  *
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #include <errno.h>
 #include <iconv.h>

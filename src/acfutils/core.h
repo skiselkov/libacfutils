@@ -20,8 +20,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_ACFUTILS_CORE_H_
 #define	_ACFUTILS_CORE_H_
@@ -33,6 +34,38 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+/**
+ * \def UNUSED_ATTR
+ * Attribute which marks a function as unused. This is designed to avoid
+ * warnings & errors from compiler code analyzers for unused static
+ * functions. Place this ahead of a function declaration or definition,
+ * to mark the function as purposely unused.
+ */
+/**
+ * \def UNUSED
+ * Attribute which stops a compiler from complaining when a variable
+ * isn't used.
+ */
+/**
+ * \def PACKED_ATTR
+ * Attribute which marks a structure as having a packed memory layout
+ * (i.e. the compiler isn't allowed to insert padding). Place at the
+ * start of a structure definition,
+ * e.g. `PACKED_ATTR struct structName { ... };`
+ */
+/**
+ * \def LACF_DESTROY
+ * Calls lacf_free() on `ptr` and also then sets the pointer to `NULL`
+ * to force a null-pointer-dereference and hard crash if an attempt is
+ * made to use the pointer after the `LACF_DESTROY` operation.
+ */
+/**
+ * \def ARRAY_NUM_ELEM
+ * Given a fixed-size array, evaluates to the number of elements in the
+ * array. Useful for automatically determining the capacity of an array
+ * for functions which take a count-of-elements argument.
+ */
 
 #if	defined(__GNUC__) || defined(__clang__)
 #define	UNUSED_ATTR	__attribute__((unused))

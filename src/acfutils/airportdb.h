@@ -12,8 +12,9 @@
  *
  * CDDL HEADER END
  *
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_AIRPORTDB_H_
 #define	_AIRPORTDB_H_

@@ -13,8 +13,9 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #include <acfutils/core.h>
 #include <acfutils/safe_alloc.h>
