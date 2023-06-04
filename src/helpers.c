@@ -346,7 +346,8 @@ extract_icao_country_code(const char *icao)
  * 2- or 3-character strings conforming to the following format:
  *	*) Two-digit runway heading between 01 and 36. Headings less
  *	   than 10 are always prefixed by a '0'. "00" is NOT valid.
- *	*) An optional parallel runway discriminator, one of 'L', 'R' or 'C'.
+ *	*) An optional parallel runway discriminator, one of 'L', 'R', 'C'
+ *	   or 'T'.
  */
 bool_t
 is_valid_rwy_ID(const char *rwy_ID)
@@ -360,8 +361,10 @@ is_valid_rwy_ID(const char *rwy_ID)
 	if (hdg == 0 || hdg > 36)
 		return (B_FALSE);
 	if (len == 3) {
-		if (rwy_ID[2] != 'R' && rwy_ID[2] != 'L' && rwy_ID[2] != 'C')
+		if (rwy_ID[2] != 'R' && rwy_ID[2] != 'L' && rwy_ID[2] != 'C' &&
+		    rwy_ID[2] != 'T') {
 			return (B_FALSE);
+		}
 	}
 
 	return (B_TRUE);
