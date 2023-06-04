@@ -21,10 +21,10 @@
 #include <zlib.h>
 #include <junzip.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/compress.h>
-#include <acfutils/helpers.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/compress.h"
+#include "acfutils/helpers.h"
+#include "acfutils/safe_alloc.h"
 
 typedef struct {
 	JZFile		ops;
@@ -144,7 +144,20 @@ rec_cb(JZFile *zip, int idx, JZFileHeader *header, char *filename,
 	return (0);
 }
 
-API_EXPORT void *
+/**
+ * Decompresses the first file contained in a .zip archive and returns its
+ * contents.
+ *
+ * @param in_buf A memory buffer containing the entire .zip file.
+ * @param len Number of bytes in `in_buf`.
+ * @param out_len Return argument, which will be filled with the amount of
+ *	bytes contained in the returned decompressed buffer.
+ *
+ * @return A buffer containing the decompressed file data, or NULL if
+ *	decompression failed.
+ * @return Free the returned data using lacf_free().
+ */
+void *
 decompress_zip(void *in_buf, size_t len, size_t *out_len)
 {
 	memfile_t mf = {

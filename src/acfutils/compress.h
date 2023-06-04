@@ -13,7 +13,11 @@
  * CDDL HEADER END
 */
 /*
- * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This file contains various compression/decompression utility functions.
  */
 
 #ifndef	_ACF_UTILS_COMPRESS_H_
@@ -25,19 +29,13 @@
 extern "C" {
 #endif
 
-#define	zlib_test	ACFSYM(zlib_test)
 API_EXPORT bool_t zlib_test(const void *in_buf, size_t len);
-#define	zlib_compress	ACFSYM(zlib_compress)
 API_EXPORT void *zlib_compress(void *in_buf, size_t len, size_t *out_len);
-#define	zlib_decompress	ACFSYM(zlib_decompress)
 API_EXPORT void *zlib_decompress(void *in_buf, size_t len, size_t *out_len_p);
 
-#define	test_7z		ACFSYM(test_7z)
 API_EXPORT bool_t test_7z(const void *in_buf, size_t len);
-#define	decompress_7z	ACFSYM(decompress_7z)
 API_EXPORT void *decompress_7z(const char *filename, size_t *out_len);
 
-#define	decompress_zip	ACFSYM(decompress_zip)
 API_EXPORT void *decompress_zip(void *in_buf, size_t len, size_t *out_len);
 
 #ifdef	__cplusplus

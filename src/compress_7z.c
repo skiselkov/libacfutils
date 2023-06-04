@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <string.h>
@@ -26,14 +26,16 @@
 #include <7zFile.h>
 #include <7zVersion.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/compress.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/compress.h"
+#include "acfutils/safe_alloc.h"
 
-/*
+/**
  * Performs a light-weight & quick test to see if some data might constitute
- * a 7-zip archive. Returns B_TRUE if the data MAY be a 7-zip archive,
- * B_FALSE if definitely not.
+ * a 7-zip archive.
+ * @param in_buf Input buffer to test.
+ * @param len Number of bytes in `in_buf`.
+ * @return B_TRUE if the data MAY be a 7-zip archive, B_FALSE if definitely not.
  */
 bool_t
 test_7z(const void *in_buf, size_t len)
@@ -43,7 +45,7 @@ test_7z(const void *in_buf, size_t len)
 	    memcmp(in_buf, magic, sizeof (magic)) == 0);
 }
 
-/*
+/**
  * Decompresses the first file contained in a 7-zip archive and returns its
  * contents.
  *
@@ -52,7 +54,8 @@ test_7z(const void *in_buf, size_t len)
  *	bytes contained in the returned decompressed buffer.
  *
  * @return A buffer containing the decompressed file data, or NULL if
- *	decompression failed. Free the returned data using lacf_free().
+ *	decompression failed.
+ * @return Free the returned data using lacf_free().
  */
 void *
 decompress_7z(const char *filename, size_t *out_len)
