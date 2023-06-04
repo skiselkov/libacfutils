@@ -82,7 +82,7 @@ webdav_foreach_dirlist(chartdb_t *cdb, CURL *curl, const char *path,
     bool_t (*cb)(chartdb_t *cdb, CURL *curl, const char *href))
 {
 	chart_dl_info_t dl = { .cdb = NULL };
-	chart_prov_info_login_t *login = cdb->prov_info;
+	const chart_prov_info_login_t *login = cdb->prov_login;
 	xmlDoc *doc = NULL;
 	xmlXPathContext *xpath_ctx = NULL;
 	xmlXPathObject *xpath_obj = NULL;
@@ -377,9 +377,9 @@ update_index(chartdb_t *cdb)
 bool_t
 chart_autorouter_init(chartdb_t *cdb)
 {
-	chart_prov_info_login_t *login = cdb->prov_info;
+	const chart_prov_info_login_t *login = cdb->prov_login;
 
-	VERIFY(cdb->prov_info != NULL);
+	VERIFY(cdb->prov_login != NULL);
 	VERIFY(login->username != NULL);
 	VERIFY(login->password != NULL);
 
@@ -408,13 +408,13 @@ chart_autorouter_get_chart(chart_t *chart)
 	bool_t result;
 	char url[512];
 	CURL *curl = NULL;
-	chart_prov_info_login_t *login;
+	const chart_prov_info_login_t *login;
 
 	ASSERT(chart->arpt != NULL);
 	arpt = chart->arpt;
 	ASSERT(arpt->db != NULL);
 	cdb = arpt->db;
-	login = cdb->prov_info;
+	login = cdb->prov_login;
 	ASSERT(login != NULL);
 
 	filepath = chartdb_mkpath(chart);

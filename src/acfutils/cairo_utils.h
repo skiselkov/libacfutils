@@ -20,7 +20,11 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2022 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This file contains various utility and helper functions for cairo graphics.
  */
 
 #ifndef	_ACF_UTILS_CAIRO_UTILS_H_
@@ -34,6 +38,10 @@
 extern "C" {
 #endif
 
+/**
+ * If `surf` is not NULL, calls cairo_surface_destroy() on it and
+ * resets the `surf` pointer to NULL afterwards.
+ */
 #define	CAIRO_SURFACE_DESTROY(surf) \
 	do {\
 		if ((surf) != NULL) { \
@@ -42,8 +50,17 @@ extern "C" {
 		} \
 	} while (0)
 
-/* For backwards compatibility with legacy apps */
+/** For backwards compatibility with legacy apps. */
 #define	mt_cairo_render_rounded_rectangle	cairo_utils_rounded_rect
+/**
+ * Appends a rounded rectangle to the current path. In essence operates
+ * exactly as cairo_rectangle(), except the corners can be rounded over.
+ * @param x X coordinate origin of the rectangle.
+ * @param y Y coordinate origin of the rectangle.
+ * @param w Width of rectangle.
+ * @param h Height of rectangle.
+ * @param radius Radius of the rounded arcs comprising the corners.
+ */
 API_EXPORT void cairo_utils_rounded_rect(cairo_t *cr, double x, double y,
     double w, double h, double radius);
 

@@ -244,8 +244,8 @@ start_auth(chartdb_t *cdb, navigraph_t *nav)
 	chart_dl_info_t dl_info;
 
 	ASSERT(cdb != NULL);
-	ASSERT(cdb->prov_info != NULL);
-	login = cdb->prov_info;
+	ASSERT(cdb->prov_login != NULL);
+	login = cdb->prov_login;
 	ASSERT(nav != NULL);
 
 	chart_dl_info_init(&dl_info, cdb, DEV_AUTH_ENDPT);
@@ -393,8 +393,8 @@ get_tokens(chartdb_t *cdb, navigraph_t *nav)
 
 	ASSERT(cdb != NULL);
 	ASSERT(nav != NULL);
-	ASSERT(cdb->prov_info != NULL);
-	login = cdb->prov_info;
+	ASSERT(cdb->prov_login != NULL);
+	login = cdb->prov_login;
 
 	chart_dl_info_init(&dl_info, cdb, TOKEN_ENDPT);
 
@@ -745,8 +745,8 @@ chart_navigraph_init(chartdb_t *cdb)
 
 	ASSERT(cdb != NULL);
 
-	VERIFY(cdb->prov_info != NULL);
-	login = cdb->prov_info;
+	VERIFY(cdb->prov_login != NULL);
+	login = cdb->prov_login;
 	VERIFY(login->username != NULL);
 	VERIFY(login->password != NULL);
 	VERIFY(login->cainfo != NULL);

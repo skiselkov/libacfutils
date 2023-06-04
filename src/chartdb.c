@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2022 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <errno.h>
@@ -655,7 +655,7 @@ chartdb_pdf_convert_file(const char *pdftoppm_path, char *old_path, int page,
 	if (png_buf == NULL)
 		goto errout;
 
-	new_path = strdup(old_path);
+	new_path = safe_strdup(old_path);
 	ext = strrchr(new_path, '.');
 	VERIFY(ext != NULL);
 	lacf_strlcpy(&ext[1], "png", strlen(&ext[1]) + 1);
@@ -1211,7 +1211,7 @@ loader_fini(void *userinfo)
 chartdb_t *
 chartdb_init(const char *cache_path, const char *pdftoppm_path,
     const char *pdfinfo_path, unsigned airac, const char *provider_name,
-    void *provider_info)
+    const chart_prov_info_login_t *provider_login)
 {
 	chartdb_t *cdb;
 	chart_prov_id_t pid;
@@ -1220,7 +1220,7 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	/* pdftoppm_path can be NULL */
 	/* pdfinfo_path can be NULL */
 	ASSERT(provider_name != NULL);
-	/* provider_info can be NULL */
+	/* provider_login can be NULL */
 
 	for (pid = 0; pid < NUM_PROVIDERS; pid++) {
 		if (strcmp(provider_name, prov[pid].name) == 0)
@@ -1240,7 +1240,22 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 		cdb->pdfinfo_path = safe_strdup(pdfinfo_path);
 	cdb->airac = airac;
 	cdb->prov = pid;
-	cdb->prov_info = provider_info;
+	/* Deep-copy the login information */
+	if (provider_login != NULL) {
+		cdb->prov_login = safe_malloc(sizeof (*cdb->prov_login));
+		if (provider_login->username != NULL) {
+			cdb->prov_login->username = safe_strdup(
+			    provider_login->username);
+		}
+		if (provider_login->password != NULL) {
+			cdb->prov_login->password = safe_strdup(
+			    provider_login->password);
+		}
+		if (provider_login->cainfo != NULL) {
+			cdb->prov_login->cainfo = safe_strdup(
+			    provider_login->cainfo);
+		}
+	}
 	cdb->normalize_non_icao = B_TRUE;
 	/* Default to 1/32 of physical memory, but no more than 256MB */
 	cdb->load_limit = MIN(physmem() >> 5, 256 << 20);
@@ -1287,7 +1302,22 @@ chartdb_fini(chartdb_t *cdb)
 	free(cdb->path);
 	free(cdb->pdftoppm_path);
 	free(cdb->pdfinfo_path);
-	free(cdb);
+	if (cdb->prov_login != NULL) {
+		if (cdb->prov_login->username != NULL) {
+			ZERO_FREE_N(cdb->prov_login->username,
+			    strlen(cdb->prov_login->username));
+		}
+		if (cdb->prov_login->password != NULL) {
+			ZERO_FREE_N(cdb->prov_login->password,
+			    strlen(cdb->prov_login->password));
+		}
+		if (cdb->prov_login->cainfo != NULL) {
+			ZERO_FREE_N(cdb->prov_login->cainfo,
+			    strlen(cdb->prov_login->cainfo));
+		}
+		ZERO_FREE(cdb->prov_login);
+	}
+	ZERO_FREE(cdb);
 }
 
 bool_t
@@ -1609,6 +1639,16 @@ chartdb_get_chart_surface(chartdb_t *cdb, const char *icao,
 {
 	chart_t *chart;
 
+	ASSERT(cdb != NULL);
+	ASSERT(icao != NULL);
+	ASSERT(chart_name != NULL);
+	ASSERT(surf != NULL);
+	/* num_pages can be NULL */
+
+	*surf = NULL;
+	if (num_pages != NULL)
+		*num_pages = 0;
+
 	mutex_enter(&cdb->lock);
 
 	chart = chart_find(cdb, icao, chart_name);
@@ -1670,11 +1710,11 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 	if (metar && now - arpt->metar_load_t < MAX_METAR_AGE) {
 		/* Fresh METAR still cached, return that. */
 		if (arpt->metar != NULL)
-			result = strdup(arpt->metar);
+			result = safe_strdup(arpt->metar);
 	} else if (!metar && now - arpt->taf_load_t < MAX_TAF_AGE) {
 		/* Fresh TAF still cached, return that. */
 		if (arpt->taf != NULL)
-			result = strdup(arpt->taf);
+			result = safe_strdup(arpt->taf);
 	} else {
 		if (metar) {
 			if (!list_link_active(
@@ -1687,7 +1727,7 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 			}
 			/* If we have an old METAR, return that for now */
 			if (arpt->metar != NULL)
-				result = strdup(arpt->metar);
+				result = safe_strdup(arpt->metar);
 		} else {
 			if (!list_link_active(
 			    &cdb->loader_cmd_taf.loader_node)) {
@@ -1699,7 +1739,7 @@ get_metar_taf_common(chartdb_t *cdb, const char *icao, bool_t metar)
 			}
 			/* If we have an old TAF, return that for now */
 			if (arpt->taf != NULL)
-				result = strdup(arpt->taf);
+				result = safe_strdup(arpt->taf);
 		}
 	}
 
@@ -1737,7 +1777,7 @@ chartdb_is_arpt_known(chartdb_t *cdb, const char *icao)
 			mutex_exit(&cdb->lock); \
 			return (NULL); \
 		} \
-		field_name = strdup(arpt->field_name); \
+		field_name = safe_strdup(arpt->field_name); \
 		mutex_exit(&cdb->lock); \
 		return (field_name); \
 	} while (0)
@@ -1795,15 +1835,14 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
 	    node_name);
 
-	if (cdb->prov_info != NULL) {
+	if (cdb->prov_login != NULL) {
 		/*
 		 * If the caller supplied a CAINFO path, we ONLY want to use
 		 * that for the METAR download. We do NOT want to send in any
 		 * user credentials, which might be meant for the main chart
 		 * data provider.
 		 */
-		chart_prov_info_login_t *prov_login = cdb->prov_info;
-		login.cainfo = prov_login->cainfo;
+		login.cainfo = cdb->prov_login->cainfo;
 	}
 
 	if (!chart_download(cdb, url, NULL, &login, error_reason, &info))
@@ -1835,7 +1874,7 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 		free(path);
 		goto errout;
 	}
-	result = strdup(
+	result = safe_strdup(
 	    (char *)xpath_obj->nodesetval->nodeTab[0]->children->content);
 	xmlXPathFreeObject(xpath_obj);
 	xmlXPathFreeContext(xpath_ctx);

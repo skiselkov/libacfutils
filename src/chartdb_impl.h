@@ -118,9 +118,9 @@ struct chartdb_s {
 	int		(*chart_sort_func)(const void *, const void *, void *);
 
 	/* private to chart provider */
-	void		*prov_info;
-	void		*prov_priv;
-	bool_t		init_complete;
+	chart_prov_info_login_t	*prov_login;
+	void			*prov_priv;
+	bool_t			init_complete;
 
 	/* protected by `lock' */
 	list_t		loader_queue;
