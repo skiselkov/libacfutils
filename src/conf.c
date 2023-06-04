@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -37,22 +37,6 @@
 
 /* For conf_get_da and conf_set_da. */
 CTASSERT(sizeof (double) == sizeof (unsigned long long));
-
-/*
- * This is a general-purpose configuration store. It's really just a
- * key-value pair dictionary that can be read from and written to a file.
- *
- * The file format is very simple, consisting of a simple sequence of
- * lines like the following:
- *
- * key = value
- *
- * In addition to being able to return the full-text values of keys, this
- * set functions also allows you to easily parse the data in a variety of
- * formats (integers, floats, booleans, etc.). The file format also allows
- * for comments, so it is usable as a user-written configuration parser.
- * Lines beginning with "#" or "--" are automatically skipped.
- */
 
 struct conf {
 	avl_tree_t	tree;
@@ -94,7 +78,7 @@ conf_key_compar(const void *a, const void *b)
 		return (1);
 }
 
-/*
+/**
  * Creates an empty configuration. Set values using conf_set_* and write
  * to a file using conf_write,
  */
@@ -107,9 +91,9 @@ conf_create_empty(void)
 	return (conf);
 }
 
-/*
+/**
  * Creates a new configuration as a copy of an existing configuration.
- * The new copy is returned and must be freed by the caller using conf_free.
+ * @return A copy of `conf2` which mustbe freed by the caller using conf_free().
  */
 conf_t *
 conf_create_copy(const conf_t *conf2)
@@ -122,7 +106,7 @@ conf_create_copy(const conf_t *conf2)
 	return (conf);
 }
 
-/*
+/**
  * Given two configurations, takes all values in `conf_from' and inserts
  * them into `conf_to', in essence, merging the two configurations.
  * After this call, `conf_to' will contain all the values present in
@@ -150,7 +134,7 @@ conf_merge(const conf_t *conf_from, conf_t *conf_to)
 	}
 }
 
-/*
+/**
  * Frees a conf_t object and all of its internal resources.
  */
 void
@@ -177,10 +161,11 @@ conf_free(conf_t *conf)
 	free(conf);
 }
 
-/*
+/**
  * Same as conf_read, but serves as a shorthand for reading directly from
  * a file path on disk. If the file cannot be opened for reading and errline
  * is not NULL, it will be set to -1.
+ * @return The parsed configuration object, or `NULL` if reading failed.
  */
 conf_t *
 conf_read_file(const char *filename, int *errline)
@@ -243,16 +228,15 @@ ck_free_value(conf_key_t *ck)
 	}
 }
 
-/*
+/**
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
  * comments.
  *
- * Returns the parsed conf_t object, or NULL in case an error was found.
+ * @return The parsed conf_t object, or NULL in case an error was found.
  * If errline is not NULL, it is set to the line number where the error
  * was encountered.
- *
- * Use conf_free to free the returned structure.
+ * @return Use conf_free() to free the returned structure.
  */
 conf_t *
 conf_read(FILE *fp, int *errline)
@@ -333,16 +317,15 @@ conf_parse_line(char *line, conf_t *conf)
 	return (B_TRUE);
 }
 
-/*
+/**
  * Parses a configuration from a file. The file is structured as a
  * series of "key = value" lines. The parser understands "#" and "--"
  * comments.
  *
- * Returns the parsed conf_t object, or NULL in case an error was found.
+ * @return The parsed conf_t object, or NULL in case an error was found.
  * If errline is not NULL, it is set to the line number where the error
  * was encountered.
- *
- * Use conf_free to free the returned structure.
+ * @return Use conf_free() to free the returned structure.
  */
 conf_t *
 conf_read2(void *fp, int *errline, bool_t compressed)
@@ -381,10 +364,18 @@ errout:
 	return (NULL);
 }
 
-/*
- * Same as conf_read, but takes an in-memory buffer containing the text
- * of the configuration. The buffer is in `buf' and is of length `cap'.
- * The buffer DOESN'T need to be NUL-terminated.
+/**
+ * Same as conf_read(), but takes an in-memory buffer containing the text
+ * of the configuration.
+ * @param buf The memory buffer containing the configuration file text.
+ *	The buffer DOESN'T need to be NUL-terminated.
+ * @param cap The number of bytes in `buf`.
+ * @param errline Optional return argument, which will be the filled with
+ *	the failing line number, if a parsing error occurs.
+ * @return The parsed conf_t object, or NULL in case an error was found.
+ * If errline is not NULL, it is set to the line number where the error
+ * was encountered.
+ * @return Use conf_free() to free the returned structure.
  */
 conf_t *
 conf_read_buf(const void *buf, size_t cap, int *errline)
@@ -446,8 +437,8 @@ errout:
 	return (NULL);
 }
 
-/*
- * Same as conf_write, but serves as a shorthand for writing directly to
+/**
+ * Same as conf_write(), but serves as a shorthand for writing directly to
  * a file path on disk.
  */
 bool_t
@@ -456,8 +447,8 @@ conf_write_file(const conf_t *conf, const char *filename)
 	return (conf_write_file2(conf, filename, B_FALSE));
 }
 
-/*
- * Same as conf_write_file, but lets you specify whether the output
+/**
+ * Same as conf_write_file(), but lets you specify whether the output
  * should be Gzip-compressed.
  */
 bool_t
@@ -525,6 +516,25 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 	return (res);
 }
 
+/**
+ * Writes a conf_t object to an in-memory buffer.
+ * @param buf The buffer into which to write the configuration.
+ *	This must be sized sufficiently large to contain the entire
+ *	configuration file. Please note that the written buffer is not
+ *	explicitly NUL-terminated, so you mustn't treat it as a char string.
+ * @param cap Capacity of `buf` in bytes. This function will never write
+ *	more than `cap` bytes, even if that means cutting the configuration
+ *	file short. You should check the return value of the function and
+ *	allocate enough space in `buf` to contain the entire configuration.
+ * @return The number of bytes it would have taken to contain the entire
+ *	configuration. Example how to allocate an appropriately-sized buffer
+ *	first, before writing the configuration "for real":
+ *```
+ *	size_t len = conf_write_buf(conf, NULL, 0);
+ *	void *buf = safe_malloc(len);
+ *	conf_write_buf(conf, buf, len);
+ *```
+ */
 size_t
 conf_write_buf(const conf_t *conf, void *buf, size_t cap)
 {
@@ -652,7 +662,7 @@ errout:
 #undef	SNPRINTF_ADV
 }
 
-/*
+/**
  * Writes a conf_t object to a file. Returns B_TRUE if the write was
  * successful, B_FALSE otherwise.
  */
@@ -662,9 +672,10 @@ conf_write(const conf_t *conf, FILE *fp)
 	return (conf_write_impl(conf, fp, 0, B_FALSE, B_TRUE));
 }
 
-/*
+/**
+ * \internal
  * Looks for a pre-existing configuration key-value pair based on key name.
- * Returns the conf_key_t object if found, NULL otherwise.
+ * @return The conf_key_t object if found, NULL otherwise.
  */
 static conf_key_t *
 conf_find(const conf_t *conf, const char *key, avl_index_t *where)
@@ -676,9 +687,10 @@ conf_find(const conf_t *conf, const char *key, avl_index_t *where)
 	return (avl_find(&conf->tree, &srch, where));
 }
 
-/*
+/**
  * Retrieves the string value of a configuration key. If found, the value
- * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ * is placed in `value`.
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_str(const conf_t *conf, const char *key, const char **value)
@@ -697,7 +709,8 @@ conf_get_str(const conf_t *conf, const char *key, const char **value)
 
 /*
  * Retrieves the 32-bit int value of a configuration key. If found, the value
- * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ * is placed in `value`.
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_i(const conf_t *conf, const char *key, int *value)
@@ -714,9 +727,10 @@ conf_get_i(const conf_t *conf, const char *key, int *value)
 	return (B_TRUE);
 }
 
-/*
+/**
  * Retrieves the 64-bit int value of a configuration key. If found, the value
- * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ * is placed in `value`.
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_lli(const conf_t *conf, const char *key, long long *value)
@@ -733,9 +747,10 @@ conf_get_lli(const conf_t *conf, const char *key, long long *value)
 	return (B_TRUE);
 }
 
-/*
+/**
  * Retrieves the 64-bit float value of a configuration key. If found, the value
- * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ * is placed in `value`.
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_d(const conf_t *conf, const char *key, double *value)
@@ -756,7 +771,9 @@ conf_get_d(const conf_t *conf, const char *key, double *value)
 	}
 }
 
-/* Same as conf_get_d, but for float values */
+/**
+ * Same as conf_get_d, but for float values.
+ */
 bool_t
 conf_get_f(const conf_t *conf, const char *key, float *value)
 {
@@ -776,14 +793,16 @@ conf_get_f(const conf_t *conf, const char *key, float *value)
 	}
 }
 
-/*
+/**
  * Retrieves the 64-bit float value previously stored using conf_set_da. If
- * found, the value is placed in *value. Returns B_TRUE if the key was found,
- * else B_FALSE.
+ * found, the value is placed in `value`.
+ *
  * Due to a limitation in MinGW, we can't use '%a' here. Instead, we directly
  * write the binary representation of the double value. Since IEEE754 is used
  * on all our supported platforms, that makes it portable. As future-proofing
  * for big endian platforms, we always enforce storing the value in LE.
+ *
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_da(const conf_t *conf, const char *key, double *value)
@@ -814,9 +833,10 @@ conf_get_da(const conf_t *conf, const char *key, double *value)
 	return (B_TRUE);
 }
 
-/*
+/**
  * Retrieves the boolean value of a configuration key. If found, the value
- * is placed in *value. Returns B_TRUE if the key was found, else B_FALSE.
+ * is placed in `value`.
+ * @return B_TRUE if the key was found, else B_FALSE.
  */
 bool_t
 conf_get_b(const conf_t *conf, const char *key, bool_t *value)
@@ -835,6 +855,10 @@ conf_get_b(const conf_t *conf, const char *key, bool_t *value)
 	return (B_TRUE);
 }
 
+/**
+ * Same as conf_get_b(), but takes a C99-style `bool` type argument,
+ * instead of libacfutils' own `bool_t` type.
+ */
 bool
 conf_get_b2(const conf_t *conf, const char *key, bool *value)
 {
@@ -845,6 +869,27 @@ conf_get_b2(const conf_t *conf, const char *key, bool *value)
 	return (true);
 }
 
+/**
+ * Retrieves a binary buffer value of a configuration key.
+ * @param buf The buffer which will be filled with the configuration data.
+ *	You must pre-allocate the buffer appropriately to hold the data,
+ *	otherwise it will be truncated.
+ * @param cap The capacity of `buf` in bytes. This function will never write
+ *	more than `cap` bytes to `buf`. Use the return value of this function
+ *	to determine if the value was truncated.
+ * @return The number of bytes that would have been written to `buf` if it
+ *	had been large enough to contain the entire value. If the key doesn't
+ *	exist in the configuration, returns 0 instead. Example how to
+ *	allocate an appropriately-sized buffer first, before retrieving
+ *	the configuration data "for real":
+ *```
+ *	size_t len = conf_get_data(conf, key, NULL, 0);
+ *	void *buf = safe_malloc(len);
+ *	if (conf_get_data(conf, key, buf, len) != 0) {
+ *		... use data ...
+ *	}
+ *```
+ */
 size_t
 conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
 {
@@ -864,9 +909,12 @@ conf_get_data(const conf_t *conf, const char *key, void *buf, size_t cap)
 	return (ck->data.sz);
 }
 
-/*
+/**
  * Sets up a key-value pair in the conf_t structure with a string value.
- * If value = NULL, this instead removes the key-value pair (if present).
+ * @param key The key name for which to set the value. If the key already
+ *	exists, it will be overwritten.
+ * @param value The value to set for the new key. If you pass `NULL`,
+ *	this will instead remove the key-value pair (if present).
  */
 void
 conf_set_str(conf_t *conf, const char *key, const char *value)
@@ -928,9 +976,9 @@ conf_set_common(conf_t *conf, const char *key, const char *fmt, ...)
 	va_end(ap2);
 }
 
-/*
- * Same as conf_set_str but with an int value. Obviously this cannot
- * remove a key, use conf_set_str(conf, key, NULL) for that.
+/**
+ * Same as conf_set_str() but with an int value. Obviously this cannot
+ * remove a key, use `conf_set_str(conf, key, NULL)` for that.
  */
 void
 conf_set_i(conf_t *conf, const char *key, int value)
@@ -940,9 +988,9 @@ conf_set_i(conf_t *conf, const char *key, int value)
 	conf_set_common(conf, key, "%i", value);
 }
 
-/*
- * Same as conf_set_str but with a long long value. Obviously this
- * cannot remove a key, use conf_set_str(conf, key, NULL) for that.
+/**
+ * Same as conf_set_str() but with a long long value. Obviously this
+ * cannot remove a key, use `conf_set_str(conf, key, NULL)` for that.
  */
 void
 conf_set_lli(conf_t *conf, const char *key, long long value)
@@ -960,9 +1008,9 @@ conf_set_lli(conf_t *conf, const char *key, long long value)
 #endif
 }
 
-/*
- * Same as conf_set_str but with a double value. Obviously this cannot
- * remove a key, use conf_set_str(conf, key, NULL) for that.
+/**
+ * Same as conf_set_str() but with a double value. Obviously this cannot
+ * remove a key, use `conf_set_str(conf, key, NULL)` for that.
  */
 void
 conf_set_d(conf_t *conf, const char *key, double value)
@@ -975,6 +1023,10 @@ conf_set_d(conf_t *conf, const char *key, double value)
 		conf_set_common(conf, key, "%.15f", value);
 }
 
+/**
+ * Same as conf_set_str() but with a float value. Obviously this cannot
+ * remove a key, use `conf_set_str(conf, key, NULL)` for that.
+ */
 void
 conf_set_f(conf_t *conf, const char *key, float value)
 {
@@ -986,10 +1038,10 @@ conf_set_f(conf_t *conf, const char *key, float value)
 		conf_set_common(conf, key, "%.12f", value);
 }
 
-/*
- * Same as conf_set_d, but able to accurately represent the exact value of
+/**
+ * Same as conf_set_d(), but able to accurately represent the exact value of
  * a double argument. Obviously this cannot remove a key, use
- * conf_set_str(conf, key, NULL) for that.
+ * `conf_set_str(conf, key, NULL)` for that.
  */
 void
 conf_set_da(conf_t *conf, const char *key, double value)
@@ -1013,9 +1065,9 @@ conf_set_da(conf_t *conf, const char *key, double value)
 #endif
 }
 
-/*
- * Same as conf_set_str but with a bool_t value. Obviously this cannot
- * remove a key, use conf_set_str(conf, key, NULL) for that.
+/**
+ * Same as conf_set_str() but with a `bool_t` value. Obviously this cannot
+ * remove a key, use `conf_set_str(conf, key, NULL)` for that.
  */
 void
 conf_set_b(conf_t *conf, const char *key, bool_t value)
@@ -1025,8 +1077,8 @@ conf_set_b(conf_t *conf, const char *key, bool_t value)
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
 }
 
-/*
- * Same as conf_set_b, but using C99's native bool type.
+/**
+ * Same as conf_set_b(), but using C99's native bool type.
  */
 void
 conf_set_b2(conf_t *conf, const char *key, bool value)
@@ -1036,6 +1088,14 @@ conf_set_b2(conf_t *conf, const char *key, bool value)
 	conf_set_common(conf, key, "%s", value ? "true" : "false");
 }
 
+/**
+ * Same as conf_set_str(), but allows you to pass an arbitrary binary
+ * data buffer to be set for the configuration key.
+ * @param buf The data buffer to set for the key's value. If you pass
+ *	`NULL` here instead, the key-value pair will be removed (if present).
+ * @param sz The number of bytes in `buf`. If you pass 0 here instead,
+ *	the key-value pair will be removed (if present).
+ */
 void
 conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 {
@@ -1103,8 +1163,8 @@ conf_set_data(conf_t *conf, const char *key, const void *buf, size_t sz)
 		va_end(ap2); \
 	} while (0)
 
-/*
- * Same as conf_get_str, but allows passing in a printf-formatted argument
+/**
+ * Same as conf_get_str(), but allows passing in a printf-formatted argument
  * string in `fmt' and a variable number of arguments following `value'
  * to construct the configuration key name dynamically.
  */
@@ -1117,8 +1177,8 @@ conf_get_str_v(const conf_t *conf, const char *fmt, const char **value, ...)
 	VARIABLE_GET(conf_get_str, value, value);
 }
 
-/*
- * Same as conf_get_i, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_i(), but with dynamic name-construction as conf_get_str_v().
  */
 bool_t
 conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
@@ -1129,8 +1189,9 @@ conf_get_i_v(const conf_t *conf, const char *fmt, int *value, ...)
 	VARIABLE_GET(conf_get_i, value, value);
 }
 
-/*
- * Same as conf_get_lli, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_lli(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 bool_t
 conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
@@ -1141,8 +1202,8 @@ conf_get_lli_v(const conf_t *conf, const char *fmt, long long *value, ...)
 	VARIABLE_GET(conf_get_lli, value, value);
 }
 
-/*
- * Same as conf_get_f, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_f(), but with dynamic name-construction as conf_get_str_v().
  */
 bool_t
 conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
@@ -1153,8 +1214,8 @@ conf_get_f_v(const conf_t *conf, const char *fmt, float *value, ...)
 	VARIABLE_GET(conf_get_f, value, value);
 }
 
-/*
- * Same as conf_get_d, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_d(), but with dynamic name-construction as conf_get_str_v().
  */
 bool_t
 conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
@@ -1165,8 +1226,9 @@ conf_get_d_v(const conf_t *conf, const char *fmt, double *value, ...)
 	VARIABLE_GET(conf_get_d, value, value);
 }
 
-/*
- * Same as conf_get_da, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_da(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 bool_t
 conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
@@ -1177,8 +1239,9 @@ conf_get_da_v(const conf_t *conf, const char *fmt, double *value, ...)
 	VARIABLE_GET(conf_get_da, value, value);
 }
 
-/*
- * Same as conf_get_b, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_data(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 size_t
 conf_get_data_v(const conf_t *conf, const char *fmt, void *buf,
@@ -1190,8 +1253,8 @@ conf_get_data_v(const conf_t *conf, const char *fmt, void *buf,
 	VARIABLE_GET(conf_get_data, cap, buf, cap);
 }
 
-/*
- * Same as conf_get_b, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_get_b(), but with dynamic name-construction as conf_get_str_v().
  */
 bool_t
 conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
@@ -1202,8 +1265,8 @@ conf_get_b_v(const conf_t *conf, const char *fmt, bool_t *value, ...)
 	VARIABLE_GET(conf_get_b, value, value);
 }
 
-/*
- * Same as conf_get_b_v, but using the C99 native bool type.
+/**
+ * Same as conf_get_b_v(), but using the C99 native bool type.
  */
 bool
 conf_get_b2_v(const conf_t *conf, const char *fmt, bool *value, ...)
@@ -1215,7 +1278,8 @@ conf_get_b2_v(const conf_t *conf, const char *fmt, bool *value, ...)
 }
 
 /*
- * Same as conf_set_str, but with dynamic name-construction as conf_get_str_v.
+ * Same as conf_set_str(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 void
 conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
@@ -1225,8 +1289,8 @@ conf_set_str_v(conf_t *conf, const char *fmt, const char *value, ...)
 	VARIABLE_SET(conf_set_str, value, value);
 }
 
-/*
- * Same as conf_set_i, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_i(), but with dynamic name-construction as conf_get_str_v().
  */
 void
 conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
@@ -1236,8 +1300,9 @@ conf_set_i_v(conf_t *conf, const char *fmt, int value, ...)
 	VARIABLE_SET(conf_set_i, value, value);
 }
 
-/*
- * Same as conf_set_lli, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_lli(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 void
 conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
@@ -1247,8 +1312,8 @@ conf_set_lli_v(conf_t *conf, const char *fmt, long long value, ...)
 	VARIABLE_SET(conf_set_lli, value, value);
 }
 
-/*
- * Same as conf_set_f, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_f(), but with dynamic name-construction as conf_get_str_v().
  */
 void
 conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
@@ -1258,8 +1323,8 @@ conf_set_f_v(conf_t *conf, const char *fmt, double value, ...)
 	VARIABLE_SET(conf_set_f, value, value);
 }
 
-/*
- * Same as conf_set_d, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_d(), but with dynamic name-construction as conf_get_str_v().
  */
 void
 conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
@@ -1269,8 +1334,9 @@ conf_set_d_v(conf_t *conf, const char *fmt, double value, ...)
 	VARIABLE_SET(conf_set_d, value, value);
 }
 
-/*
- * Same as conf_set_da, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_da(), but with dynamic name-construction as
+ * conf_get_str_v().
  */
 void
 conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
@@ -1280,8 +1346,8 @@ conf_set_da_v(conf_t *conf, const char *fmt, double value, ...)
 	VARIABLE_SET(conf_set_da, value, value);
 }
 
-/*
- * Same as conf_set_b, but with dynamic name-construction as conf_get_str_v.
+/**
+ * Same as conf_set_b(), but with dynamic name-construction as conf_get_str_v().
  */
 void
 conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
@@ -1291,6 +1357,10 @@ conf_set_b_v(conf_t *conf, const char *fmt, bool_t value, ...)
 	VARIABLE_SET(conf_set_b, value, value);
 }
 
+/**
+ * Same as conf_set_data(), but with dynamic name-construction as
+ * conf_get_str_v().
+ */
 void conf_set_data_v(conf_t *conf, const char *fmt, const void *buf,
     size_t sz, ...)
 {
@@ -1299,21 +1369,32 @@ void conf_set_data_v(conf_t *conf, const char *fmt, const void *buf,
 	VARIABLE_SET(conf_set_data, sz, buf, sz);
 }
 
-/*
- * Walks all configuration key-value pairs. You must set *cookie to NULL
- * on the first call. The function uses it to know how far it has progressed
- * in the walk. Once the walk is done, the function returns B_FALSE. Otherwise
- * it returns B_TRUE and the next config key & value in the respective args.
- * You may add or remove key-value pairs to the configuration during the walk.
- * Proper usage of this function:
+/**
+ * Walks all configuration key-value pairs. You must NOT add or remove
+ * key-value pairs in the configuration during the walk.
  *
+ * Caveat: this function skips data-type keys (created with conf_set_data()).
+ *
+ * @param cookie A helper pointer so the function knows how far it has
+ *	progressed. You MUST set it to `NULL` before the first call.
+ * @param key Return parameter, which will be filled with the next key
+ *	it has found.
+ * @param value Return parameter, which will be filled with the next
+ *	string value it has found.
+ * @return B_TRUE if the function has found another key-value pair and
+ *	returned them in `key` and `value, or `B_FALSE` if no more key-value
+ *	have been found.
+ *
+ * Proper usage of this function:
+ *```
  *	void *cookie = NULL;
  *	const char *key, *value;
  *	while (conf_walk(conf, &key, &value, &cookie)) {
  *		... do something with key & value ...
  *	}
+ *```
  */
-bool_t
+API_EXPORT bool_t
 conf_walk(const conf_t *conf, const char **key, const char **value,
     void **cookie)
 {
