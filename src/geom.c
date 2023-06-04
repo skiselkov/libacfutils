@@ -21,12 +21,12 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/math.h>
-#include <acfutils/helpers.h>
-#include <acfutils/geom.h>
-#include <acfutils/perf.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#include "acfutils/math.h"
+#include "acfutils/helpers.h"
+#include "acfutils/geom.h"
+#include "acfutils/perf.h"
+#include "acfutils/safe_alloc.h"
 
 /*
  * The WGS84 ellipsoid parameters.
