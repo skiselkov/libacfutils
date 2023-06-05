@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <stdio.h>
@@ -296,6 +296,10 @@ handle_windows_exception(EXCEPTION_POINTERS *ei)
 
 #endif	/* APL || LIN */
 
+/**
+ * Installs a custom crash handler and initializes the system.
+ * This should be called near the top of your `XPluginStart`.
+ */
 void
 except_init(void)
 {
@@ -310,6 +314,10 @@ except_init(void)
 #endif	/* !LIN && !APL */
 }
 
+/**
+ * Uninstalls a custom crash handler and deinitializes the system.
+ * This should be called near the bottom of your `XPluginStop`.
+ */
 void
 except_fini(void)
 {

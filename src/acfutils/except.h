@@ -20,7 +20,24 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This file contains an exception/crash catching machinery. Please note
+ * that this system may override any other crash handlers and on Linux &
+ * MacOS, there can usually only be a single crash handler. So you should
+ * definitely NOT use this if you're not the loaded aircraft addon, or
+ * you're not using this for development & testing.
+ *
+ * Once the custom crash handlers are installed, if a crash or unexpected
+ * exception occurs, our custom crash handler catches that condition and
+ * attempts to print a suitable error message. The crash handler performs
+ * a stack backtrace and attempts to analyze the symbols of the crashed
+ * binary to provide as much debug information as possible.
+ *
+ * @see except_init()
+ * @see except_fini()
  */
 
 #ifndef	_ACFUTILS_EXCEPT_H_
@@ -32,9 +49,7 @@
 extern "C" {
 #endif
 
-#define	except_init	ACFSYM(except_init)
 API_EXPORT void except_init(void);
-#define	except_fini	ACFSYM(except_fini)
 API_EXPORT void except_fini(void);
 
 #ifdef __cplusplus
