@@ -15,11 +15,6 @@
 /*
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
-/**
- * \file
- * The purpose of this module is to aggregate integration with 3rd party
- * apps of the host OS.
- */
 
 #if	IBM
 #include <windows.h>

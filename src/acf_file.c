@@ -15,7 +15,6 @@
 /*
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
-/** \file */
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -62,11 +61,11 @@ acf_prop_compar(const void *a, const void *b)
 /**
  * Reads an X-Plane .acf file and returns a structure which can be used
  * to access its properties.
- *
  * @param filename A full path to the .acf file to read.
- *
  * @return A constructed .acf file in an accessible structure, or NULL
  *	on error. The exact error is emitted via logMsg.
+ * @see acf_prop_find()
+ * @see acf_file_get_version()
  */
 acf_file_t *
 acf_file_read(const char *filename)

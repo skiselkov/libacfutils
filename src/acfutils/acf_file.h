@@ -15,7 +15,14 @@
 /*
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
-/** \file */
+/**
+ * \file
+ * This module contains functionality to parse and traverse X-Plane
+ * .acf files. This can be used to interrogate aircraft properties,
+ * as well as to read physics model shape outlines.
+ * @see acf_file_read()
+ * @see acf_prop_find()
+ */
 
 #ifndef	_ACF_UTILS_ACF_FILE_H_
 #define	_ACF_UTILS_ACF_FILE_H_

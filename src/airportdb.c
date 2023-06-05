@@ -14,7 +14,6 @@
  *
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
-/** \file */
 
 #include <errno.h>
 #include <iconv.h>
@@ -49,103 +48,6 @@
 #include "acfutils/perf.h"
 #include "acfutils/safe_alloc.h"
 #include "acfutils/types.h"
-
-/**
- * \struct airportdb
- *
- * The airport database is the primary repository of knowledge about airports,
- * runways and bounding boxes. It is composed of two data structures:
- *
- * - a global ident -> airport_t AVL tree (apt_dat). This allows us to
- *	quickly locate an airport based on its identifier.
- * - a geo-referenced AVL tree from approximate airport reference point
- *	position (in 1-degree accuracy) to the airport_t (geo_table). This
- *	allows us to quickly sift through the airport database to locate any
- *	airports close to a given point of interest.
- *
- * Of these, apt_dat is the primary repository of knowledge - once an airport
- * is gone from apt_dat, it is freed. An airport may or may not be
- * geo-referenced in the geo_table. Once all loading of an airport is
- * complete, it WILL be geo-referenced.
- *
- * The geo_table is actually comprised of tile_t data structures. A tile_t
- * refers to a 1x1 degree geographical tile at specific coordinates and
- * contains its own private airport_t tree, which is again organized by
- * abstract identifier, allowing us to step through all the airports in a
- * tile or quickly locate one based on identifier.
- *
- * During normal operation, not all airports from all over the world are
- * loaded into memory, as that would use quite a bit of memory and delay
- * startup. Instead, only the closets 9 tiles around the aircraft are
- * present. New tiles are loaded as the aircraft repositions and the old
- * ones are released. Loading a tile first populates the global apt_dat
- * with all its airports, which are then geo-referenced in the newly
- * created tile. Releasing a tile is the converse, ultimately ending in
- * the airports being purged from apt_dat and freed.
- *
- * The 9-tile rule can result in strange behavior close to the poles, where
- * the code might think of close by airports as being very far away and
- * thus not load them. Luckily, there are only about 4 airports beyond 80
- * degrees latitude (north or south), all of which are very special
- * non-regular airports, so we just ignore those.
- *
- *
- * AIRPORT DATA CONSTRUCTION METHOD
- *
- * For each airport, we need to obtain the following pieces of information:
- *
- * 1. The abstract airport identifier.
- *	- Optional ICAO identifier, on a 1302 icao_code line.
- *	- Optional IATA identifier, on a 1302 iata_code line.
- * 2. The airport reference point latitude, longitude and elevation.
- * 3. The airport's transition altitude and transition level (if published).
- * 4. For each runway:
- *	- Runway width.
- *	- Each threshold's geographical position and elevation.
- *	- If the threshold is displaced, the amount of displacement.
- *	- For each end, if available, the optimal glidepath angle and
- *	   threshold clearing height.
- *
- * First we examine all installed scenery. That means going through each
- * apt.dat declared in scenery_packs.ini and the global default apt dat
- * to find these kinds of records:
- *
- * - '1' records identify airports. See parse_apt_dat_1_line.
- * - '21' records identify runway-related lighting fixtures (PAPIs/VASIs).
- *	See parse_apt_dat_21_line.
- * - '50' through '56' and '1050' through '1056' records identify frequency
- *	information. See parse_apt_dat_freq_line.
- * - '100' records identify runways. See parse_apt_dat_100_line.
- * - '1302' records identify airport meta-information, such as ICAO code,
- *	TA, TL, reference point location, etc.
- *
- * Prior to X-Plane 11, apt.dat's didn't necessarily contain the '1302'
- * records, so we had to pull those from the Airports.txt in the navdata
- * directory for the built-in GNS430. Starting from X-Plane 11, Airports.txt
- * is gone and this data has been relocated to the apt.dat.
- *
- * A further complication of the absence of an Airports.txt is that this
- * file contained both the GPA and TCH for each runway and although it did
- * sometimes require some fuzzy matching to account for outdated scenery
- * not exactly matching the navdata, we could obtain this information from
- * one place.
- *
- * So for X-Plane 11, we've implemented a new method of obtaining this
- * information. By default, if a runway has an instrument approach (unless
- * ifr_only=B_FALSE), it will have an entry in CIFP. Runway entries in
- * APPCH-type procedures specify the TCH and GPA in columns 24 and 29 (ARINC
- * 424 fields 4.1.9.1.85-89 and 4.1.9.1.103-106). We only use the first
- * such occurence. If there are multiple approaches to the runway, they
- * should all end up with the same TCH and GPA. This should cover pretty much
- * every case. In the rare case where we *don't* get the TCH and GPA this way,
- * we try a fallback mechanism. Almost every instrument approach runway has
- * some kind of visual glideslope indication (VGSI) right next to it. We can
- * extract the location of those from the apt.dat file. These VGSIs are
- * located in the exact touchdown point and have a fixed GPA. So we simply
- * look for a VGSI close to the runway's centerline and that is aligned with
- * the runway, compute the longitudinal displacement of this indicator from
- * the runway threshold and using the indicator's GPA compute the optimal TCH.
- */
 
 #define	RWY_PROXIMITY_LAT_FRACT		3
 #define	RWY_PROXIMITY_LON_DISPL		609.57	/* meters, 2000 ft */
