@@ -20,14 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2022 Saso Kiselkov. All rights reserved.
- */
-/*
- * mt_cairo_render is a multi-threaded cairo rendering surface with
- * built-in double-buffering and OpenGL compositing. You only need to
- * provide a callback that renders into the surface using a passed
- * cairo_t and then call mt_cairo_render_draw at regular intervals to
- * display the rendered result.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <XPLMGraphics.h>
@@ -52,7 +45,7 @@ static const struct {
 #include FT_ERRORS_H
 
 const char *
-ft_err2str(FT_Error err)
+font_utils_ft_err2str(FT_Error err)
 {
 	for (int i = 0; ft_errors[i].err_msg != NULL; i++)
 		if (ft_errors[i].err_code == err)
@@ -60,25 +53,9 @@ ft_err2str(FT_Error err)
 	return (NULL);
 }
 
-/*
- * Simple font loading front-end.
- *
- * @param fontdir A path to the directory from which to load the font.
- * @param fontfile A font file name. This is concatenated onto the fontdir
- *	with a path separator. If you only want to provide one string with
- *	a full path to the font file, pass that in fontdir and set
- *	fontfile = NULL.
- * @param ft FreeType library handle.
- * @param font Return FreeType font face object pointer. Release this after
- *	the cairo font face object using FT_DoneFace.
- * @param cr_font Return cairo font face object pointer. Release this before
- *	the freetype font face using cairo_font_face_destroy.
- *
- * Return B_TRUE if loading the font was successfull, B_FALSE otherwise. In
- *	case of error, the reason is logged using logMsg.
- */
 bool_t
-try_load_font(const char *fontdir, const char *fontfile, FT_Library ft,
+font_utils_try_load_font(const char *fontdir, const char *fontfile,
+    FT_Library ft, 
     FT_Face *font, cairo_font_face_t **cr_font)
 {
 	char *fontpath = mkpathname(fontdir, fontfile, NULL);

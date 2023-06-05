@@ -20,7 +20,12 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This file contains support utilities to help with font handling
+ * and Cairo font operations.
  */
 
 #ifndef	_ACF_UTILS_FONT_UTILS_H_
@@ -37,11 +42,36 @@
 extern "C" {
 #endif
 
-#define	ft_err2str	ACFSYM(ft_err2str)
+/** For backwards compatibility with older code */
+#define	ft_err2str	font_utils_ft_err2str
+/**
+ * Translates an `FT_Error` error code into a human-readable string.
+ */
 API_EXPORT const char *ft_err2str(FT_Error err);
-#define	try_load_font	ACFSYM(try_load_font)
-API_EXPORT bool_t try_load_font(const char *fontdir, const char *fontfile,
-    FT_Library ft, FT_Face *font, cairo_font_face_t **cr_font);
+
+/** For backwards compatibility with older code */
+#define	try_load_font	font_utils_try_load_font
+
+/**
+ * Simple font loading front-end.
+ *
+ * @param fontdir A path to the directory from which to load the font.
+ * @param fontfile A font file name. This is concatenated onto the fontdir
+ *	with a path separator. If you only want to provide one string with
+ *	a full path to the font file, pass that in fontdir and set
+ *	fontfile = NULL.
+ * @param ft FreeType library handle.
+ * @param font Return FreeType font face object pointer. Release this after
+ *	the cairo font face object using FT_DoneFace.
+ * @param cr_font Return cairo font face object pointer. Release this before
+ *	the freetype font face using cairo_font_face_destroy.
+ *
+ * Return `B_TRUE` if loading the font was successfull, `B_FALSE` otherwise.
+ *	In case of error, the reason is logged using logMsg.
+ */
+API_EXPORT bool_t font_utils_try_load_font(const char *fontdir,
+    const char *fontfile, FT_Library ft, FT_Face *font,
+    cairo_font_face_t **cr_font);
 
 #ifdef	__cplusplus
 }
