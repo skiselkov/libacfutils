@@ -66,6 +66,11 @@ reg_cmd_compar(const void *a, const void *b)
 	return (0);
 }
 
+/**
+ * Initializes the DCR machinery. This should be called before any of
+ * the other DCR macros or functions are called - typically near the
+ * top of your `XPluginEnable` or `XPluginStart` callbacks.
+ */
 void
 dcr_init(void)
 {
@@ -78,6 +83,15 @@ dcr_init(void)
 	    offsetof(reg_cmd_t, node));
 }
 
+/**
+ * Deinitializes the DCR machinery. This should be called on plugin shutdown
+ * and after you are done with all dataref manipulations, typically near the
+ * bottom of your `XPluginEnable` or `XPluginStart` callbacks.
+ *
+ * This function will go through all aggregated datarefs and commands that
+ * were created using the DCR family of macros and functions and
+ * destroy/unregister them all as necessary.
+ */
 void
 dcr_fini(void)
 {
@@ -105,6 +119,7 @@ dcr_fini(void)
 	avl_destroy(&cmds);
 }
 
+/** Internal, do not call, use the `DCR_CREATE` macros instead */
 void *
 dcr_alloc_rdr(void)
 {
@@ -112,6 +127,7 @@ dcr_alloc_rdr(void)
 	return (safe_calloc(1, sizeof (reg_dr_t)));
 }
 
+/** Internal, do not call, use the `DCR_CREATE` macros instead */
 dr_t *
 dcr_get_dr(void *token)
 {
@@ -120,6 +136,7 @@ dcr_get_dr(void *token)
 	return (&((reg_dr_t *)token)->dr);
 }
 
+/** Internal, do not call, use the `DCR_CREATE` macros instead */
 void
 dcr_insert_rdr(void *token)
 {
@@ -136,6 +153,22 @@ dcr_insert_rdr(void *token)
 	avl_insert(&drs, rdr, where);
 }
 
+/**
+ * Finds a command and register a callback to handle it, while registering
+ * it with DCR, so the handler is automatically deregistered when you call
+ * dcr_fini().
+ * @param fmt A printf-style format string which will be evaluated to form
+ *	the name of the command for the lookup. The variadic arguments to
+ *	this function are used for the format specifiers in this string.
+ * @param cb Callback function to register for the command handler.
+ * @param before Flag describing whether the callback should be called before
+ *	X-Plane handles the command, or after.
+ * @param refcon Reference constant, which will be passed to the callback
+ *	in the `refcon` argument.
+ * @return Returns the `XPLMCommandRef` of the command, if found and the
+ *	command has been registered successfully. Otherwise returns `NULL`.
+ * @see https://www.man7.org/linux/man-pages/man3/printf.3.html
+ */
 XPLMCommandRef
 dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
     void *refcon, ...)
@@ -150,6 +183,11 @@ dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
 	return ref;
 }
 
+/**
+ * Same as dcr_find_cmd(), but takes a `va_list` argument list for the
+ * format arguments, instead of being variadic.
+ * @see dcr_find_cmd()
+ */
 XPLMCommandRef
 dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
     void *refcon, va_list ap)
@@ -186,6 +224,12 @@ dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
 	return (cmd->cmd);
 }
 
+/**
+ * Same as dcr_find_cmd(), but will cause a hard assertion failure if the
+ * command doesn't exist. This is similar to the fcmd_find() and fdr_find()
+ * functions.
+ * @see dcr_find_cmd()
+ */
 XPLMCommandRef
 f_dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
     void *refcon, ...)
@@ -200,6 +244,12 @@ f_dcr_find_cmd(const char *fmt, XPLMCommandCallback_f cb, bool before,
 	return (ref);
 }
 
+/**
+ * Same as f_dcr_find_cmd(), but takes a `va_list` argument list for the
+ * format arguments, instead of being variadic.
+ * @see f_dcr_find_cmd()
+ * @see dcr_find_cmd()
+ */
 XPLMCommandRef
 f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
     void *refcon, va_list ap)
@@ -219,6 +269,22 @@ f_dcr_find_cmd_v(const char *fmt, XPLMCommandCallback_f cb, bool before,
 	return (ref);
 }
 
+/**
+ * Creates a new command and registers a command handler for it in a single
+ * step. This also registers the command handler with DCR, so the handler
+ * is automatically deregistered when you call dcr_fini().
+ * @param cmdname The name of the command to be registered. This must be
+ *	unique to prevent unpredictable behavior.
+ * @param cmddesc A human-readable description of the command to show in
+ *	X-Plane's command assignment UI.
+ * @param cb Callback function to register for the command handler.
+ * @param before Flag describing whether the callback should be called before
+ *	X-Plane handles the command, or after.
+ * @param refcon Reference constant, which will be passed to the callback
+ *	in the `refcon` argument.
+ * @return Returns the `XPLMCommandRef` of the newly created command. If the
+ *	command creation fails, this function causes a hard assertion failure.
+ */
 XPLMCommandRef
 dcr_create_cmd(const char *cmdname, const char *cmddesc,
     XPLMCommandCallback_f cb, bool before, void *refcon)
