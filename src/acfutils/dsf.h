@@ -20,7 +20,13 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This file holds a general-purpose DSF parser. To start parsing a DSF
+ * file on disk, use dsf_init() to obtain a handle to the file. When you
+ * are done with the DSF file, use dsf_fini() to release the handle.
  */
 
 #ifndef	_ACFUTILS_DSF_H_
@@ -60,7 +66,7 @@ extern "C" {
 
 #define	DSF_ATOM_CMDS	DSF_ATOM('C', 'M', 'D', 'S')
 
-#define	DSF_REASON_SZ	256
+enum { DSF_REASON_SZ = 256 };
 
 #define	DSF_ATOM_ID_PRINTF(atom) \
 	((atom)->id & 0xff000000) >> 24, \
@@ -260,7 +266,6 @@ API_EXPORT dsf_t *dsf_init(const char *filename);
 API_EXPORT dsf_t *dsf_parse(uint8_t *buf, size_t bufsz,
     char reason[DSF_REASON_SZ]);
 API_EXPORT void dsf_fini(dsf_t *dsf);
-API_EXPORT bool_t dsf_read_md5(const char *filename, uint8_t md5sum[16]);
 API_EXPORT char *dsf_dump(const dsf_t *dsf);
 
 API_EXPORT const dsf_atom_t *dsf_lookup(const dsf_t *dsf, ...);

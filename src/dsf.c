@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <string.h>
@@ -160,6 +160,15 @@ read_u32(const uint8_t *buf)
 #endif
 }
 
+/**
+ * Reads a DSF file from disk and provides a handle to it. This function
+ * should be used as the first step to access the DSF data. If the file
+ * is compressed on disk, it is decompressed in memory first.
+ * @param filename The full file name & path to the DSF file on disk.
+ * @return A handle to the open DSF file, if successful. If there was a
+ *	failure in reading the file, this returns `NULL` instead. The
+ *	reason for the failure is automatically reported using logMsg().
+ */
 dsf_t *
 dsf_init(const char *filename)
 {
@@ -682,6 +691,19 @@ parse_atom_list(const uint8_t *buf, uint64_t bufsz, list_t *atoms,
 	return (B_TRUE);
 }
 
+/**
+ * Parses a decompressed DSF file from a memory buffer. You should generally
+ * not need to use this function, unless you're streaming DSFs over the net.
+ * Use dsf_init() for files store on disk.
+ * @param buf A buffer containing the decompressed DSF file data.
+ * @param bufsz Number of bytes in `buf`.
+ * @param reason A return string, which will be filled with a human-readable
+ *	failure reason in case parsing of the data fails. If the parse is
+ *	successful, this buffer is left unaltered.
+ * @return A handle to the parsed DSF data, if successful. If there was a
+ *	failure parsing the data, this returns `NULL` instead. The
+ *	reason for the failure is written into the `reason` argument.
+ */
 dsf_t *
 dsf_parse(uint8_t *buf, size_t bufsz, char reason[DSF_REASON_SZ])
 {
@@ -757,6 +779,10 @@ free_atom(dsf_atom_t *atom)
 	free(atom);
 }
 
+/**
+ * Destroys a DSF file handle which was previously created using either
+ * dsf_init() or dsf_parse().
+ */
 void
 dsf_fini(dsf_t *dsf)
 {
@@ -878,6 +904,12 @@ dump_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 		dump_atom(subatom, str, len, depth + 1);
 }
 
+/**
+ * Generates a human-readable description of the contents of a DSF file.
+ * @param dsf The DSF file to describe.
+ * @return A NUL-terminated string describing the DSF file. The caller
+ *	is reponsible for freeing this string using lacf_free().
+ */
 char *
 dsf_dump(const dsf_t *dsf)
 {
@@ -906,6 +938,19 @@ dsf_dump(const dsf_t *dsf)
 	return (str);
 }
 
+/**
+ * Performs a DSF atom lookup inside of a DSF file. The variadic part of
+ * this function must be a list of 32-bit unsigned integers, and MUST be
+ * terminated by a zero integer argument. The integers form an path of
+ * DSF atom IDs to be searched in the DSF tree structure. If along the
+ * way a part of the path sits in a list atom with multiple instances of
+ * the same atom ID, this picks the first instance. To search through
+ * lists of same-ID atoms, use dsf_lookup_v with a varying index number
+ * for the relevant atom path segment.
+ * @return The DSF atom at the provided path. If any part of the path was
+ *	not found, this function returns `NULL` instead.
+ * @see dsf_lookup_v
+ */
 const dsf_atom_t *
 dsf_lookup(const dsf_t *dsf, ...)
 {
@@ -937,6 +982,18 @@ dsf_lookup(const dsf_t *dsf, ...)
 	return (atom);
 }
 
+/**
+ * Same as dsf_lookup(), but instead of taking a variadic list of atoms
+ * to form a path, this takes a flat array of \ref dsf_lookup_t structures.
+ * @param lookup An array of \ref dsf_lookup_t structures, each identifying
+ *	a part of the path. The array MUST be terminated by a \ref
+ *	dsf_lookup_t structure with a zero `atom_id` field. Use the `idx`
+ *	field of the structures to disambiguate which instance of a subatom
+ *	in a list atom the lookup is meant for.
+ * @return The DSF atom at the provided path. If any part of the path was
+ *	not found, this function returns `NULL` instead.
+ * @see dsf_lookup()
+ */
 const dsf_atom_t *
 dsf_lookup_v(const dsf_t *dsf, const dsf_lookup_t *lookup)
 {
@@ -964,6 +1021,25 @@ dsf_lookup_v(const dsf_t *dsf, const dsf_lookup_t *lookup)
 	return (atom);
 }
 
+/**
+ * Iterator to allow you to traverse a list of subatoms of a DSF atom.
+ * @param parent The parent atom to use as the root of the iteration.
+ *	We iterate through this atom's subatoms.
+ * @param atom_id Atom ID to filter out. This function skips subatoms
+ *	which do not have an ID which matches this atom.
+ * @param prev The previous atom in the iteration. On first call, you should
+ *	pass a `NULL` here, to initialize the search.
+ * @return The next subatom inside of `parent` which matches the `atom_id`.
+ *	If no matching subatoms are present in the parent, returns `NULL`.
+ *
+ * Example of iterating through all subatoms matching a particular ID:
+ *```
+ *	for (const dsf_atom_t *subatom = dsf_iter(parent, MY_ATOM_ID, NULL);
+ *	    subatom != NULL; atom = dsf_iter(parent, MY_ATOM_ID, subatom)) {
+ *		... work with subatom ...
+ *	}
+ *```
+ */
 const dsf_atom_t *
 dsf_iter(const dsf_atom_t *parent, uint32_t atom_id, const dsf_atom_t *prev)
 {
@@ -977,6 +1053,22 @@ dsf_iter(const dsf_atom_t *parent, uint32_t atom_id, const dsf_atom_t *prev)
 	return (NULL);
 }
 
+/**
+ * Given a DSF file and callback list, iterates through all encoded commands
+ * in the DSF file. You can use this to extract the command list in the DSF.
+ * @param dsf The DSF file to operate on. This file must contain a CMDS atom.
+ * @param user_cbs An array of callbacks, with the position in the array
+ *	denoting what type of command this callback will be called for. You
+ *	may leave positions in the array set to `NULL` if you are not
+ *	interested in receiving a callback for a particular command type.
+ * @param userinfo An optional pointer, which will be stored in the
+ *	\ref dsf_cmd_parser_t structure in the `userinfo` field. You can
+ *	extract the userinfo pointer from there.
+ * @param reason A failure reason buffer, which will be filled with a
+ *	human-readable failure description, if a parsing failure occurs.
+ * @return `B_TRUE` if parsing of the command section was successful, or
+ *	`B_FALSE` if not.
+ */
 bool_t
 dsf_parse_cmds(const dsf_t *dsf, dsf_cmd_cb_t user_cbs[NUM_DSF_CMDS],
     void *userinfo, char reason[DSF_REASON_SZ])
@@ -995,7 +1087,7 @@ dsf_parse_cmds(const dsf_t *dsf, dsf_cmd_cb_t user_cbs[NUM_DSF_CMDS],
 	parser.userinfo = userinfo;
 	parser.reason = subreason;
 
-	cmds_atom = dsf_lookup(dsf, DSF_ATOM_CMDS, 0, 0);
+	cmds_atom = dsf_lookup(dsf, DSF_ATOM_CMDS, 0);
 	if (cmds_atom == NULL) {
 		if (reason != NULL)
 			snprintf(reason, DSF_REASON_SZ, "CMDS atom not found");
@@ -1044,6 +1136,10 @@ dsf_parse_cmds(const dsf_t *dsf, dsf_cmd_cb_t user_cbs[NUM_DSF_CMDS],
 	return (B_TRUE);
 }
 
+/**
+ * Utility function to translate a DSF command type into a human-readable
+ * description.
+ */
 const char *
 dsf_cmd2str(dsf_cmd_t cmd)
 {
@@ -1111,7 +1207,7 @@ dsf_cmd2str(dsf_cmd_t cmd)
 	case DSF_COMMENT32:
 		return ("COMMENT32");
 	default:
-		VERIFY(0);
+		VERIFY_FAIL();
 	}
 }
 
