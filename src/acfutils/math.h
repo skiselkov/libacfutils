@@ -31,6 +31,10 @@ extern "C" {
 #define	POW3(x)	((x) * (x) * (x))
 #define	POW2(x)	((x) * (x))
 #define	ROUND_ERROR	1e-10
+#ifndef	ABS
+/** @return The absolute value of `x`. */
+#define	ABS(x)	((x) > 0 ? (x) : -(x))
+#endif
 
 struct vect2_s;
 
