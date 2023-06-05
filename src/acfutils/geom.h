@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "math.h"	/* to bring in ABS() macro for backwards compat */
 #include "sysmacros.h"
 #include "types.h"
 
