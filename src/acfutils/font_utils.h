@@ -66,7 +66,7 @@ API_EXPORT const char *ft_err2str(FT_Error err);
  * @param cr_font Return cairo font face object pointer. Release this before
  *	the freetype font face using cairo_font_face_destroy.
  *
- * Return `B_TRUE` if loading the font was successfull, `B_FALSE` otherwise.
+ * @return `B_TRUE` if loading the font was successfull, `B_FALSE` otherwise.
  *	In case of error, the reason is logged using logMsg.
  */
 API_EXPORT bool_t font_utils_try_load_font(const char *fontdir,
