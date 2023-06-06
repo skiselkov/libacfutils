@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <stddef.h>
@@ -100,6 +100,10 @@ static bool_t inited = B_FALSE;
 static thread_id_t main_thread;
 static bool_t in_zink_mode = B_FALSE;
 
+/**
+ * Initializes the glutils module. Should be called before any other
+ * functions of glutils are used.
+ */
 void
 glutils_sys_init(void)
 {
@@ -112,10 +116,13 @@ glutils_sys_init(void)
 	}
 }
 
-/*
+/**
  * Kills all OpenGL client state arrays. Call this before enabling the OpenGL
  * client arrays you will need to draw, as otherwise you don't know if some
  * other plugin left them in some misconfigured state.
+ *
+ * \deprecated This function shouldn't be used for modern OpenGL contexts,
+ *	as it uses the deprecated glDisableClientState() GL function.
  */
 API_EXPORT void
 glutils_disable_all_client_state(void)
@@ -139,10 +146,13 @@ glutils_disable_all_client_state(void)
 		glDisableClientState(disable_caps[i]);
 }
 
-/*
+/**
  * Disables all (but at most 32) vertex attribute arrays. This should be
  * used to make sure all OpenGL state is clean at the start of an X-Plane
  * draw callback when using shared vertex array objects.
+ *
+ * \deprecated This function shouldn't be used for modern OpenGL contexts.
+ *	You should only disable vertex attributes you've previously enabled.
  */
 API_EXPORT void
 glutils_disable_all_vtx_attrs(void)
@@ -154,12 +164,13 @@ glutils_disable_all_vtx_attrs(void)
 		glDisableVertexAttribArray(i);
 }
 
-/*
- * This function is a shorthand for creating an IBO to triangulate an
+/**
+ * This function is a shorthand for creating an index buffer to triangulate an
  * old-style GL_QUADS object (which isn't supported in modern OpenGL anymore).
  * The quad is triangulated in this order: p0-p1-p2 & p0-p2-p3.
- * The IBO is constructed for quads composed num_vtx vertices. This number
+ * The IBO is constructed for quads composed `num_vtx` vertices. This number
  * must be a multiple of 4.
+ * @return The object number of the index buffer object in the OpenGL context.
  */
 API_EXPORT GLuint
 glutils_make_quads_IBO(size_t num_vtx)
@@ -189,6 +200,7 @@ glutils_make_quads_IBO(size_t num_vtx)
 	return (buf);
 }
 
+/** Implementation of the glutils_init_2D_quads() macro. Don't call directly. */
 API_EXPORT void
 glutils_init_2D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect2_t *p, const vect2_t *t, size_t num_pts)
@@ -202,6 +214,9 @@ glutils_init_2D_quads_impl(glutils_quads_t *quads, const char *filename,
 	free(p_3d);
 }
 
+/**
+ * Implementation of the glutils_update_2D_quads() macro. Don't call directly.
+ */
 API_EXPORT void
 glutils_update_2D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect2_t *p, const vect2_t *t, size_t num_pts)
@@ -215,6 +230,7 @@ glutils_update_2D_quads_impl(glutils_quads_t *quads, const char *filename,
 	free(p_3d);
 }
 
+/** Implementation of the glutils_init_3D_quads() macro. Don't call directly. */
 API_EXPORT void
 glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
@@ -243,6 +259,9 @@ glutils_init_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 		glBindVertexArray(old_vao);
 }
 
+/**
+ * Implementation of the glutils_update_3D_quads() macro. Don't call directly.
+ */
 API_EXPORT void
 glutils_update_3D_quads_impl(glutils_quads_t *quads, const char *filename,
     int line, const vect3_t *p, const vect2_t *t, size_t num_pts)
@@ -281,6 +300,11 @@ glutils_update_3D_quads_impl(glutils_quads_t *quads, const char *filename,
 	free(vtx_data);
 }
 
+/**
+ * Destroys a glutils_quads_t object, which was previously initialized
+ * using glutils_init_2D_quads() or glutils_init_3D_quads(). This releases
+ * all memory resources used by the object.
+ */
 API_EXPORT void
 glutils_destroy_quads(glutils_quads_t *quads)
 {
@@ -339,6 +363,22 @@ glutils_draw_common(GLenum mode, GLuint vao, GLuint vbo, GLuint ibo,
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+/**
+ * Renders a previously initialized glutils_quads_t object.
+ * @param quads The quads object to be rendered.
+ * @param prog A compiled and linked OpenGL shader program, which will be
+ *	used for the render. You are free to structure the fragment shader
+ *	as you desire. The vertex shader, however, should follow these rules:
+ *	- `vtx_pos`: this input attribute receives a `vec3` for each
+ *		vertex in the quad. For quads initialized using
+ *		glutils_init_2D_quads(), the data is still `vec3`s, but
+ *		the Z coordinate will always be zero.
+ *	- `vtx_tex0`: this input attribute receives a `vec2` for each
+ *		vertex's UV coordinate. If you didn't provide UV coordinates
+ *		in the quads init call, this `vec2` will simply be (0,0)
+ *		for all vertices and need not be declared in the shader.
+ *
+ */
 API_EXPORT void
 glutils_draw_quads(glutils_quads_t *quads, GLint prog)
 {
@@ -378,10 +418,10 @@ cache_compar(const void *a, const void *b)
 	return (0);
 }
 
-/*
+/**
  * Constructs a new object cache with a certain defined capacity in bytes.
- * This cache lets you construct & cache gl_utils_quads_t and gl_utils_lines_t
- * objects on the GPU. USe glutils_cache_get_* to store & retrieve cached
+ * This cache lets you construct & cache glutils_quads_t and glutils_lines_t
+ * objects on the GPU. Use `glutils_cache_get_*` to store & retrieve cached
  * objects. When the cache is destroyed, the stored objects are destroyed
  * and their memory freed from the GPU.
  *
@@ -432,7 +472,7 @@ free_cache_entry(cache_entry_t *ce)
 	free(ce);
 }
 
-/*
+/**
  * Destroys a glutils object cache. This frees all stored objects and
  * their associated memory from both main memory and GPU memory.
  */
@@ -561,6 +601,10 @@ glutils_cache_get_common(glutils_cache_t *cache, cache_entry_type_t type,
 		return (&ce->lines);
 }
 
+/**
+ * Same as glutils_cache_get_3D_quads(), but for 2D quads.
+ * @see glutils_cache_get_3D_quads()
+ */
 glutils_quads_t *
 glutils_cache_get_2D_quads(glutils_cache_t *cache, const vect2_t *p,
     const vect2_t *t, size_t num_pts)
@@ -568,6 +612,24 @@ glutils_cache_get_2D_quads(glutils_cache_t *cache, const vect2_t *p,
 	return (glutils_cache_get_common(cache, 0, p, t, num_pts));
 }
 
+/**
+ * Mirrors the behavior of the glutils_init_3D_quads() macro, but utilizing
+ * the object cache in the `cache` argument. The cache looks for a
+ * glutils_quads_t matching the `p` and (optionally, if non-NULL) `t`
+ * argument contents. If an object was found, it is returned and can be
+ * used for drawing. The cache automatically trims out old cached objects,
+ * in order to stay within its allocation limits.
+ *
+ * @return A glutils_quads_t object matching the passed `p` and `t` point
+ *	arrays. The returned object is suitable for use in
+ *	glutils_draw_quads(). The object may be deallocated due to
+ *	subsequent object requests causing old objects to be freed, so you
+ *	MUSTN'T keep this pointer beyond your immediate drawing needs. The
+ *	object should be re-requested from the cache every time you need
+ *	to draw it. You must also NOT glutils_quads_free() this object, or
+ *	you will cause use of invalid memory. The cache handles object
+ *	lifetimes completely.
+ */
 glutils_quads_t *
 glutils_cache_get_3D_quads(glutils_cache_t *cache, const vect3_t *p,
     const vect2_t *t, size_t num_pts)
@@ -575,6 +637,13 @@ glutils_cache_get_3D_quads(glutils_cache_t *cache, const vect3_t *p,
 	return (glutils_cache_get_common(cache, 1, p, t, num_pts));
 }
 
+/**
+ * @deprecated The glutils_lines_t functionality is deprecated, as it relies
+ *	on legacy `GL_LINE_STRIP` functionality of the OpenGL driver.
+ *	See glutils_nl_t for a modern replacement.
+ *
+ * Same as glutils_cache_get_3D_quads(), but for glutils_lines_t objects.
+ */
 glutils_lines_t *
 glutils_cache_get_3D_lines(glutils_cache_t *cache, const vect3_t *p,
     size_t num_pts)
@@ -582,6 +651,13 @@ glutils_cache_get_3D_lines(glutils_cache_t *cache, const vect3_t *p,
 	return (glutils_cache_get_common(cache, 2, p, NULL, num_pts));
 }
 
+/**
+ * @deprecated The glutils_lines_t functionality is deprecated, as it relies
+ *	on legacy `GL_LINE_STRIP` functionality of the OpenGL driver.
+ *	See glutils_nl_t for a modern replacement.
+ *
+ * Implementation of the glutils_init_3D_lines() macro. Don't call directly.
+ */
 API_EXPORT void
 glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
     int line, const vect3_t *p, size_t num_pts)
@@ -628,6 +704,20 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+/**
+ * @deprecated The glutils_lines_t functionality is deprecated, as it relies
+ *	on legacy `GL_LINE_STRIP` functionality of the OpenGL driver.
+ *	See glutils_nl_t for a modern replacement.
+ *
+ * Draws a glutils_lines_t object, using a custom shader program.
+ * @param lines The glutils_lines_t object which you've previously
+ *	initialized using glutils_init_3D_lines().
+ * @param prog A compiled and linked shader program, which will be used
+ *	for the rendering. This must not be 0. See glutils_draw_quads()
+ *	for more information on the structuring requirements for the
+ *	program.
+ * @see glutils_draw_quads()
+ */
 API_EXPORT void
 glutils_draw_lines(glutils_lines_t *lines, GLint prog)
 {
@@ -635,6 +725,14 @@ glutils_draw_lines(glutils_lines_t *lines, GLint prog)
 	    &lines->setup, lines->num_vtx, prog);
 }
 
+/**
+ * @deprecated The glutils_lines_t functionality is deprecated, as it relies
+ *	on legacy `GL_LINE_STRIP` functionality of the OpenGL driver.
+ *	See glutils_nl_t for a modern replacement.
+ *
+ * Destroys a glutils_lines_t object which you have previously initialized
+ * using glutils_init_3D_lines().
+ */
 API_EXPORT void
 glutils_destroy_lines(glutils_lines_t *lines)
 {
@@ -648,6 +746,13 @@ glutils_destroy_lines(glutils_lines_t *lines)
 	}
 }
 
+/**
+ * Utility function, which extracts the current viewport setting in the
+ * OpenGL context and creates an orthographic projection matrix, which
+ * will provide a 1:1 correspondence to the pixels of the viewport.
+ * @param pvm Mandatory return argument, which will be filled with the
+ *	resultant projection matrix ("pvm" = projection-view-model matrix).
+ */
 API_EXPORT void
 glutils_vp2pvm(GLfloat pvm[16])
 {
@@ -685,6 +790,21 @@ texsz_instance_compar(const void *a, const void *b)
 	return (0);
 }
 
+/**
+ * This is the initializer for the TEXSZ profiling facility in glutils.
+ * This facility helps you keep track of allocations and checks to make
+ * sure memory isn't leaked.
+ *
+ * If you intend on using the TEXSZ system, you should call this function
+ * before making any buffer allocations or OpenGL object creation. This
+ * initializes the allocation tracker. After you are done, you should
+ * shut down the system using glutils_texsz_fini(). This checks to make
+ * sure all allocated resources have been properly released. If not, this
+ * will cause an assertion failure, with debug information about where the
+ * allocation took place.
+ *
+ * For more information about the system, see TEXSZ_MK_TOKEN().
+ */
 API_EXPORT void
 glutils_texsz_init(void)
 {
@@ -695,6 +815,15 @@ glutils_texsz_init(void)
 	    sizeof (texsz_alloc_t), offsetof(texsz_alloc_t, node));
 }
 
+/**
+ * Shuts down the TEXSZ system. If you are using this system, you should
+ * call this after releasing all OpenGL resources, to check that no leaks
+ * have occurred. If any resource registered with the TEXZ system hasn't
+ * been properly freed, this will cause an assertion failure, with debug
+ * information about where the allocation took place.
+ *
+ * For more information about the system, see TEXSZ_MK_TOKEN().
+ */
 API_EXPORT void
 glutils_texsz_fini(void)
 {
@@ -840,6 +969,12 @@ texsz_bytes(GLenum format, GLenum type, unsigned w, unsigned h)
 	return (channels * bpc * w * h);
 }
 
+/**
+ * Implementation of the `TEXSZ_ALLOC*` macros. Do not call this directly,
+ * use the wrapper macros instead.
+ * @see TEXSZ_ALLOC()
+ * @see TEXSZ_ALLOC_INSTANCE()
+ */
 API_EXPORT void
 glutils_texsz_alloc(const char *token, const void *instance,
     const char *filename, int line, GLenum format, GLenum type,
@@ -850,6 +985,12 @@ glutils_texsz_alloc(const char *token, const void *instance,
 	    texsz_bytes(format, type, w, h));
 }
 
+/**
+ * Implementation of the `TEXSZ_FREE*` macros. Do not call this directly,
+ * use the wrapper macros instead.
+ * @see TEXSZ_FREE()
+ * @see TEXSZ_FREE_INSTANCE()
+ */
 API_EXPORT void
 glutils_texsz_free(const char *token, const void *instance,
     GLenum format, GLenum type, unsigned w, unsigned h)
@@ -858,6 +999,12 @@ glutils_texsz_free(const char *token, const void *instance,
 	texsz_incr(token, instance, NULL, -1, -texsz_bytes(format, type, w, h));
 }
 
+/**
+ * Implementation of the `TEXSZ_ALLOC_BYTES*` macros. Do not call this
+ * directly, use the wrapper macros instead.
+ * @see TEXSZ_ALLOC_BYTES()
+ * @see TEXSZ_ALLOC_BYTES_INSTANCE()
+ */
 API_EXPORT void
 glutils_texsz_alloc_bytes(const char *token, const void *instance,
     const char *filename, int line, int64_t bytes)
@@ -866,6 +1013,12 @@ glutils_texsz_alloc_bytes(const char *token, const void *instance,
 	texsz_incr(token, instance, filename, line, bytes);
 }
 
+/**
+ * Implementation of the `TEXSZ_FREE_BYTES*` macros. Do not call this
+ * directly, use the wrapper macros instead.
+ * @see TEXSZ_FREE_BYTES()
+ * @see TEXSZ_FREE_BYTES_INSTANCE()
+ */
 API_EXPORT void
 glutils_texsz_free_bytes(const char *token, const void *instance, int64_t bytes)
 {
@@ -873,6 +1026,10 @@ glutils_texsz_free_bytes(const char *token, const void *instance, int64_t bytes)
 	texsz_incr(token, instance, NULL, -1, -bytes);
 }
 
+/**
+ * @return The total amount of bytes tracked. Useful for estimating GPU
+ * memory load due to custom avionics code.
+ */
 API_EXPORT uint64_t
 glutils_texsz_get(void)
 {
@@ -880,6 +1037,12 @@ glutils_texsz_get(void)
 	return (texsz.bytes);
 }
 
+/**
+ * Walks the entire list of allocations. This is mostly useful for debugging
+ * and/or VRAM profiling.
+ * @param cb Callback which will be called for every allocation in the system.
+ * @param userinfo Optional argument, which will be passed to the callback.
+ */
 API_EXPORT void
 glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo)
 {
@@ -891,12 +1054,19 @@ glutils_texsz_enum(glutils_texsz_enum_cb_t cb, void *userinfo)
 	}
 }
 
+/**
+ * @return `B_TRUE` if the TEXSZ machinery has been initialized.
+ */
 API_EXPORT bool_t
 glutils_texsz_inited(void)
 {
 	return (texsz.inited);
 }
 
+/**
+ * @return `B_TRUE` if the Nvidia Nsight debugger is loaded in the appp.
+ * @return Caveat: current only works on Linux.
+ */
 bool_t
 glutils_nsight_debugger_present(void)
 {
@@ -906,11 +1076,35 @@ glutils_nsight_debugger_present(void)
 		    strncmp(environ[i], "NVIDIA_PROCESS", 14) == 0)
 			return (B_TRUE);
 	}
-#endif	/* !APL */
+#endif	/* LIN */
 	/* NSight doesn't exist for MacOS */
 	return (B_FALSE);
 }
 
+/**
+ * \struct glutils_nl_t
+ * This is a replacement for the obsolete `GL_LINES` rendering type
+ * in OpenGL, using new OpenGL core profile features only. The `nl`
+ * in the name means "new lines" (to differentiate it from the deprecated
+ * glutils_lines_t, which relied on outdated `GL_LINE_STRIP` functionality
+ * in the OpenGL driver).
+ *
+ * To set up a `glutils_nl_t`, use glutils_nl_alloc_2D() or
+ * glutils_nl_alloc_3D(), with a series of 2D or 3D points, which
+ * will form the end points of the lines. You can then use
+ * glutils_nl_draw() to make the lines render. Finally, to free the
+ * vertex buffers associated with the lines, use glutils_nl_free().
+ *
+ * Please note that the points you pass are treated as separate line
+ * segments, rather a single continuous line strip. For example, if you
+ * want to draw a line strip consisting of two line segments, you will
+ * need to pass *four* points, not three.
+ *
+ * @see glutils_nl_alloc_2D()
+ * @see glutils_nl_alloc_3D()
+ * @see glutils_nl_draw()
+ * @see glutils_nl_free()
+ */
 struct glutils_nl_s {
 	size_t		num_pts;
 	GLuint		vao;
@@ -935,6 +1129,12 @@ typedef struct {
 	vec3	seg_end;
 } nl_vtx_data_t;
 
+/**
+ * Same as glutils_nl_alloc_3D(), but expects 2D vertex data, with only
+ * X and Y coordinates. While drawing, this still emits 3D vertex data,
+ * but the Z coordinate is always set to 0.
+ * @see glutils_nl_t
+ */
 glutils_nl_t *
 glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts)
 {
@@ -955,6 +1155,21 @@ glutils_nl_alloc_2D(const vec2 *pts, size_t num_pts)
 	return (nl);
 }
 
+/**
+ * Allocates a "new lines" \ref glutils_nl_t object. This can be used
+ * to emulate the obsolete `GL_LINES` drawing type in legacy OpenGL,
+ * but only using OpenGL core features and with support for the fully
+ * programmable shader pipeline.
+ * @param pts The 3D points to pass to the shader as vertex input.
+ * @param num_pts Number of points in the `pts` argument. This must
+ *	be an even number. The line segments are drawn disconnected,
+ *	so rather than drawing as a single continuous line, each pair
+ *	of points is treated as a single line segment.
+ * @return An initialized \ref glutils_nl_t which is ready for drawing.
+ *	Use glutils_nl_free() to release the vertices and their
+ *	associated memory resources.
+ * @see glutils_nl_t
+ */
 glutils_nl_t *
 glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts)
 {
@@ -1013,6 +1228,10 @@ glutils_nl_alloc_3D(const vec3 *pts, size_t num_pts)
 	return (nl);
 }
 
+/**
+ * Frees all resources associated with a \ref glutils_nl_t, which was
+ * previously returned from glutils_nl_alloc_2D() or glutils_nl_alloc_3D().
+ */
 void
 glutils_nl_free(glutils_nl_t *nl)
 {
@@ -1063,6 +1282,48 @@ nl_setup_vertex_attribs(glutils_nl_t *nl, GLuint prog)
 	nl->last_prog = prog;
 }
 
+/**
+ * Renders a \ref glutils_nl_t object.
+ *
+ * @param nl Lines object previously created using glutils_nl_alloc_2D()
+ *	or glutils_nl_alloc_3D().
+ * @param width The width of the line in pixels.
+ * @param prog A compiled and linked OpenGL program object. This may NOT
+ *	be zero. See below for details on how this program must be
+ *	constructed.
+ *
+ * The shader program passed must include a specially crafted vertex shader.
+ * libacfutils ships a file named `nl.vert` in its headers, which contains
+ * the functionality to emulate the fixed screen-sized pixel behavior of
+ * `GL_LINES`. To utilize this code, you should structure your vertex shader
+ * code approximately as follows:
+ *```
+ * #include "acfutils/nl.vert"
+ *
+ * layout(location = 0) uniform mat4 pvm;
+ *
+ * void
+ * main(void)
+ * {
+ *     gl_Position = nl_vert_main(pvm);
+ * }
+ *```
+ * The vertex shader should call the `nl_vert_main` function with the
+ * pre-multiplied projection-view-model matrix of your rendering, and
+ * use its output for the `gl_Position` output of the vertex shader.
+ *
+ * The `nl.vert` code snippet utilizes two additional internal uniforms
+ * and 3 vertex inputs. These are auto-populated by glutils_nl_draw(),
+ * but you may want to customize their layout locations in the resulting
+ * shader program. With no customizations, the inputs occupy locations
+ * 0-2, and the uniforms locations 10-11. To override the base of these
+ * locations, define `LACF_NL_VERT_INPUT_OFFSET` to move the input
+ * location offset and `LACF_NL_VERT_UNIFORM_OFFSET` to move the uniform
+ * location offset.
+ *
+ * The fragment shader is entirely under your control. You may use it to
+ * perform arbitrary painting within the fragments generated by the line.
+ */
 void
 glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
 {
@@ -1121,6 +1382,31 @@ glutils_nl_draw(glutils_nl_t *nl, float width, GLuint prog)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+/**
+ * Utility function to convert between `libpng` image color types and
+ * bit depths to a matching OpenGL texture format, suitable for directly
+ * holding decompressed PNG image data. The purpose of this function is
+ * to allow easy loading of PNG images into OpenGL textures.
+ * @param png_color_type The PNG image color type. Must be one of
+ *	`PNG_COLOR_TYPE_RGB` or `PNG_COLOR_TYPE_RGB_ALPHA`. No other
+ *	color type is supported and will result in an error return.
+ * @param png_bit_depth The PNG image bit depth. This must be 8. No other
+ *	bit depth is supported and will result in an error return.
+ * @param int_fmt A mandatory return argument, which will be filled with an
+ *	OpenGL texture data internal format which matches the PNG image color
+ *	type and bit depth (e.g. `GL_RGB`).
+ * @param fmt A mandatory return argument, which will be filled with an
+ *	OpenGL texture data format which matches the PNG image color type
+ *	and bit depth (e.g. `GL_RGB`).
+ * @param type A mandatory return argument, which will be filled with an
+ *	OpenGL texture data type which matches the PNG image color type
+ *	and bit depth (e.g. `GL_UNSIGNED_BYTE`).
+ * @return `B_TRUE` if the PNG color type and bit depth are supported and
+ *	the `int_fmt`, `fmt` and `type` return arguments were filled with
+ *	the correct information. If the input PNG color type or bit depth
+ *	do not match a supported combination, `B_FALSE` is returned instead
+ *	and `int_fmt`, `fmt` and `type` are left unmodified.
+ */
 bool_t
 glutils_png2gltexfmt(int png_color_type, int png_bit_depth,
     GLint *int_fmt, GLint *fmt, GLint *type)
@@ -1148,6 +1434,9 @@ glutils_png2gltexfmt(int png_color_type, int png_bit_depth,
 	}
 }
 
+/**
+ * @return `B_TRUE` if X-Plane is operating Zink mode, `B_FALSE` if not.
+ */
 bool_t
 glutils_in_zink_mode(void)
 {

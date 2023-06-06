@@ -20,15 +20,17 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #ifndef	_ACF_UTILS_GLEW_OS_H_
 #define	_ACF_UTILS_GLEW_OS_H_
 
-/*
- * Includes & properly defines the context handler function for the
+/**
+ * \file
+ * Includes and properly defines the context handler function for the
  * GLEW OS-specific bindings (WGL/GLX).
+ *
  * This is needed since libacfutils uses GLEW-MX (multi-context) to
  * support multi-threaded rendering, where each context can have
  * different context caps (primarily for MacOS OpenGL 2.1/4.1

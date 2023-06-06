@@ -82,6 +82,11 @@ extern "C" {
  * format string with arguments, to append to the message "assertion
  * <condition> failed:". Use this if you need to provide more context
  * why the assertion check failed.
+ *
+ * Example usage of VERIFY_MSG():
+ *```
+ * VERIFY_MSG(is_valid(foo), "foo was set to %d", foo);
+ *```
  */
 #define	VERIFY_MSG(x, fmt, ...) \
 	do { \
