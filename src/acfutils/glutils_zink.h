@@ -22,6 +22,7 @@
 /*
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_ACF_UTILS_GLUTILS_ZINK_H_
 #define	_ACF_UTILS_GLUTILS_ZINK_H_
