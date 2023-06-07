@@ -1242,7 +1242,7 @@ chartdb_init(const char *cache_path, const char *pdftoppm_path,
 	cdb->prov = pid;
 	/* Deep-copy the login information */
 	if (provider_login != NULL) {
-		cdb->prov_login = safe_malloc(sizeof (*cdb->prov_login));
+		cdb->prov_login = safe_calloc(1, sizeof (*cdb->prov_login));
 		if (provider_login->username != NULL) {
 			cdb->prov_login->username = safe_strdup(
 			    provider_login->username);
