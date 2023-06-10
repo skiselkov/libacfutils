@@ -48,6 +48,11 @@ extern "C" {
  * isn't used.
  */
 /**
+ * \def WARN_UNUSED_RES_ATTR
+ * Attribute which if used on a function, makes the compiler emit a
+ * warning if the return value of a function is ignored.
+ */
+/**
  * \def PACKED_ATTR
  * Attribute which marks a structure as having a packed memory layout
  * (i.e. the compiler isn't allowed to insert padding). Place at the
@@ -68,10 +73,12 @@ extern "C" {
  */
 
 #if	defined(__GNUC__) || defined(__clang__)
-#define	UNUSED_ATTR	__attribute__((unused))
-#define	PACKED_ATTR	__attribute__((__packed__))
+#define	UNUSED_ATTR		__attribute__((unused))
+#define	WARN_UNUSED_RES_ATTR	__attribute__((warn_unused_result))
+#define	PACKED_ATTR		__attribute__((__packed__))
 #else
 #define	UNUSED_ATTR
+#define	WARN_UNUSED_RES_ATTR
 #define	PACKED_ATTR
 #endif
 #define	UNUSED(x)	(void)(x)
