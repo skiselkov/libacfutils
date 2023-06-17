@@ -75,7 +75,11 @@ extern "C" {
 #if	defined(__GNUC__) || defined(__clang__)
 #define	UNUSED_ATTR		__attribute__((unused))
 #define	WARN_UNUSED_RES_ATTR	__attribute__((warn_unused_result))
+#if	IBM && defined(__GNUC__) && __GNUC__ < 11
+#define	PACKED_ATTR		__attribute__((__packed__, gcc_struct))
+#else
 #define	PACKED_ATTR		__attribute__((__packed__))
+#endif
 #else
 #define	UNUSED_ATTR
 #define	WARN_UNUSED_RES_ATTR
