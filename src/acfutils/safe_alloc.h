@@ -134,7 +134,7 @@ safe_append_realloc(char *buf, const char *str)
  * and subsequently deallocated using free(). This is useful for making
  * sure nothing remains of a buffer after freeing, thus preventing
  * potentially attempting to read its contents and seeing valid data
- * (use-after-free). The `ptr` argument is then set to `NULL`.
+ * (use-after-free).
  *
  * N.B. this macro relies on `sizeof` returning the correct size of this
  * data buffer, so it should only be used on single struct buffers, not
@@ -147,6 +147,13 @@ safe_append_realloc(char *buf, const char *str)
 		if ((ptr) != NULL) \
 			memset((ptr), 0, sizeof (*(ptr))); \
 		free(ptr); \
+	} while (0)
+/**
+ * Same as ZERO_FREE(), but also sets `ptr` to NULL after freeing.
+ */
+#define	DESTROY_FREE(ptr) \
+	do { \
+		ZERO_FREE(ptr); \
 		(ptr) = NULL; \
 	} while (0)
 
@@ -161,8 +168,15 @@ safe_append_realloc(char *buf, const char *str)
 		if ((ptr) != NULL) \
 			memset((ptr), 0, sizeof (*(ptr)) * (num)); \
 		free(ptr); \
-		(ptr) = NULL; \
 	} while (0)
+/**
+ * Same as ZERO_FREE_N(), but also sets `ptr` to NULL after freeing.
+ */
+#define	DESTROY_FREE_N(ptr, num) \
+	do { \
+		ZERO_FREE_N((ptr), (num)); \
+		(ptr) = NULL; \
+	while (0)
 
 /**
  * Performs a zeroing of the `data` buffer. Please note that `sizeof`
