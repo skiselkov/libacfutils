@@ -40,8 +40,9 @@
 extern "C" {
 #endif
 
-/*
+/**
  * Removes all leading & trailing whitespace from a line.
+ * The string is modified in-place.
  */
 UNUSED_ATTR static void
 strip_space(char *line)
