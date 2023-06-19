@@ -323,7 +323,15 @@ API_EXPORT int airac_time2cycle(time_t t);
 /**
  * Grabs the next non-empty, non-comment line from a file, having stripped
  * away all leading and trailing whitespace. Any tab characters are also
- * replaced with spaces.
+ * replaced with spaces. Comments are lines that start with a '#' character.
+ * Also, any text following a '#' on a line is stripped away and considered
+ * a comment.
+ *
+ * This function is useful for writing a custom config file parser. It can
+ * also be used to consume X-Plane OBJ and similar files, or generally any
+ * text-based data file which uses '#' for comments. See also
+ * conf_create_empty(), conf_read_file() and the conf.h file for a
+ * fully-featured config system already included with libacfutils.
  *
  * @param fp File from which to retrieve the line.
  * @param linep Line buffer which will hold the new line. If the buffer pointer
@@ -333,9 +341,10 @@ API_EXPORT int airac_time2cycle(time_t t);
  *	allocated.
  * @param linenum The current line number. Will be advanced by 1 for each
  *	new line read.
- *
  * @return The number of characters in the line (after stripping whitespace)
  *	without the terminating NUL.
+ * @see conf_create_empty()
+ * @see conf_read_file()
  */
 UNUSED_ATTR static ssize_t
 parser_get_next_line(FILE *fp, char **linep, size_t *linecap, unsigned *linenum)

@@ -80,7 +80,8 @@ conf_key_compar(const void *a, const void *b)
 
 /**
  * Creates an empty configuration. Set values using conf_set_* and write
- * to a file using conf_write,
+ * to a file using conf_write_file() and similar functions. You must free
+ * the returned configuration using conf_free() when you are done with it.
  */
 conf_t *
 conf_create_empty(void)
@@ -166,6 +167,8 @@ conf_free(conf_t *conf)
  * a file path on disk. If the file cannot be opened for reading and errline
  * is not NULL, it will be set to -1.
  * @return The parsed configuration object, or `NULL` if reading failed.
+ *	You must free the returned configuration using conf_free() when
+ *	you are done with it.
  */
 conf_t *
 conf_read_file(const char *filename, int *errline)
@@ -236,7 +239,8 @@ ck_free_value(conf_key_t *ck)
  * @return The parsed conf_t object, or NULL in case an error was found.
  * If errline is not NULL, it is set to the line number where the error
  * was encountered.
- * @return Use conf_free() to free the returned structure.
+ * @return Use conf_free() to free the returned structure when you are
+ *	done with it.
  */
 conf_t *
 conf_read(FILE *fp, int *errline)
