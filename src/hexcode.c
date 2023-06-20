@@ -20,7 +20,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <acfutils/hexcode.h>
+#include "acfutils/assert.h"
+#include "acfutils/hexcode.h"
 
 /**
  * Encodes binary data into a string of hex digits.
