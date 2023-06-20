@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <stdlib.h>
@@ -52,6 +52,29 @@ xlate_compar(const void *a, const void *b)
 		return (1);
 }
 
+/**
+ * Initializes the internationalization engine. You must call this before
+ * starting to use any translation routines contained in this subsystem.
+ * @param po_file Path to a PO file containing translations. The format
+ *	of this file must conform to the
+ *	[PO file format](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html)
+ *	used by the GNU gettext software. Please note that we only support
+ *	the `msgid` and `msgstr` commands from the PO file format. The
+ *	intl.h system in libacfutils isn't a full replacement or
+ *	reimplementation of GNU gettext.
+ * @return `B_TRUE` if the translation engine was initialized successfully,
+ *	`B_FALSE` if not. Failures can happen only due to failure to read
+ *	or parse the passed .po file. The exact error reason is dumped
+ *	into the log file using logMsg().
+ * #### Example PO File
+ *```
+ * # This is a comment
+ * msgid "Can't start planner: pushback already in progress. Please "
+ * "stop the pushback operation first."
+ * msgstr "Não pode iniciar o planejador: pushback já em progresso. "
+ * "Por favor primeiro pare a operação do pushback."
+ *```
+ */
 bool_t
 acfutils_xlate_init(const char *po_file)
 {
@@ -181,6 +204,11 @@ errout:
 	return (B_FALSE);
 }
 
+/**
+ * Deinitializes the internationalization support of libacfutils. This is
+ * always safe to call, even if you didn't call acfutils_xlate_init(), and
+ * it's safe to call multiple times.
+ */
 void
 acfutils_xlate_fini(void)
 {
@@ -200,6 +228,23 @@ acfutils_xlate_fini(void)
 	acfutils_xlate_inited = B_FALSE;
 }
 
+/**
+ * Translates a message given a message ID string. This performs a lookup
+ * in the PO file parsed in acfutils_xlate_init() for a matching `msgid`
+ * stanza and returns the corresponding `msgstr` value. If no matching
+ * `msgid` is found in the file (or acfutils_xlate_init() was never called),
+ * the input msgid string is returned instead.
+ * @note You can use the `_()` macro as a shorthand for a call to
+ *	acfutils_xlate(). This provides a convenient in-line method to
+ *	localize messages, e.g.:
+ *```
+ * // The message below will automatically be translated
+ * logMsg(_("Hello World!"));
+ *```
+ * If acfutils_xlate_init() was called and a suitable translation exists,
+ * the translated text will be printed. Otherwise, "Hello World!" will be
+ * printed.
+ */
 const char *
 acfutils_xlate(const char *msgid)
 {
@@ -216,6 +261,12 @@ acfutils_xlate(const char *msgid)
 		return (ent->msgstr);
 }
 
+/**
+ * Translates an X-Plane language enum into a 2-letter ISO-639-1 code.
+ * @param lang An XPLMLanguageCode enum as obtained from XPLMGetLanguage().
+ * @return The ISO-639-1 2-letter language code corresponding to the
+ *	language enum. If the language enum is unknown, returns "xx" instead.
+ */
 const char *
 acfutils_xplang2code(int lang)
 {

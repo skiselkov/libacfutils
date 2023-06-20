@@ -20,7 +20,20 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * Internationalization (i18n) support routines. Use acfutils_xlate_init()
+ * to initialize the i18n engine and acfutils_xlate_fini() to deinitialize
+ * it at shutdown (and free allocated resources).
+ *
+ * To translate a string, you can either use the acfutils_xlate() function,
+ * or the shorthand `_("string")` macro.
+ *
+ * @see acfutils_xlate_init()
+ * @see acfutils_xlate_fini()
+ * @see acfutils_xlate()
  */
 
 #ifndef	_ACF_UTILS_INTL_H_
@@ -34,6 +47,17 @@
 extern "C" {
 #endif
 
+/**
+ * This macro is a shorthand for invoking acfutils_xlate(). This provides
+ * a convenient in-line method to localize messages, e.g.:
+ *```
+ * // The message below will automatically be translated
+ * logMsg(_("Hello World!"));
+ *```
+ * If acfutils_xlate_init() was called and a suitable translation exists,
+ * the translated text will be printed. Otherwise, "Hello World!" will be
+ * printed.
+ */
 #define	_(str)	acfutils_xlate(str)
 
 API_EXPORT bool_t acfutils_xlate_init(const char *po_file);
