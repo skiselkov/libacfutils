@@ -20,7 +20,14 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * This module contains a header-implementation of a high-pass filter.
+ * @see hp_filter_t
+ * @see hp_filter_init()
+ * @see hp_filter_update()
  */
 
 #ifndef	_ACF_UTILS_HP_FILTER_H_
@@ -32,12 +39,28 @@
 extern "C" {
 #endif
 
+/**
+ * This is a generic high-pass RC filter. Use hp_filter_init() to
+ * initialize the filter and hp_filter_update() to feed the filter new
+ * input values to be filtered. The hp_filter_update() function returns
+ * the new output value of the filter. You can also retrieve the last
+ * output value of the filter using hp_filter_get().
+ * @see hp_filter_init()
+ * @see hp_filter_update()
+ * @see hp_filter_get()
+ */
 typedef struct {
-	double	state;	/* Filter state */
-	double	prev;	/* revious measurement */
-	double	RC;	/* Time constant parameter (1/(2.pi.f_c)) */
+	double	state;	/**< Current filter state */
+	double	prev;	/**< Previous measurement */
+	double	RC;	/**< Time constant parameter `(1 / (2.pi.f_c))` */
 } hp_filter_t;
 
+/**
+ * Initializes a high-pass filter.
+ * @param filt The filter to be initialized.
+ * @param f_cutoff Filter cutoff frequency in Hz.
+ * @see hp_filter_t
+ */
 static inline void
 hp_filter_init(hp_filter_t *filt, double f_cutoff)
 {
@@ -48,6 +71,19 @@ hp_filter_init(hp_filter_t *filt, double f_cutoff)
 	filt->RC = 1.0 / (2 * M_PI * f_cutoff);
 }
 
+/**
+ * Updates a high-pass filter with a new input value. You want to
+ * call this every time a new measurement is obtained, which you
+ * want to filter.
+ * @param filt The filter to be updated.
+ * @param m The new measurement to be integrated into the filter.
+ * @param d_t Delta-time in seconds since the last filter update.
+ * @return The current filter output after the update has been performed.
+ * @note The filter needs at least 2 measurements before it can start
+ *	providing valid output. The filter's output will be `NAN` before
+ *	that.
+ * @see hp_filter_get()
+ */
 static inline double
 hp_filter_update(hp_filter_t *filt, double m, double d_t)
 {
@@ -65,6 +101,14 @@ hp_filter_update(hp_filter_t *filt, double m, double d_t)
 	return (filt->state);
 }
 
+/**
+ * @return The current output of a high-pass filter without updating
+ *	the filter's state.
+ * @note The filter needs at least 2 measurements before it can start
+ *	providing valid output. The filter's output will be `NAN` before
+ *	that.
+ * @see hp_filter_update()
+ */
 static inline double
 hp_filter_get(const hp_filter_t *filt)
 {
@@ -72,6 +116,11 @@ hp_filter_get(const hp_filter_t *filt)
 	return (filt->state);
 }
 
+/**
+ * Sets a new cutoff frequency for a high-pass filter.
+ * @param filt The filter for which to change the cutoff frequency.
+ * @param f_cutoff New cutoff frequency to set (in Hz).
+ */
 static inline void
 hp_filter_set_f_cutoff(hp_filter_t *filt, double f_cutoff)
 {
@@ -80,6 +129,9 @@ hp_filter_set_f_cutoff(hp_filter_t *filt, double f_cutoff)
 	filt->RC = 1.0 / (2 * M_PI * f_cutoff);
 }
 
+/**
+ * @return The current cutoff frequency (in Hz) for a high-pass filter.
+ */
 static inline double
 hp_filter_get_f_cutoff(const hp_filter_t *filt)
 {
