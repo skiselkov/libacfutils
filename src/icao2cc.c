@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <acfutils/icao2cc.h>
+#include "acfutils/assert.h"
+#include "acfutils/icao2cc.h"
+#include "acfutils/helpers.h"
 
 typedef struct {
 	const char *icao;
