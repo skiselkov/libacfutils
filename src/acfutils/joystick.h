@@ -20,7 +20,11 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2019 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * Helper types for joystick handling in X-Plane.
  */
 
 #ifndef	_ACF_UTILS_JOYSTICK_H_
@@ -30,7 +34,7 @@
 extern "C" {
 #endif
 
-/*
+/**
  * X-Plane joystick axis assignment values. These are essentialy the list
  * in X-Plane's joystick axis assignment droplist.
  */
