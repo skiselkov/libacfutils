@@ -203,7 +203,7 @@ API_EXPORT double rel_hdg_impl(double hdg1, double hdg2, const char *file,
  * Renormalizes a heading value that lies outside of the 0-360 inclusive
  * range. Basically this takes care of undoing "angle wrapping".
  *
- * ### Example:
+ * #### Example:
  *```
  * normalize_hdg(90)  => 90
  * normalize_hdg(-90) => 270
@@ -638,7 +638,7 @@ lacf_strcasestr(const char *haystack, const char *needle)
  *	value.
  * @param digits The number of digits that the final number should have.
  *
- * ### Example:
+ * #### Example:
  *
  * Say we want a number to take up room for 4 digits, adding decimal
  * digits after the point as necessary to padd the number:
@@ -702,7 +702,7 @@ floormul(double x, double y)
  *	will be set to 1 in `out_var`. If zero, the bits in `bit_mask` will
  *	be reset to 0 in `out_var`.
  *
- * ### Example
+ * #### Example
  *```
  * #define FOO_FEATURE_FLAG 0x1
  * #define BAR_FEATURE_FLAG 0x2

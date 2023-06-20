@@ -716,7 +716,7 @@ free_strlist(char **comps, size_t num)
  *
  * You should free the string using lacf_free() when you are done.
  *
- * Example usage:
+ * #### Example
  *```
  * char *str = NULL;
  * size_t sz = 0;
