@@ -13,7 +13,13 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * Translation functionality to convert ICAO airport codes into
+ * country codes and language codes. This is useful for building
+ * flight information systems.
  */
 
 #ifndef	_ICAO2CC_H_
@@ -25,9 +31,7 @@
 extern "C" {
 #endif
 
-#define	icao2cc		ACFSYM(icao2cc)
 API_EXPORT const char *icao2cc(const char *icao);
-#define	icao2lang	ACFSYM(icao2lang)
 API_EXPORT const char *icao2lang(const char *icao);
 
 #ifdef	__cplusplus

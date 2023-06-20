@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <stdarg.h>
@@ -421,13 +421,19 @@ static icao2cc_t icao2cc_table[] = {
     { .icao = NULL, .cc = NULL, .lang = NULL }	/* Last entry */
 };
 
-/*
+/**
  * Converts an ICAO code to a country code. This performs a simple prefix
  * match using the icao2cc_table.
+ * @return The 2-letter ISO 3166 country code using upper case. If the
+ *	country code cannot be determined, or the passed argument isn't
+ *	a valid ICAO code, returns NULL instead.
  */
 const char *
 icao2cc(const char *icao)
 {
+	ASSERT(icao != NULL);
+	if (!is_valid_icao_code(icao))
+		return (NULL);
 	/*
 	 * Doing a linear search is not particularly elegant, but the size
 	 * of the ICAO table is fixed and small, so it probably doesn't
@@ -442,13 +448,14 @@ icao2cc(const char *icao)
 	return (NULL);
 }
 
-/*
+/**
  * Grabs an ICAO airport code and tries to map it to language code of
  * the principal language spoken at that airport. This shouldn't be relied
  * upon to be very accurate, since in reality the airport-to-language
  * mapping is anything but clear cut.
- * Returns a two- or three-letter language code (if no two-letter one exists),
- * or "XX" if no suitable mapping was found.
+ *
+ * @return A two- or three-letter language code (if no two-letter one
+ *	exists) using lower case, or "XX" if no suitable mapping was found.
  */
 const char *
 icao2lang(const char *icao)
