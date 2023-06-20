@@ -414,7 +414,7 @@ API_EXPORT char **strsplit(const char *input, const char *sep,
 	do { \
 		free_strlist((comps), (num)); \
 		(comps) = NULL; \
-		(len) = 0; \
+		(num) = 0; \
 	} while (0)
 API_EXPORT void free_strlist(char **comps, size_t num);
 API_EXPORT void unescape_percent(char *str);
