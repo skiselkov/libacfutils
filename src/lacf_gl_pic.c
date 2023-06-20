@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <XPLMGraphics.h>
@@ -87,6 +87,14 @@ load_image(lacf_gl_pic_t *pic)
 	return (B_TRUE);
 }
 
+/**
+ * Initializes a new gl_pic_t with a PNG image file on disk.
+ * @note This doesn't perform any disk I/O. gl_pic_t's are lazy-loaded
+ *	on the first attempt to draw. If you want to pre-load a gl_pic_t
+ *	ahead of time, use lacf_gl_pic_load().
+ * @return A newly allocated gl_pic_t ready for drawing. Use
+ *	gl_pic_destroy() to free the image after you are done with it.
+ */
 lacf_gl_pic_t *
 lacf_gl_pic_new(const char *path)
 {
@@ -100,6 +108,14 @@ lacf_gl_pic_new(const char *path)
 	return (pic);
 }
 
+/**
+ * This is a convenience front-end function to lacf_gl_pic_new(), which
+ * lets you provide a containing directory and image filename separately.
+ * This can be useful when the directory is subject to change, but the
+ * filename isn't. The function concatenates the path components before
+ * passing them on to lacf_gl_pic_new().
+ * @see lacf_gl_pic_new()
+ */
 lacf_gl_pic_t *
 lacf_gl_pic_new_from_dir(const char *dirpath, const char *filename)
 {
@@ -115,6 +131,10 @@ lacf_gl_pic_new_from_dir(const char *dirpath, const char *filename)
 	return (pic);
 }
 
+/**
+ * Destroys and frees the memory associated with a gl_pic_t which was
+ * previously returned by lacf_gl_pic_new() or lacf_gl_pic_new_from_dir().
+ */
 void
 lacf_gl_pic_destroy(lacf_gl_pic_t *pic)
 {
@@ -125,6 +145,33 @@ lacf_gl_pic_destroy(lacf_gl_pic_t *pic)
 	free(pic);
 }
 
+/**
+ * A newly initialized gl_pic_t is normally lazy-loaded and no disk I/O
+ * is performed until the image is to be drawn. This function allows you
+ * to pre-load the image into VRAM before it is needed.
+ * @return `B_TRUE` if loading the image was successful (or the image was
+ *	loaded already). `B_FALSE` if loading the image failed, either
+ *	due to disk I/O or an issue with the image format on disk.
+ */
+bool_t
+lacf_gl_pic_load(lacf_gl_pic_t *pic)
+{
+	ASSERT(pic != NULL);
+	if (pic->tex != 0)
+		return (B_TRUE);
+	return (load_image(pic));
+}
+
+/**
+ * If the image was loaded, unloads the image and frees GPU-side VRAM
+ * buffers. This can be used to reduce the memory footprint of images
+ * you don't plan to use for a longer time. Do **not** call this
+ * function just between each frame. If you plan on drawing the image
+ * repeatedly, just keep it loaded. If you do not plan to draw the
+ * image for a long time, unloading it can save on VRAM usage.
+ *
+ * If the image was unloaded already, this function does nothing.
+ */
 void
 lacf_gl_pic_unload(lacf_gl_pic_t *pic)
 {
@@ -144,24 +191,47 @@ lacf_gl_pic_unload(lacf_gl_pic_t *pic)
 	}
 }
 
+/**
+ * @return The pixel width of the image. This may need to perform disk
+ *	I/O to load the image and determine its dimensions. If loading
+ *	the image failed, returns 0.
+ */
 int
 lacf_gl_pic_get_width(lacf_gl_pic_t *pic)
 {
 	ASSERT(pic != NULL);
-	if (pic->tex == 0)
+	if (pic->w == 0)
 		load_image(pic);
 	return (pic->w);
 }
 
+/**
+ * @return The pixel height of the image. This may need to perform disk
+ *	I/O to load the image and determine its dimensions. If loading
+ *	the image failed, returns 0.
+ */
 int
 lacf_gl_pic_get_height(lacf_gl_pic_t *pic)
 {
 	ASSERT(pic != NULL);
-	if (pic->tex == 0)
+	if (pic->h == 0)
 		load_image(pic);
 	return (pic->h);
 }
 
+/**
+ * Draws the image using the current X-Plane projection and modelview
+ * matrices. This makes it possible to use to draw either gauges into
+ * the panel texture, or windows during a window draw callback.
+ *
+ * @param pos Position of the lower left corner of the image relative
+ *	to the coordinate system origin.
+ * @param size The size of the image for drawing. You can pass
+ *	NULL_VECT2 here to make the image draw using its native size.
+ * @param alpha Floating point value 0-1 for partial alpha compositing.
+ *	This is passed to the fragment shader in a uniform, to let the
+ *	fragment shader perform partial alpha blending.
+ */
 void
 lacf_gl_pic_draw(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
     float alpha)
@@ -185,13 +255,28 @@ lacf_gl_pic_draw(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
 	}
 	glUseProgram(pic->shader);
 	glUniform1f(glGetUniformLocation(pic->shader, "alpha"), alpha);
-	lacf_gl_pic_draw_custom(pic, pos, size, pic->shader, pvm);
+	glUniformMatrix4fv(glGetUniformLocation(pic->shader, "pvm"),
+	    1, GL_FALSE, (const GLfloat *)pvm);
+	lacf_gl_pic_draw_custom(pic, pos, size, pic->shader);
 	glUseProgram(0);
 }
 
+/**
+ * Draws the image using a custom OpenGL program. You can use this
+ * function to perform custom image compositing using your own shaders.
+ *
+ * @param pos Position of the lower left corner of the image relative
+ *	to the coordinate system origin.
+ * @param size The size of the image for drawing. You can pass
+ *	NULL_VECT2 here to make the image draw using its native size.
+ * @param prog The OpenGL program to use for drawing. You **must** bind
+ *	this program before calling this function using glUseProgram().
+ *	The program must take the same inputs as glutils_draw_quads()
+ *	for vertex positions.
+ */
 void
 lacf_gl_pic_draw_custom(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
-    GLuint prog, const mat4 pvm)
+    GLuint prog)
 {
 	glutils_quads_t *quads;
 	vect2_t p[4];
@@ -200,7 +285,6 @@ lacf_gl_pic_draw_custom(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
 	};
 
 	ASSERT(pic != NULL);
-	ASSERT(pvm != NULL);
 
 	if (pic->tex == 0 && !load_image(pic))
 		return;
@@ -216,9 +300,7 @@ lacf_gl_pic_draw_custom(lacf_gl_pic_t *pic, vect2_t pos, vect2_t size,
 	quads = glutils_cache_get_2D_quads(pic->cache, p, t, 4);
 
 	XPLMBindTexture2d(pic->tex, 0);
-	glUniform1i(glGetUniformLocation(prog, "tex"), 0);
-	glUniformMatrix4fv(glGetUniformLocation(prog, "pvm"),
-	    1, GL_FALSE, (const GLfloat *)pvm);
+	glUniform1i(glGetUniformLocation(prog, "vtx_tex0"), 0);
 	glutils_draw_quads(quads, prog);
 	XPLMBindTexture2d(0, 0);
 }

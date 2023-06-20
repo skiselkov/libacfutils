@@ -13,7 +13,18 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2021 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
+ */
+/**
+ * \file
+ * A simple subsystem that provides the ability to load and draw PNG
+ * images in an OpenGL context.
+ *
+ * Use lacf_gl_pic_new() or lacf_gl_pic_new_from_dir() to load a gl_pic
+ * object from disk. When done with the image, use lacf_gl_pic_destroy()
+ * to free all resources associated with the pic.
+ *
+ * To draw the image, use lacf_gl_pic_draw() or lacf_gl_pic_draw_custom().
  */
 
 #ifndef	_LIBACFUTILS_GL_PIC_H_
@@ -35,6 +46,7 @@ API_EXPORT lacf_gl_pic_t *lacf_gl_pic_new_from_dir(const char *dirpath,
     const char *filename);
 API_EXPORT void lacf_gl_pic_destroy(lacf_gl_pic_t *pic);
 
+API_EXPORT bool_t lacf_gl_pic_load(lacf_gl_pic_t *pic);
 API_EXPORT void lacf_gl_pic_unload(lacf_gl_pic_t *pic);
 
 API_EXPORT int lacf_gl_pic_get_width(lacf_gl_pic_t *pic);
@@ -43,7 +55,7 @@ API_EXPORT int lacf_gl_pic_get_height(lacf_gl_pic_t *pic);
 API_EXPORT void lacf_gl_pic_draw(lacf_gl_pic_t *pic, vect2_t pos,
     vect2_t size, float alpha);
 API_EXPORT void lacf_gl_pic_draw_custom(lacf_gl_pic_t *pic, vect2_t pos,
-    vect2_t size, GLuint prog, const mat4 pvm);
+    vect2_t size, GLuint prog);
 
 #ifdef __cplusplus
 }
