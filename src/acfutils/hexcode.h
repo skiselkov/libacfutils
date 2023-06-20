@@ -13,8 +13,9 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2018 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_ACF_UTILS_HEXCODE_H_
 #define	_ACF_UTILS_HEXCODE_H_
@@ -27,11 +28,8 @@
 extern "C" {
 #endif
 
-#define	hex_enc	ACFSYM(hex_enc)
 API_EXPORT void hex_enc(const void *in_raw, size_t len, void *out_enc,
     size_t out_cap);
-
-#define	hex_dec	ACFSYM(hex_dec)
 API_EXPORT bool_t hex_dec(const void *in_enc, size_t len, void *out_raw,
     size_t out_cap);
 
