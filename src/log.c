@@ -29,6 +29,8 @@
 #include <execinfo.h>   /* used for stack tracing */
 #endif	/* !IBM */
 
+#include <XPLMUtilities.h>
+
 #include <acfutils/assert.h>
 #include <acfutils/helpers.h>
 #include <acfutils/log.h>

@@ -75,7 +75,7 @@ extern "C" {
  * @see is_valid_alt_ft()
  */
 #define	IS_VALID_GEO_POS3(pos) \
-	(is_valid_lat((pos).lat) && is_valid_lat((pos).lon) && \
+	(is_valid_lat((pos).lat) && is_valid_lon((pos).lon) && \
 	is_valid_elev((pos).elev))
 /**
  * Same as IS_VALID_GEO_POS3(), but for 2-space geographic coordinates
@@ -208,12 +208,14 @@ API_EXPORT double rel_hdg_impl(double hdg1, double hdg2, const char *file,
  * normalize_hdg(90)  => 90
  * normalize_hdg(-90) => 270
  * normalize_hdg(400) => 40
+ * normalize_hdg(NAN) => NAN
  *```
  */
 static inline double
 normalize_hdg(double hdg)
 {
-	ASSERT(!isnan(hdg));
+	if (isnan(hdg))
+		return (hdg);
 	hdg = fmod(hdg, 360);
 	/* Flip negative into positive */
 	if (hdg < 0.0)
