@@ -84,7 +84,7 @@ extern "C" {
  * @see is_valid_lon()
  */
 #define	IS_VALID_GEO_POS2(pos) \
-	(is_valid_lat((pos).lat) && is_valid_lat((pos).lon))
+	(is_valid_lat((pos).lat) && is_valid_lon((pos).lon))
 /**
  * @return True if `lat` is a valid latitude value. That means the value
  *	is not NAN and lay between -90 and +90 (inclusive).
