@@ -122,17 +122,6 @@ log_fini(void)
 }
 
 /**
- * A simple logging callback function suitable for passing to log_init()
- * in its first argument. This function simply emits the input string
- * to the X-Plane Log.txt file via XPLMDebugString().
- */
-void
-log_xplm_cb(const char *str)
-{
-	XPLMDebugString(str);
-}
-
-/**
  * Log implementation function. Do not call directly. Use the logMsg() macro.
  * @see logMsg()
  */

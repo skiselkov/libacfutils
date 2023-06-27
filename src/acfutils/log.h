@@ -34,6 +34,10 @@
 
 #include <stdarg.h>
 
+#ifndef	_LACF_WITHOUT_XPLM
+#include <XPLMUtilities.h>
+#endif
+
 #include "sysmacros.h"
 
 #ifdef __cplusplus
@@ -47,7 +51,19 @@ extern "C" {
 typedef void (*logfunc_t)(const char *);
 API_EXPORT void log_init(logfunc_t func, const char *prefix);
 API_EXPORT void log_fini(void);
-API_EXPORT void log_xplm_cb(const char *str);
+
+#ifndef	_LACF_WITHOUT_XPLM
+/**
+ * A simple logging callback function suitable for passing to log_init()
+ * in its first argument. This function simply emits the input string
+ * to the X-Plane Log.txt file via XPLMDebugString().
+ */
+UNUSED_ATTR static void
+log_xplm_cb(const char *str)
+{
+	XPLMDebugString(str);
+}
+#endif	/* !defined(_LACF_WITHOUT_XPLM) */
 
 #if	defined(__GNUC__) || defined(__clang__)
 #define	BUILTIN_STRRCHR	__builtin_strrchr
