@@ -41,6 +41,9 @@
  * won't need to keep track of making sure to clean up after each dataref.
  * You can simply create datarefs and commands without worrying about
  * immediately writing cleanup routines for all of them.
+ * @see dcr_init(), dcr_fini()
+ * @see DCR_CREATE_I(), DCR_CREATE_F(), DCR_CREATE_F64(), etc.
+ * @see dcr_find_cmd(), dcr_create_cmd(), etc.
  */
 
 #ifndef	_ACF_UTILS_DR_CMD_REG_H_
@@ -82,7 +85,7 @@ API_EXPORT void dcr_insert_rdr(void *token);
 
 /**
  * Internal, do not call, use the type-specific `DCR_CREATE` macros instead,
- * such as DR_CREATE_I() or DDR_CREATE_F().
+ * such as DCR_CREATE_I() or DCR_CREATE_F().
  */
 #define	DCR_CREATE_COMMON(type, dr_ptr, ...) \
 	do { \
