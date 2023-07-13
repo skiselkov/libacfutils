@@ -41,7 +41,6 @@
 #include <dirent.h>	/* to bring in DIR, opendir, readdir & friends */
 #include <unistd.h>
 #endif
-#include <time.h>
 
 #if	IBM
 #include <windows.h>
@@ -54,6 +53,7 @@
 #include "math_core.h"
 #include "sysmacros.h"
 #include "safe_alloc.h"
+#include "time.h"
 #include "types.h"
 
 #ifdef	__cplusplus

@@ -92,11 +92,13 @@ safe_realloc(void *oldptr, size_t size)
 static inline char *
 safe_strdup(const char *str2)
 {
-	char *str = strdup(str2);
-	if (str2 != NULL) {
-		VERIFY_MSG(str != NULL, "Cannot allocate %lu bytes: "
-		    "out of memory", (long unsigned)strlen(str2) + 1);
-	}
+	char *str;
+	int l;
+	ASSERT(str2 != NULL);
+	l = strlen(str2);
+	str = (char *)safe_malloc(l + 1);
+	memcpy(str, str2, l);
+	str[l] = '\0';
 	return (str);
 }
 
