@@ -27,7 +27,7 @@ CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-ntlm-wb --disable-crypto-auth --disable-sspi \
     --without-winidn --without-libssh2 --without-librtmp \
     --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
-    --with-pic --without-zstd --without-system-zlib"
+    --with-pic --without-zstd --without-system-zlib --without-brotli"
 
 case `uname` in
 	Linux)
