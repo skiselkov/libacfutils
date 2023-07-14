@@ -174,6 +174,7 @@ extern "C" {
 	CTASSERT(_Generic((x), type: 0, default: 1) != 0)
 #else	/* __STDC_VERSION__ < 201112L */
 #define	TYPE_ASSERT(x, type)
+#define	NOT_TYPE_ASSERT(x, type)
 #if	defined(__GNUC__) || defined(__clang__)
 #define	CTASSERT(x)		_CTASSERT(x, __LINE__)
 #define	_CTASSERT(x, y)		__CTASSERT(x, y)
@@ -220,6 +221,11 @@ highbit64(unsigned long long x)
 #ifndef	AVG
 #define	AVG(x, y)	(((x) + (y)) / 2.0)
 #endif
+#if	defined(_MSC_VER)
+#define	FILTER_IN_TYPE(x)	double
+#else
+#define	FILTER_IN_TYPE(x)	__typeof__(x)
+#endif
 /*
  * Provides a gradual method of integrating an old value until it approaches
  * a new target value. This is used in iterative processes by calling the
@@ -231,8 +237,8 @@ highbit64(unsigned long long x)
  */
 #define	FILTER_IN(old_val, new_val, d_t, lag) \
 	do { \
-		__typeof__(old_val) o = (old_val); \
-		__typeof__(new_val) n = (new_val); \
+		FILTER_IN_TYPE(old_val) o = (old_val); \
+		FILTER_IN_TYPE(new_val) n = (new_val); \
 		ASSERT(!isnan(o)); \
 		(old_val) += (n - o) * ((d_t) / (lag)); \
 		/* Prevent an overshoot */ \
@@ -248,8 +254,8 @@ highbit64(unsigned long long x)
  */
 #define	FILTER_IN_NAN(old_val, new_val, d_t, lag) \
 	do { \
-		__typeof__(old_val) o = (old_val); \
-		__typeof__(new_val) n = (new_val); \
+		FILTER_IN_TYPE(old_val) o = (old_val); \
+		FILTER_IN_TYPE(new_val) n = (new_val); \
 		if (isnan(n)) \
 			(old_val) = NAN; \
 		else if (isnan(o)) \
