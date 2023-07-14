@@ -558,6 +558,7 @@ static inline int
 lacf_strcasecmp(const char *s1, const char *s2)
 {
 	int l1, l2, res;
+	enum { STACKBUFSZ_LIM = 1024 };
 
 	ASSERT(s1 != NULL);
 	ASSERT(s2 != NULL);
@@ -565,11 +566,11 @@ lacf_strcasecmp(const char *s1, const char *s2)
 	l1 = strlen(s1);
 	l2 = strlen(s2);
 
-	if (l1 < 4096 && l2 < 4096) {
-		char s1_lower[l1 + 1], s2_lower[l2 + 1];
+	if (l1 < STACKBUFSZ_LIM && l2 < STACKBUFSZ_LIM) {
+		char s1_lower[STACKBUFSZ_LIM], s2_lower[STACKBUFSZ_LIM];
 
-		lacf_strlcpy(s1_lower, s1, l1 + 1);
-		lacf_strlcpy(s2_lower, s2, l2 + 1);
+		lacf_strlcpy(s1_lower, s1, sizeof (s1_lower));
+		lacf_strlcpy(s2_lower, s2, sizeof (s2_lower));
 		strtolower(s1_lower);
 		strtolower(s2_lower);
 		res = strcmp(s1_lower, s2_lower);
@@ -598,6 +599,7 @@ lacf_strcasestr(const char *haystack, const char *needle)
 {
 	int l1, l2;
 	char *res;
+	enum { STACKBUFSZ_LIM = 1024 };
 
 	ASSERT(haystack != NULL);
 	ASSERT(needle != NULL);
@@ -605,11 +607,12 @@ lacf_strcasestr(const char *haystack, const char *needle)
 	l1 = strlen(haystack);
 	l2 = strlen(needle);
 
-	if (l1 < 4096 && l2 < 4096) {
-		char haystack_lower[l1 + 1], needle_lower[l2 + 1];
+	if (l1 < STACKBUFSZ_LIM && l2 < STACKBUFSZ_LIM) {
+		char haystack_lower[STACKBUFSZ_LIM];
+		char needle_lower[STACKBUFSZ_LIM];
 
-		lacf_strlcpy(haystack_lower, haystack, l1 + 1);
-		lacf_strlcpy(needle_lower, needle, l2 + 1);
+		lacf_strlcpy(haystack_lower, haystack, sizeof (haystack_lower));
+		lacf_strlcpy(needle_lower, needle, sizeof (needle_lower));
 		strtolower(haystack_lower);
 		strtolower(needle_lower);
 		res = strstr(haystack_lower, needle_lower);
