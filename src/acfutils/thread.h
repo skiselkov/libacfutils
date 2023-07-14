@@ -264,15 +264,11 @@ typedef struct {
 #endif	/* !APL && !LIN */
 
 /*
- * This is the thread cleanup tracking machinery. Due to how the global
- * nature of these variables, this system cannot be used in shared/DLL
- * builds of libacfutils.
+ * This is the thread cleanup tracking machinery.
  */
-#ifndef	ACFUTILS_DLL
-
-extern bool_t	lacf_thread_list_inited;
-extern mutex_t	lacf_thread_list_lock;
-extern list_t	lacf_thread_list;
+API_EXPORT extern bool_t	lacf_thread_list_inited;
+API_EXPORT extern mutex_t	lacf_thread_list_lock;
+API_EXPORT extern list_t	lacf_thread_list;
 
 static inline void
 _lacf_thread_list_init(void)
@@ -346,16 +342,6 @@ lacf_threads_fini(void)
 
 	_lacf_thread_list_fini();
 }
-
-#else	/* defined(ACFUTILS_DLL) */
-
-#define	_lacf_thread_list_init()
-#define	_lacf_thread_list_fini()
-#define	_lacf_thread_list_add(ti)
-#define	_lacf_thread_list_remove(ti)
-#define	lacf_threads_fini
-
-#endif	/* defined(ACFUTILS_DLL) */
 
 #if	APL || LIN
 

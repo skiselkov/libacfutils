@@ -445,7 +445,8 @@ API_EXPORT ssize_t filesz(const char *filename);
 #if	IBM || LIN
 #define	strlcpy				lacf_strlcpy
 #endif
-void lacf_strlcpy(char *restrict dest, const char *restrict src, size_t cap);
+API_EXPORT void lacf_strlcpy(char *restrict dest, const char *restrict src,
+    size_t cap);
 
 /**
  * Portable version of the POSIX basename() function.
