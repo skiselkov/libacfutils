@@ -38,20 +38,19 @@ extern "C" {
 
 struct vect2_s;
 
-#define	quadratic_solve		ACFSYM(quadratic_solve)
 API_EXPORT unsigned quadratic_solve(double a, double b, double c, double x[2]);
-#define	fx_lin			ACFSYM(fx_lin)
 API_EXPORT double fx_lin(double x, double x1, double y1, double x2, double y2)
     PURE_ATTR;
-#define	fx_lin_multi		ACFSYM(fx_lin_multi)
 API_EXPORT double fx_lin_multi(double x, const struct vect2_s *points,
     bool_t extrapolate) PURE_ATTR;
-#define	fx_lin_multi_inv	ACFSYM(fx_lin_multi_inv)
+API_EXPORT double fx_lin_multi2(double x, const struct vect2_s *points,
+    size_t n_points, bool_t extrapolate) PURE_ATTR;
 API_EXPORT double *fx_lin_multi_inv(double y, const struct vect2_s *points,
     size_t *num_out);
-#define	fx_lin_multi_inv2	ACFSYM(fx_lin_multi_inv2)
 API_EXPORT double *fx_lin_multi_inv2(double y, const struct vect2_s *points,
     bool_t extrapolate, size_t *num_out);
+API_EXPORT double *fx_lin_multi_inv3(double y, const struct vect2_s *points,
+    size_t n_points, bool_t extrapolate, size_t *num_out);
 
 /*
  * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.

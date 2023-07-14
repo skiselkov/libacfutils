@@ -70,6 +70,18 @@ fx_lin(double x, double x1, double y1, double x2, double y2)
 	return (((x - x1) / (x2 - x1)) * (y2 - y1) + y1);
 }
 
+static inline size_t
+count_points_sentinel(const vect2_t *points)
+{
+	size_t n_points;
+	ASSERT(points != NULL);
+	ASSERT(!IS_NULL_VECT(points[0]));
+	ASSERT(!IS_NULL_VECT(points[1]));
+	for (n_points = 2; !IS_NULL_VECT(points[2]); n_points++)
+		points++;
+	return (n_points);
+}
+
 /*
  * Multi-segment version of fx_lin. The segments are defined as a series of
  * x-y coordinate points (list terminated with a NULL_VECT2). The list must
@@ -82,8 +94,16 @@ fx_lin(double x, double x1, double y1, double x2, double y2)
 double
 fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 {
-	ASSERT(!IS_NULL_VECT(points[0]));
-	ASSERT(!IS_NULL_VECT(points[1]));
+	return (fx_lin_multi2(x, points, count_points_sentinel(points),
+	    extrapolate));
+}
+
+double
+fx_lin_multi2(double x, const struct vect2_s *points, size_t n_points,
+    bool_t extrapolate)
+{
+	ASSERT(points != NULL);
+	ASSERT3U(n_points, >=, 2);
 
 	for (;;) {
 		vect2_t p1 = points[0], p2 = points[1];
@@ -100,31 +120,46 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 		if (x <= p2.x)
 			return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
 		/* X outside of range to the right */
-		if (IS_NULL_VECT(points[2])) {
+		if (n_points == 2) {
 			if (extrapolate)
 				return (fx_lin(x, p1.x, p1.y, p2.x, p2.y));
 			break;
 		}
 
 		points++;
+		n_points--;
 	}
 
 	return (NAN);
 }
 
 double *
+fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
+{
+	return (fx_lin_multi_inv3(y, points, count_points_sentinel(points),
+	    B_FALSE, num_out));
+}
+
+double *
 fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
     size_t *num_out)
+{
+	return (fx_lin_multi_inv3(y, points, count_points_sentinel(points),
+	    extrapolate, num_out));
+}
+
+double *
+fx_lin_multi_inv3(double y, const struct vect2_s *points, size_t n_points,
+    bool_t extrapolate, size_t *num_out)
 {
 	double *out = NULL;
 	size_t cap = 0, num = 0;
 
 	ASSERT(points != NULL);
 	ASSERT(num_out != NULL);
-	ASSERT(!IS_NULL_VECT(points[0]));
-	ASSERT(!IS_NULL_VECT(points[1]));
+	ASSERT3U(n_points, >=, 2);
 
-	for (int i = 0; !IS_NULL_VECT(points[i + 1]); i++) {
+	for (size_t i = 0; i + 1 < n_points; i++) {
 		vect2_t p1 = points[i], p2 = points[i + 1];
 		double min_val = MIN(p1.y, p2.y);
 		double max_val = MAX(p1.y, p2.y);
@@ -140,7 +175,7 @@ fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
 	}
 
 	out = safe_calloc(cap, sizeof (*out));
-	for (int i = 0; !IS_NULL_VECT(points[i + 1]); i++) {
+	for (size_t i = 0; i + 1 < n_points; i++) {
 		vect2_t p1 = points[i], p2 = points[i + 1];
 		double min_val = MIN(p1.y, p2.y);
 		double max_val = MAX(p1.y, p2.y);
@@ -168,12 +203,6 @@ fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
 	*num_out = num;
 
 	return (out);
-}
-
-double *
-fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
-{
-	return (fx_lin_multi_inv2(y, points, B_FALSE, num_out));
 }
 
 /*
