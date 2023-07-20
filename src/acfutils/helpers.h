@@ -549,13 +549,13 @@ sprintf_alloc(PRINTF_FORMAT(const char *fmt), ...)
 }
 
 /**
- * Portable version of BSD & POSIX strcasecmp().
- * This is a case-insensitive variant strcmp().
- * @see [strcmp()](https://linux.die.net/man/3/strcmp)
- * @see [strcasecmp()](https://linux.die.net/man/3/strcasecmp)
+ * Portable version of BSD & POSIX strncasecmp().
+ * This is a case-insensitive variant strncmp().
+ * @see [strcmp()](https://linux.die.net/man/3/strncmp)
+ * @see [strcasecmp()](https://linux.die.net/man/3/strncasecmp)
  */
 static inline int
-lacf_strcasecmp(const char *s1, const char *s2)
+lacf_strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	int l1, l2, res;
 	enum { STACKBUFSZ_LIM = 1024 };
@@ -573,7 +573,7 @@ lacf_strcasecmp(const char *s1, const char *s2)
 		lacf_strlcpy(s2_lower, s2, sizeof (s2_lower));
 		strtolower(s1_lower);
 		strtolower(s2_lower);
-		res = strcmp(s1_lower, s2_lower);
+		res = strncmp(s1_lower, s2_lower, n);
 	} else {
 		char *s1_lower = (char *)safe_malloc(l1 + 1);
 		char *s2_lower = (char *)safe_malloc(l2 + 1);
@@ -582,11 +582,23 @@ lacf_strcasecmp(const char *s1, const char *s2)
 		lacf_strlcpy(s2_lower, s2, l2 + 1);
 		strtolower(s1_lower);
 		strtolower(s2_lower);
-		res = strcmp(s1_lower, s2_lower);
+		res = strncmp(s1_lower, s2_lower, n);
 		free(s1_lower);
 		free(s2_lower);
 	}
 	return (res);
+}
+
+/**
+ * Portable version of BSD & POSIX strcasecmp().
+ * This is a case-insensitive variant strcmp().
+ * @see [strcmp()](https://linux.die.net/man/3/strcmp)
+ * @see [strcasecmp()](https://linux.die.net/man/3/strcasecmp)
+ */
+static inline int
+lacf_strcasecmp(const char *s1, const char *s2)
+{
+	return (lacf_strncasecmp(s1, s2, SIZE_MAX));
 }
 
 /**
