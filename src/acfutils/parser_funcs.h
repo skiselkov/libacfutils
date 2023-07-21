@@ -187,7 +187,7 @@ parser_get_next_quoted_str2(FILE *fp, int *linep)
 				} else if (c >= '0' && c <= '7') {
 					/* 1-3 letter octal codes */
 					char num[4];
-					int val = 0;
+					unsigned val = 0;
 
 					memset(num, 0, sizeof (num));
 					num[0] = c;
