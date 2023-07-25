@@ -1139,6 +1139,7 @@ void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
+#if 0
 	mat4 pvm;
 
 	if (dr_geti(&drs.draw_call_type) != 0) {
@@ -1157,6 +1158,14 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 		    ==, 16);
 		glm_mat4_mul(proj, mv, pvm);
 	}
+#else
+	mat4 pvm, proj, mv;
+	VERIFY3S(dr_getvf32(&drs.mv_matrix, (float *)mv, 0, 16),
+	    ==, 16);
+	VERIFY3S(dr_getvf32(&drs.proj_matrix, (float *)proj, 0, 16),
+	    ==, 16);
+	glm_mat4_mul(proj, mv, pvm);
+#endif
 	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
 	    (GLfloat *)pvm);
 }
