@@ -1139,10 +1139,19 @@ void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
-#if 0
 	mat4 pvm;
+    
+    /*
+    Until X-Plane 12.06, XP wrongly reported `sim/view/draw_call_type` as `0`
+    in window callbacks. 12.06 fixes that, but the viewport method doesn't work
+    for windows (the viewport is always reported in pixels, whereas the OGL matrices
+    that XP provides as datarefs take interface scaling into account.) On XP > 12.06,
+    we always use the matrices rather than the viewport to decide how to draw.
+    */
+    int xp_version;
+    XPLMGetVersions(&xp_version, NULL, NULL);
 
-	if (dr_geti(&drs.draw_call_type) != 0) {
+	if (xp_version < 12060 && dr_geti(&drs.draw_call_type) != 0) {
 		int vp[4];
 
 		VERIFY3S(dr_getvi(&drs.viewport, vp, 0, 4), ==, 4);
@@ -1158,14 +1167,6 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 		    ==, 16);
 		glm_mat4_mul(proj, mv, pvm);
 	}
-#else
-	mat4 pvm, proj, mv;
-	VERIFY3S(dr_getvf32(&drs.mv_matrix, (float *)mv, 0, 16),
-	    ==, 16);
-	VERIFY3S(dr_getvf32(&drs.proj_matrix, (float *)proj, 0, 16),
-	    ==, 16);
-	glm_mat4_mul(proj, mv, pvm);
-#endif
 	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
 	    (GLfloat *)pvm);
 }
