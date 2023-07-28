@@ -20,9 +20,10 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include <unistd.h>
@@ -80,6 +81,8 @@ demd_read(const dsf_atom_t *demi, const dsf_atom_t *demd,
 		case 4:
 			DEMD_READ(int32_t, v);
 			break;
+		default:
+			VERIFY_FAIL();
 		}
 		break;
 	case DEMI_DATA_UINT:
@@ -93,10 +96,12 @@ demd_read(const dsf_atom_t *demi, const dsf_atom_t *demd,
 		case 4:
 			DEMD_READ(uint32_t, v);
 			break;
+		default:
+			VERIFY_FAIL();
 		}
 		break;
 	default:
-		VERIFY(0);
+		VERIFY_FAIL();
 	}
 
 #undef	DEMD_READ

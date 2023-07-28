@@ -57,6 +57,7 @@ lzma/qmake/Makefile
 
 src/test/dsfdump
 src/test/shpdump
+src/test/rwmutex
 
 libacfutils-redist
 qmake/acfutils.def

@@ -11,20 +11,26 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2023 Saso Kiselkov. All rights reserved.
 
-all : dsfdump shpdump
+CFLAGS := -g -O2 -W -Wall -Wextra -Werror -I.. -D_LACF_WITHOUT_XPLM -DDEBUG \
+    -DIBM=0 -DLIN=1 -DAPL=0 -D_GNU_SOURCE -std=c11 \
+    $(shell ../../pkg-config-deps linux-64 --cflags)
+LDFLAGS := -L../../qmake/lin64 -lacfutils \
+    $(shell ../../pkg-config-deps linux-64 --libs) \
+    -lm -lpthread -lxcb
+LIBACFUTILS := ../../qmake/lin64/libacfutils.a
+
+all : dsfdump shpdump rwmutex
 
 clean :
-	rm -f dsfdump shpdump
+	rm -f dsfdump shpdump rwmutex
 
-dsfdump : dsfdump.c ../../qmake/lin64/libacfutils.a
-	$(CC) -g -W -Wall -Werror -o dsfdump dsfdump.c \
-	    -I.. -L../../qmake/lin64 -lacfutils \
-	    $(shell ../../pkg-config-deps linux-64 --libs) -lm -lpthread -lxcb
+dsfdump : dsfdump.c $(LIBACFUTILS)
+	$(CC) $(CFLAGS) -o dsfdump dsfdump.c $(LDFLAGS)
 
-shpdump : shpdump.c ../../qmake/lin64/libacfutils.a
-	$(CC) -g -W -Wall -Werror -o shpdump shpdump.c \
-	    -I.. -L../../qmake/lin64 -lacfutils \
-	    $(shell ../../pkg-config-deps linux-64 --cflags --libs) \
-	    -lm -lpthread -lxcb
+shpdump : shpdump.c $(LIBACFUTILS)
+	$(CC) $(CFLAGS) -o shpdump shpdump.c $(LDFLAGS)
+
+rwmutex : rwmutex.c $(LIBACFUTILS)
+	$(CC) $(CFLAGS) -o rwmutex rwmutex.c $(LDFLAGS)

@@ -1136,7 +1136,7 @@ rwmutex_enter(rwmutex_t *rw, bool_t write)
 	 * only write (since readers don't retain any ownership information),
 	 * so it's best to avoid recursion altogether.
 	 */
-	ASSERT_MSG(!rwmutex_held_write(rw), "%s", "Attempted to recursive "
+	ASSERT_MSG(!rwmutex_held_write(rw), "%s", "Attempted to recursively "
 	    "acquire an rwmutex_t. This is NOT supported!");
 
 	mutex_enter(&rw->lock);
