@@ -18,14 +18,16 @@
 
 #include <math.h>
 
-#include <acfutils/geom.h>
-#include <acfutils/helpers.h>
-#include <acfutils/math.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/geom.h"
+#include "acfutils/helpers.h"
+#include "acfutils/math.h"
+#include "acfutils/safe_alloc.h"
 
-/*
- * Solves quadratic equation ax^2 + bx + c = 0. Solutions are placed in 'x'.
- * Returns the number of solutions (0, 1 or 2).
+#define	ROUND_ERROR	1e-10
+
+/**
+ * Solves quadratic equation `ax^2 + bx + c = 0`. Solutions are placed in 'x'.
+ * @return The number of solutions (0, 1 or 2).
  */
 unsigned
 quadratic_solve(double a, double b, double c, double x[2])
@@ -54,7 +56,7 @@ quadratic_solve(double a, double b, double c, double x[2])
 	}
 }
 
-/*
+/**
  * Interpolates a linear function defined by two points.
  *
  * @param x Point who's 'y' value we're looking for on the function.
@@ -82,7 +84,7 @@ count_points_sentinel(const vect2_t *points)
 	return (n_points);
 }
 
-/*
+/**
  * Multi-segment version of fx_lin. The segments are defined as a series of
  * x-y coordinate points (list terminated with a NULL_VECT2). The list must
  * contain AT LEAST 2 points. The value of 'x' is then computed using the
@@ -98,6 +100,15 @@ fx_lin_multi(double x, const struct vect2_s *points, bool_t extrapolate)
 	    extrapolate));
 }
 
+/**
+ * Multi-segment version of fx_lin. The segments are defined as a series
+ * of x-y coordinate points. The list must contain AT LEAST 2 points. The
+ * value of 'x' is then computed using the fx_lin function from the
+ * appropriate segment. If 'x' falls outside of the curve range, the
+ * `extrapolate` argument controls behavior. If extrapolate is `B_TRUE`,
+ * the nearest segment is extrapolated to the value of 'x'. Otherwise the
+ * function returns `NAN`.
+ */
 double
 fx_lin_multi2(double x, const struct vect2_s *points, size_t n_points,
     bool_t extrapolate)
@@ -133,6 +144,25 @@ fx_lin_multi2(double x, const struct vect2_s *points, size_t n_points,
 	return (NAN);
 }
 
+/**
+ * The inverse of fx_lin_multi(). This attempts to invert the output
+ * of a function defined by `points` (terminated by a NULL_VECT2 element)
+ * into the possible input `x` elements. If the function isn't monotonic,
+ * this function may need to return multiple points. If the output Y value
+ * isn't found anywhere on the input function, this function returns NULL
+ * and `num_out` is set to zero. Use fx_lin_multi_inv2() for explicit
+ * extrapolation control.
+ * @param y The output Y value of the original function for which to
+ *	perform the inverse lookup.
+ * @param points Sequence of at least 2 points, which define the function.
+ *	The list must be terminated by a NULL_VECT2 point.
+ * @param num_out Return argument, which will be filled with the number of
+ *	returned points.
+ * @return A malloc'd series of input X values which would produce the Y
+ *	value passed in the first argument. The number of points in this
+ *	array is returned in `num_out`. You MUST free this list when you're
+ *	done with it by calling lacf_free().
+ */
 double *
 fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
 {
@@ -140,6 +170,17 @@ fx_lin_multi_inv(double y, const struct vect2_s *points, size_t *num_out)
 	    B_FALSE, num_out));
 }
 
+/**
+ * Same as fx_lin_multi_inv(), but allows you to control extrapolation of
+ * the function. If `extrapolate=B_TRUE`, then the edges of the function
+ * definition in `points` are extrapolated, to see if they might intersect
+ * the Y value. Please note that this doesn't guarantee that you'll get a
+ * non-zero number of X points out of the function (e.g. if the function
+ * lies entirely on one side of a boundary value and reverses away from the
+ * boundary condition on both sides, solving for a Y past the boundary
+ * value will still return no results).
+ * @see fx_lin_multi_inv()
+ */
 double *
 fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
     size_t *num_out)
@@ -148,6 +189,11 @@ fx_lin_multi_inv2(double y, const struct vect2_s *points, bool_t extrapolate,
 	    extrapolate, num_out));
 }
 
+/**
+ * Same as fx_lin_multi_inv2(), but instead of relying on passing a
+ * NULL_VECT2-terminated in `points`, this function takes an explicit
+ * number of points in the `n_points` argument. This MUST be at least 2.
+ */
 double *
 fx_lin_multi_inv3(double y, const struct vect2_s *points, size_t n_points,
     bool_t extrapolate, size_t *num_out)
@@ -205,9 +251,18 @@ fx_lin_multi_inv3(double y, const struct vect2_s *points, size_t n_points,
 	return (out);
 }
 
-/*
+/**
+ * Given a series of X-Y coordinates, this function initializes a polynomial
+ * interpolator that smoothly passes through all the input points. When you
+ * are done with the interpolator, you DON'T have to free it. The pn_interp_t
+ * structure is entirely self-contained.
+ *
  * Algorithm credit: https://en.wikibooks.org/wiki/\
  *	Algorithm_Implementation/Mathematics/Polynomial_interpolation
+ *
+ * @param interp Interpolator that needs to be initialized.
+ * @param points Input points that the interpolator needs to pass through.
+ * @param npts Number points in `points'. This must be GREATER than 0.
  */
 void
 pn_interp_init(pn_interp_t *interp, const vect2_t *points, unsigned numpts)
