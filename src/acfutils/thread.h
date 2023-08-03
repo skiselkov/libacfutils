@@ -320,10 +320,17 @@ typedef struct {
 
 #if	APL || LIN
 
+#if	APL
+#define	thread_t	pthread_t
+#define	thread_id_t	pthread_t
+#define	mutex_t	pthread_mutex_t
+#define	condvar_t	pthread_cond_t
+#else	/* !APL */
 typedef pthread_t thread_t;
 typedef pthread_t thread_id_t;
 typedef pthread_mutex_t mutex_t;
 typedef pthread_cond_t condvar_t;
+#endif	/* !APL */
 #define	curthread_id		pthread_self()
 #define	curthread		pthread_self()
 
