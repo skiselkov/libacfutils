@@ -426,6 +426,8 @@ mt_cairo_render_glob_init(bool_t want_coherent_mem)
 {
 	if (glob_inited)
 		return;
+	cairo_surface_destroy(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+	    1, 1));
 	mtcr_main_thread = curthread_id;
 	fdr_find(&drs.viewport, "sim/graphics/view/viewport");
 	fdr_find(&drs.proj_matrix, "sim/graphics/view/projection_matrix");
