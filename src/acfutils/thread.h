@@ -1007,7 +1007,7 @@ cv_broadcast(condvar_t *cv)
  * @param prio Must be one of the `THREAD_PRIO_*` constants.
  */
 static inline void
-thread_set_prio(thread_t *thr, int prio)
+thread_set_prio(thread_t thr, int prio)
 {
 	SetThreadPriority(thr, prio);
 }
