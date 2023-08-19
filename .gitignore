@@ -139,3 +139,6 @@ geographiclib/geographiclib-mac-64
 geographiclib/geographiclib-win-64
 
 doc/html
+
+rust/Cargo.lock
+rust/target
