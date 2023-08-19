@@ -50,6 +50,7 @@ crc64_state_init(uint64_t *crc)
 	ASSERT(crc != NULL);
 	*crc = (uint64_t)-1;
 }
+API_EXPORT void crc64_state_init_impl(uint64_t *crc);
 API_EXPORT uint64_t crc64_append(uint64_t crc, const void *input, size_t sz);
 API_EXPORT uint64_t crc64(const void *input, size_t sz);
 
