@@ -17,7 +17,7 @@ pub struct Conf {
 }
 
 impl Conf {
-	pub fn new() -> Conf {
+	pub fn new() -> Self {
 		unsafe {
 			Conf{ conf: conf_create_empty() }
 		}
@@ -235,7 +235,7 @@ impl Conf {
 }
 
 impl Clone for Conf {
-	fn clone(&self) -> Conf {
+	fn clone(&self) -> Self {
 		unsafe {
 			Conf { conf: conf_create_copy(self.conf) }
 		}
@@ -246,6 +246,17 @@ impl Drop for Conf {
 	fn drop(&mut self) {
 		unsafe {
 			conf_free(self.conf)
+		}
+	}
+}
+
+impl std::fmt::Display for Conf {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+	    Result<(), std::fmt::Error> {
+		if let Ok(str) = String::from_utf8(self.to_buf()) {
+			write!(f, "{}", str)
+		} else {
+			Err(std::fmt::Error)
 		}
 	}
 }

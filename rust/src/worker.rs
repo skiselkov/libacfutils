@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex, Condvar};
 use std::time::{Instant, Duration};
 use std::marker::Send;
 
+#[derive(Debug)]
 pub struct Worker<T: Clone + Send + 'static> {
 	thread: Option<std::thread::JoinHandle<()>>,
 	data: WorkerData<T>,
@@ -18,6 +19,7 @@ pub struct Worker<T: Clone + Send + 'static> {
 
 type WorkerData<T> = Arc<(Mutex<WorkerConfig<T>>, Condvar)>;
 
+#[derive(Debug)]
 struct WorkerConfig<T> {
 	intval: Duration,
 	shutdown: bool,
@@ -86,8 +88,7 @@ fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 
 impl<T: Clone + Send + 'static> Worker<T> {
 	pub fn new(intval: Duration, init_func: Option<fn(T)>,
-	    worker_func: fn(T), fini_func: Option<fn(T)>, arg: T) ->
-	    Worker<T> {
+	    worker_func: fn(T), fini_func: Option<fn(T)>, arg: T) -> Self {
 		let wk = Arc::new((Mutex::new(WorkerConfig {
 		    intval: intval,
 		    init_func: init_func,
