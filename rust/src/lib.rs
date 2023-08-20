@@ -9,4 +9,4 @@
 
 pub mod conf;
 pub mod crc64;
-
+pub mod worker;
