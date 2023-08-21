@@ -59,8 +59,9 @@ impl Conf {
 	}
 	pub fn to_file2(&self, filename: &str, compressed: bool) -> bool {
 		unsafe {
-			conf_write_file2(self.conf,
-			    filename.as_ptr() as *const c_char, compressed)
+			let c_filename = CString::new(filename).unwrap();
+			conf_write_file2(self.conf, c_filename.as_ptr(),
+			    compressed)
 		}
 	}
 	pub fn to_buf(&self) -> Vec<u8> {
