@@ -42,8 +42,14 @@ impl Conf {
 	}
 	pub fn from_buf(buf: &[u8], errline: Option<&mut i32>) -> Option<Conf> {
 		let conf = unsafe {
-			conf_read_buf(buf.as_ptr() as *const c_void,
-			    buf.len(), errline.unwrap())
+			match errline {
+			Some(linenr) =>
+				conf_read_buf(buf.as_ptr() as *const c_void,
+				    buf.len(), linenr),
+			None =>
+				conf_read_buf(buf.as_ptr() as *const c_void,
+				    buf.len(), std::ptr::null_mut::<i32>()),
+			}
 		};
 		if !conf.is_null() {
 			Some(Conf{conf: conf})
@@ -88,8 +94,8 @@ impl Conf {
 			if conf_get_str(self.conf, c_key.as_ptr(), &mut value) {
 				let c_str = std::ffi::CStr::from_ptr(value);
 				match c_str.to_str() {
-					Ok(the_str) => Some(the_str),
-					Err(_) => None
+				Ok(the_str) => Some(the_str),
+				Err(_) => None
 				}
 			} else {
 				None
