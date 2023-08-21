@@ -86,6 +86,14 @@ fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 	}
 }
 
+#[derive(Debug, Clone)]
+pub struct WorkerAlreadyStartedError {}
+impl std::fmt::Display for WorkerAlreadyStartedError {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		write!(f, "worker already started")
+	}
+}
+
 impl<T: Clone + Send + 'static> Worker<T> {
 	pub fn new(intval: Duration, init_func: Option<fn(T)>,
 	    worker_func: fn(T), fini_func: Option<fn(T)>, arg: T) -> Self {
@@ -98,10 +106,27 @@ impl<T: Clone + Send + 'static> Worker<T> {
 		    shutdown: false
 		}), Condvar::new()));
 		Worker {
-		    data: Arc::clone(&wk),
-		    thread: Some(std::thread::spawn(|| {
-			worker_run(wk)
-		    })),
+		    data: wk,
+		    thread: None
+		}
+	}
+	pub fn start(&mut self) -> Result<(), WorkerAlreadyStartedError> {
+		match self.thread {
+		None => {
+			let wk_data = Arc::clone(&self.data);
+			self.thread = Some(std::thread::spawn(|| {
+				worker_run(wk_data)
+			}));
+			Ok(())
+		},
+		Some(_) => Err(WorkerAlreadyStartedError{}),
+		}
+	}
+	pub fn is_started(&self) -> bool {
+		if let Some(_) = self.thread {
+			true
+		} else {
+			false
 		}
 	}
 	pub fn get_interval(&self) -> Duration {
