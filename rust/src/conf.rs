@@ -28,7 +28,8 @@ impl Conf {
 	pub fn from_file(filename: &str, errline: Option<&mut i32>) ->
 	    Option<Conf> {
 		let conf = unsafe {
-			let c_filename = CString::new(filename).unwrap();
+			let c_filename = CString::new(filename)
+			    .expect("`filename` contains a stray NUL byte");
 			match errline {
 			Some(linenr) =>
 				conf_read_file(c_filename.as_ptr(), linenr),
@@ -62,13 +63,15 @@ impl Conf {
 	}
 	pub fn to_file(&self, filename: &str) -> bool {
 		unsafe {
-			let c_filename = CString::new(filename).unwrap();
+			let c_filename = CString::new(filename)
+			    .expect("`filename` contains a stray NUL byte");
 			conf_write_file(self.conf, c_filename.as_ptr())
 		}
 	}
 	pub fn to_file2(&self, filename: &str, compressed: bool) -> bool {
 		unsafe {
-			let c_filename = CString::new(filename).unwrap();
+			let c_filename = CString::new(filename)
+			    .expect("`filename` contains a stray NUL byte");
 			conf_write_file2(self.conf, c_filename.as_ptr(),
 			    compressed)
 		}
@@ -90,7 +93,8 @@ impl Conf {
 	}
 	pub fn get_str(&self, key: &str) -> Option<&str> {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			let mut value: *const c_char =
 			    std::ptr::null::<c_char>();
 
@@ -106,7 +110,8 @@ impl Conf {
 		}
 	}
 	pub fn get_i32(&self, key: &str) -> Option<i32> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: i32 = 0;
 
 		if unsafe { conf_get_i(self.conf, c_key.as_ptr(), &mut val) } {
@@ -116,7 +121,8 @@ impl Conf {
 		}
 	}
 	pub fn get_i64(&self, key: &str) -> Option<i64> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: i64 = 0;
 
 		if unsafe { conf_get_lli(self.conf, c_key.as_ptr(),
@@ -127,7 +133,8 @@ impl Conf {
 		}
 	}
 	pub fn get_f32(&self, key: &str) -> Option<f32> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: f32 = 0.0;
 
 		if unsafe { conf_get_f(self.conf, c_key.as_ptr(), &mut val) } {
@@ -137,7 +144,8 @@ impl Conf {
 		}
 	}
 	pub fn get_f64(&self, key: &str) -> Option<f64> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: f64 = 0.0;
 
 		if unsafe { conf_get_d(self.conf, c_key.as_ptr(), &mut val) } {
@@ -147,7 +155,8 @@ impl Conf {
 		}
 	}
 	pub fn get_f64_exact(&self, key: &str) -> Option<f64> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: f64 = 0.0;
 
 		if unsafe { conf_get_da(self.conf, c_key.as_ptr(), &mut val) } {
@@ -157,7 +166,8 @@ impl Conf {
 		}
 	}
 	pub fn get_bool(&self, key: &str) -> Option<bool> {
-		let c_key = CString::new(key).unwrap();
+		let c_key = CString::new(key)
+		    .expect("`key` contains a stray NUL byte");
 		let mut val: bool = false;
 
 		if unsafe { conf_get_b2(self.conf, c_key.as_ptr(), &mut val) } {
@@ -168,7 +178,8 @@ impl Conf {
 	}
 	pub fn get_data(&self, key: &str) -> Option<Vec<u8>> {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			let n = conf_get_data(self.conf, c_key.as_ptr(),
 			    std::ptr::null_mut(), 0);
 			if n != 0 {
@@ -183,58 +194,68 @@ impl Conf {
 	}
 	pub fn remove_val(&self, key: &str) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_str(self.conf, c_key.as_ptr(),
 			    std::ptr::null());
 		}
 	}
 	pub fn set_str(&self, key: &str, value: &str) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
-			let c_value = CString::new(value).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
+			let c_value = CString::new(value)
+			    .expect("`value` contains a stray NUL byte");
 			conf_set_str(self.conf, c_key.as_ptr(),
 			    c_value.as_ptr());
 		}
 	}
 	pub fn set_i32(&self, key: &str, value: i32) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_i(self.conf, c_key.as_ptr(), value);
 		}
 	}
 	pub fn set_i64(&self, key: &str, value: i64) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_lli(self.conf, c_key.as_ptr(), value);
 		}
 	}
 	pub fn set_f32(&self, key: &str, value: f32) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_f(self.conf, c_key.as_ptr(), value);
 		}
 	}
 	pub fn set_f64(&self, key: &str, value: f64) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_d(self.conf, c_key.as_ptr(), value);
 		}
 	}
 	pub fn set_f64_exact(&self, key: &str, value: f64) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_da(self.conf, c_key.as_ptr(), value);
 		}
 	}
 	pub fn set_bool(&self, key: &str, value: bool) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_b2(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_data(&self, key: &str, value: &Vec<u8>) {
+	pub fn set_data(&self, key: &str, value: &[u8]) {
 		unsafe {
-			let c_key = CString::new(key).unwrap();
+			let c_key = CString::new(key)
+			    .expect("`key` contains a stray NUL byte");
 			conf_set_data(self.conf, c_key.as_ptr(),
 			    value.as_ptr() as *const c_void, value.len());
 		}

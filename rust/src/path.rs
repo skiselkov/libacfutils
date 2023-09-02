@@ -35,7 +35,8 @@ macro_rules! mkpathstring {
     ( $( $x:expr ),* ) => {
 	{
 	    let new_path: PathBuf = [$( $x, )*].iter().collect();
-	    new_path.into_os_string().into_string().unwrap()
+	    new_path.into_os_string().into_string()
+		.expect("OS string isn't valid UTF-8")
 	}
     };
 }

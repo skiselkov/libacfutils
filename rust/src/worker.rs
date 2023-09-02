@@ -32,7 +32,7 @@ struct WorkerConfig<T> {
 fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 	/* Don't hold the lock while calling init_func */
 	let (init_func_opt, init_arg) = {
-		let data = wk.0.lock().unwrap();
+		let data = wk.0.lock().expect("mutex is in a panicked state");
 		(data.init_func, data.arg.clone())
 	};
 	if let Some(init_func) = init_func_opt {
@@ -45,7 +45,8 @@ fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 		 * copy out the function & argument and drop the lock.
 		 */
 		let (worker_func, arg) = {
-			let data = wk.0.lock().unwrap();
+			let data = wk.0.lock()
+			    .expect("mutex is in a panicked state");
 			if data.shutdown {
 				break;
 			}
@@ -55,7 +56,8 @@ fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 		(worker_func)(arg);
 		{
 			/* Reacquire the lock and wait on the condvar */
-			let data = wk.0.lock().unwrap();
+			let data = wk.0.lock()
+			    .expect("mutex is in a panicked state");
 			let next = last + data.intval;
 			let now = Instant::now();
 			/*
@@ -78,7 +80,7 @@ fn worker_run<T: Clone + Send + 'static>(wk: WorkerData<T>) {
 	}
 	/* Don't hold the lock while calling fini_func */
 	let (fini_func_opt, fini_arg) = {
-		let data = wk.0.lock().unwrap();
+		let data = wk.0.lock().expect("mutex is in a panicked state");
 		(data.fini_func, data.arg.clone())
 	};
 	if let Some(fini_func) = fini_func_opt {
@@ -130,21 +132,22 @@ impl<T: Clone + Send + 'static> Worker<T> {
 		}
 	}
 	pub fn get_interval(&self) -> Duration {
-		self.data.0.lock().unwrap().intval
+		self.data.0.lock()
+		    .expect("mutex is in a panicked state")
+		    .intval
 	}
 	pub fn set_interval(&mut self, intval: Duration) {
-		let mut wk = self.data.0.lock().unwrap();
+		let mut wk = self.data.0.lock()
+		    .expect("mutex is in a panicked state");
 		wk.intval = intval;
 		self.data.1.notify_one();
 	}
 	pub fn set_interval_nowake(&mut self, intval: Duration) {
-		self.data.0.lock().unwrap().intval = intval;
+		self.data.0.lock()
+		    .expect("mutex is in a panicked state")
+		    .intval = intval;
 	}
 	pub fn wake_up(&mut self) {
-		let _data = self.data.0.lock().unwrap();
-		self.data.1.notify_one();
-	}
-	pub fn wake_up_wait(&mut self) {
 		self.data.1.notify_one();
 	}
 }
@@ -153,12 +156,13 @@ impl<T: Clone + Send + 'static> Drop for Worker<T> {
 	fn drop(&mut self) {
 		{
 			/* Notify the worker thread to shut down immediately */
-			let mut data = self.data.0.lock().unwrap();
+			let mut data = self.data.0.lock()
+			    .expect("mutex is in a panicked state");
 			data.shutdown = true;
 			self.data.1.notify_one();
 		}
 		if let Some(thread) = self.thread.take() {
-			thread.join().unwrap();
+			thread.join().expect("worker thread has panicked");
 		}
 	}
 }
