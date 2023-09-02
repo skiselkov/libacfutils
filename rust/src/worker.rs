@@ -187,9 +187,10 @@ mod tests {
 		let fini_closure = |_: Counter| {
 			println!("Worker: shutting down!");
 		};
-		let _wk = crate::worker::Worker::new(
+		let mut wk = crate::worker::Worker::new(
 		    Duration::from_millis(200), Some(init_closure),
 		    run_closure, Some(fini_closure), counter_wk);
+		wk.start().expect("Worker shouldn't have already been running");
 		loop {
 			{
 				let ctr = counter.lock().unwrap();
