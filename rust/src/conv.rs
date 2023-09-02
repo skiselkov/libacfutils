@@ -7,9 +7,10 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
-pub mod conf;
-pub mod conv;
-pub mod crc64;
-pub mod math;
-pub mod path;
-pub mod worker;
+pub fn radsec2rpm(radsec: f64) -> f64 {
+	(radsec / (2.0 * std::f64::consts::PI)) * 60.0
+}
+
+pub fn rpm2radsec(rpm: f64) -> f64 {
+	(rpm / 60.0) * 2.0 * std::f64::consts::PI
+}

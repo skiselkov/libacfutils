@@ -22,6 +22,9 @@ impl Conf {
 			Conf{ conf: conf_create_empty() }
 		}
 	}
+	pub unsafe fn to_raw_conf_t(&self) -> *mut conf_t {
+		self.conf
+	}
 	pub fn from_file(filename: &str, errline: Option<&mut i32>) ->
 	    Option<Conf> {
 		let conf = unsafe {
@@ -298,7 +301,7 @@ impl Iterator for ConfIterator<'_> {
 }
 
 #[repr(C)]
-struct conf_t {
+pub struct conf_t {
 	_unused: [u8; 0],
 }
 
