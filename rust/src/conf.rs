@@ -192,7 +192,7 @@ impl Conf {
 			}
 		}
 	}
-	pub fn remove_val(&self, key: &str) {
+	pub fn remove(&mut self, key: &str) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
@@ -200,7 +200,7 @@ impl Conf {
 			    std::ptr::null());
 		}
 	}
-	pub fn set_str(&self, key: &str, value: &str) {
+	pub fn set_str(&mut self, key: &str, value: &str) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
@@ -210,49 +210,49 @@ impl Conf {
 			    c_value.as_ptr());
 		}
 	}
-	pub fn set_i32(&self, key: &str, value: i32) {
+	pub fn set_i32(&mut self, key: &str, value: i32) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_i(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_i64(&self, key: &str, value: i64) {
+	pub fn set_i64(&mut self, key: &str, value: i64) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_lli(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_f32(&self, key: &str, value: f32) {
+	pub fn set_f32(&mut self, key: &str, value: f32) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_f(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_f64(&self, key: &str, value: f64) {
+	pub fn set_f64(&mut self, key: &str, value: f64) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_d(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_f64_exact(&self, key: &str, value: f64) {
+	pub fn set_f64_exact(&mut self, key: &str, value: f64) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_da(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_bool(&self, key: &str, value: bool) {
+	pub fn set_bool(&mut self, key: &str, value: bool) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
 			conf_set_b2(self.conf, c_key.as_ptr(), value);
 		}
 	}
-	pub fn set_data(&self, key: &str, value: &[u8]) {
+	pub fn set_data(&mut self, key: &str, value: &[u8]) {
 		unsafe {
 			let c_key = CString::new(key)
 			    .expect("`key` contains a stray NUL byte");
@@ -373,4 +373,55 @@ extern "C" {
 	    buf: *const c_void, sz: usize);
 	fn conf_walk(conf: *const conf_t, key: *mut*const c_char,
 	    value: *mut*const c_char, cookie: *mut*const c_void) -> bool;
+}
+
+mod tests {
+	#[test]
+	fn conf_test() {
+		use crate::conf::Conf;
+		let data: Vec<u8> = vec![0xde, 0xad, 0xbe, 0xef];
+		let mut conf = Conf::new();
+
+		conf.set_str("str_key", "str_val");
+		conf.set_i32("i32_max", i32::MAX);
+		conf.set_i32("i32_min", i32::MIN);
+		conf.set_i64("i64_max", i64::MAX);
+		conf.set_i64("i64_min", i64::MIN);
+		conf.set_f32("f32_key", 1.0);
+		conf.set_f64("f64_key", 1.0);
+		conf.set_f64_exact("f64_exact", 1.23456);
+		conf.set_bool("bool_key", true);
+		conf.set_data("data_key", data.as_slice());
+		conf.set_i64("test_remove", 123456);
+		conf.remove("test_remove");
+
+		let ser_repr = conf.to_buf();
+		let conf = Conf::from_buf(ser_repr.as_slice(), None).unwrap();
+		for (k, v) in conf.iter() {
+			match k.as_str() {
+			    "str_key" => assert_eq!(v, "str_val"),
+			    "i32_max" => assert_eq!(v, format!("{}", i32::MAX)),
+			    "i32_min" => assert_eq!(v, format!("{}", i32::MIN)),
+			    "i64_max" => assert_eq!(v, format!("{}", i64::MAX)),
+			    "i64_min" => assert_eq!(v, format!("{}", i64::MIN)),
+			    "f32_key" => (),	// repr not set in stone
+			    "f64_key" => (),	// repr not set in stone
+			    "f64_exact" => assert_eq!(v, "3ff3c0c1fc8f3238"),
+			    "bool_key" => assert_eq!(v, "true"),
+			    "data_key" => (),	// exact decode checked below
+			    _ => unreachable!(),// checks "test_remove" is gone
+			}
+		}
+		assert_eq!(conf.get_str("str_key").unwrap(), "str_val");
+		assert_eq!(conf.get_i32("i32_max").unwrap(), i32::MAX);
+		assert_eq!(conf.get_i32("i32_min").unwrap(), i32::MIN);
+		assert_eq!(conf.get_i64("i64_max").unwrap(), i64::MAX);
+		assert_eq!(conf.get_i64("i64_min").unwrap(), i64::MIN);
+		assert_eq!(conf.get_f32("f32_key").unwrap(), 1.0);
+		assert_eq!(conf.get_f64("f64_key").unwrap(), 1.0);
+		assert_eq!(conf.get_f64_exact("f64_exact").unwrap(), 1.23456);
+		assert_eq!(conf.get_bool("bool_key").unwrap(), true);
+		assert_eq!(conf.get_data("data_key").unwrap(), data);
+		assert_eq!(conf.get_str("test_remove"), None);
+	}
 }
