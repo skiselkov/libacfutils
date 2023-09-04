@@ -10,6 +10,7 @@
 pub mod conf;
 pub mod conv;
 pub mod crc64;
+pub mod log;
 pub mod math;
 pub mod path;
 pub mod worker;
