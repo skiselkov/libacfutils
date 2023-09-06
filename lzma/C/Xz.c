@@ -1,5 +1,5 @@
 /* Xz.c - Xz
-2017-05-12 : Igor Pavlov : Public domain */
+2023-04-02 : Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -41,7 +41,7 @@ void Xz_Free(CXzStream *p, ISzAllocPtr alloc)
 unsigned XzFlags_GetCheckSize(CXzStreamFlags f)
 {
   unsigned t = XzFlags_GetCheckType(f);
-  return (t == 0) ? 0 : (4 << ((t - 1) / 3));
+  return (t == 0) ? 0 : ((unsigned)4 << ((t - 1) / 3));
 }
 
 void XzCheck_Init(CXzCheck *p, unsigned mode)
@@ -70,7 +70,7 @@ int XzCheck_Final(CXzCheck *p, Byte *digest)
   switch (p->mode)
   {
     case XZ_CHECK_CRC32:
-      SetUi32(digest, CRC_GET_DIGEST(p->crc));
+      SetUi32(digest, CRC_GET_DIGEST(p->crc))
       break;
     case XZ_CHECK_CRC64:
     {

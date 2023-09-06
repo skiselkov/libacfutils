@@ -1,7 +1,7 @@
 // XzDecoder.h
 
-#ifndef __XZ_DECODER_H
-#define __XZ_DECODER_H
+#ifndef ZIP7_INC_XZ_DECODER_H
+#define ZIP7_INC_XZ_DECODER_H
 
 #include "../../../C/Xz.h"
 
@@ -12,79 +12,72 @@
 namespace NCompress {
 namespace NXz {
 
-struct CXzUnpackerCPP
+struct CDecoder
 {
-  Byte *InBuf;
-  Byte *OutBuf;
-  CXzUnpacker p;
+  CXzDecMtHandle xz;
+  int _tryMt;
+  UInt32 _numThreads;
+  UInt64 _memUsage;
+
+  SRes MainDecodeSRes; // it's not HRESULT
+  bool MainDecodeSRes_wasUsed;
+  CXzStatInfo Stat;
+
+  CDecoder():
+      xz(NULL),
+      _tryMt(True),
+      _numThreads(1),
+      _memUsage((UInt64)(sizeof(size_t)) << 28),
+      MainDecodeSRes(SZ_OK),
+      MainDecodeSRes_wasUsed(false)
+    {}
   
-  CXzUnpackerCPP();
-  ~CXzUnpackerCPP();
-};
+  ~CDecoder()
+  {
+    if (xz)
+      XzDecMt_Destroy(xz);
+  }
 
+  /* Decode() can return S_OK, if there is data after good xz streams, and that data is not new xz stream.
+     check also (Stat.DataAfterEnd) flag */
 
-struct CStatInfo
-{
-  UInt64 InSize;
-  UInt64 OutSize;
-  UInt64 PhySize;
-
-  UInt64 NumStreams;
-  UInt64 NumBlocks;
-
-  bool UnpackSize_Defined;
-
-  bool NumStreams_Defined;
-  bool NumBlocks_Defined;
-
-  bool IsArc;
-  bool UnexpectedEnd;
-  bool DataAfterEnd;
-  bool Unsupported;
-  bool HeadersError;
-  bool DataError;
-  bool CrcError;
-
-  CStatInfo() { Clear(); }
-
-  void Clear();
-};
-
-
-struct CDecoder: public CStatInfo
-{
-  CXzUnpackerCPP xzu;
-  SRes DecodeRes; // it's not HRESULT
-
-  CDecoder(): DecodeRes(SZ_OK) {}
-
-  /* Decode() can return ERROR code only if there is progress or stream error.
-     Decode() returns S_OK in case of xz decoding error, but DecodeRes and CStatInfo contain error information */
   HRESULT Decode(ISequentialInStream *seqInStream, ISequentialOutStream *outStream,
       const UInt64 *outSizeLimit, bool finishStream, ICompressProgressInfo *compressProgress);
-  Int32 Get_Extract_OperationResult() const;
 };
 
 
-class CComDecoder:
+class CComDecoder Z7_final:
   public ICompressCoder,
   public ICompressSetFinishMode,
   public ICompressGetInStreamProcessedSize,
-  public CMyUnknownImp
+ #ifndef Z7_ST
+  public ICompressSetCoderMt,
+  public ICompressSetMemLimit,
+ #endif
+  public CMyUnknownImp,
+  public CDecoder
 {
-  CDecoder _decoder;
+  Z7_COM_QI_BEGIN2(ICompressCoder)
+  Z7_COM_QI_ENTRY(ICompressSetFinishMode)
+  Z7_COM_QI_ENTRY(ICompressGetInStreamProcessedSize)
+ #ifndef Z7_ST
+  Z7_COM_QI_ENTRY(ICompressSetCoderMt)
+  Z7_COM_QI_ENTRY(ICompressSetMemLimit)
+ #endif
+  Z7_COM_QI_END
+  Z7_COM_ADDREF_RELEASE
+
+  Z7_IFACE_COM7_IMP(ICompressCoder)
+  Z7_IFACE_COM7_IMP(ICompressSetFinishMode)
+  Z7_IFACE_COM7_IMP(ICompressGetInStreamProcessedSize)
+ #ifndef Z7_ST
+  Z7_IFACE_COM7_IMP(ICompressSetCoderMt)
+  Z7_IFACE_COM7_IMP(ICompressSetMemLimit)
+ #endif
+
   bool _finishStream;
 
 public:
-  MY_UNKNOWN_IMP2(
-      ICompressSetFinishMode,
-      ICompressGetInStreamProcessedSize)
-  
-  STDMETHOD(Code)(ISequentialInStream *inStream, ISequentialOutStream *outStream,
-      const UInt64 *inSize, const UInt64 *outSize, ICompressProgressInfo *progress);
-  STDMETHOD(SetFinishMode)(UInt32 finishMode);
-  STDMETHOD(GetInStreamProcessedSize)(UInt64 *value);
-
   CComDecoder(): _finishStream(false) {}
 };
 

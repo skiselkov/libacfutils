@@ -5,6 +5,7 @@
 #include "../../../../C/7zCrc.h"
 
 #include "../../../Common/AutoPtr.h"
+// #include "../../../Common/UTFConvert.h"
 
 #include "../../Common/StreamObjects.h"
 
@@ -13,16 +14,14 @@
 namespace NArchive {
 namespace N7z {
 
-HRESULT COutArchive::WriteSignature()
+static void FillSignature(Byte *buf)
 {
-  Byte buf[8];
   memcpy(buf, kSignature, kSignatureSize);
   buf[kSignatureSize] = kMajorVersion;
   buf[kSignatureSize + 1] = 4;
-  return WriteDirect(buf, 8);
 }
 
-#ifdef _7Z_VOL
+#ifdef Z7_7Z_VOL
 HRESULT COutArchive::WriteFinishSignature()
 {
   RINOK(WriteDirect(kFinishSignature, kSignatureSize));
@@ -48,15 +47,16 @@ static void SetUInt64(Byte *p, UInt64 d)
 
 HRESULT COutArchive::WriteStartHeader(const CStartHeader &h)
 {
-  Byte buf[24];
-  SetUInt64(buf + 4, h.NextHeaderOffset);
-  SetUInt64(buf + 12, h.NextHeaderSize);
-  SetUInt32(buf + 20, h.NextHeaderCRC);
-  SetUInt32(buf, CrcCalc(buf + 4, 20));
-  return WriteDirect(buf, 24);
+  Byte buf[32];
+  FillSignature(buf);
+  SetUInt64(buf + 8 + 4, h.NextHeaderOffset);
+  SetUInt64(buf + 8 + 12, h.NextHeaderSize);
+  SetUInt32(buf + 8 + 20, h.NextHeaderCRC);
+  SetUInt32(buf + 8, CrcCalc(buf + 8 + 4, 20));
+  return WriteDirect(buf, sizeof(buf));
 }
 
-#ifdef _7Z_VOL
+#ifdef Z7_7Z_VOL
 HRESULT COutArchive::WriteFinishHeader(const CFinishHeader &h)
 {
   CCRC crc;
@@ -74,15 +74,15 @@ HRESULT COutArchive::WriteFinishHeader(const CFinishHeader &h)
 }
 #endif
 
-HRESULT COutArchive::Create(ISequentialOutStream *stream, bool endMarker)
+HRESULT COutArchive::Create_and_WriteStartPrefix(ISequentialOutStream *stream /* , bool endMarker */)
 {
   Close();
-  #ifdef _7Z_VOL
+  #ifdef Z7_7Z_VOL
   // endMarker = false;
   _endMarker = endMarker;
   #endif
   SeqStream = stream;
-  if (!endMarker)
+  // if (!endMarker)
   {
     SeqStream.QueryInterface(IID_IOutStream, &Stream);
     if (!Stream)
@@ -90,8 +90,13 @@ HRESULT COutArchive::Create(ISequentialOutStream *stream, bool endMarker)
       return E_NOTIMPL;
       // endMarker = true;
     }
+    RINOK(Stream->Seek(0, STREAM_SEEK_CUR, &_signatureHeaderPos))
+    Byte buf[32];
+    FillSignature(buf);
+    memset(&buf[8], 0, 32 - 8);
+    return WriteDirect(buf, sizeof(buf));
   }
-  #ifdef _7Z_VOL
+  #ifdef Z7_7Z_VOL
   if (endMarker)
   {
     /*
@@ -100,34 +105,16 @@ HRESULT COutArchive::Create(ISequentialOutStream *stream, bool endMarker)
     sh.NextHeaderSize = (UInt32)(Int32)-1;
     sh.NextHeaderCRC = 0;
     WriteStartHeader(sh);
+    return S_OK;
     */
   }
-  else
   #endif
-  {
-    if (!Stream)
-      return E_FAIL;
-    RINOK(WriteSignature());
-    RINOK(Stream->Seek(0, STREAM_SEEK_CUR, &_prefixHeaderPos));
-  }
-  return S_OK;
 }
 
 void COutArchive::Close()
 {
   SeqStream.Release();
   Stream.Release();
-}
-
-HRESULT COutArchive::SkipPrefixArchiveHeader()
-{
-  #ifdef _7Z_VOL
-  if (_endMarker)
-    return S_OK;
-  #endif
-  Byte buf[24];
-  memset(buf, 0, 24);
-  return WriteDirect(buf, 24);
 }
 
 UInt64 COutArchive::GetPos() const
@@ -196,7 +183,7 @@ void COutArchive::WriteNumber(UInt64 value)
       break;
     }
     firstByte |= mask;
-    mask >>= 1;
+    mask = (Byte)(mask >> 1);
   }
   WriteByte(firstByte);
   for (; i > 0; i--)
@@ -206,16 +193,16 @@ void COutArchive::WriteNumber(UInt64 value)
   }
 }
 
-static UInt32 GetBigNumberSize(UInt64 value)
+static unsigned GetBigNumberSize(UInt64 value)
 {
-  int i;
+  unsigned i;
   for (i = 1; i < 9; i++)
     if (value < (((UInt64)1 << (i * 7))))
       break;
   return i;
 }
 
-#ifdef _7Z_VOL
+#ifdef Z7_7Z_VOL
 UInt32 COutArchive::GetVolHeadersSize(UInt64 dataSize, int nameLength, bool props)
 {
   UInt32 result = GetBigNumberSize(dataSize) * 2 + 41;
@@ -264,18 +251,18 @@ void COutArchive::WriteFolder(const CFolder &folder)
       for (idSize = 1; idSize < sizeof(id); idSize++)
         if ((id >> (8 * idSize)) == 0)
           break;
-      idSize &= 0xF;
+      // idSize &= 0xF; // idSize is smaller than 16 already
       Byte temp[16];
       for (unsigned t = idSize; t != 0; t--, id >>= 8)
         temp[t] = (Byte)(id & 0xFF);
   
-      Byte b = (Byte)(idSize);
-      bool isComplex = !coder.IsSimpleCoder();
+      unsigned b = idSize;
+      const bool isComplex = !coder.IsSimpleCoder();
       b |= (isComplex ? 0x10 : 0);
 
-      size_t propsSize = coder.Props.Size();
+      const size_t propsSize = coder.Props.Size();
       b |= ((propsSize != 0) ? 0x20 : 0);
-      temp[0] = b;
+      temp[0] = (Byte)b;
       WriteBytes(temp, idSize + 1);
       if (isComplex)
       {
@@ -309,7 +296,7 @@ void COutArchive::WriteBoolVector(const CBoolVector &boolVector)
   {
     if (boolVector[i])
       b |= mask;
-    mask >>= 1;
+    mask = (Byte)(mask >> 1);
     if (mask == 0)
     {
       WriteByte(b);
@@ -476,7 +463,7 @@ void COutArchive::WriteAlignedBools(const CBoolVector &v, unsigned numDefined, B
 {
   const unsigned bvSize = (numDefined == v.Size()) ? 0 : Bv_GetSizeInBytes(v);
   const UInt64 dataSize = ((UInt64)numDefined << itemSizeShifts) + bvSize + 2;
-  SkipToAligned(3 + (unsigned)bvSize + (unsigned)GetBigNumberSize(dataSize), itemSizeShifts);
+  SkipToAligned(3 + bvSize + GetBigNumberSize(dataSize), itemSizeShifts);
 
   WriteByte(type);
   WriteNumber(dataSize);
@@ -514,14 +501,20 @@ HRESULT COutArchive::EncodeStream(
   outFolders.FolderUnpackCRCs.Defs.Add(true);
   outFolders.FolderUnpackCRCs.Vals.Add(CrcCalc(data, data.Size()));
   // outFolders.NumUnpackStreamsVector.Add(1);
-  UInt64 dataSize64 = data.Size();
-  UInt64 unpackSize = data.Size();
-  RINOK(encoder.Encode(
+  const UInt64 dataSize64 = data.Size();
+  const UInt64 expectSize = data.Size();
+  RINOK(encoder.Encode1(
       EXTERNAL_CODECS_LOC_VARS
       stream,
       // NULL,
-      &dataSize64,
-      folders.AddNew(), outFolders.CoderUnpackSizes, unpackSize, SeqStream, packSizes, NULL))
+      &dataSize64,  // inSizeForReduce
+      expectSize,
+      folders.AddNew(),
+      // outFolders.CoderUnpackSizes, unpackSize,
+      SeqStream, packSizes, NULL))
+  if (!streamSpec->WasFinished())
+    return E_FAIL;
+  encoder.Encode_Post(dataSize64, outFolders.CoderUnpackSizes);
   return S_OK;
 }
 
@@ -545,7 +538,39 @@ void COutArchive::WriteHeader(
 
   WriteByte(NID::kHeader);
 
-  // Archive Properties
+  /*
+  {
+    // It's example for per archive properies writing
+  
+    WriteByte(NID::kArchiveProperties);
+
+    // you must use random 40-bit number that will identify you
+    // then you can use same kDeveloperID for any properties and methods
+    const UInt64 kDeveloperID = 0x123456789A; // change that value to real random 40-bit number
+
+    #define GENERATE_7Z_ID(developerID, subID) (((UInt64)0x3F << 56) | ((UInt64)developerID << 16) | subID)
+
+    {
+      const UInt64 kSubID = 0x1; // you can use small number for subID
+      const UInt64 kID = GENERATE_7Z_ID(kDeveloperID, kSubID);
+      WriteNumber(kID);
+      const unsigned kPropsSize = 3; // it's example size
+      WriteNumber(kPropsSize);
+      for (unsigned i = 0; i < kPropsSize; i++)
+        WriteByte((Byte)(i & 0xFF));
+    }
+    {
+      const UInt64 kSubID = 0x2; // you can use small number for subID
+      const UInt64 kID = GENERATE_7Z_ID(kDeveloperID, kSubID);
+      WriteNumber(kID);
+      const unsigned kPropsSize = 5; // it's example size
+      WriteNumber(kPropsSize);
+      for (unsigned i = 0; i < kPropsSize; i++)
+        WriteByte((Byte)(i + 16));
+    }
+    WriteByte(NID::kEnd);
+  }
+  */
 
   if (db.Folders.Size() > 0)
   {
@@ -637,7 +662,15 @@ void COutArchive::WriteHeader(
       const UString &name = db.Names[i];
       if (!name.IsEmpty())
         numDefined++;
-      namesDataSize += (name.Len() + 1) * 2;
+      const size_t numUtfChars =
+      /*
+      #if WCHAR_MAX > 0xffff
+        Get_Num_Utf16_chars_from_wchar_string(name.Ptr());
+      #else
+      */
+        name.Len();
+      // #endif
+      namesDataSize += (numUtfChars + 1) * 2;
     }
     
     if (numDefined > 0)
@@ -654,6 +687,25 @@ void COutArchive::WriteHeader(
         for (unsigned t = 0; t <= name.Len(); t++)
         {
           wchar_t c = name[t];
+
+          /*
+          #if WCHAR_MAX > 0xffff
+          if (c >= 0x10000)
+          {
+            c -= 0x10000;
+            if (c < (1 << 20))
+            {
+              unsigned c0 = 0xd800 + ((c >> 10) & 0x3FF);
+              WriteByte((Byte)c0);
+              WriteByte((Byte)(c0 >> 8));
+              c = 0xdc00 + (c & 0x3FF);
+            }
+            else
+              c = '_'; // we change character unsupported by UTF16
+          }
+          #endif
+          */
+  
           WriteByte((Byte)c);
           WriteByte((Byte)(c >> 8));
         }
@@ -773,15 +825,15 @@ HRESULT COutArchive::WriteDatabase(
   {
     headerSize = 0;
     headerOffset = 0;
-    headerCRC = CrcCalc(0, 0);
+    headerCRC = CrcCalc(NULL, 0);
   }
   else
   {
     bool encodeHeaders = false;
-    if (options != 0)
+    if (options)
       if (options->IsEmpty())
-        options = 0;
-    if (options != 0)
+        options = NULL;
+    if (options)
       if (options->PasswordIsDefined || headerOptions.CompressMainHeader)
         encodeHeaders = true;
 
@@ -816,7 +868,7 @@ HRESULT COutArchive::WriteDatabase(
       RINOK(EncodeStream(
           EXTERNAL_CODECS_LOC_VARS
           encoder, buf,
-          packSizes, folders, outFolders));
+          packSizes, folders, outFolders))
 
       _writeToStream = true;
       
@@ -830,11 +882,11 @@ HRESULT COutArchive::WriteDatabase(
       FOR_VECTOR (i, packSizes)
         headerOffset += packSizes[i];
     }
-    RINOK(_outByte.Flush());
+    RINOK(_outByte.Flush())
     headerCRC = CRC_GET_DIGEST(_crc);
     headerSize = _outByte.GetProcessedSize();
   }
-  #ifdef _7Z_VOL
+  #ifdef Z7_7Z_VOL
   if (_endMarker)
   {
     CFinishHeader h;
@@ -850,14 +902,16 @@ HRESULT COutArchive::WriteDatabase(
   }
   else
   #endif
+  if (Stream)
   {
     CStartHeader h;
     h.NextHeaderSize = headerSize;
     h.NextHeaderCRC = headerCRC;
     h.NextHeaderOffset = headerOffset;
-    RINOK(Stream->Seek(_prefixHeaderPos, STREAM_SEEK_SET, NULL));
+    RINOK(Stream->Seek((Int64)_signatureHeaderPos, STREAM_SEEK_SET, NULL))
     return WriteStartHeader(h);
   }
+  return S_OK;
 }
 
 void CUInt32DefVector::SetItem(unsigned index, bool defined, UInt32 value)
