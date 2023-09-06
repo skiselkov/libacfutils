@@ -110,7 +110,7 @@ pcre2/pcre2-linux-64
 pcre2/pcre2-mac-64
 pcre2/pcre2-win-64
 
-glfw/glfw-3.3
+glfw/glfw-3.3.8
 glfw/glfw-linux-64
 glfw/glfw-mac-64
 glfw/glfw-win-64

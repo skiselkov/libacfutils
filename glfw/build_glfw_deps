@@ -17,7 +17,7 @@
 
 source ../build_dep.common
 
-GLFW_VERSION="3.3"
+GLFW_VERSION="3.3.8"
 GLFW="glfw-${GLFW_VERSION}.tar.xz"
 
 function build_platform() {
