@@ -22,7 +22,7 @@ typedef UInt32 CSwapUInt32;
   // #if defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 1900)
   #if defined(__clang__) && (__clang_major__ >= 4) \
       || defined(Z7_GCC_VERSION) && (Z7_GCC_VERSION >= 40701)
-      #define k_SwapBytes_Mode_MAX  k_SwapBytes_Mode_AVX2
+      #define k_SwapBytes_Mode_MAX  k_SwapBytes_Mode_SSSE3
       #define SWAP_ATTRIB_SSE2  __attribute__((__target__("sse2")))
       #define SWAP_ATTRIB_SSSE3 __attribute__((__target__("ssse3")))
       #define SWAP_ATTRIB_AVX2  __attribute__((__target__("avx2")))
