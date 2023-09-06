@@ -17,13 +17,13 @@
 
 source ../build_dep.common
 
-PCRE2="pcre2-10.32.zip"
+PCRE2="pcre2-10.42.tar.xz"
 
 case `uname` in
 	Linux)
 		build_dep "linux-64" "--enable-static --disable-shared" \
 		    "$PCRE2" "pcre2" "lib/libpcre2-8.a" && \
-		build_dep "win-64" "--enable-static --disable-shared \
+		build_dep "win-64" "--enable-static --enable-shared \
 		    --host=x86_64-w64-mingw32" \
 		    "$PCRE2" "pcre2" "lib/libpcre2-8.a"
 		;;
