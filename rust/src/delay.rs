@@ -128,7 +128,7 @@ where
 
 mod tests {
 	#[test]
-	fn test_delay() {
+	fn delayline_test() {
 		use std::time::Duration;
 		use crate::delay::DelayLine;
 
