@@ -11,6 +11,7 @@ pub mod conf;
 pub mod conv;
 pub mod crc64;
 pub mod delay;
+pub mod icao2cc;
 pub mod log;
 pub mod math;
 pub mod path;
