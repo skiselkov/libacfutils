@@ -43,7 +43,7 @@ fi
 if [[ "$do_clean" != 1 ]]; then
 	git submodule init mingw-std-threads && \
 	git submodule update --merge --recursive && \
-	( cd mingw-std-threads && git checkout master )
+	( cd mingw-std-threads && git checkout 6c2061b7da41d6aa1b2162ff4383ec3ece864bc6 )
 fi
 
 ( cd zlib && ./build_zlib_deps ) && \
