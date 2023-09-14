@@ -167,6 +167,12 @@ API_EXPORT mt_cairo_uploader_t *mt_cairo_render_get_uploader(
 API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
+typedef struct {
+	unsigned	x, y;
+	unsigned	w, h;
+} mtcr_rect_t;
+API_EXPORT void mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
+    const mtcr_rect_t *rects, size_t num);
 
 #ifdef	LACF_MTCR_DEBUG
 API_EXPORT void mt_cairo_render_set_ctx_checking_enabled(

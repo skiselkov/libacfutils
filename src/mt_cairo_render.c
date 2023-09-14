@@ -1519,6 +1519,15 @@ mt_cairo_render_get_height(mt_cairo_render_t *mtcr)
 	return (mtcr->h);
 }
 
+void
+mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
+    const mtcr_rect_t *rects, size_t num)
+{
+	UNUSED(mtcr);
+	UNUSED(rects);
+	UNUSED(num);
+}
+
 /**
  * Enables context integrity checking for the mt_cairo_render_t internals.
  * @note This is an internal development option for libacfutils, so unless

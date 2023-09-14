@@ -115,7 +115,7 @@ pub mod units {
 		pub fn as_F(&self) -> f64 {
 			kelvin2fah(self.T)
 		}
-		pub const fn _new_const(kelvin: f64) -> Self {
+		pub const fn new_const(kelvin: f64) -> Self {
 			Self { T: kelvin }
 		}
 	}
@@ -170,7 +170,7 @@ pub mod units {
 		pub fn as_psi(&self) -> f64 {
 			pa2psi(self.p)
 		}
-		pub const fn _new_const(pa: f64) -> Self {
+		pub const fn new_const(pa: f64) -> Self {
 			Self { p: pa }
 		}
 	}
@@ -230,7 +230,7 @@ pub mod units {
 		pub fn as_sm(&self) -> f64 {
 			met2sm(self.d)
 		}
-		pub const fn _new_const(m: f64) -> Self {
+		pub const fn new_const(m: f64) -> Self {
 			Self { d: m }
 		}
 	}
@@ -356,7 +356,7 @@ pub mod units {
 		pub fn as_fpm(&self) -> f64 {
 			mps2fpm(self.s)
 		}
-		pub const fn _new_const(mps: f64) -> Self {
+		pub const fn new_const(mps: f64) -> Self {
 			Self { s: mps }
 		}
 	}
@@ -414,9 +414,9 @@ pub mod consts {
 	 * ISA (International Standard Atmosphere) parameters.
 	 */
 	/* Sea level temperature */
-	pub const ISA_SL_TEMP: Temperature = Temperature::_new_const(288.15);
+	pub const ISA_SL_TEMP: Temperature = Temperature::new_const(288.15);
 	 /* Sea level pressure */
-	pub const ISA_SL_PRESS: Pressure = Pressure::_new_const(101325.0);
+	pub const ISA_SL_PRESS: Pressure = Pressure::new_const(101325.0);
 	/* Sea level density in kg/m^3 */
 	pub const ISA_SL_DENS: f64 = 1.225;
 	/* Temperature lapse rate per 1000ft */
@@ -424,9 +424,9 @@ pub mod consts {
 	/* Temperature lapse rate per 1 meter */
 	pub const ISA_TLR_PER_1M: f64 = 0.0065;
 	/* Speed of sound at sea level */
-	pub const ISA_SPEED_SOUND: Speed = Speed::_new_const(340.3);
+	pub const ISA_SPEED_SOUND: Speed = Speed::new_const(340.3);
 	/* Tropopause altitude */
-	pub const ISA_TP_ALT: Distance = Distance::_new_const(36089.0 * 0.3048);
+	pub const ISA_TP_ALT: Distance = Distance::new_const(36089.0 * 0.3048);
 	/*
 	 * Physical constants.
 	 */
