@@ -133,6 +133,17 @@ pub mod units {
 			Self::Output { T: self.T - rhs.T }
 		}
 	}
+	impl std::fmt::Display for Temperature {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1}\u{00B0}C", self.as_C())
+		}
+	}
+	impl Default for Temperature {
+		fn default() -> Self {
+			crate::phys::consts::ISA_SL_TEMP
+		}
+	}
 
 	#[derive(Clone, Debug, PartialEq, PartialOrd)]
 	pub struct Pressure {
@@ -163,9 +174,20 @@ pub mod units {
 			Self { p: pa }
 		}
 	}
+	impl std::fmt::Display for Pressure {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.2} PSI", self.as_psi())
+		}
+	}
+	impl Default for Pressure {
+		fn default() -> Self {
+			crate::phys::consts::ISA_SL_PRESS
+		}
+	}
 	impl_units_ops_non_neg!(Pressure, p);
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Distance {
 		d: f64,		/* meters */
 	}
@@ -212,9 +234,15 @@ pub mod units {
 			Self { d: m }
 		}
 	}
+	impl std::fmt::Display for Distance {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.2} nm", self.as_nm())
+		}
+	}
 	impl_units_ops_non_neg!(Distance, d);
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Mass {
 		m: f64,		/* kg */
 	}
@@ -241,9 +269,15 @@ pub mod units {
 			kg2lbs(self.m)
 		}
 	}
+	impl std::fmt::Display for Mass {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1} kg", self.as_kg())
+		}
+	}
 	impl_units_ops_non_neg!(Mass, m);
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Angvel {
 		r: f64,		/* rad/sec */
 	}
@@ -277,9 +311,15 @@ pub mod units {
 			radsec2rpm(self.r)
 		}
 	}
+	impl std::fmt::Display for Angvel {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1} rpm", self.as_rpm())
+		}
+	}
 	impl_units_ops!(Angvel, r);
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Speed {
 		s: f64,		/* m/s */
 	}
@@ -320,9 +360,15 @@ pub mod units {
 			Self { s: mps }
 		}
 	}
+	impl std::fmt::Display for Speed {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1} KT", self.as_kt())
+		}
+	}
 	impl_units_ops!(Speed, s);
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
 	pub struct MassRate {
 		mr: f64,	/* kg/s */
 	}
@@ -352,6 +398,12 @@ pub mod units {
 			kg2lbs(self.mr * 3600.0)
 		}
 	}
+	impl std::fmt::Display for MassRate {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1} kg/s", self.mr)
+		}
+	}
 	impl_units_ops!(MassRate, mr);
 }
 
@@ -362,7 +414,7 @@ pub mod consts {
 	 * ISA (International Standard Atmosphere) parameters.
 	 */
 	/* Sea level temperature */
-	pub const ISA_SL_TEMP: Temperature = Temperature::_new_const(283.15);
+	pub const ISA_SL_TEMP: Temperature = Temperature::_new_const(288.15);
 	 /* Sea level pressure */
 	pub const ISA_SL_PRESS: Pressure = Pressure::_new_const(101325.0);
 	/* Sea level density in kg/m^3 */
