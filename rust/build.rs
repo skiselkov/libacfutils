@@ -7,14 +7,13 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
-use build_target::*;
-
-fn main() {
+fn add_test_config() {
+	use build_target::*;
 	let (plat_short, plat_long) = match target_os().unwrap() {
-	Os::Windows => ("win64", "win-64"),
-	Os::Linux => ("lin64", "linux-64"),
-	Os::MacOs => ("mac64", "mac-64"),
-	_ => unreachable!()
+	    Os::Windows => ("win64", "win-64"),
+	    Os::Linux => ("lin64", "linux-64"),
+	    Os::MacOs => ("mac64", "mac-64"),
+	    _ => unreachable!()
 	};
 	println!("cargo:rustc-link-search=native=../qmake/{}", plat_short);
 	println!("cargo:rustc-link-lib=static=acfutils");
@@ -31,4 +30,10 @@ fn main() {
 	println!("cargo:rustc-link-search=native=../zlib/zlib-{}/lib",
 	    plat_long);
 	println!("cargo:rustc-link-lib=static=z");
+}
+
+fn main() {
+	if cfg!(feature = "test") {
+		add_test_config();
+	}
 }
