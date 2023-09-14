@@ -90,7 +90,7 @@ pub mod units {
 	    }
 	}
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct Temperature {
 		T: f64,		/* Kelvin */
 	}
@@ -145,7 +145,7 @@ pub mod units {
 		}
 	}
 
-	#[derive(Clone, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct Pressure {
 		p: f64,		/* Pascals */
 	}
@@ -187,7 +187,7 @@ pub mod units {
 	}
 	impl_units_ops_non_neg!(Pressure, p);
 
-	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Distance {
 		d: f64,		/* meters */
 	}
@@ -242,7 +242,7 @@ pub mod units {
 	}
 	impl_units_ops_non_neg!(Distance, d);
 
-	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Mass {
 		m: f64,		/* kg */
 	}
@@ -277,7 +277,7 @@ pub mod units {
 	}
 	impl_units_ops_non_neg!(Mass, m);
 
-	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Angvel {
 		r: f64,		/* rad/sec */
 	}
@@ -319,7 +319,7 @@ pub mod units {
 	}
 	impl_units_ops!(Angvel, r);
 
-	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Speed {
 		s: f64,		/* m/s */
 	}
@@ -368,7 +368,7 @@ pub mod units {
 	}
 	impl_units_ops!(Speed, s);
 
-	#[derive(Clone, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct MassRate {
 		mr: f64,	/* kg/s */
 	}
