@@ -281,6 +281,8 @@ impl Drop for Conf {
 	}
 }
 
+unsafe impl Send for Conf {}
+
 impl std::fmt::Display for Conf {
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 	    Result<(), std::fmt::Error> {
