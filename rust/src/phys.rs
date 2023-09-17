@@ -49,12 +49,12 @@ pub mod units {
 	    }
 	}
 
-	macro_rules! impl_units_ops_non_neg {
-	    ($type: ty, $field:ident) => {
+	macro_rules! impl_units_ops_check {
+	    ($type: ty, $field:ident, $op:ident) => {
 		impl std::ops::Add for $type {
 			type Output = $type;
 			fn add(self, rhs: $type) -> Self::Output {
-				assert!(self.$field + rhs.$field >= 0.0);
+				assert!((self.$field + rhs.$field).$op(&0.0));
 				Self::Output {
 				    $field: self.$field + rhs.$field
 				}
@@ -63,7 +63,7 @@ pub mod units {
 		impl std::ops::Sub for $type {
 			type Output = $type;
 			fn sub(self, rhs: $type) -> Self::Output {
-				assert!(self.$field - rhs.$field >= 0.0);
+				assert!((self.$field - rhs.$field).$op(&0.0));
 				Self::Output {
 				    $field: self.$field - rhs.$field
 				}
@@ -72,7 +72,7 @@ pub mod units {
 		impl std::ops::Mul for $type {
 			type Output = $type;
 			fn mul(self, rhs: $type) -> Self::Output {
-				assert!(self.$field * rhs.$field >= 0.0);
+				assert!((self.$field * rhs.$field).$op(&0.0));
 				Self::Output {
 				    $field: self.$field * rhs.$field
 				}
@@ -81,12 +81,22 @@ pub mod units {
 		impl std::ops::Div for $type {
 			type Output = $type;
 			fn div(self, rhs: $type) -> Self::Output {
-				assert!(self.$field / rhs.$field >= 0.0);
+				assert!((self.$field / rhs.$field).$op(&0.0));
 				Self::Output {
 				    $field: self.$field / rhs.$field
 				}
 			}
 		}
+	    }
+	}
+	macro_rules! impl_units_ops_non_neg {
+	    ($type: ty, $field:ident) => {
+		impl_units_ops_check!($type, $field, ge);
+	    }
+	}
+	macro_rules! impl_units_ops_pos {
+	    ($type: ty, $field:ident) => {
+		impl_units_ops_check!($type, $field, gt);
 	    }
 	}
 
@@ -119,20 +129,7 @@ pub mod units {
 			Self { T: kelvin }
 		}
 	}
-	impl std::ops::Add for Temperature {
-		type Output = Temperature;
-		fn add(self, rhs: Temperature) -> Self::Output {
-			assert!(self.T + rhs.T > 0.0);
-			Self::Output { T: self.T + rhs.T }
-		}
-	}
-	impl std::ops::Sub for Temperature {
-		type Output = Temperature;
-		fn sub(self, rhs: Temperature) -> Self::Output {
-			assert!(self.T - rhs.T > 0.0);
-			Self::Output { T: self.T - rhs.T }
-		}
-	}
+	impl_units_ops_pos!(Temperature, T);
 	impl std::fmt::Display for Temperature {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 		    std::fmt::Result {
