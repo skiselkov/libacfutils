@@ -474,6 +474,30 @@ pub mod units {
 	impl_units_ops!(MassRate, mr);
 }
 
+pub mod util {
+	use crate::phys::{units::*, consts::*};
+	/*
+	 * Returns the speed of sound in m/s in dry air.
+	 */
+	pub fn speed_sound_dry_air(T: Temperature) -> Speed
+	{
+		speed_sound(T, GAMMA_DRY_AIR, R_SPEC_DRY_AIR)
+	}
+	/*
+	 * Returns the speed of sound in any specific gas.
+	 * @param T Temperature of the gas.
+	 * @param gamma Ratio of specific heats for the gas. For dry air,
+	 *	this is `crate::phys::consts::GAMMA_DRY_AIR`.
+	 * @param R Specific gas constant for the gas. For dry air,
+	 *	this is `crate::phys::consts::R_SPEC_DRY_AIR`.
+	 * @return Speed of sound in the specified gas.
+	 */
+	pub fn speed_sound(T: Temperature, gamma: f64, R: f64) -> Speed
+	{
+		Speed::from_mps((gamma * R * T.as_K()).sqrt())
+	}
+}
+
 pub mod consts {
 	use crate::phys::units::*;
 	use std::time::Duration;
@@ -503,10 +527,9 @@ pub mod consts {
 	pub const EARTH_SID_DAY: Duration = Duration::new(86164, 905_000_000);
 	pub const EARTH_ROT_RATE: f64 = 360.0 / 86164.0905;	/* deg/sec */
 	pub const DRY_AIR_MOL: f64 = 0.02896968;/* Molar mass of dry air */
-	pub const GAMMA: f64 = 1.4;		/* Spec heat ratio of dry air */
+	pub const GAMMA_DRY_AIR: f64 = 1.4;	/* Spec heat ratio of dry air */
 	pub const R_UNIV: f64 = 8.314462618;	/* Universal gas constant */
-	/* Specific gas constant of dry air */
-	pub const R_SPEC: f64 = 287.058;
+	pub const R_SPEC_DRY_AIR: f64 = 287.058;/* Spec gas const of dry air */
 	/* Stefan-Boltzmann constant */
 	pub const BOLTZMANN_CONST: f64 = 5.67e-8;
 }
