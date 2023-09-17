@@ -111,9 +111,11 @@ pub mod units {
 			Self { T: kelvin }
 		}
 		pub fn from_C(celsius: f64) -> Self {
+			assert!(celsius >= -273.15);
 			Self { T: c2kelvin(celsius) }
 		}
 		pub fn from_F(fahrenheit: f64) -> Self {
+			assert!(fahrenheit > -459.67);
 			Self { T: fah2kelvin(fahrenheit) }
 		}
 		pub fn as_K(&self) -> f64 {
@@ -143,13 +145,47 @@ pub mod units {
 	}
 
 	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	pub struct TemperatureRelative {
+		dT: f64,	/* Kelvin */
+	}
+	impl TemperatureRelative {
+		pub fn from_K(kelvin: f64) -> Self {
+			assert!(kelvin.is_normal());
+			Self { dT: kelvin }
+		}
+		pub fn from_C(celsius: f64) -> Self {
+			Self { dT: c2kelvin(celsius) }
+		}
+		pub fn from_F(fahrenheit: f64) -> Self {
+			Self { dT: fah2kelvin(fahrenheit) }
+		}
+		pub fn as_K(&self) -> f64 {
+			self.dT
+		}
+		pub fn as_C(&self) -> f64 {
+			kelvin2c(self.dT)
+		}
+		pub fn as_F(&self) -> f64 {
+			kelvin2fah(self.dT)
+		}
+	}
+	impl_units_ops!(TemperatureRelative, dT);
+	impl std::fmt::Display for TemperatureRelative {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.1}\u{00B0}dC", self.as_C())
+		}
+	}
+
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct Pressure {
-		p: f64,		/* Pascals */
+		p: f64,		/* Pascals, CANNOT be negative */
 	}
 	impl Pressure {
 		pub fn from_pa(pa: f64) -> Self {
 			assert!(pa.is_normal());
-			assert!(pa.abs() < 1e9);
+			assert!(pa >= 0.0);
+			assert!(pa < 1e12);
 			Self { p: pa }
 		}
 		pub fn from_hpa(hpa: f64) -> Self {
@@ -183,6 +219,40 @@ pub mod units {
 		}
 	}
 	impl_units_ops_non_neg!(Pressure, p);
+
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	pub struct PressureRelative {
+		dP: f64,	/* Pascals, CAN be negative */
+	}
+	impl PressureRelative {
+		pub fn from_pa(pa: f64) -> Self {
+			assert!(pa.is_normal());
+			assert!(pa.abs() < 1e12);
+			Self { dP: pa }
+		}
+		pub fn from_hpa(hpa: f64) -> Self {
+			Self::from_pa(hpa / 100.0)
+		}
+		pub fn from_psi(psi: f64) -> Self {
+			Self::from_pa(psi2pa(psi))
+		}
+		pub fn as_pa(&self) -> f64 {
+			self.dP
+		}
+		pub fn as_hpa(&self) -> f64 {
+			self.dP / 100.0
+		}
+		pub fn as_psi(&self) -> f64 {
+			pa2psi(self.dP)
+		}
+	}
+	impl_units_ops!(PressureRelative, dP);
+	impl std::fmt::Display for PressureRelative {
+		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
+		    std::fmt::Result {
+			write!(f, "{:.2} PSID", self.as_psi())
+		}
+	}
 
 	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Distance {
@@ -448,31 +518,26 @@ pub mod conv {
 	/* celsius -> fahrenheit */
 	pub fn c2fah(celsius: f64) -> f64 {
 		assert!(celsius.is_normal());
-		assert!(celsius > -273.15);
 		(celsius * 1.8) + 32.0
 	}
 	/* fahrenheit -> celsius */
 	pub fn fah2c(fah: f64) -> f64 {
 		assert!(fah.is_normal());
-		assert!(fah > -459.67);
 		(fah - 32.0) / 1.8
 	}
 	/* kelvin -> celsius */
 	pub fn kelvin2c(kelvin: f64) -> f64 {
 		assert!(kelvin.is_normal());
-		assert!(kelvin > 0.0);
 		kelvin - 273.15
 	}
 	/* celsius -> kelvin */
 	pub fn c2kelvin(celsius: f64) -> f64 {
 		assert!(celsius.is_normal());
-		assert!(celsius > -273.15);
 		celsius + 273.15
 	}
 	/* fahrenheit -> kelvin */
 	pub fn fah2kelvin(fah: f64) -> f64 {
 		assert!(fah.is_normal());
-		assert!(fah > -459.67);
 		(fah + 459.67) / 1.8
 	}
 	/* kelvin -> fahrenheit */
@@ -526,37 +591,31 @@ pub mod conv {
 	/* Pascals -> Hectopascals */
 	pub fn hpa2pa(hpa: f64) -> f64 {
 		assert!(hpa.is_normal());
-		assert!(hpa >= 0.0);
 		hpa * 100.0
 	}
 	/* Hectopascals -> Pascals */
 	pub fn Pa2hpa(pa: f64) -> f64 {
 		assert!(pa.is_normal());
-		assert!(pa >= 0.0);
 		pa / 100.0
 	}
 	/* psi -> Pascals */
 	pub fn psi2pa(psi: f64) -> f64 {
 		assert!(psi.is_normal());
-		assert!(psi >= 0.0);
 		psi * 6894.73326075122482308111
 	}
 	/* Pascals -> psi */
 	pub fn pa2psi(pa: f64) -> f64 {
 		assert!(pa.is_normal());
-		assert!(pa >= 0.0);
 		pa / 6894.73326075122482308111
 	}
 	/* In.Hg -> pa */
 	pub fn inhg2pa(inhg: f64) -> f64 {
 		assert!(inhg.is_normal());
-		assert!(inhg >= 0.0);
 		inhg * (101325.0 / 29.92)
 	}
 	/* pa -> In.Hg */
 	pub fn Pa2inhg(pa: f64) -> f64 {
 		assert!(pa.is_normal());
-		assert!(pa >= 0.0);
 		pa * (29.92 / 101325.0)
 	}
 	/*
