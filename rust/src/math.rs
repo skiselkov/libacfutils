@@ -24,3 +24,58 @@ macro_rules! impl_round_to {
 
 impl_round_to!(f32);
 impl_round_to!(f64);
+
+pub trait FilterIn {
+	/**
+	 * Provides a gradual method of integrating an old value until it
+	 * approaches a new target value. This is used in iterative processes
+	 * by calling the filter_in method repeatedly a certain time intervals
+	 * (d_t = delta-time). As time progresses, old_val will gradually be
+	 * made to approach new_val. The lag serves to make the approach
+	 * slower or faster (e.g. a value of '2' and d_t in seconds makes
+	 * old_val approach new_val with a ramp that is approximately 2
+	 * seconds long).
+	 *
+	 * @note self and new_val must NOT be NAN or infinite.
+	 */
+	fn filter_in(&self, new_val: Self, d_t: f64, lag: f64) -> Self;
+	/**
+	 * Same as `filter_in()`, but handles NAN and infinite values for
+	 * self and new_val properly.
+	 * - if new_val is NAN or infinite, new_val is returned,
+	 * - else if self is NAN or infinite, new_val is returned,
+	 *	(without gradual filtering).
+	 * - otherwise this simply implements the filter_in algorithm.
+	 */
+	fn filter_in_nan(&self, new_val: Self, d_t: f64, lag: f64) -> Self;
+}
+
+macro_rules! impl_filter_in {
+    ($t:ty) => {
+	impl FilterIn for $t {
+		fn filter_in(&self, new_val: $t, d_t: f64, lag: f64) -> $t {
+			assert!(self.is_finite());
+			assert!(new_val.is_finite());
+			assert!(d_t >= 0.0);
+			assert!(lag >= 0.0);
+
+			let alpha = (1.0 / (1.0 + d_t / lag)) as $t;
+			alpha * self + (1.0 - alpha) * new_val
+		}
+		fn filter_in_nan(&self, new_val: $t, d_t: f64, lag: f64) -> $t {
+			assert!(d_t >= 0.0);
+			assert!(lag >= 0.0);
+
+			if (self.is_finite() && new_val.is_finite()) {
+				let alpha = 1.0 / (1.0 + d_t / lag) as $t;
+				alpha * self + (1.0 - alpha) * new_val
+			} else {
+				new_val
+			}
+		}
+	}
+    };
+}
+
+impl_filter_in!(f32);
+impl_filter_in!(f64);
