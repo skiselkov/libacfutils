@@ -101,7 +101,7 @@ pub mod units {
 	}
 	impl Temperature {
 		pub fn from_K(kelvin: f64) -> Self {
-			assert!(kelvin.is_normal());
+			assert!(kelvin.is_finite());
 			assert!(kelvin > 0.0);
 			Self { T: kelvin }
 		}
@@ -163,7 +163,7 @@ pub mod units {
 	}
 	impl TemperatureRelative {
 		pub fn from_K(kelvin: f64) -> Self {
-			assert!(kelvin.is_normal());
+			assert!(kelvin.is_finite());
 			Self { dT: kelvin }
 		}
 		pub fn from_C(celsius: f64) -> Self {
@@ -196,7 +196,7 @@ pub mod units {
 	}
 	impl Pressure {
 		pub fn from_pa(pa: f64) -> Self {
-			assert!(pa.is_normal());
+			assert!(pa.is_finite());
 			assert!(pa >= 0.0);
 			assert!(pa < 1e12);
 			Self { p: pa }
@@ -250,7 +250,7 @@ pub mod units {
 	}
 	impl PressureRelative {
 		pub fn from_pa(pa: f64) -> Self {
-			assert!(pa.is_normal());
+			assert!(pa.is_finite());
 			assert!(pa.abs() < 1e12);
 			Self { dP: pa }
 		}
@@ -284,7 +284,7 @@ pub mod units {
 	}
 	impl Distance {
 		pub fn from_m(m: f64) -> Self {
-			assert!(m.is_normal());
+			assert!(m.is_finite());
 			assert!(m >= 0.0);
 			Self { d: m }
 		}
@@ -374,7 +374,7 @@ pub mod units {
 	}
 	impl Angvel {
 		pub fn from_radsec(radsec: f64) -> Self {
-			assert!(radsec.is_normal());
+			assert!(radsec.is_finite());
 			assert!(radsec.abs() < 1e12);
 			Self { r: radsec }
 		}
@@ -382,7 +382,7 @@ pub mod units {
 			Self { r: crate::geom::conv::deg2rad(degsec) }
 		}
 		pub fn from_rps(rps: f64) -> Self {
-			assert!(rps.is_normal());
+			assert!(rps.is_finite());
 			assert!(rps.abs() < 1e12);
 			Self { r: rps * 2.0 * std::f64::consts::PI }
 		}
@@ -416,7 +416,7 @@ pub mod units {
 	}
 	impl Speed {
 		pub fn from_mps(mps: f64) -> Self {
-			assert!(mps.is_normal());
+			assert!(mps.is_finite());
 			assert!(mps.abs() < 1e6);
 			Self { s: mps }
 		}
@@ -465,17 +465,17 @@ pub mod units {
 	}
 	impl MassRate {
 		pub fn from_kgs(kgs: f64) -> Self {
-			assert!(kgs.is_normal());
+			assert!(kgs.is_finite());
 			assert!(kgs.abs() < 1e12);
 			Self { mr: kgs }
 		}
 		pub fn from_kgh(kgh: f64) -> Self {
-			assert!(kgh.is_normal());
+			assert!(kgh.is_finite());
 			assert!(kgh.abs() < 1e9);
 			Self { mr: kgh / 3600.0 }
 		}
 		pub fn from_pph(pph: f64) -> Self {
-			assert!(pph.is_normal());
+			assert!(pph.is_finite());
 			assert!(pph.abs() < 1e9);
 			Self { mr: lbs2kg(pph) / 3600.0 }
 		}
@@ -564,32 +564,32 @@ pub mod conv {
 	 */
 	/* celsius -> fahrenheit */
 	pub fn c2fah(celsius: f64) -> f64 {
-		assert!(celsius.is_normal());
+		assert!(celsius.is_finite());
 		(celsius * 1.8) + 32.0
 	}
 	/* fahrenheit -> celsius */
 	pub fn fah2c(fah: f64) -> f64 {
-		assert!(fah.is_normal());
+		assert!(fah.is_finite());
 		(fah - 32.0) / 1.8
 	}
 	/* kelvin -> celsius */
 	pub fn kelvin2c(kelvin: f64) -> f64 {
-		assert!(kelvin.is_normal());
+		assert!(kelvin.is_finite());
 		kelvin - 273.15
 	}
 	/* celsius -> kelvin */
 	pub fn c2kelvin(celsius: f64) -> f64 {
-		assert!(celsius.is_normal());
+		assert!(celsius.is_finite());
 		celsius + 273.15
 	}
 	/* fahrenheit -> kelvin */
 	pub fn fah2kelvin(fah: f64) -> f64 {
-		assert!(fah.is_normal());
+		assert!(fah.is_finite());
 		(fah + 459.67) / 1.8
 	}
 	/* kelvin -> fahrenheit */
 	pub fn kelvin2fah(kelvin: f64) -> f64 {
-		assert!(kelvin.is_normal());
+		assert!(kelvin.is_finite());
 		assert!(kelvin > 0.0);
 		(kelvin * 1.8) - 459.67
 	}
@@ -598,37 +598,37 @@ pub mod conv {
 	 */
 	/* feet -> meters */
 	pub fn feet2met(ft: f64) -> f64 {
-		assert!(ft.is_normal());
+		assert!(ft.is_finite());
 		assert!(ft >= 0.0);
 		ft * 0.3048
 	}
 	/* meters -> feet */
 	pub fn met2feet(m: f64) -> f64 {
-		assert!(m.is_normal());
+		assert!(m.is_finite());
 		assert!(m >= 0.0);
 		m * 3.2808398950131
 	}
 	/* nautical miles -> meters */
 	pub fn nm2met(nm: f64) -> f64 {
-		assert!(nm.is_normal());
+		assert!(nm.is_finite());
 		assert!(nm >= 0.0);
 		nm * 1852.0
 	}
 	/* meters -> nautical miles */
 	pub fn met2nm(m: f64) -> f64 {
-		assert!(m.is_normal());
+		assert!(m.is_finite());
 		assert!(m >= 0.0);
 		m / 1852.0
 	}
 	/* statute miles -> meters */
 	pub fn sm2met(sm: f64) -> f64 {
-		assert!(sm.is_normal());
+		assert!(sm.is_finite());
 		assert!(sm >= 0.0);
 		(sm * 5280.0) * 0.3048
 	}
 	/* meters -> statute miles */
 	pub fn met2sm(m: f64) -> f64 {
-		assert!(m.is_normal());
+		assert!(m.is_finite());
 		assert!(m >= 0.0);
 		(m / 0.3048) / 5280.0
 	}
@@ -637,32 +637,32 @@ pub mod conv {
 	 */
 	/* Pascals -> Hectopascals */
 	pub fn hpa2pa(hpa: f64) -> f64 {
-		assert!(hpa.is_normal());
+		assert!(hpa.is_finite());
 		hpa * 100.0
 	}
 	/* Hectopascals -> Pascals */
 	pub fn Pa2hpa(pa: f64) -> f64 {
-		assert!(pa.is_normal());
+		assert!(pa.is_finite());
 		pa / 100.0
 	}
 	/* psi -> Pascals */
 	pub fn psi2pa(psi: f64) -> f64 {
-		assert!(psi.is_normal());
+		assert!(psi.is_finite());
 		psi * 6894.73326075122482308111
 	}
 	/* Pascals -> psi */
 	pub fn pa2psi(pa: f64) -> f64 {
-		assert!(pa.is_normal());
+		assert!(pa.is_finite());
 		pa / 6894.73326075122482308111
 	}
 	/* In.Hg -> pa */
 	pub fn inhg2pa(inhg: f64) -> f64 {
-		assert!(inhg.is_normal());
+		assert!(inhg.is_finite());
 		inhg * (101325.0 / 29.92)
 	}
 	/* pa -> In.Hg */
 	pub fn Pa2inhg(pa: f64) -> f64 {
-		assert!(pa.is_normal());
+		assert!(pa.is_finite());
 		pa * (29.92 / 101325.0)
 	}
 	/*
@@ -670,54 +670,54 @@ pub mod conv {
 	 */
 	/* m/s -> km/h */
 	pub fn mps2kph(mps: f64) -> f64 {
-		assert!(mps.is_normal());
+		assert!(mps.is_finite());
 		mps * 3.6
 	}
 	/* km/h -> m/s */
 	pub fn kph2mps(kph: f64) -> f64 {
-		assert!(kph.is_normal());
+		assert!(kph.is_finite());
 		kph / 3.6
 	}
 	/* m/s -> miles/h */
 	pub fn mps2mph(mps: f64) -> f64 {
-		assert!(mps.is_normal());
+		assert!(mps.is_finite());
 		mps / 0.44704
 	}
 	/* miles/h -> m/s */
 	pub fn mph2mps(mps: f64) -> f64 {
-		assert!(mps.is_normal());
+		assert!(mps.is_finite());
 		mps * 0.44704
 	}
 	/* ft/min -> m/s */
 	pub fn fpm2mps(fpm: f64) -> f64 {
-		assert!(fpm.is_normal());
+		assert!(fpm.is_finite());
 		(fpm / 0.3048) * 60.0
 	}
 	/* m/s -> ft/min */
 	pub fn mps2fpm(mps: f64) -> f64 {
-		assert!(mps.is_normal());
+		assert!(mps.is_finite());
 		(mps / 0.3048) / 60.0
 	}
 	/* knots -> m/s */
 	pub fn kt2mps(kt: f64) -> f64 {
-		assert!(kt.is_normal());
+		assert!(kt.is_finite());
 		(kt * 1852.0) / 3600.0
 	}
 	/* m/s -> knots */
 	pub fn mps2kt(mps: f64) -> f64 {
-		assert!(mps.is_normal());
+		assert!(mps.is_finite());
 		(mps * 3600.0) / 1852.0
 	}
 	/*
 	 * Mass conversions
 	 */
 	pub fn lbs2kg(lbs: f64) -> f64 {
-		assert!(lbs.is_normal());
+		assert!(lbs.is_finite());
 		assert!(lbs.abs() < 1e12);
 		lbs * 0.45359237
 	}
 	pub fn kg2lbs(kg: f64) -> f64 {
-		assert!(kg.is_normal());
+		assert!(kg.is_finite());
 		assert!(kg.abs() < 1e12);
 		kg / 0.45359237
 	}
@@ -726,13 +726,13 @@ pub mod conv {
 	 */
 	/* Watts to horsepower */
 	pub fn watt2hp(w: f64) -> f64 {
-		assert!(w.is_normal());
+		assert!(w.is_finite());
 		assert!(w.abs() < 1e12);
 		w * 0.001341022
 	}
 	/* horsepower to Watts */
 	pub fn hp2watt(hp: f64) -> f64 {
-		assert!(hp.is_normal());
+		assert!(hp.is_finite());
 		assert!(hp.abs() < 1e12);
 		hp / 0.001341022
 	}
