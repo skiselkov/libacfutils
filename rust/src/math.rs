@@ -7,6 +7,8 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
+use std::ops::{Add, Sub, Mul};
+
 pub trait RoundTo {
 	fn round_to(self: Self, multiple: Self) -> Self;
 }
@@ -79,3 +81,18 @@ macro_rules! impl_filter_in {
 
 impl_filter_in!(f32);
 impl_filter_in!(f64);
+
+pub fn wavg<T>(x: T, y: T, w: T) -> T
+where
+    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Copy,
+{
+	x + (y - x) * w
+}
+
+mod tests {
+	#[test]
+	fn test_wavg() {
+		assert_eq!(crate::math::wavg(5.0, 10.0, 0.0), 5.0);
+		assert_eq!(crate::math::wavg(5.0, 10.0, 1.0), 10.0);
+	}
+}
