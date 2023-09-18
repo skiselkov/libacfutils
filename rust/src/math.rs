@@ -40,7 +40,7 @@ pub trait FilterIn {
 	 *
 	 * @note self and new_val must NOT be NAN or infinite.
 	 */
-	fn filter_in(&mut self, new_val: Self, d_t: f64, lag: f64);
+	fn filter_in(&self, new_val: Self, d_t: f64, lag: f64) -> Self;
 	/**
 	 * Same as `filter_in()`, but handles NAN and infinite values for
 	 * self and new_val properly.
@@ -49,31 +49,30 @@ pub trait FilterIn {
 	 *	(without gradual filtering).
 	 * - otherwise this simply implements the filter_in algorithm.
 	 */
-	fn filter_in_nan(&mut self, new_val: Self, d_t: f64, lag: f64);
+	fn filter_in_nan(&self, new_val: Self, d_t: f64, lag: f64) -> Self;
 }
 
 macro_rules! impl_filter_in {
     ($t:ty) => {
 	impl FilterIn for $t {
-		fn filter_in(&mut self, new_val: $t, d_t: f64, lag: f64) {
+		fn filter_in(&self, new_val: $t, d_t: f64, lag: f64) -> $t {
 			assert!(self.is_finite());
 			assert!(new_val.is_finite());
 			assert!(d_t >= 0.0);
 			assert!(lag >= 0.0);
 
 			let alpha = (1.0 / (1.0 + d_t / lag)) as $t;
-			*self = alpha * (*self) + (1.0 - alpha) * new_val;
+			alpha * self + (1.0 - alpha) * new_val
 		}
-		fn filter_in_nan(&mut self, new_val: $t, d_t: f64, lag: f64) {
+		fn filter_in_nan(&self, new_val: $t, d_t: f64, lag: f64) -> $t {
 			assert!(d_t >= 0.0);
 			assert!(lag >= 0.0);
 
 			if (self.is_finite() && new_val.is_finite()) {
 				let alpha = 1.0 / (1.0 + d_t / lag) as $t;
-				*self = alpha * (*self) +
-				    (1.0 - alpha) * new_val;
+				alpha * self + (1.0 - alpha) * new_val
 			} else {
-				*self = new_val;
+				new_val
 			}
 		}
 	}
