@@ -94,11 +94,6 @@ pub mod units {
 		impl_units_ops_check!($type, $field, ge);
 	    }
 	}
-	macro_rules! impl_units_ops_pos {
-	    ($type: ty, $field:ident) => {
-		impl_units_ops_check!($type, $field, gt);
-	    }
-	}
 
 	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct Temperature {
@@ -131,7 +126,25 @@ pub mod units {
 			Self { T: kelvin }
 		}
 	}
-	impl_units_ops_pos!(Temperature, T);
+	impl std::ops::Add<TemperatureRelative> for Temperature {
+		type Output = Temperature;
+		fn add(self, rhs: TemperatureRelative) -> Self::Output {
+			assert!(self.T + rhs.dT > 0.0);
+			Self::Output { T: self.T + rhs.dT }
+		}
+	}
+	impl std::ops::Sub for Temperature {
+		type Output = TemperatureRelative;
+		fn sub(self, rhs: Temperature) -> Self::Output {
+			Self::Output { dT: self.T - rhs.T }
+		}
+	}
+	impl std::ops::Mul for Temperature {
+		type Output = Temperature;
+		fn mul(self, rhs: Temperature) -> Self::Output {
+			Self::Output { T: self.T * rhs.T }
+		}
+	}
 	impl std::fmt::Display for Temperature {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 		    std::fmt::Result {
@@ -218,7 +231,18 @@ pub mod units {
 			crate::phys::consts::ISA_SL_PRESS
 		}
 	}
-	impl_units_ops_non_neg!(Pressure, p);
+	impl std::ops::Sub for Pressure {
+		type Output = PressureRelative;
+		fn sub(self, rhs: Pressure) -> Self::Output {
+			Self::Output { dP: self.p - rhs.p }
+		}
+	}
+	impl std::ops::Mul for Pressure {
+		type Output = Pressure;
+		fn mul(self, rhs: Pressure) -> Self::Output {
+			Self::Output { p: self.p * rhs.p }
+		}
+	}
 
 	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct PressureRelative {
