@@ -640,30 +640,54 @@ pub mod conv {
 		assert!(hpa.is_finite());
 		hpa * 100.0
 	}
+	#[macro_export]
+	macro_rules! hpa2pa {
+	    ($hpa: expr) => { $hpa * 100.0 };
+	}
 	/* Hectopascals -> Pascals */
-	pub fn Pa2hpa(pa: f64) -> f64 {
+	pub fn pa2hpa(pa: f64) -> f64 {
 		assert!(pa.is_finite());
 		pa / 100.0
+	}
+	#[macro_export]
+	macro_rules! pa2hpa {
+	    ($pa: expr) => { $pa / 100.0 };
 	}
 	/* psi -> Pascals */
 	pub fn psi2pa(psi: f64) -> f64 {
 		assert!(psi.is_finite());
 		psi * 6894.73326075122482308111
 	}
+	#[macro_export]
+	macro_rules! psi2pa {
+	    ($psi: expr) => { $psi * 6894.73326075122482308111 };
+	}
 	/* Pascals -> psi */
 	pub fn pa2psi(pa: f64) -> f64 {
 		assert!(pa.is_finite());
 		pa / 6894.73326075122482308111
+	}
+	#[macro_export]
+	macro_rules! pa2psi {
+	    ($pa: expr) => { $pa / 6894.73326075122482308111 };
 	}
 	/* In.Hg -> pa */
 	pub fn inhg2pa(inhg: f64) -> f64 {
 		assert!(inhg.is_finite());
 		inhg * (101325.0 / 29.92)
 	}
+	#[macro_export]
+	macro_rules! inhg2pa {
+	    ($inhg: expr) => { $inhg * (101325.0 / 29.92) };
+	}
 	/* pa -> In.Hg */
-	pub fn Pa2inhg(pa: f64) -> f64 {
+	pub fn pa2inhg(pa: f64) -> f64 {
 		assert!(pa.is_finite());
 		pa * (29.92 / 101325.0)
+	}
+	#[macro_export]
+	macro_rules! pa2inhg {
+	    ($pa: expr) => { $pa * (29.92 / 101325.0) };
 	}
 	/*
 	 * Speed conversions
