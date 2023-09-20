@@ -87,6 +87,22 @@ macro_rules! impl_filter_in {
 }
 
 impl_filter_in!(f32);
+impl_filter_in!(f64);
+
+pub fn lerp<T>(x: T, y: T, w: T) -> T
+where
+    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Copy,
+{
+	x + (y - x) * w
+}
+
+mod tests {
+	#[test]
+	fn test_lerp() {
+		assert_eq!(crate::math::lerp(5.0, 10.0, 0.0), 5.0);
+		assert_eq!(crate::math::lerp(5.0, 10.0, 1.0), 10.0);
+	}
+}
 
 pub fn fx_lin<Tx, Ty>(x: Tx, x1: Tx, y1: Ty, x2: Tx, y2: Ty) -> Ty
 where
