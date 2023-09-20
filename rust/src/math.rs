@@ -103,3 +103,39 @@ mod tests {
 		assert_eq!(crate::math::wavg(5.0, 10.0, 1.0), 10.0);
 	}
 }
+
+pub fn fx_lin<X, Y>(x: X, x1: X, y1: Y, x2: X, y2: Y) -> Y
+where
+    X: std::ops::Sub<Output = X> + std::ops::Div<Output = X> +
+	std::ops::Mul<Y, Output = Y> + Copy,
+    Y: std::ops::Sub<Output = Y> + std::ops::Add<Output = Y> + Copy,
+{
+	((x - x1) / (x2 - x1)) * (y2 - y1) + y1
+}
+
+pub fn fx_lin_multi<X, Y>(x: X, points: &[(X, Y)]) -> Y
+where
+    X: PartialOrd + std::ops::Sub<Output = X> + std::ops::Div<Output = X> +
+	std::ops::Mul<Y, Output = Y> + Copy,
+    Y: std::ops::Sub<Output = Y> + std::ops::Add<Output = Y> + Copy,
+{
+	assert!(points.len() >= 2);
+
+	// X outside of range to the left
+	if x < points[0].0 {
+		return fx_lin(x, points[0].0, points[0].1,
+		    points[1].0, points[1].1);
+	}
+
+	for i in 0 .. points.len() - 1 {
+		let p1 = &points[i];
+		let p2 = &points[i + 1];
+
+		if x <= p2.0 {
+			return fx_lin(x, p1.0, p1.1, p2.0, p2.1);
+		}
+	}
+	// X outside of range to the right
+	return fx_lin(x, points[points.len() - 2].0, points[points.len() - 2].1,
+	    points[points.len() - 1].0, points[points.len() - 1].1);
+}
