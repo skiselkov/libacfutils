@@ -7,7 +7,7 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Sub, Mul, Div};
 use std::time::Duration;
 
 pub trait RoundTo {
@@ -87,46 +87,30 @@ macro_rules! impl_filter_in {
 }
 
 impl_filter_in!(f32);
-impl_filter_in!(f64);
 
-pub fn wavg<T>(x: T, y: T, w: T) -> T
+pub fn fx_lin<Tx, Ty>(x: Tx, x1: Tx, y1: Ty, x2: Tx, y2: Ty) -> Ty
 where
-    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Copy,
+    Tx: Copy + PartialEq +
+	Sub<Output = Tx> + Mul<Ty, Output = Ty> + Div<Output = Tx>,
+    Ty: Copy + Add<Output = Ty> + Sub<Output = Ty>,
 {
-	x + (y - x) * w
-}
-
-mod tests {
-	#[test]
-	fn test_wavg() {
-		assert_eq!(crate::math::wavg(5.0, 10.0, 0.0), 5.0);
-		assert_eq!(crate::math::wavg(5.0, 10.0, 1.0), 10.0);
-	}
-}
-
-pub fn fx_lin<X, Y>(x: X, x1: X, y1: Y, x2: X, y2: Y) -> Y
-where
-    X: std::ops::Sub<Output = X> + std::ops::Div<Output = X> +
-	std::ops::Mul<Y, Output = Y> + Copy,
-    Y: std::ops::Sub<Output = Y> + std::ops::Add<Output = Y> + Copy,
-{
+	assert!(x1 != x2);
 	((x - x1) / (x2 - x1)) * (y2 - y1) + y1
 }
 
-pub fn fx_lin_multi<X, Y>(x: X, points: &[(X, Y)]) -> Y
+pub fn fx_lin_multi<Tx, Ty>(x: Tx, points: &[(Tx, Ty)]) -> Ty
 where
-    X: PartialOrd + std::ops::Sub<Output = X> + std::ops::Div<Output = X> +
-	std::ops::Mul<Y, Output = Y> + Copy,
-    Y: std::ops::Sub<Output = Y> + std::ops::Add<Output = Y> + Copy,
+    Tx: Copy + PartialOrd + PartialEq +
+	Sub<Output = Tx> + Mul<Ty, Output = Ty> + Div<Output = Tx>,
+    Ty: Copy + Add<Output = Ty> + Sub<Output = Ty>,
 {
 	assert!(points.len() >= 2);
 
-	// X outside of range to the left
+	// x outside of range to the left
 	if x < points[0].0 {
 		return fx_lin(x, points[0].0, points[0].1,
 		    points[1].0, points[1].1);
 	}
-
 	for i in 0 .. points.len() - 1 {
 		let p1 = &points[i];
 		let p2 = &points[i + 1];
@@ -135,7 +119,8 @@ where
 			return fx_lin(x, p1.0, p1.1, p2.0, p2.1);
 		}
 	}
-	// X outside of range to the right
-	return fx_lin(x, points[points.len() - 2].0, points[points.len() - 2].1,
+	// x outside of range to the right
+	return fx_lin(x,
+	    points[points.len() - 2].0, points[points.len() - 2].1,
 	    points[points.len() - 1].0, points[points.len() - 1].1);
 }
