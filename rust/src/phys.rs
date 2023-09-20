@@ -249,6 +249,9 @@ pub mod units {
 		dP: f64,	/* Pascals, CAN be negative */
 	}
 	impl PressureRelative {
+		pub fn from_pressure(p: Pressure) -> Self {
+			Self { dP: p.as_pa() }
+		}
 		pub fn from_pa(pa: f64) -> Self {
 			assert!(pa.is_finite());
 			assert!(pa.abs() < 1e12);
