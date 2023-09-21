@@ -39,7 +39,7 @@ impl Conf {
 			}
 		};
 		if !conf.is_null() {
-			Some(Conf{conf: conf})
+			Some(Conf{conf})
 		} else {
 			None
 		}
@@ -56,7 +56,7 @@ impl Conf {
 			}
 		};
 		if !conf.is_null() {
-			Some(Conf{conf: conf})
+			Some(Conf{conf})
 		} else {
 			None
 		}
@@ -270,6 +270,12 @@ impl Clone for Conf {
 		unsafe {
 			Conf { conf: conf_create_copy(self.conf) }
 		}
+	}
+}
+
+impl Default for Conf {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 

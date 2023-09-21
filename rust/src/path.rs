@@ -27,8 +27,8 @@ macro_rules! mkpathbuf {
  * together using the platform-appropriate path separators, and returns
  * a String object.
  * @note The path components MUST be valid UTF-8, otherwise this macro
- *	panics. If your inputs might not be valid UTF-8, use the
- *	mkpathbuf() macro to create a PathBuf object instead.
+ * panics. If your inputs might not be valid UTF-8, use the
+ * mkpathbuf() macro to create a PathBuf object instead.
  */
 #[macro_export]
 macro_rules! mkpathstring {

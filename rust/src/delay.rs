@@ -48,7 +48,7 @@ where
 		}
 	}
 	pub fn push(&mut self, newval: T) -> T {
-		assert!(self.values.len() != 0);
+		assert!(!self.values.is_empty());
 		let latest = &self.values[self.values.len() - 1];
 		if latest.value != newval {
 			self.values.push(DelayValue {
@@ -67,7 +67,7 @@ where
 	}
 	pub fn pull(&mut self) -> T {
 		let now = (self.now_func)();
-		assert!(self.values.len() != 0);
+		assert!(!self.values.is_empty());
 		/*
 		 * While we have more than 1 value in the value stack, check
 		 * to see if the newer values have become active yet.
@@ -83,7 +83,7 @@ where
 		self.values[0].value.clone()
 	}
 	pub fn peek(&self) -> T {
-		assert!(self.values.len() != 0);
+		assert!(!self.values.is_empty());
 		self.values[0].value.clone()
 	}
 	pub fn set_delay(&mut self, delay: Duration) {
@@ -108,7 +108,7 @@ where
 		self.delay_rand
 	}
 	pub fn get_time_since_change(&self) -> Duration {
-		assert!(self.values.len() != 0);
+		assert!(!self.values.is_empty());
 		let latest = &self.values[self.values.len() - 1];
 		(self.now_func)().duration_since(latest.entered)
 	}

@@ -100,11 +100,11 @@ impl<T: Clone + Send + 'static> Worker<T> {
 	pub fn new(intval: Duration, init_func: Option<fn(T)>,
 	    worker_func: fn(T), fini_func: Option<fn(T)>, arg: T) -> Self {
 		let wk = Arc::new((Mutex::new(WorkerConfig {
-		    intval: intval,
-		    init_func: init_func,
-		    worker_func: worker_func,
-		    fini_func: fini_func,
-		    arg: arg,
+		    intval,
+		    init_func,
+		    worker_func,
+		    fini_func,
+		    arg,
 		    shutdown: false
 		}), Condvar::new()));
 		Worker {
@@ -125,11 +125,7 @@ impl<T: Clone + Send + 'static> Worker<T> {
 		}
 	}
 	pub fn is_started(&self) -> bool {
-		if let Some(_) = self.thread {
-			true
-		} else {
-			false
-		}
+		self.thread.is_some()
 	}
 	pub fn get_interval(&self) -> Duration {
 		self.data.0.lock()

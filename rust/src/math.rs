@@ -11,13 +11,13 @@ use std::ops::{Add, Sub, Mul, Div};
 use std::time::Duration;
 
 pub trait RoundTo {
-	fn round_to(self: Self, multiple: Self) -> Self;
+	fn round_to(self, multiple: Self) -> Self;
 }
 
 macro_rules! impl_round_to {
     ($t:ty) => {
 	impl RoundTo for $t {
-		fn round_to(self: $t, multiple: $t) -> $t {
+		fn round_to(self, multiple: $t) -> $t {
 			assert_ne!(multiple, 0.0);
 			(self / multiple).round() * multiple
 		}
@@ -136,6 +136,7 @@ where
 			return fx_lin(x, p1.0, p1.1, p2.0, p2.1);
 		}
 	}
+	#[allow(clippy::needless_return)]
 	// x outside of range to the right
 	return fx_lin(x,
 	    points[points.len() - 2].0, points[points.len() - 2].1,
