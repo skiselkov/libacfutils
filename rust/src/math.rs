@@ -89,9 +89,10 @@ macro_rules! impl_filter_in {
 impl_filter_in!(f32);
 impl_filter_in!(f64);
 
-pub fn lerp<T>(x: T, y: T, w: T) -> T
+pub fn lerp<T, Scalar>(x: T, y: T, w: Scalar) -> T
 where
-    T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Copy,
+    T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Scalar, Output = T>,
+    Scalar: Copy,
 {
 	x + (y - x) * w
 }
