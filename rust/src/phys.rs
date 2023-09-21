@@ -203,6 +203,9 @@ pub mod units {
 		pub fn as_F(&self) -> f64 {
 			kelvin2fah(self.dT)
 		}
+		pub const fn new_const(kelvin: f64) -> Self {
+			Self { dT: kelvin }
+		}
 	}
 	impl_units_ops!(TemperatureRelative, dT);
 	impl_units_scalar_ops!(TemperatureRelative, dT);
@@ -295,6 +298,9 @@ pub mod units {
 		}
 		pub fn as_psi(&self) -> f64 {
 			pa2psi(self.dP)
+		}
+		pub const fn new_const(pa: f64) -> Self {
+			Self { dP: pa }
 		}
 	}
 	impl_units_ops!(PressureRelative, dP);
@@ -431,6 +437,9 @@ pub mod units {
 		pub fn as_rpm(&self) -> f64 {
 			radsec2rpm(self.r)
 		}
+		pub const fn new_const(radsec: f64) -> Self {
+			Self { r: radsec }
+		}
 	}
 	impl std::fmt::Display for Angvel {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
@@ -519,6 +528,9 @@ pub mod units {
 		}
 		pub fn as_pph(&self) -> f64 {
 			kg2lbs(self.mr * 3600.0)
+		}
+		pub const fn new_const(kgs: f64) -> Self {
+			Self { mr: kgs }
 		}
 	}
 	impl std::fmt::Display for MassRate {
