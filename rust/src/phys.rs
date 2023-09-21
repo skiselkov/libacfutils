@@ -48,7 +48,6 @@ pub mod units {
 		}
 	    }
 	}
-
 	macro_rules! impl_units_ops_check {
 	    ($type: ty, $field:ident, $op:ident) => {
 		impl std::ops::Add for $type {
@@ -90,9 +89,31 @@ pub mod units {
 	    }
 	}
 	macro_rules! impl_units_ops_non_neg {
-	    ($type: ty, $field:ident) => {
+	    ($type: ty, $field: ident) => {
 		impl_units_ops_check!($type, $field, ge);
 	    }
+	}
+	macro_rules! impl_units_scalar_ops_one {
+	    ($type: ty, $field: ident, $trait: ident, $op: ident,
+		$scalar_type: ty) => {
+		impl std::ops::$trait<$scalar_type> for $type {
+			type Output = $type;
+			fn $op(self, rhs: $scalar_type) -> Self::Output {
+				assert!(rhs.is_finite());
+				Self::Output {
+				    $field: self.$field.$op(rhs as f64)
+				}
+			}
+		}
+	    };
+	}
+	macro_rules! impl_units_scalar_ops {
+	    ($type: ty, $field: ident) => {
+		impl_units_scalar_ops_one!($type, $field, Mul, mul, f32);
+		impl_units_scalar_ops_one!($type, $field, Mul, mul, f64);
+		impl_units_scalar_ops_one!($type, $field, Div, div, f32);
+		impl_units_scalar_ops_one!($type, $field, Div, div, f64);
+	    };
 	}
 
 	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
@@ -145,6 +166,7 @@ pub mod units {
 			Self::Output { T: self.T * rhs.T }
 		}
 	}
+	impl_units_scalar_ops!(Temperature, T);
 	impl std::fmt::Display for Temperature {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 		    std::fmt::Result {
@@ -183,6 +205,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops!(TemperatureRelative, dT);
+	impl_units_scalar_ops!(TemperatureRelative, dT);
 	impl std::fmt::Display for TemperatureRelative {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 		    std::fmt::Result {
@@ -243,6 +266,7 @@ pub mod units {
 			Self::Output { p: self.p * rhs.p }
 		}
 	}
+	impl_units_scalar_ops!(Pressure, p);
 
 	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 	pub struct PressureRelative {
@@ -274,6 +298,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops!(PressureRelative, dP);
+	impl_units_scalar_ops!(PressureRelative, dP);
 	impl std::fmt::Display for PressureRelative {
 		fn fmt(&self, f: &mut std::fmt::Formatter<'_>) ->
 		    std::fmt::Result {
@@ -335,6 +360,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops_non_neg!(Distance, d);
+	impl_units_scalar_ops!(Distance, d);
 
 	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Mass {
@@ -370,6 +396,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops_non_neg!(Mass, m);
+	impl_units_scalar_ops!(Mass, m);
 
 	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Angvel {
@@ -412,6 +439,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops!(Angvel, r);
+	impl_units_scalar_ops!(Angvel, r);
 
 	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct Speed {
@@ -461,6 +489,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops!(Speed, s);
+	impl_units_scalar_ops!(Speed, s);
 
 	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
 	pub struct MassRate {
@@ -499,6 +528,7 @@ pub mod units {
 		}
 	}
 	impl_units_ops!(MassRate, mr);
+	impl_units_scalar_ops!(MassRate, mr);
 }
 
 pub mod util {
