@@ -260,7 +260,6 @@ pub mod units {
 	impl std::ops::Add for Pressure {
 		type Output = Pressure;
 		fn add(self, rhs: Pressure) -> Self::Output {
-			assert!(self.p + rhs.p >= 0.0);
 			Self::Output { p: self.p + rhs.p }
 		}
 	}
