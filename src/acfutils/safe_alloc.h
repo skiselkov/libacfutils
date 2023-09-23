@@ -180,7 +180,7 @@ static inline char *
 safe_strdup(const char *str2)
 {
 	char *str;
-	int l;
+	size_t l;
 	ASSERT(str2 != NULL);
 	l = strlen(str2);
 	str = (char *)safe_malloc(l + 1);
