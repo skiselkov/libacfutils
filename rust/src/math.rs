@@ -28,71 +28,38 @@ macro_rules! impl_round_to {
 impl_round_to!(f32);
 impl_round_to!(f64);
 
-pub trait FilterIn {
+pub trait FilterIn<T>
+where
+    T: Add<Output = T> + Mul<f64, Output = T>
+{
 	/**
 	 * Provides a gradual method of integrating an old value until it
 	 * approaches a new target value. This is used in iterative processes
 	 * by calling the filter_in method repeatedly a certain time intervals
-	 * (d_t = delta-time). As time progresses, old_val will gradually be
+	 * (d_t = delta-time). As time progresses, self will gradually be
 	 * made to approach new_val. The lag serves to make the approach
-	 * slower or faster (e.g. a value of '2' and d_t in seconds makes
-	 * old_val approach new_val with a ramp that is approximately 2
-	 * seconds long).
-	 *
-	 * @note self and new_val must NOT be NAN or infinite.
+	 * slower or faster (e.g. a lag of 2 seconds makes self approach
+	 * new_val with a ramp that is approximately 2 seconds long).
 	 */
-	fn filter_in(&self, new_val: Self, d_t: Duration, lag: Duration) ->
-	    Self;
-	/**
-	 * Same as `filter_in()`, but handles NAN and infinite values for
-	 * self and new_val properly.
-	 * - if new_val is NAN or infinite, new_val is returned,
-	 * - else if self is NAN or infinite, new_val is returned,
-	 *	(without gradual filtering).
-	 * - otherwise this simply implements the filter_in algorithm.
-	 */
-	fn filter_in_nan(&self, new_val: Self, d_t: Duration, lag: Duration) ->
-	    Self;
+	fn filter_in(self, new_val: T, d_t: Duration, lag: Duration) -> T;
 }
 
-macro_rules! impl_filter_in {
-    ($t:ty) => {
-	impl FilterIn for $t {
-		fn filter_in(&self, new_val: $t, d_t: Duration,
-		    lag: Duration) -> $t {
-			assert!(self.is_finite());
-			assert!(new_val.is_finite());
-			assert!(d_t.as_secs_f64() >= 0.0);
-			assert!(lag.as_secs_f64() >= 0.0);
+impl<T> FilterIn<T> for T
+where
+    T: Add<Output = T> + Mul<f64, Output = T>,
+{
+	fn filter_in(self, new_val: T, d_t: Duration, lag: Duration) -> T {
+		assert!(d_t.as_secs_f64() >= 0.0);
+		assert!(lag.as_secs_f64() >= 0.0);
 
-			let alpha = (1.0 / (1.0 + d_t.as_secs_f64() /
-			    lag.as_secs_f64())) as $t;
-			alpha * self + (1.0 - alpha) * new_val
-		}
-		fn filter_in_nan(&self, new_val: $t, d_t: Duration,
-		    lag: Duration) -> $t {
-			assert!(d_t.as_secs_f64() >= 0.0);
-			assert!(lag.as_secs_f64() >= 0.0);
-
-			if (self.is_finite() && new_val.is_finite()) {
-				let alpha = 1.0 / (1.0 + d_t.as_secs_f64() /
-				    lag.as_secs_f64()) as $t;
-				alpha * self + (1.0 - alpha) * new_val
-			} else {
-				new_val
-			}
-		}
+		let alpha = 1.0 / (1.0 + d_t.as_secs_f64() / lag.as_secs_f64());
+		self * alpha + new_val * (1.0 - alpha)
 	}
-    };
 }
-
-impl_filter_in!(f32);
-impl_filter_in!(f64);
 
 pub fn lerp<T, Scalar>(x: T, y: T, w: Scalar) -> T
 where
     T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Scalar, Output = T>,
-    Scalar: Copy,
 {
 	x + (y - x) * w
 }
