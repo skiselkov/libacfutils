@@ -257,6 +257,12 @@ pub mod units {
 			crate::phys::consts::ISA_SL_PRESS
 		}
 	}
+	impl std::ops::Add for Pressure {
+		type Output = Pressure;
+		fn add(self, rhs: Pressure) -> Self::Output {
+			Self::Output { p: self.p + rhs.p }
+		}
+	}
 	impl std::ops::Sub for Pressure {
 		type Output = PressureRelative;
 		fn sub(self, rhs: Pressure) -> Self::Output {
