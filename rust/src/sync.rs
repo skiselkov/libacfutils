@@ -37,7 +37,7 @@ pub trait RwLockForceOps<T> {
 	fn f_write(&self) -> RwLockWriteGuard<'_, T>;
 }
 
-impl<T> RwLockSafeOps<T> for RwLock<T> {
+impl<T> RwLockForceOps<T> for RwLock<T> {
 	fn f_read(&self) -> RwLockReadGuard<'_, T> {
 		self.read().expect("Cannot RwLock.read(): lock is panicked")
 	}
@@ -63,7 +63,7 @@ pub trait MutexForceOps<T> {
 	fn f_lock(&self) -> MutexGuard<'_, T>;
 }
 
-impl<T> MutexSafeOps<T> for Mutex<T> {
+impl<T> MutexForceOps<T> for Mutex<T> {
 	fn f_lock(&self) -> MutexGuard<'_, T> {
 		self.lock().expect("Cannot Mutex.lock(): lock is panicked")
 	}
