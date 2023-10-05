@@ -16,4 +16,5 @@ pub mod log;
 pub mod math;
 pub mod path;
 pub mod phys;
+pub mod sync;
 pub mod worker;
