@@ -20,7 +20,7 @@ pub struct Worker<T: Clone + Send + 'static> {
 type WorkerData<T> = Arc<(Mutex<WorkerConfig<T>>, Condvar)>;
 
 #[derive(Debug)]
-struct WorkerConfig<T> {
+struct WorkerConfig<T: Clone> {
 	intval: Duration,
 	shutdown: bool,
 	init_func: Option<fn(T)>,
