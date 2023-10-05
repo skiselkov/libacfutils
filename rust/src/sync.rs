@@ -16,7 +16,7 @@ use std::sync::{Mutex, MutexGuard};
  * panic if the underlying lock is in a panicked state. Basically
  * saves you the need to call unwrap() or expect() on the lock result.
  */
-pub trait RwLockSafeOps<T> {
+pub trait RwLockForceOps<T> {
 	/**
 	 * Force-read() lock on a std::sync::RwLock. This acquires the
 	 * lock for reading, or panic if the underlying lock is in a
@@ -52,7 +52,7 @@ impl<T> RwLockSafeOps<T> for RwLock<T> {
  * panicked state. Basically saves you the need to call unwrap() or
  * expect() on the lock result.
  */
-pub trait MutexSafeOps<T> {
+pub trait MutexForceOps<T> {
 	/**
 	 * Force-lock()s a std::sync::Mutex. This acquires the mutex, or
 	 * panicks if the underlying lock is in a panicked state. Basically
