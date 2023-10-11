@@ -93,7 +93,7 @@ safe_realloc(void *oldptr, size_t size)
 	return (p);
 }
 
-#if	!APL || CMAKE_OSX_DEPLOYMENT_TARGET >= MAC_OS_X_VERSION_10_15
+#if	!APL || __MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_15
 #if	IBM || __STDC_VERSION__ >= 201112L || __cplusplus >= 201703L || \
     _POSIX_C_SOURCE >= 200112L || defined(__DOXYGEN__)
 
