@@ -51,6 +51,7 @@ extern "C" {
 typedef void (*logfunc_t)(const char *);
 API_EXPORT void log_init(logfunc_t func, const char *prefix);
 API_EXPORT void log_fini(void);
+API_EXPORT logfunc_t log_get_logfunc(void);
 
 #ifndef	_LACF_WITHOUT_XPLM
 /**

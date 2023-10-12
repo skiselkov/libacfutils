@@ -122,6 +122,17 @@ log_fini(void)
 }
 
 /**
+ * Returns the currently installed log function, which was passed in
+ * log_init().
+ * @see log_init()
+ */
+logfunc_t
+log_get_logfunc(void)
+{
+	return (log_func);
+}
+
+/**
  * Log implementation function. Do not call directly. Use the logMsg() macro.
  * @see logMsg()
  */
