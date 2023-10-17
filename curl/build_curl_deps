@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2023 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-CURL="curl-8.2.1.tar.xz"
+CURL="curl-8.4.0.tar.xz"
 CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
     --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
     --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
