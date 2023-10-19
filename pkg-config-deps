@@ -183,7 +183,10 @@ elif [[ "$1" = "--libs" ]]; then
 		fi
 	fi
 
-	if [[ "$ARCH" != "mac-64" ]]; then
+	if [[ "$ARCH" = "mac-64" ]]; then
+		# Required for IPv6 support in libcurl
+		EXTRA="-framework SystemConfiguration"
+	else
 		EXTRA="-static-libstdc++"
 	fi
 fi
