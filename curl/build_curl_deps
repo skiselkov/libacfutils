@@ -38,7 +38,7 @@ case `uname` in
 		    "$CONFOPTS_COMMON" "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
-		build_dep "mac-64" "$CONFOPTS_COMMON_CMAKE \
+		build_dep "mac-64" "$CONFOPTS_COMMON \
 		    -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64'" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
