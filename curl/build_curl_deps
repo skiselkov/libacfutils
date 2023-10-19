@@ -25,20 +25,27 @@ CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
     -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF"
 
-PKG_CONFIG_PATH_IN="$(pwd)/../ssl/openssl-{platform}/lib/pkgconfig:\
-$(pwd)/../zlib/zlib-{platform}/lib/pkgconfig"
-export PKG_CONFIG_PATH_IN
 export CONFIG_CMAKE=1
 
 case `uname` in
 	Linux)
-		build_dep "linux-64" "$CONFOPTS_COMMON" \
+		build_dep "linux-64" "$CONFOPTS_COMMON \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-linux-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
 		LIBS="-lcrypt32" build_dep "win-64" \
-		    "$CONFOPTS_COMMON" "$CURL" "libcurl" "lib/libcurl.a"
+		    "$CONFOPTS_COMMON \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-win-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-win-64/lib/libz.a" \
+		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
 		build_dep "mac-64" "$CONFOPTS_COMMON \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-mac-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-mac-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-mac-64/lib/libz.a \
 		    -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64'" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
