@@ -103,7 +103,7 @@ function build_dep() {
 
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
-		if [ -n "CONFIG_CMAKE" ]; then
+		if [ -n "$CONFIG_CMAKE" ]; then
 			cmake -DCMAKE_INSTALL_DIR="$(pwd)/$INSTALL_DIR" \
 			    ${CONFOPTS} "../$SRCDIR" || exit 1
 		else
