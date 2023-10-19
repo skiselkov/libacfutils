@@ -18,39 +18,26 @@
 source ../build_dep.common
 
 CURL="curl-8.4.0.tar.xz"
-CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
-    --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
-    --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
-    --disable-imap --disable-smb --disable-smtp --disable-gopher \
-    --disable-manual --disable-pthreads --disable-unix-sockets \
-    --disable-ipv6 --disable-threaded-resolver --disable-cookies \
-    --disable-ntlm-wb --disable-sspi \
-    --without-winidn --without-libssh2 --without-librtmp \
-    --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
-    --with-pic --without-zstd  --without-brotli"
 
-CONFOPTS_COMMON_CMAKE="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
+CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DBUILD_STATIC_LIBS=ON -DHTTP_ONLY=ON -DENABLE_UNIX_SOCKETS=OFF \
     -DCURL_DISABLE_COOKIES=ON -DCURL_DISABLE_NTLM=ON \
     -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
     -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF"
 
+PKG_CONFIG_PATH_IN="$(pwd)/../ssl/openssl-{platform}/lib/pkgconfig:\
+$(pwd)/../zlib/zlib-{platform}/lib/pkgconfig"
+export PKG_CONFIG_PATH_IN
+export CONFIG_CMAKE=1
+
 case `uname` in
 	Linux)
-		LIBS="-lpthread" build_dep "linux-64" "$CONFOPTS_COMMON \
-		    --with-ssl=$(pwd)/../ssl/openssl-linux-64 \
-		    --with-zlib=$(pwd)/../zlib/zlib-linux-64" \
+		build_dep "linux-64" "$CONFOPTS_COMMON" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
 		LIBS="-lcrypt32" build_dep "win-64" \
-		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32 \
-		    --with-ssl=$(pwd)/../ssl/openssl-win-64 \
-		    --with-zlib=$(pwd)/../zlib/zlib-win-64" \
-		    "$CURL" "libcurl" "lib/libcurl.a"
+		    "$CONFOPTS_COMMON" "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
-		PKG_CONFIG_PATH_IN="$(pwd)/../ssl/openssl-mac-64/lib/pkgconfig:$(pwd)/../zlib/zlib-mac-64/lib/pkgconfig"
-		export PKG_CONFIG_PATH_IN
-		export CONFIG_CMAKE=1
 		build_dep "mac-64" "$CONFOPTS_COMMON_CMAKE \
 		    -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64'" \
 		    "$CURL" "libcurl" "lib/libcurl.a"

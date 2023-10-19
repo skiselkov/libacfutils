@@ -104,7 +104,14 @@ function build_dep() {
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
 		if [ -n "$CONFIG_CMAKE" ]; then
-			cmake -DCMAKE_INSTALL_DIR="$(pwd)/$INSTALL_DIR" \
+			if [[ $(uname) = "Linux" ]] &&
+			    [[ "$PLATFORM" = "win-64" ]]; then
+				XCOMPILE_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=../../XCompile.cmake -DHOST=x86_64-w64-mingw32"
+			else
+				XCOMPILE_OPTIONS=""
+			fi
+			cmake -DCMAKE_INSTALL_PREFIX="$(pwd)/$INSTALL_DIR" \
+			    ${XCOMPILE_OPTIONS} \
 			    ${CONFOPTS} "../$SRCDIR" || exit 1
 		else
 			eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CFLAGS}\\ \
