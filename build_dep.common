@@ -107,6 +107,8 @@ function build_dep() {
 			if [[ $(uname) = "Linux" ]] &&
 			    [[ "$PLATFORM" = "win-64" ]]; then
 				XCOMPILE_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=../../XCompile.cmake -DHOST=x86_64-w64-mingw32"
+			elif [[ "$PLATFORM" = "mac-64" ]]; then
+				XCOMPILE_OPTIONS="-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13"
 			else
 				XCOMPILE_OPTIONS=""
 			fi
