@@ -1162,10 +1162,10 @@ file2buf(const char *filename, size_t *bufsz)
 }
 
 /**
- * @return The size of the file at path `filename` in bytes. If the file
- *	size cannot be determined, this returns -1 instead. This function
- *	doesn't open the file for reading, so don't assume that filesz()
- *	returning a valid size indicates file read access.
+ * @return The size of the file at path `filename` in bytes. If the file does
+ *	not exist, or the size cannot be determined, this returns `-1` instead.
+ *	This function doesn't open the file for reading, so don't assume that
+ *	filesz() returning a valid size indicates file read access.
  */
 ssize_t
 filesz(const char *filename)
@@ -1173,7 +1173,7 @@ filesz(const char *filename)
 	struct stat st;
 
 	ASSERT(filename != NULL);
-	if (stat(filename, &st) != 0)
+	if (!file_exists(filename, NULL) || stat(filename, &st) != 0)
 		return (-1);
 	return (st.st_size);
 }
