@@ -83,7 +83,7 @@ ocr/tesseract-linux-64
 ocr/tesseract-mac-64
 ocr/tesseract-win-64
 
-ssl/openssl-1.1.1i
+ssl/openssl-1.1.1w
 ssl/openssl-win-64
 ssl/openssl-mac-64
 ssl/openssl-mac-arm
