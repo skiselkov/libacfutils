@@ -24,7 +24,7 @@ CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DCURL_DISABLE_COOKIES=ON -DCURL_DISABLE_NTLM=ON \
     -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
     -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF \
-    -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON"
+    -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON -DCURL_USE_OPENSSL=ON"
 
 export CONFIG_CMAKE=1
 
@@ -35,7 +35,7 @@ case `uname` in
 		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
 		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
-		LIBS="-lcrypt32" build_dep "win-64" \
+		build_dep "win-64" \
 		    "$CONFOPTS_COMMON \
 		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
 		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-win-64/include \
