@@ -24,14 +24,15 @@
 
 #include <junzip.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/avl.h>
-#include <acfutils/compress.h>
-#include <acfutils/list.h>
-#include <acfutils/odb.h>
-#include <acfutils/perf.h>
-#include <acfutils/safe_alloc.h>
-#include <acfutils/thread.h>
+#include "acfutils/assert.h"
+#include "acfutils/avl.h"
+#include "acfutils/compress.h"
+#include "acfutils/list.h"
+#include "acfutils/odb.h"
+#include "acfutils/perf.h"
+#include "acfutils/safe_alloc.h"
+#include "acfutils/thread.h"
+#include "acfutils/time.h"
 
 #include "chart_prov_common.h"
 
@@ -525,11 +526,59 @@ errout:
 }
 
 static void
+odb_refresh_us_decompress(odb_t *odb, dl_info_t *dl_info)
+{
+	size_t len;
+	void *buf;
+
+	ASSERT(odb != NULL);
+	ASSERT(dl_info != NULL);
+
+	if (dl_info->bufsz == 0) {
+		logMsg("Error updating obstacle database from %s: "
+		    "server didn't send any data", FAA_DOF_URL);
+		return;
+	}
+	buf = decompress_zip(dl_info->buf, dl_info->bufsz, &len);
+	if (buf != NULL) {
+		char *subpath = mkpathname(odb->cache_dir, "US", NULL);
+		/*
+		 * The downloaded DOF is HUUUGE, so DON'T lock here.
+		 * add_obst_to_odb will lock the database when it's
+		 * ready to add a single obstacle instead.
+		 */
+		odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
+
+		mutex_enter(&odb->tiles_lock);
+
+		if (file_exists(subpath, NULL))
+			remove_directory(subpath);
+		create_directory_recursive(odb->cache_dir);
+		odb_write_tiles(odb, "US");
+		odb_flush_tiles(odb);
+		write_odb_refresh_date(odb, "US");
+
+		lacf_free(subpath);
+		odb->refresh_times[ODB_REGION_US] = time(NULL);
+
+		mutex_exit(&odb->tiles_lock);
+
+		logMsg("Obstacle database update successful");
+	} else {
+		logMsg("Error updating obstacle database from %s: "
+		    "failed to decompress downloaded ZIP file", FAA_DOF_URL);
+		odb->refresh_times[ODB_REGION_US] = -1u;
+	}
+	free(buf);
+}
+
+static void
 odb_refresh_us(odb_t *odb)
 {
 	CURL *curl;
 	CURLcode res;
 	dl_info_t dl_info = { .odb = odb };
+	time_t refresh_date;
 
 	thread_set_name("odb-refresh-us");
 
@@ -554,42 +603,31 @@ odb_refresh_us(odb_t *odb)
 		curl_easy_setopt(curl, CURLOPT_PROXY, odb->proxy);
 	mutex_exit(&odb->proxy_lock);
 
+	refresh_date = odb_get_cc_refresh_date(odb, "US");
+	if (refresh_date != 0) {
+		/* If-Modified-Since the above time stamp */
+		curl_easy_setopt(curl, CURLOPT_TIMEVALUE, (long)refresh_date);
+		curl_easy_setopt(curl, CURLOPT_TIMECONDITION,
+		    (long)CURL_TIMECOND_IFMODSINCE);
+	}
 	res = curl_easy_perform(curl);
 
-	if (res == CURLE_OK && dl_info.bufsz != 0) {
-		size_t len;
-		void *buf = decompress_zip(dl_info.buf, dl_info.bufsz, &len);
+	if (res == CURLE_OK) {
+		long code = 0;
 
-		if (buf != NULL) {
-			char *subpath = mkpathname(odb->cache_dir, "US", NULL);
-
-			/*
-			 * The downloaded DOF is HUUUGE, so DON'T lock here.
-			 * add_obst_to_odb will lock the database when it's
-			 * ready to add a single obstacle instead.
-			 */
-			odb_proc_us_dof_impl(buf, len, add_obst_to_odb, odb);
-
+		curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+		if (code == 200) {
+			odb_refresh_us_decompress(odb, &dl_info);
+		} else if (code == 304) {
+			logMsg("Obstacle database %s unchanged", FAA_DOF_URL);
 			mutex_enter(&odb->tiles_lock);
-
-			if (file_exists(subpath, NULL))
-				remove_directory(subpath);
-			create_directory_recursive(odb->cache_dir);
-			odb_write_tiles(odb, "US");
-			odb_flush_tiles(odb);
-			write_odb_refresh_date(odb, "US");
-
-			lacf_free(subpath);
 			odb->refresh_times[ODB_REGION_US] = time(NULL);
-
 			mutex_exit(&odb->tiles_lock);
 		} else {
 			logMsg("Error updating obstacle database from %s: "
-			    "failed to decompress downloaded ZIP file",
-			    FAA_DOF_URL);
-			odb->refresh_times[ODB_REGION_US] = -1u;
+			    "server responded with code %ld", FAA_DOF_URL,
+			    code);
 		}
-		free(buf);
 	} else {
 		logMsg("Error updating obstacle database from %s: %s",
 		    FAA_DOF_URL, curl_easy_strerror(res));
