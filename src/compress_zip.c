@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include <zlib.h>
-#include <junzip.h>
+#include "junzip.h"
 
 #include "acfutils/assert.h"
 #include "acfutils/compress.h"

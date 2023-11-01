@@ -34,8 +34,8 @@
 #include "acfutils/thread.h"
 #include "chart_prov_faa.h"
 #include "chart_prov_common.h"
-#include "jsmn/jsmn.h"
-#include "jsmn/jsmn_path.h"
+#include <jsmn.h>
+#include "jsmn_path.h"
 #include "sha2.h"
 
 /* #define	DEBUG_NAVIGRAPH */

@@ -29,9 +29,9 @@
 #include <string.h>
 #include <errno.h>
 
-#include <alc.h>
-#include <alext.h>
-#include <efx.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+#include <AL/efx.h>
 
 #include <opusfile.h>
 
