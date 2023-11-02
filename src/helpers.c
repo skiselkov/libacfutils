@@ -875,6 +875,8 @@ mkpathname_v(const char *comp, va_list ap)
 			n--;
 		}
 	}
+	/* eliminate duplicate and flipped path separators */
+	fix_pathsep(str);
 
 	return (str);
 }
@@ -883,7 +885,8 @@ mkpathname_v(const char *comp, va_list ap)
  * For some inexplicable reason, on Windows X-Plane can return paths via the
  * API which are a mixture of Windows- & Unix-style path separators. This
  * function fixes that by flipping all path separators to the appropriate
- * type used on the host OS.
+ * type used on the host OS. This also eliminates duplicate path separators,
+ * which tends to break Windows UNC path resolution.
  */
 void
 fix_pathsep(char *str)
@@ -896,6 +899,15 @@ fix_pathsep(char *str)
 		if (str[i] == '\\')
 			str[i] = '/';
 #endif	/* !IBM */
+	}
+	/* Eliminate duplicate '//' and '\\' */
+	for (char *elem = str; *elem != '\0';) {
+		if (elem[0] == DIRSEP && elem[1] == DIRSEP) {
+			/* Move the rest up one, to delete the duplicate */
+			memmove(elem, &elem[1], strlen(&elem[1]) + 1);
+		} else {
+			elem++;
+		}
 	}
 }
 
@@ -1005,15 +1017,6 @@ path_normalize(char *path)
 	ASSERT(path != NULL);
 
 	fix_pathsep(path);
-	/* Eliminate duplicate '//' and '\\' */
-	for (elem = path; *elem != '\0';) {
-		if (elem[0] == DIRSEP && elem[1] == DIRSEP) {
-			/* Move the rest up one, to delete the duplicate */
-			memmove(elem, &elem[1], strlen(&elem[1]) + 1);
-		} else {
-			elem++;
-		}
-	}
 	/* Resolve directory returns */
 	while ((elem = strstr(path, DIRSEP_S ".." DIRSEP_S)) != NULL ||
 	    ((elem = strstr(path, DIRSEP_S "..")) != NULL && elem[3] == '\0')) {
