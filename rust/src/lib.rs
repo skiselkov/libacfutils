@@ -14,6 +14,7 @@ pub mod geom;
 pub mod icao2cc;
 pub mod log;
 pub mod math;
+pub mod panic;
 pub mod path;
 pub mod phys;
 pub mod sync;

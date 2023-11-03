@@ -18,13 +18,19 @@ macro_rules! logMsg {
 	{
 		use std::ffi::CString;
 		let c_format = CString::new("%s").unwrap();
-		let c_filename = CString::new(file!())
+		let filename_cow = std::path::Path::new(file!())
+		    .components()
+		    .last()
+		    .unwrap_or(std::path::Component::Normal("<empty>".as_ref()))
+		    .as_os_str()
+		    .to_string_lossy();
+		let c_filename = CString::new(filename_cow.as_ref())
 		    .expect("file!() returned string with stray NUL byte");
 		let c_message = CString::new(format!($($x,)*))
 		    .expect("passed log message contained stray NUL byte");
 		unsafe {
-			acfutils::log::log_impl(c_filename.as_ptr(), line!(),
-			    c_format.as_ptr(), c_message.as_ptr());
+			crate::log::log_impl(c_filename.as_ptr(),
+			    line!(), c_format.as_ptr(), c_message.as_ptr());
 		}
 	}
     };
