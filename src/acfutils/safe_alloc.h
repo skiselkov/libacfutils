@@ -106,9 +106,10 @@ safe_realloc(void *oldptr, size_t size)
  *
  * @return If successful, the returned address is guaranteed to be aligned
  *	to multiples of `alignment` bytes. The contents of the memory buffer
- *	are undefined. The returned pointer must be passed to free() (or
- *	std::free() in C++) to dispose of the allocation and avoid leaking
- *	memory.
+ *	are undefined. The returned pointer must be passed to aligned_free()
+ *	to dispose of the allocation and avoid leaking memory.
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
  * @return If the memory allocation cannot be satisfied, this function
  *	triggers an assertion failure with an out-of-memory error.
  * @note If the requested buffer size is 0, this function may return `NULL`,
@@ -153,9 +154,10 @@ safe_aligned_malloc(size_t alignment, size_t size)
  *
  * @return If successful, the returned address is guaranteed to be aligned
  *	to multiples of `alignment` bytes. The contents of the memory buffer
- *	are zero-initialized. The returned pointer must be passed to free()
- *	(or std::free() in C++) to dispose of the allocation and avoid
- *	leaking memory.
+ *	are zero-initialized. The returned pointer must be passed to
+ *	aligned_free() to dispose of the allocation and avoid leaking memory.
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
  * @return If the memory allocation cannot be satisfied, this function
  *	triggers an assertion failure with an out-of-memory error.
  * @note If the requested buffer size is 0, this function may return `NULL`,
@@ -167,6 +169,22 @@ safe_aligned_calloc(size_t alignment, size_t nmemb, size_t size)
 	void *p = safe_aligned_malloc(alignment, nmemb * size);
 	memset(p, 0, size);
 	return (p);
+}
+
+/**
+ * Frees memory previously allocated using safe_aligned_malloc() or
+ * safe_aligned_calloc().
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
+ */
+static inline void
+aligned_free(void *ptr)
+{
+#if	IBM
+	_aligned_free(ptr);
+#else
+	free(ptr);
+#endif
 }
 
 #endif \
