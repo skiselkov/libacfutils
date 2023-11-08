@@ -40,7 +40,7 @@ opus-mac-64
 opus-win-32
 opus-win-64
 
-curl-7.72.0
+curl-8.4.0
 libcurl-linux-64
 libcurl-win-64
 libcurl-mac-64
@@ -57,6 +57,7 @@ lzma/qmake/Makefile
 
 src/test/dsfdump
 src/test/shpdump
+src/test/rwmutex
 
 libacfutils-redist
 qmake/acfutils.def
@@ -82,7 +83,7 @@ ocr/tesseract-linux-64
 ocr/tesseract-mac-64
 ocr/tesseract-win-64
 
-ssl/openssl-1.1.1i
+ssl/openssl-1.1.1w
 ssl/openssl-win-64
 ssl/openssl-mac-64
 ssl/openssl-mac-arm
@@ -94,7 +95,7 @@ openal-soft/openal-soft-*-win-64
 openal-soft/openal-soft-*-mac-64
 openal-soft/openal-soft-*-linux-64
 
-libxml2/libxml2-2.9.4
+libxml2/libxml2-2.9.14
 libxml2/libxml2-linux-64
 libxml2/libxml2-win-64
 libxml2/libxml2-mac-64
@@ -104,12 +105,12 @@ libjpeg/libjpeg-linux-64
 libjpeg/libjpeg-win-64
 libjpeg/libjpeg-mac-64
 
-pcre2/pcre2-10.32
+pcre2/pcre2-10.42
 pcre2/pcre2-linux-64
 pcre2/pcre2-mac-64
 pcre2/pcre2-win-64
 
-glfw/glfw-3.3
+glfw/glfw-3.3.8
 glfw/glfw-linux-64
 glfw/glfw-mac-64
 glfw/glfw-win-64
@@ -138,3 +139,6 @@ geographiclib/geographiclib-mac-64
 geographiclib/geographiclib-win-64
 
 doc/html
+
+rust/Cargo.lock
+rust/target

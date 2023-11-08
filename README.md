@@ -1,3 +1,5 @@
+\mainpage
+
 # libacfutils
 
 This is a general purpose library of utility functions designed to make

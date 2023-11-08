@@ -27,6 +27,10 @@
 #include <signal.h>
 #endif
 
+/**
+ * Configures the calling thread to block SIGPIPE signals on macOS and Linux.
+ * Does nothing on Windows.
+ */
 void
 lacf_mask_sigpipe(void)
 {

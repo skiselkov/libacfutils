@@ -18,7 +18,7 @@
 # OpenSSL uses a fairly custom build infrastructure, so we can't
 # use build_dep
 
-OPENSSL="openssl-1.1.1i"
+OPENSSL="openssl-1.1.1w"
 
 function make_macOS_fat() {
 	PLATFORM="$1"

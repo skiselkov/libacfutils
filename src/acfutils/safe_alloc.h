@@ -20,8 +20,17 @@
 #ifndef	_ACF_UTILS_SAFE_ALLOC_H_
 #define	_ACF_UTILS_SAFE_ALLOC_H_
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if	IBM
+#include <malloc.h>
+#endif
+
+#if	defined(__cplusplus) && __cplusplus >= 201703L
+#include <cstdlib>
+#endif
 
 #include "assert.h"
 #include "sysmacros.h"
@@ -84,6 +93,105 @@ safe_realloc(void *oldptr, size_t size)
 	return (p);
 }
 
+#if	!APL || __MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_15
+#if	IBM || __STDC_VERSION__ >= 201112L || __cplusplus >= 201703L || \
+    _POSIX_C_SOURCE >= 200112L || defined(__DOXYGEN__)
+
+/**
+ * Same as safe_malloc(), but allows you to specify an alignment requirement
+ * for the buffer.
+ *
+ * @param alignment The byte alignment of the buffer. This must be a
+ *	power-of-two and no smaller than `sizeof (void *)`.
+ *
+ * @return If successful, the returned address is guaranteed to be aligned
+ *	to multiples of `alignment` bytes. The contents of the memory buffer
+ *	are undefined. The returned pointer must be passed to aligned_free()
+ *	to dispose of the allocation and avoid leaking memory.
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
+ * @return If the memory allocation cannot be satisfied, this function
+ *	triggers an assertion failure with an out-of-memory error.
+ * @note If the requested buffer size is 0, this function may return `NULL`,
+ *	or an unusable non-`NULL` pointer which is safe to pass to free().
+ */
+static inline void *
+safe_aligned_malloc(size_t alignment, size_t size)
+{
+	void *p = NULL;
+	int err = 0;
+	ASSERT3U(alignment, >=, sizeof (void *));
+	ASSERT0(alignment ^ (1 << highbit64(alignment)));
+#if	IBM
+	p = _aligned_malloc(size, alignment);
+	if (size > 0 && p == NULL)
+		err = ENOMEM;
+#elif	__STDC_VERSION__ >= 201112L
+	p = aligned_alloc(alignment, size);
+	if (size > 0 && p == NULL)
+		err = ENOMEM;
+#elif	__cplusplus >= 201703L
+	p = std::aligned_alloc(alignment, size);
+	if (size > 0 && p == NULL)
+		err = ENOMEM;
+#elif	defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L
+	err = posix_memalign(&p, alignment, size);
+#else	/* !(__STDC_VERSION__ >= 201112L || _POSIX_C_SOURCE >= 200112L) */
+	VERIFY_FAIL();
+#endif	/* !(__STDC_VERSION__ >= 201112L || _POSIX_C_SOURCE >= 200112L) */
+	VERIFY_MSG(err == 0, "Cannot allocate %lu bytes (align %lu): %s",
+	    (long unsigned)size, (long unsigned)alignment, strerror(err));
+
+	return (p);
+}
+
+/**
+ * Same as safe_calloc(), but allows you to specify an alignment requirement
+ * for the buffer.
+ *
+ * @param alignment The byte alignment of the buffer. This must be a
+ *	power-of-two and no smaller than `sizeof (void *)`.
+ *
+ * @return If successful, the returned address is guaranteed to be aligned
+ *	to multiples of `alignment` bytes. The contents of the memory buffer
+ *	are zero-initialized. The returned pointer must be passed to
+ *	aligned_free() to dispose of the allocation and avoid leaking memory.
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
+ * @return If the memory allocation cannot be satisfied, this function
+ *	triggers an assertion failure with an out-of-memory error.
+ * @note If the requested buffer size is 0, this function may return `NULL`,
+ *	or an unusable non-`NULL` pointer which is safe to pass to free().
+ */
+static inline void *
+safe_aligned_calloc(size_t alignment, size_t nmemb, size_t size)
+{
+	void *p = safe_aligned_malloc(alignment, nmemb * size);
+	memset(p, 0, size);
+	return (p);
+}
+
+/**
+ * Frees memory previously allocated using safe_aligned_malloc() or
+ * safe_aligned_calloc().
+ * @note You must NOT use the normal C library free() function, as doing so
+ *	is NOT portable.
+ */
+static inline void
+aligned_free(void *ptr)
+{
+#if	IBM
+	_aligned_free(ptr);
+#else
+	free(ptr);
+#endif
+}
+
+#endif \
+/* __STDC_VERSION__ || __cplusplus || IBM || _POSIX_C_SOURCE || __DOXYGEN__ */
+
+#endif	/* !APL || CMAKE_OSX_DEPLOYMENT_TARGET >= MAC_OS_X_VERSION_10_15 */
+
 /**
  * Provides an allocation-safe version of strdup(). If the allocation
  * of the required number of bytes fails, this trips an assertion check
@@ -93,7 +201,7 @@ static inline char *
 safe_strdup(const char *str2)
 {
 	char *str;
-	int l;
+	size_t l;
 	ASSERT(str2 != NULL);
 	l = strlen(str2);
 	str = (char *)safe_malloc(l + 1);

@@ -35,8 +35,6 @@
 #include <dirent.h>
 #endif	/* !IBM */
 
-#include <XPLMUtilities.h>
-
 #include "acfutils/airportdb.h"
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"

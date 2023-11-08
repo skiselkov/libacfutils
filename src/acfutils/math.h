@@ -13,8 +13,9 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2020 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
+/** \file */
 
 #ifndef	_ACF_UTILS_MATH_H_
 #define	_ACF_UTILS_MATH_H_
@@ -27,10 +28,12 @@
 extern "C" {
 #endif
 
+/** @return The 4th power of `x`. */
 #define	POW4(x)	((x) * (x) * (x) * (x))
+/** @return The 3th power of `x`. */
 #define	POW3(x)	((x) * (x) * (x))
+/** @return The 2th power of `x`. */
 #define	POW2(x)	((x) * (x))
-#define	ROUND_ERROR	1e-10
 #ifndef	ABS
 /** @return The absolute value of `x`. */
 #define	ABS(x)	((x) > 0 ? (x) : -(x))
@@ -52,32 +55,43 @@ API_EXPORT double *fx_lin_multi_inv2(double y, const struct vect2_s *points,
 API_EXPORT double *fx_lin_multi_inv3(double y, const struct vect2_s *points,
     size_t n_points, bool_t extrapolate, size_t *num_out);
 
-/*
- * Weighted avg, 'w' is weight fraction from 0.0 = all of x to 1.0 = all of y.
+/**
+ * @note Internall. Do not call directly. Use wavg() instead.
+ * @see wavg()
  */
 static inline double
 wavg_impl(double x, double y, double w, const char *file, int line)
 {
 	UNUSED(file);
 	UNUSED(line);
+	ASSERT_MSG(!isnan(w), "%f is NAN: called from: %s:%d", w, file, line);
 	ASSERT_MSG(w >= 0.0, "%f < 0.0: called from: %s:%d", w, file, line);
 	ASSERT_MSG(w <= 1.0, "%f > 1.0: called from: %s:%d", w, file, line);
 	return (x + (y - x) * w);
 }
+/**
+ * Weighted average, `w` is weight fraction from 0.0 = all of x to
+ * 1.0 = all of y. The `w` argument MUST be within the 0.0-1.0 range,
+ * otherwise an assertion failure is triggered.
+ */
 #define wavg(x, y, w)	wavg_impl((x), (y), (w), __FILE__, __LINE__)
 
+/**
+ * Similar to wavg(), but performs no bounds checks. For values of `w` which
+ * are outside of 0.0-1.0, the value is extrapolated beyond the bounds.
+ */
 static inline double
 wavg2(double x, double y, double w)
 {
 	return (x + (y - x) * w);
 }
 
-/*
+/**
  * Given two values min_val and max_val, returns how far between min_val
  * and max_val a third value 'x' lies. If `clamp_output' is true, 'x' is
  * clamped such that it always lies between min_val and max_val. In essence,
  * this function computes:
- *
+ *```
  *      ^
  *      |
  *    1 -------------------+
@@ -90,6 +104,7 @@ wavg2(double x, double y, double w)
  *      |     |     |      |
  *      +-----|-----|------|----->
  *         min_val  x   max_val
+ *```
  */
 static inline double
 iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
@@ -101,38 +116,29 @@ iter_fract(double x, double min_val, double max_val, bool_t clamp_output)
 	return (x);
 }
 
-/*
+#define	MAX_PN_INTERP_ORDER	64
+/**
  * This is a generic polynomial interpolator/extrapolator. Given a series
  * of X-Y coordinates, pn_interp_init constructs a polynomial interpolation
  * that smoothly passes through all of the input points. Please note that
  * this function is limited to a maximum number of inputs points (mainly
  * to make memory management easy by not requiring dynamic allocation).
+ * @see pn_interp_init()
+ * @see pn_interp_run()
  */
-#define	MAX_PN_INTERP_ORDER	64
 typedef struct {
 	unsigned	order;
 	double		coeff[MAX_PN_INTERP_ORDER];
 } pn_interp_t;
 
-/*
- * Given a series of X-Y coordinates, this function initializes a polynomial
- * interpolator that smoothly passes through all the input points. When you
- * are done with the interpolator, you DON'T have to free it. The pn_interp_t
- * structure is entirely self-contained.
- *
- * @param interp Interpolator that needs to be initialized.
- * @param points Input points that the interpolator needs to pass through.
- * @param npts Number points in `points'. This must be GREATER than 0.
- */
-#define	pn_interp_init	ACFSYM(pn_interp_init)
 API_EXPORT void pn_interp_init(pn_interp_t *interp, const vect2_t *points,
     unsigned npts);
 
-/*
- * Given an initialized pn_interp_t (see above), calculates the Y value
- * at a given point.
+/**
+ * Given an initialized pn_interp_t, calculates the Y value at a given point.
  * @param x The X point for which to calculate the interpolated Y value.
- * @param interp An initialized interpolator (as initialized by pn_interp_init).
+ * @param interp An initialized interpolator (see pn_interp_init()).
+ * @see pn_interp_init()
  */
 static inline double
 pn_interp_run(double x, const pn_interp_t *interp)
@@ -149,7 +155,7 @@ pn_interp_run(double x, const pn_interp_t *interp)
 	return (y);
 }
 
-/*
+/**
  * Implements the smoothstep function from GLSL. See Wikipedia
  * for more info: https://en.wikipedia.org/wiki/Smoothstep
  */
@@ -162,8 +168,8 @@ smoothstep(double x, double edge0, double edge1)
 	return (POW2(x) * (3 - 2 * x));
 }
 
-/*
- * Inverse of smoothstep. The returned value is always in the range of 0-1.
+/**
+ * Inverse of smoothstep(). The returned value is always in the range of 0-1.
  */
 static inline double
 smoothstep_inv(double x)
@@ -172,6 +178,44 @@ smoothstep_inv(double x)
 	return (0.5 - sin(asin(1 - 2 * x) / 3));
 }
 
+/**
+ * Hysterhesis-rounding macro. Given an old value, new value, rounding step
+ * and hysterhesis range, performs the following:
+ * - first rounds `newval` to the nearest multiple of `step`
+ * - if `oldval` is NAN, it simply adops the new rounded value
+ * - otherwise, if the new rounded value differs from `oldval` by at least
+ *	half step plus the hysterhesis range fraction, then `oldval` is set
+ *	to the new rounded value, otherwise it stays put.
+ *
+ * The purpose of this macro is to make `oldval` change in fixed steps, but
+ * avoid oscillation if the new value is right in the middle between two
+ * step sizes:
+ *```
+ *              oldval              nearly halfway to next step will cause
+ *                 |    +--newval - oldval to start oscillating rapidly
+ *                 |    |           between X and X+1
+ *                 |    |
+ *                 V    V
+ * ======+=========+=========+=========+=====
+ *      X-1        X        X+1       X+2
+                   |         |
+ *                 |<-step-->|
+ *```
+ * The HROUND2() macro provides an additional "buffer" zone around the
+ * midpoint of the step, to avoid this oscillation:
+ *```
+ *              oldval
+ *                 |    newval     newval must now cross beyond this
+ *                 |       |      _point before it will cause oldval
+ *                 |       |     / to change from X to X+1
+ *                 V       V    V
+ * =+==============+=======|====|==+====
+ * X-1             X       |<-->| X+1
+ *                 |      hyst_rng |
+ *                 |               |
+ *                 |<----step----->|
+ *```
+ */
 #define	HROUND2(oldval, newval, step, hyst_rng) \
 	do { \
 		double tmpval = round((newval) / (step)) * (step); \
@@ -184,6 +228,12 @@ smoothstep_inv(double x)
 		} \
 	} while (0)
 
+/**
+ * Same as HROUND2(), but uses a default hysterhesis range value of 0.35.
+ * That means the new value will only influence `oldval` if it is at least
+ * step * (0.5 + 0.35) = step * 0.85 or 85% of the way to the nearest step
+ * value away from `oldval`.
+ */
 #define	HROUND(oldval, newval, step) \
 	HROUND2((oldval), (newval), (step), 0.35)
 

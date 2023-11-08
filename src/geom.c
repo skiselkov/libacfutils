@@ -28,6 +28,8 @@
 #include "acfutils/perf.h"
 #include "acfutils/safe_alloc.h"
 
+#define	ROUND_ERROR	1e-10
+
 /**
  * The WGS-84 ellipsoid parameters. For most functions where you can
  * pass a \ref ellip_t, you will want to pass a pointer to this structure

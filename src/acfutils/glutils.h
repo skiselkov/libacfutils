@@ -50,6 +50,12 @@
 extern "C" {
 #endif
 
+#ifdef	__AVX__
+#define	MAT4_ALLOC_ALIGN	32
+#else
+#define	MAT4_ALLOC_ALIGN	16
+#endif
+
 /**
  * Utility system to emulate `GL_QUADS` drawing using modern OpenGL core
  * functionality. This object encapsulates the GPU-side buffers to draw

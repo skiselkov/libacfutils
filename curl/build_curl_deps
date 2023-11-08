@@ -13,40 +13,41 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2023 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-CURL="curl-7.72.0.tar.xz"
-CONFOPTS_COMMON="--enable-static --disable-shared --disable-ftp \
-    --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
-    --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
-    --disable-imap --disable-smb --disable-smtp --disable-gopher \
-    --disable-manual --disable-pthreads --disable-unix-sockets \
-    --disable-ipv6 --disable-threaded-resolver --disable-cookies \
-    --disable-ntlm-wb --disable-crypto-auth --disable-sspi \
-    --without-winidn --without-libssh2 --without-librtmp \
-    --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
-    --with-pic --without-zstd --without-system-zlib --without-brotli"
+CURL="curl-8.4.0.tar.xz"
+
+CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
+    -DBUILD_STATIC_LIBS=ON -DHTTP_ONLY=ON -DENABLE_UNIX_SOCKETS=OFF \
+    -DCURL_DISABLE_COOKIES=ON -DCURL_DISABLE_NTLM=ON \
+    -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
+    -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF \
+    -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON -DCURL_USE_OPENSSL=ON"
+
+export CONFIG_CMAKE=1
 
 case `uname` in
 	Linux)
-		LIBS="-lpthread" build_dep "linux-64" "$CONFOPTS_COMMON \
-		    --with-ssl=$(pwd)/../ssl/openssl-linux-64 \
-		    --with-zlib=$(pwd)/../zlib/zlib-linux-64" \
+		build_dep "linux-64" "$CONFOPTS_COMMON \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-linux-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" \
 		    "$CURL" "libcurl" "lib/libcurl.a" && \
-		LIBS="-lcrypt32" build_dep "win-64" \
-		    "$CONFOPTS_COMMON --host=x86_64-w64-mingw32 \
-		    --with-ssl=$(pwd)/../ssl/openssl-win-64 \
-		    --with-zlib=$(pwd)/../zlib/zlib-win-64" \
+		build_dep "win-64" \
+		    "$CONFOPTS_COMMON \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-win-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-win-64/lib/libz.a" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	Darwin)
-		PATH="$(echo "$PATH" | sed 's|/opt/local[/_a-zA-Z0-9]*:||g')"
-		export PATH
 		build_dep "mac-64" "$CONFOPTS_COMMON \
-		    --with-ssl=\"$(pwd)/../ssl/openssl-mac-64\" \
-		    --with-zlib=$(pwd)/../zlib/zlib-mac-64" \
+		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-mac-64 \
+		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-mac-64/include \
+		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-mac-64/lib/libz.a \
+		    -DCMAKE_OSX_ARCHITECTURES='x86_64;arm64'" \
 		    "$CURL" "libcurl" "lib/libcurl.a"
 		;;
 	*)

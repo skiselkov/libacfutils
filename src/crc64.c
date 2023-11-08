@@ -45,6 +45,16 @@ crc64_init(void)
 }
 
 /**
+ * Same as crc64_state_init(), but provided for linkage for Rust bridge.
+ */
+void
+crc64_state_init_impl(uint64_t *crc)
+{
+	ASSERT(crc != NULL);
+	crc64_state_init(crc);
+}
+
+/**
  * Computes the CRC64 checksum of a block of input data.
  * @param input The input data block for which the CRC64 checksum
  *	should be computed.

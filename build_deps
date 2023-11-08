@@ -43,8 +43,32 @@ fi
 if [[ "$do_clean" != 1 ]]; then
 	git submodule init mingw-std-threads && \
 	git submodule update --merge --recursive && \
-	( cd mingw-std-threads && git checkout master )
+	( cd mingw-std-threads && git checkout 6c2061b7da41d6aa1b2162ff4383ec3ece864bc6 )
 fi
+
+function check_brew_install() {
+	if ! which "$1" &> /dev/null; then
+		if ! brew install "$2"; then
+			echo "Required utility '$1' not found" \
+			    "and cannot be installed." >&2
+			return 1
+		fi
+	fi
+	return 0
+}
+
+case $(uname) in
+    Darwin)
+	if [ -z "$do_clean" ]; then
+		check_brew_install qmake "qt" || exit 1
+		check_brew_install pkg-config "pkg-config" || exit 1
+		check_brew_install gsed "gnu-sed" || exit 1
+		check_brew_install cmake "cmake" || exit 1
+	fi
+	;;
+*)
+	;;
+esac
 
 ( cd zlib && ./build_zlib_deps ) && \
     ( echo "Building libiconv ..."; cd libiconv && ./build_libiconv_deps ) && \

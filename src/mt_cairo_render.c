@@ -22,13 +22,6 @@
 /*
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
-/*
- * mt_cairo_render is a multi-threaded cairo rendering surface with
- * built-in buffering and OpenGL compositing. You only need to provide
- * a callback that renders into the surface using a passed cairo_t and
- * then call mt_cairo_render_draw at regular intervals to display the
- * rendered result.
- */
 
 #include <XPLMGraphics.h>
 
@@ -57,12 +50,6 @@
 
 #include <cglm/cglm.h>
 
-#define	MTCR_DEBUG(...) \
-	do { \
-		if (mtcr->debug) \
-			logMsg(__VA_ARGS__); \
-	} while (0)
-
 TEXSZ_MK_TOKEN(mt_cairo_render_tex);
 TEXSZ_MK_TOKEN(mt_cairo_render_pbo);
 
@@ -79,7 +66,6 @@ typedef struct {
 struct mt_cairo_render_s {
 	char			*init_filename;
 	int			init_line;
-	bool_t			debug;
 	vect3_t			monochrome;
 	bool_t			use_ffp;
 
@@ -421,11 +407,19 @@ worker(void *arg)
 	mutex_exit(&mtcr->lock);
 }
 
-/*
- * Initializes the mt_cairo_render state. You should call this before doing
- * *ANY* Cairo or mt_cairo_render calls. Notably, the font machinery of
- * Cairo isn't thread-safe before this call, so place a call to this function
- * at the start of your bootstrap code.
+/**
+ * Performs global initialization of the mt_cairo_render backend logic.
+ * @param want_coherent_mem If set to `B_TRUE`, this enables the use of
+ *	persistent coherent memory for OpenGL texture uploading. This is
+ *	generally recommended for most deployments, unless your OpenGL
+ *	driver has bugs which make this mechanism not work well. If the
+ *	underlying driver doesn't support persistent coherent memory
+ *	(such as on macOS), mt_cairo_render_t automatically falls back
+ *	to a different mechanism.
+ * @note Only the first call of mt_cairo_render_glob_init() is honored.
+ *	If you want your call to take precedence, you MUST call this
+ *	function before creating any renderers or an uploader using
+ *	mt_cairo_render_init() or mt_cairo_uploader_init() respectively.
  */
 void
 mt_cairo_render_glob_init(bool_t want_coherent_mem)
@@ -595,24 +589,10 @@ check_use_ffp(const mt_cairo_render_t *mtcr)
 	    strstr((const char *)glGetString(GL_RENDERER), "Radeon") != NULL);
 }
 
-/*
- * Creates a new mt_cairo_render_t surface.
- * @param w Width of the rendered surface (in pixels).
- * @param h Height of the rendered surface (in pixels).
- * @param fps Framerate at which the surface should be rendered.
- *	This can be changed at any time later. Pass a zero fps value
- *	to make the renderer only run on-request (see mt_cairo_render_once).
- * @param init_cb An optional initialization callback that can be
- *	used to initialize private resources needed during rendering.
- *	Called once for every cairo_t instance (two instances for
- *	every mt_cairo_render_t, due to double-buffering). Please note that
- *	this can be called even after calling mt_cairo_render_init, since
- *	mt_cairo_render_set_monochrome will re-allocate the cairo instances.
- * @param render_cb A mandatory rendering callback. This is called for
- *	each rendered frame.
- * @param fini_cb An optional finalization callback that can be used
- *	to free resources allocated during init_cb.
- * @param userinfo An optional user info pointer for the callbacks.
+/**
+ * Implementation of mt_cairo_render_init() macro. Don't call this function
+ * directly use the macro instead.
+ * @see mt_cairo_render_init()
  */
 mt_cairo_render_t *
 mt_cairo_render_init_impl(const char *filename, int line,
@@ -651,8 +631,12 @@ mt_cairo_render_init_impl(const char *filename, int line,
 		mt_cairo_render_fini(mtcr);
 		return (NULL);
 	}
-	if (mtcr->coherent_data == NULL)
-		VERIFY(cr_init(mtcr, &mtcr->rs[1]));
+	if (mtcr->coherent_data == NULL) {
+		if (!cr_init(mtcr, &mtcr->rs[1])) {
+			mt_cairo_render_fini(mtcr);
+			return (NULL);
+		}
+	}
 	mt_cairo_render_set_shader(mtcr, 0);
 
 	if (!glutils_in_zink_mode())
@@ -665,6 +649,10 @@ mt_cairo_render_init_impl(const char *filename, int line,
 	return (mtcr);
 }
 
+/**
+ * Destroys a previously created mt_cairo_render_t instance.
+ * @see mt_cairo_render_init()
+ */
 void
 mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 {
@@ -699,10 +687,14 @@ mt_cairo_render_fini(mt_cairo_render_t *mtcr)
 	free(mtcr);
 }
 
+/**
+ * Changes the rendering FPS of an mt_cairo_render_t instance.
+ */
 void
 mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps)
 {
 	if (mtcr->fps != fps) {
+		ASSERT(!mtcr->fg_mode);
 		mutex_enter(&mtcr->lock);
 		mtcr->fps = fps;
 		cv_broadcast(&mtcr->cv);
@@ -710,33 +702,71 @@ mt_cairo_render_set_fps(mt_cairo_render_t *mtcr, double fps)
 	}
 }
 
+/**
+ * @return The rendering FPS of the mt_cairo_render_t.
+ */
 double
 mt_cairo_render_get_fps(mt_cairo_render_t *mtcr)
 {
 	return (mtcr->fps);
 }
 
-/*
- * Foreground mode
+/**
+ * Enables foreground rendering mode for the mt_cairo_render_t (mtcr)
+ * instance. Normally, an mtcr performs rendering in a separate
+ * background thread. There cases where you don't want or need that to
+ * happen (e.g. if you are already controlling the mtcr from a
+ * background thread and want to have the rendering happen in that
+ * background thread, instead of an extra one). Calling this function
+ * will shut down the background rendering thread of the mtcr and
+ * reconfigure it for rendering in the mt_cairo_render_once_wait()
+ * call.
+ * @note The mtcr MUST have been configured with an FPS of 0 (i.e.
+ *	manual rendering invocation) before calling this function.
+ *
+ * After this function returns, you must manually invoke
+ * mt_cairo_render_once_wait() whenever you want the mtcr to actually
+ * perform rendering. The rendering and surface swap operations will
+ * be done directly on the calling thread, so there are no background
+ * thread synchronization issues.
  */
 void
 mt_cairo_render_enable_fg_mode(mt_cairo_render_t *mtcr)
 {
 	ASSERT(mtcr != NULL);
-	ASSERT0(mtcr->fg_mode);
 	ASSERT3F(mtcr->fps, ==, 0);
 	ASSERT(mtcr->started);
 
-	mutex_enter(&mtcr->lock);
-	mtcr->shutdown = B_TRUE;
-	cv_broadcast(&mtcr->cv);
-	mutex_exit(&mtcr->lock);
-	thread_join(&mtcr->thr);
+	if (!mtcr->fg_mode) {
+		mutex_enter(&mtcr->lock);
+		mtcr->shutdown = B_TRUE;
+		cv_broadcast(&mtcr->cv);
+		mutex_exit(&mtcr->lock);
+		thread_join(&mtcr->thr);
 
-	mtcr->fg_mode = B_TRUE;
-	mtcr->started = B_FALSE;
+		mtcr->fg_mode = B_TRUE;
+		mtcr->started = B_FALSE;
+	}
 }
 
+/**
+ * @return `B_TRUE` if the passed renderer is configure for foreground
+ *	rendering, `B_FALSE` otherwise.
+ * @see mt_cairo_render_enable_fg_mode()
+ */
+bool_t
+mt_cairo_render_get_fg_mode(const mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	return (mtcr->fg_mode);
+}
+
+/**
+ * Sets the texture filtering used in compositing done by
+ * mt_cairo_render_draw().
+ * @param gl_filter_enum Must be one of the OpenGL texture filtering enums.
+ *	The default on a newly created mt_cairo_render_t is GL_LINEAR.
+ */
 void
 mt_cairo_render_set_texture_filter(mt_cairo_render_t *mtcr,
     unsigned gl_filter_enum)
@@ -797,6 +827,39 @@ set_shader_impl(mt_cairo_render_t *mtcr, unsigned prog, bool_t force)
 	mtcr->use_ffp = check_use_ffp(mtcr);
 }
 
+/**
+ * Sets a custom compositing shader program for use during
+ * mt_cairo_render_draw() and related functions. This lets you control
+ * how the compositing happens and apply arbitrary effects.
+ * @param mtcr The mt_cairo_render_t into which to install the shader.
+ * @param prog The shader program handle to set. If you set this to 0,
+ *	the shader program used by the mtcr is reset back to the default.
+ *
+ * ## Shader Uniforms and Vertex Attributes
+ *
+ * Your custom shader program must contain at least a vertex and fragment
+ * shader. The mt_cairo_render_t automatically resolves attribute and
+ * uniform bindings using the following names:
+ * - The vertex position attribute as a `vec3` named "vtx_pos". The
+ *	Z coordinate is always set to zero and only. X and Y correspond
+ *	to the input vertex coordinates based on the `pos` and `size`
+ *	arguments passed to mt_cairo_render_draw().
+ * - The vertex texture UV attribute is passed as a `vec2` named "vtx_tex0".
+ * - The combined projection-model-view matrix is passed in a uniform
+ *	of type `mat4` named "pvm".
+ * - The texture containing the cairo surface is passed in a uniform
+ *	of type `sampler2D` named "tex". If the mtcr is configured for
+ *	RGBA rendering (the default), the texture format and internal
+ *	format are both `GL_RGBA`. If the mtcr is configured for monochrome
+ *	rendering, the texture is of format `GL_RED` and internal format
+ *	`GL_R8` (meaning, the surface information is contained in the red
+ *	channel only). In all cases, the texture data is of type
+ *	`GL_UNSIGNED_BYTE`.
+ * - If configured for monochrome rendering, the monochrome color
+ *	passed in the `color` argument of mt_cairo_render_set_monochrome()
+ *	is passed in a uniform of type `vec3` named "color_in". In
+ *	RGBA mode, this uniform isn't filled.
+ */
 void
 mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 {
@@ -804,6 +867,12 @@ mt_cairo_render_set_shader(mt_cairo_render_t *mtcr, unsigned prog)
 	set_shader_impl(mtcr, prog, B_FALSE);
 }
 
+/**
+ * @return The custom shader program handle which was passed to
+ *	mt_cairo_render_set_shader(). If no custom shader program was
+ *	installed, this function returns 0 instead, to indicate that
+ *	the mtcr is using the default shader program.
+ */
 unsigned
 mt_cairo_render_get_shader(mt_cairo_render_t *mtcr)
 {
@@ -811,17 +880,18 @@ mt_cairo_render_get_shader(mt_cairo_render_t *mtcr)
 	return (mtcr->shader_is_custom ? mtcr->shader : 0);
 }
 
-/*
+/**
  * Enables or disables monochrome rendering mode. The default is disabled
  * (i.e. the image is rendered in RGBA mode). Monochrome rendering in
  * Cairo is controlled using the alpha channel. If you are using the
- * default mt_cairo_render compositing shader, the `color' vector
+ * default mt_cairo_render compositing shader, the `color` vector
  * argument to this function sets what RGB color is used in the final
  * render. Passing any non-NULL vector here enables monochrome mode. Pass
- * a NULL_VECT3 to disable monochrome mode.
- * Switching rendering modes stops & restarts the worker thread (when not
- * in FG mode) and calls any surface fini and init callbacks you passed
- * mt_cairo_render_init.
+ * a `NULL_VECT3` to disable monochrome mode.
+ *
+ * Switching rendering modes stops & restarts the worker thread (when
+ * not in foreground rendering mode) and calls any surface fini and
+ * init callbacks you passed mt_cairo_render_init().
  */
 void
 mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
@@ -873,9 +943,9 @@ mt_cairo_render_set_monochrome(mt_cairo_render_t *mtcr, vect3_t color)
 	}
 }
 
-/*
- * Returns the color used for monochrome rendering and compositing. If
- * monochrome rendering is not in use (the default), returns NULL_VECT3.
+/**
+ * @return The color used for monochrome rendering and compositing. If
+ * monochrome rendering is not in use (the default), returns `NULL_VECT3`.
  */
 vect3_t
 mt_cairo_render_get_monochrome(const mt_cairo_render_t *mtcr)
@@ -884,9 +954,21 @@ mt_cairo_render_get_monochrome(const mt_cairo_render_t *mtcr)
 	return (mtcr->monochrome);
 }
 
-/*
- * Fires the renderer off once to produce a new frame. This can be especially
- * useful for renderers with fps = 0, which are only invoked on request.
+/**
+ * Fires the renderer off once to produce a new frame. This can be
+ * especially useful for renderers with fps = 0, which are only invoked
+ * on request. This doesn't cause the caller to block until the render
+ * is complete. Instead, it simply does an asynchronous render request
+ * to the background thread. If the background thread is currently in
+ * the process of rendering a frame, this request might get ignored.
+ * If you need to make absolutely sure that a new image is drawn and
+ * that rendering is finished, use mt_cairo_render_once_wait().
+ * @note Calling this function on an mt_cairo_render_t which has been
+ *	configured for foreground rendering using
+ *	mt_cairo_render_enable_fg_mode() will cause an assertion failure.
+ *	Foreground-mode renderers MUST be driven using
+ *	mt_cairo_render_once_wait() instead.
+ * @see mt_cairo_render_once_wait()
  */
 void
 mt_cairo_render_once(mt_cairo_render_t *mtcr)
@@ -898,9 +980,14 @@ mt_cairo_render_once(mt_cairo_render_t *mtcr)
 	mutex_exit(&mtcr->lock);
 }
 
-/*
- * Same as mt_cairo_render_once, but waits for the new frame to finish
- * rendering.
+/**
+ * Same as mt_cairo_render_once(), but waits for the new frame to finish
+ * rendering. This guarantees that the image is complete and ready for
+ * compositing.
+ *
+ * If the renderer is set to foreground mode
+ * (mt_cairo_render_enable_fg_mode()), you must use this function to
+ * drive the rendering.
  */
 void
 mt_cairo_render_once_wait(mt_cairo_render_t *mtcr)
@@ -1117,9 +1204,11 @@ prepare_vtx_buffer(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
 	mtcr->last_draw.y2 = y2;
 }
 
-/*
- * Same as mt_cairo_render_draw_subrect, but renders the entire surface
- * to the passed coordinates.
+/**
+ * Same as mt_cairo_render_draw_subrect(), but renders the entire
+ * surface to the passed coordinates. For the vast majority of cases,
+ * this is the call you want to use to composite the entire surface
+ * onto the target framebuffer.
  */
 void
 mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
@@ -1127,6 +1216,10 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
 	mt_cairo_render_draw_subrect(mtcr, ZERO_VECT2, VECT2(1, 1), pos, size);
 }
 
+/**
+ * Same as mt_cairo_render_draw_subrect_pvm(), but always draws the
+ * entire surface, rather than just a subrect of it.
+ */
 void
 mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
     const GLfloat *pvm)
@@ -1135,19 +1228,23 @@ mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
 	    size, pvm);
 }
 
+/**
+ * Same as mt_cairo_render_draw_subrect_pvm(), but automatically
+ * determines the projection-view-model matrix from X-Plane's datarefs.
+ */
 void
 mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size)
 {
 	mat4 pvm;
-    
 	/*
-	Until X-Plane 12.06, XP wrongly reported `sim/view/draw_call_type` as `0`
-	in window callbacks. 12.06 fixes that, but the viewport method doesn't work
-	for windows (the viewport is always reported in pixels, whereas the OGL matrices
-	that XP provides as datarefs take interface scaling into account.) On XP > 12.06,
-	we always use the matrices rather than the viewport to decide how to draw.
-	*/
+	 * Until X-Plane 12.06, XP wrongly reported `sim/view/draw_call_type`
+	 * as `0` in window callbacks. 12.06 fixes that, but the viewport
+	 * method doesn't work for Windows (the viewport is always reported
+	 * in pixels, whereas the OGL matrices that XP provides as datarefs
+	 * take interface scaling into account.) On XP > 12.06, we always
+	 * use the matrices rather than the viewport to decide how to draw.
+	 */
 	int xp_version;
 	XPLMGetVersions(&xp_version, NULL, NULL);
 
@@ -1171,17 +1268,35 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 	    (GLfloat *)pvm);
 }
 
-/*
- * Draws the rendered surface at offset pos.xy, at a size of size.xy.
- * src_pos and src_sz allow you to specify only a sub-rectangle of the
- * surface to be rendered.
- *
+/**
+ * Composites the rendered surface onto the currently bound OpenGL
+ * drawing target.
  * This should be called at regular intervals to draw the results of
- * the cairo render (though not necessarily in lockstep with it). If
- * a new frame hasn't been rendered yet, this function simply renders
- * the old buffer again (or nothing at all if no surface has completed
- * internal Cairo rendering). You can guarantee that a surface is ready
- * by first calling mt_cairo_render_once_wait.
+ * the cairo render (though not necessarily in lockstep with it). 
+ *
+ * @param mtcr Renderer instance to be drawn. If a new frame hasn't
+ *	been rendered yet, this function simply renders the old buffer
+ *	again (or nothing at all if no surface has completed internal
+ *	Cairo rendering). You can guarantee that a surface is ready by
+ *	first calling mt_cairo_render_once_wait().
+ * @param src_pos Origin position within the surface from which to
+ *	perform the compositing. This is referenced to the top left
+ *	coordinate origin of the Cairo image surface.
+ * @param src_sz Size of area to composite from the source image
+ *	surface. If you pass `src_pos=ZERO_VECT2` and `src_sz` set to
+ *	the entire image surface size to composite the entirety of the
+ *	image surface.
+ * @param pos Target rendering position of the origin of the rectangle
+ *	to which to composite. This is specified in OpenGL coordinates
+ *	and is transformed using the provided matrix for final rendering.
+ * @param size Target rendering rectangle size to which to composite.
+ *	This is specified in OpenGL coordinates and is transformed
+ *	using the provided matrix for final rendering.
+ * @param pvm The projection-View-Model matrix, which will be used by
+ *	the vertex shader to transform the coordinates of the final
+ *	rendering rectangle. If you've installed your own custom shader,
+ *	this parameter will be passed to your shader in a mat4 uniform
+ *	named "pvm".
  */
 void
 mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
@@ -1288,9 +1403,9 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 	glUseProgram(0);
 }
 
-/*
+/**
  * Configures the mt_cairo_render_t instance to use an asynchronous uploader.
- * See mt_cairo_uploader_new for more information.
+ * See mt_cairo_uploader_new() for more information.
  *
  * @param mtcr Renderer to configure for asynchronous uploading.
  * @param mtul Uploader to use for renderer. If you pass NULL here,
@@ -1336,7 +1451,7 @@ mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr, mt_cairo_uploader_t *mtul)
 	}
 }
 
-/*
+/**
  * Returns the asynchronous uploader used by an mt_cairo_render_t,
  * or NULL if the renderer doesn't utilize asynchronous uploading.
  */
@@ -1353,8 +1468,8 @@ mt_cairo_render_get_uploader(mt_cairo_render_t *mtcr)
 	return (mtul);
 }
 
-/*
- * Retrieves the OpenGL texture object of the surface that has currently
+/**
+ * @return The OpenGL texture object of the surface that has currently
  * completed rendering. If no surface is ready yet, returns 0 instead.
  */
 GLuint
@@ -1382,6 +1497,10 @@ mt_cairo_render_get_tex(mt_cairo_render_t *mtcr)
 	return (tex);
 }
 
+/**
+ * @return The width of the cairo image surface in pixels. This is equal
+ *	to the "w" argument originally passed to mt_cairo_render_init().
+ */
 unsigned
 mt_cairo_render_get_width(mt_cairo_render_t *mtcr)
 {
@@ -1389,6 +1508,10 @@ mt_cairo_render_get_width(mt_cairo_render_t *mtcr)
 	return (mtcr->w);
 }
 
+/**
+ * @return The height of the cairo image surface in pixels. This is equal
+ *	to the "h" argument originally passed to mt_cairo_render_init().
+ */
 unsigned
 mt_cairo_render_get_height(mt_cairo_render_t *mtcr)
 {
@@ -1397,24 +1520,25 @@ mt_cairo_render_get_height(mt_cairo_render_t *mtcr)
 }
 
 void
+mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
+    const mtcr_rect_t *rects, size_t num)
+{
+	UNUSED(mtcr);
+	UNUSED(rects);
+	UNUSED(num);
+}
+
+/**
+ * Enables context integrity checking for the mt_cairo_render_t internals.
+ * @note This is an internal development option for libacfutils, so unless
+ *	you are debugging libacfutils itself, you probably won't need to
+ *	call this.
+ */
+void
 mt_cairo_render_set_ctx_checking_enabled(mt_cairo_render_t *mtcr,
     bool_t flag)
 {
 	mtcr->ctx_checking = flag;
-}
-
-void
-mt_cairo_render_set_debug(mt_cairo_render_t *mtcr, bool_t flag)
-{
-	ASSERT(mtcr != NULL);
-	mtcr->debug = flag;
-}
-
-bool_t
-mt_cairo_render_get_debug(const mt_cairo_render_t *mtcr)
-{
-	ASSERT(mtcr != NULL);
-	return (mtcr->debug);
 }
 
 static void
@@ -1568,11 +1692,11 @@ mtul_worker(void *arg)
 	VERIFY(glctx_make_current(NULL));
 }
 
-/*
+/**
  * Initializes an asynchronous render surface uploader. This should be
  * called from the main X-Plane thread.
  *
- * BACKGROUND:
+ * ## Background
  *
  * An mt_cairo_render_t runs its Cairo rendering operations in a background
  * thread. However, to present the final rendered image on screen, the
@@ -1605,7 +1729,7 @@ mtul_worker(void *arg)
  * instances using mt_cairo_render_set_uploader. You generally only ever
  * need a single uploader for all renderers you create. Thus, following
  * this pattern is a good idea:
- *
+ *```
  *	mt_cairo_uploader_t *uploader = mt_cairo_uploader_new();
  *	mt_cairo_render_t *mtcr1 = mt_cairo_render_init(...);
  *	mt_cairo_render_set_uploader(mtcr1, uploader);
@@ -1613,11 +1737,12 @@ mtul_worker(void *arg)
  *	mt_cairo_render_set_uploader(mtcr2, uploader);
  *	mt_cairo_render_t *mtcr3 = mt_cairo_render_init(...);
  *	mt_cairo_render_set_uploader(mtcr3, uploader);
- *	...use the renderers are normal...
+ *	// ...use the renderers as normal...
  *	mt_cairo_render_fini(mtcr3);
  *	mt_cairo_render_fini(mtcr2);
  *	mt_cairo_render_fini(mtcr1);
  *	mt_cairo_uploader_fini(uploader);	<- uploader fini must go last
+ *```
  */
 mt_cairo_uploader_t *
 mt_cairo_uploader_init(void)
@@ -1654,7 +1779,7 @@ mt_cairo_uploader_init(void)
 	return (mtul);
 }
 
-/*
+/**
  * Frees an mt_cairo_uploader_t and disposes of all of its resources.
  * This must be called after all mt_cairo_render_t instances using it
  * have either been destroyed, or have had their uploader link removed

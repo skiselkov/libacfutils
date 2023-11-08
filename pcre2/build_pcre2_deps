@@ -17,19 +17,20 @@
 
 source ../build_dep.common
 
-PCRE2="pcre2-10.32.zip"
+PCRE2="pcre2-10.42.tar.xz"
 
 case `uname` in
 	Linux)
-		build_dep "linux-64" "--enable-static --disable-shared" \
+		CFLAGS="-DPCRE2_STATIC" build_dep "linux-64" \
+		    "--enable-static --disable-shared" \
 		    "$PCRE2" "pcre2" "lib/libpcre2-8.a" && \
-		build_dep "win-64" "--enable-static --disable-shared \
+		CFLAGS="-DPCRE2_STATIC" build_dep "win-64" "--enable-static --disable-shared \
 		    --host=x86_64-w64-mingw32" \
 		    "$PCRE2" "pcre2" "lib/libpcre2-8.a"
 		;;
 	Darwin)
-		CFLAGS="$CFLAGS_COMMON\\ -mmacosx-version-min=10.6" \
-		    LDFLAGS="$LDFLAGS_COMMON\\ -mmacosx-version-min=10.6" \
+		CFLAGS="-mmacosx-version-min=10.6\\ -DPCRE2_STATIC" \
+		    LDFLAGS="-mmacosx-version-min=10.6" \
 		    build_dep "mac-64" "--enable-static --disable-shared" \
 		    "$PCRE2" "pcre2" "lib/libpcre2-8.a"
 		;;

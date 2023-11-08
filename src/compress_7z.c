@@ -83,7 +83,7 @@ decompress_7z(const char *filename, size_t *out_len)
 	lookStream.buf = ISzAlloc_Alloc(&allocImp, kInputBufSize);
 	lookStream.bufSize = kInputBufSize;
 	lookStream.realStream = &archiveStream.vt;
-	LookToRead2_Init(&lookStream);
+	LookToRead2_INIT(&lookStream);
 
 	CrcGenerateTable();
 	SzArEx_Init(&db);

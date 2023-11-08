@@ -598,7 +598,7 @@ lacf_strncasecmp(const char *s1, const char *s2, size_t n)
 static inline int
 lacf_strcasecmp(const char *s1, const char *s2)
 {
-	return (lacf_strncasecmp(s1, s2, SIZE_MAX));
+	return (lacf_strncasecmp(s1, s2, MAX(strlen(s1), strlen(s2))));
 }
 
 /**

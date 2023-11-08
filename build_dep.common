@@ -103,14 +103,29 @@ function build_dep() {
 
 		# Linux: for some reason, we need to specify an optimization
 		# level or we won't get lstat/fstat correctly defined. WTF...
-		eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CFLAGS}\\ \
+		if [ -n "$CONFIG_CMAKE" ]; then
+			if [[ $(uname) = "Linux" ]] &&
+			    [[ "$PLATFORM" = "win-64" ]]; then
+				XCOMPILE_OPTIONS="-DCMAKE_TOOLCHAIN_FILE=../../XCompile.cmake -DHOST=x86_64-w64-mingw32"
+			elif [[ "$PLATFORM" = "mac-64" ]]; then
+				XCOMPILE_OPTIONS="-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13"
+			else
+				XCOMPILE_OPTIONS=""
+			fi
+			cmake -DCMAKE_INSTALL_PREFIX="$(pwd)/$INSTALL_DIR" \
+			    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+			    ${XCOMPILE_OPTIONS} \
+			    ${CONFOPTS} "../$SRCDIR" || exit 1
+		else
+			eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CFLAGS}\\ \
 $CFLAGS_ADDTL" \
-		CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CXXFLAGS}\\ \
+			CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CXXFLAGS}\\ \
 $CXXFLAGS_ADDTL" \
-		LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}\\ \
+			LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}\\ \
 $LDFLAGS_ADDTL" \
-		    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
-		    ${CONFOPTS} || exit 1
+			    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
+			    ${CONFOPTS} || exit 1
+		fi
 
 		if [ -n "$CUSTPREMAKECMD" ]; then
 			eval "$CUSTPREMAKECMD" || exit 1

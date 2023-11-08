@@ -17,7 +17,7 @@
 
 source ../build_dep.common
 
-LIBXML2="libxml2-2.9.4.tar.xz"
+LIBXML2="libxml2-2.9.14.tar.xz"
 
 CONFOPTS_COMMON="--enable-static --disable-shared --enable-silent-rules \
     --with-pic --without-lzma --without-zlib --without-iconv --without-python \
