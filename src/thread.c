@@ -21,3 +21,29 @@
 bool_t	lacf_thread_list_inited = B_FALSE;
 mutex_t	lacf_thread_list_lock;
 list_t	lacf_thread_list;
+
+#if	IBM
+
+DWORD
+lacf_thread_start_routine(void *arg)
+{
+	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
+	ti->proc(ti->arg);
+	_lacf_thread_list_remove(ti);
+	free(ti);
+	return (0);
+}
+
+#else
+
+void *
+lacf_thread_start_routine(void *arg)
+{
+	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
+	ti->proc(ti->arg);
+	_lacf_thread_list_remove(ti);
+	free(ti);
+	return (NULL);
+}
+
+#endif

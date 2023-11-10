@@ -636,15 +636,7 @@ lacf_threads_fini(void)
 
 #if	APL || LIN
 
-UNUSED_ATTR static void *
-_lacf_thread_start_routine(void *arg)
-{
-	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
-	ti->proc(ti->arg);
-	_lacf_thread_list_remove(ti);
-	free(ti);
-	return (NULL);
-}
+void *lacf_thread_start_routine(void *arg);
 
 WARN_UNUSED_RES_ATTR static inline bool_t
 lacf_thread_create(thread_t *thrp, void (*proc)(void *), void *arg,
@@ -658,7 +650,7 @@ lacf_thread_create(thread_t *thrp, void (*proc)(void *), void *arg,
 	ti->linenum = linenum;
 	_lacf_thread_list_init();
 	_lacf_thread_list_add(ti);
-	if (pthread_create(thrp, NULL, _lacf_thread_start_routine, ti) == 0) {
+	if (pthread_create(thrp, NULL, lacf_thread_start_routine, ti) == 0) {
 		/* Start success */
 		return (B_TRUE);
 	}
@@ -777,15 +769,7 @@ thread_set_prio(thread_t thr, int prio)
 /**
  * @note Internal. Do not call directly.
  */
-UNUSED_ATTR static DWORD
-_lacf_thread_start_routine(void *arg)
-{
-	lacf_thread_info_t *ti = (lacf_thread_info_t *)arg;
-	ti->proc(ti->arg);
-	_lacf_thread_list_remove(ti);
-	free(ti);
-	return (0);
-}
+DWORD lacf_thread_start_routine(void *arg);
 
 /**
  * Implementation of thread_create(). Do not call directly, use
@@ -804,7 +788,7 @@ lacf_thread_create(thread_t *thrp, void (*proc)(void *), void *arg,
 	ti->linenum = linenum;
 	_lacf_thread_list_init();
 	_lacf_thread_list_add(ti);
-	if ((*(thrp) = CreateThread(NULL, 0, _lacf_thread_start_routine, ti,
+	if ((*(thrp) = CreateThread(NULL, 0, lacf_thread_start_routine, ti,
 	    0, NULL)) != NULL) {
 		/* Start success */
 		return (B_TRUE);
