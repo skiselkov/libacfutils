@@ -54,7 +54,7 @@
  * state, we statically pre-allocate these buffers to try and avoid having
  * to call into the VM subsystem.
  */
-#define	MAX_SYM_NAME_LEN	1024
+#define	MAX_SYM_NAME_LEN	4096
 #define	MAX_BACKTRACE_LEN	(64 * 1024)
 static char backtrace_buf[MAX_BACKTRACE_LEN] = { 0 };
 static char symbol_buf[sizeof (SYMBOL_INFO) +
@@ -67,7 +67,7 @@ static HMODULE modules[MAX_MODULES];
 static MODULEINFO mi[MAX_MODULES];
 static DWORD num_modules;
 
-#define	SYMNAME_MAXLEN	1023	/* C++ symbols can be HUUUUGE */
+#define	SYMNAME_MAXLEN	4095	/* C++ symbols can be HUUUUGE */
 #endif	/* IBM */
 
 static logfunc_t log_func = NULL;
@@ -248,7 +248,6 @@ find_symbol(const char *filename, void *addr, char *symname,
 	static const char *sep;
 	static FILE *fp;
 	static void *prevptr = NULL;
-	static void *image_base = NULL;
 
 	*symname = 0;
 	*prevsym = 0;
@@ -270,13 +269,21 @@ find_symbol(const char *filename, void *addr, char *symname,
 
 		if (fscanf(fp, "%p %c %" SCANF_STR_AUTOLEN(SYMNAME_MAXLEN) "s",
 		    &ptr, &unused_c, sym) != 3) {
-			break;
+			/*
+			 * This might fail if we hit a MASSIVE symbol name
+			 * which is longer than SYMNAME_MAXLEN. In that case,
+			 * we want to skip until the next newline.
+			 */
+			int c;
+			do {
+				c = fgetc(fp);
+			} while (c != '\n' && c != '\r' && c != EOF);
+			if (c != EOF) {
+				continue;
+			} else {
+				break;
+			}
 		}
-		if (strcmp(sym, "__image_base__") == 0) {
-			image_base = ptr;
-			continue;
-		}
-		ptr = (void *)(ptr - image_base);
 		if (addr >= prevptr && addr < ptr) {
 			snprintf(symname, symname_cap, "%s+%x", prevsym,
 			    (unsigned)(addr - prevptr));
@@ -328,11 +335,12 @@ log_backtrace(int skip_frames)
 	static IMAGEHLP_LINE64 *line;
 	static char filename[MAX_PATH];
 
+	mutex_enter(&backtrace_lock);
+
 	frames = RtlCaptureStackBackTrace(skip_frames + 1, MAX_STACK_FRAMES,
 	    stack, NULL);
 
 	process = GetCurrentProcess();
-	mutex_enter(&backtrace_lock);
 
 	SymInitialize(process, NULL, TRUE);
 	SymSetOptions(SYMOPT_LOAD_LINES);
@@ -425,10 +433,10 @@ log_backtrace_sw64(PCONTEXT ctx)
 	static HANDLE process, thread;
 	static DWORD machine;
 
+	mutex_enter(&backtrace_lock);
+
 	process = GetCurrentProcess();
 	thread = GetCurrentThread();
-
-	mutex_enter(&backtrace_lock);
 
 	SymInitialize(process, NULL, TRUE);
 	SymSetOptions(SYMOPT_LOAD_LINES);

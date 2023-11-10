@@ -13,7 +13,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2018 Saso Kiselkov. All rights reserved.
+# Copyright 2023 Saso Kiselkov. All rights reserved.
 
 # This utility generates a syms.txt that the libacfutils' log_backtrace
 # can read on Windows.
@@ -23,4 +23,16 @@ if [ -z "$1" ]; then
 	exit 1
 fi
 
-nm -n "$1" | egrep -i ' t | a __image_base__' | grep -iv '\.[a-z]\+'
+# We need to grab the file offset of the .text section, as well as its
+# section ID. This is then used to calculate the symbol offsets in absolute
+# terms from the file load offset (obtained in find_module() as lpBaseOfDll).
+# This way, all symbols correspond to their exact in-image locations and
+# can be exactly precisely.
+FILEOFF="$(objdump -h "$1" | awk '/\.text\>/{ print "0x" $6; }')"
+SECID=$(( $(objdump -h "$1" | awk '/\.text\>/{ print $1; }' ) + 1 ))
+objdump -j .text -t "$1" | cut -d ']' -f 2- | awk '
+/sec  '"$SECID"'.*(ty   20)/{
+	addr = strtonum($8);
+	printf("%08x t %s\n", addr + '"$FILEOFF"', $9);
+}
+' | sort
