@@ -1,0 +1,8 @@
+set(CMAKE_SYSTEM_NAME "MinGW")
+if(BUILD_SHARED_LIBS)
+  set(_LINK_TYPE dynamic)
+else()
+  set(_LINK_TYPE static)
+endif()
+set(VCPKG_TARGET_TRIPLET x64-mingw-${_LINK_TYPE})
+include($ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
