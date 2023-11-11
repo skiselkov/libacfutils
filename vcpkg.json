@@ -10,14 +10,14 @@
     "geographiclib",
     "glew",
     "glfw3",
+    "jsmn",
     "libclipboard",
     "libpng",
     "libxml2",
+    "openal-soft",
     "opus",
     "opusfile",
     "xplane-sdk",
-    "zlib",
-    "jsmn",
-    "openal-soft"
+    "zlib"
   ]
 }
