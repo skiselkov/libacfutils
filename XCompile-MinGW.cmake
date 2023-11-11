@@ -1,4 +1,3 @@
-set(CMAKE_SYSTEM_NAME "MinGW")
 if(BUILD_SHARED_LIBS)
   set(_LINK_TYPE dynamic)
 else()
