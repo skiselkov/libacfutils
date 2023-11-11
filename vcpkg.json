@@ -17,6 +17,7 @@
     "opusfile",
     "xplane-sdk",
     "zlib",
-    "jsmn"
+    "jsmn",
+    "openal-soft"
   ]
 }

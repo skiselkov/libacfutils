@@ -175,6 +175,7 @@ find_package(GLEW REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_path(JSMN_INCLUDE_DIRS "jsmn.h")
 find_package(LibXml2 REQUIRED)
+find_package(OpenAL CONFIG REQUIRED)
 find_package(Opus CONFIG REQUIRED)
 find_package(OpusFile CONFIG REQUIRED)
 find_package(PNG REQUIRED)
@@ -193,6 +194,7 @@ target_link_libraries(
          GLEW::GLEW
          glfw
          LibXml2::LibXml2
+	 OpenAL::OpenAL
          Opus::opus
          OpusFile::opusfile
          PNG::PNG
