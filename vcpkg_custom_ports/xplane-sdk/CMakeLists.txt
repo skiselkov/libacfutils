@@ -1,21 +1,13 @@
 cmake_minimum_required(VERSION 3.19)
 project(xplane-sdk LANGUAGES C CXX)
 
-if((CMAKE_SYSTEM_NAME STREQUAL "Windows") OR (CMAKE_SYSTEM_NAME STREQUAL "MinGW"))
-  set(TARGET_WIN TRUE)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(TARGET_MAC TRUE)
-else()
-  set(TARGET_LINUX TRUE)
-endif()
-
-if(TARGET_WIN OR TARGET_OSX)
+if(WIN32 OR APPLE)
   add_library(xplm SHARED IMPORTED)
   add_library(xpwidgets SHARED IMPORTED)
   target_link_libraries(xpwidgets PUBLIC xplm)
 endif()
 
-if(TARGET_WIN)
+if(WIN32)
   set_target_properties(
     xplm PROPERTIES IMPORTED_IMPLIB
                     "${CMAKE_CURRENT_SOURCE_DIR}/Libraries/Win/XPLM_64.lib")
@@ -28,7 +20,7 @@ if(TARGET_WIN)
     -DAPL=0
     -DLIN=0
   )
-elseif(TARGET_OSX)
+elseif(APPLE)
   set_target_properties(
     xplm
     PROPERTIES IMPORTED_LOCATION
@@ -63,7 +55,7 @@ target_include_directories(
   INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/CHeaders/Widgets>
             $<INSTALL_INTERFACE:include/xplane-sdk/Widgets>)
 
-add_library(xplm_cpp)
+add_library(xplm_cpp STATIC)
 
 target_sources(
   xplm_cpp
