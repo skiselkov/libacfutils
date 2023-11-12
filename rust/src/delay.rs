@@ -7,7 +7,7 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
-use std::time::{Duration, Instant};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::cmp::PartialEq;
 use crate::crc64;
 
@@ -15,7 +15,7 @@ use crate::crc64;
 pub struct DelayLine<T, F>
 where
     T: PartialEq + Clone,
-    F: Fn() -> Instant,
+    F: Fn() -> f64,
 {
 	values: Vec<DelayValue<T>>,
 	now_closure: F,
@@ -27,21 +27,23 @@ where
 #[derive(Clone, Debug)]
 struct DelayValue<T: PartialEq + Clone> {
 	value: T,
-	entered: Instant,
+	entered: f64,
 }
 
-pub fn new_realtime<T>(startval: T, delay: Duration) ->
-    DelayLine<T, impl Fn() -> Instant>
-where
-    T: PartialEq + Clone,
-{
-	DelayLine::new(startval, delay, || Instant::now())
+pub fn new_realtime<T: PartialEq + Clone>(startval: T, delay: Duration) ->
+    DelayLine<T, impl Fn() -> f64> {
+	DelayLine::new(startval, delay, || {
+	    SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.expect("System time earlier than Jan 1 1970?")
+		.as_secs_f64()
+	})
 }
 
 impl<T,F> DelayLine<T, F>
 where
     T: PartialEq + Clone,
-    F: Fn() -> Instant,
+    F: Fn() -> f64,
 {
 	pub fn new(start_value: T, delay: Duration, now_closure: F) -> Self {
 		let curval = DelayValue {
@@ -81,8 +83,9 @@ where
 		 * While we have more than 1 value in the value stack, check
 		 * to see if the newer values have become active yet.
 		 */
-		while self.values.len() > 1 && now.duration_since(
-		    self.values[1].entered) >= self.delay_cur {
+		while self.values.len() > 1 &&
+		    now - self.values[1].entered >=
+		    self.delay_cur.as_secs_f64() {
 			// value in slot [1] has become the new current value,
 			// so shift it over by removing value in slot [0]
 			self.values.remove(0);
@@ -119,7 +122,7 @@ where
 	pub fn get_time_since_change(&self) -> Duration {
 		assert!(!self.values.is_empty());
 		let latest = &self.values[self.values.len() - 1];
-		(self.now_closure)().duration_since(latest.entered)
+		Duration::from_secs_f64((self.now_closure)() - latest.entered)
 	}
 	fn recomp_delay(delay: Duration, rand_fact: f64) -> Duration {
 		if rand_fact != 0.0 {
