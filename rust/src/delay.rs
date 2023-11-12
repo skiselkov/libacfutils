@@ -12,9 +12,13 @@ use std::cmp::PartialEq;
 use crate::crc64;
 
 #[derive(Clone, Debug)]
-pub struct DelayLine<T: PartialEq + Clone> {
+pub struct DelayLine<T, F>
+where
+    T: PartialEq + Clone,
+    F: Fn() -> Instant,
+{
 	values: Vec<DelayValue<T>>,
-	now_func: fn() -> Instant,
+	now_closure: F,
 	delay_cur: Duration,
 	delay_base: Duration,
 	delay_rand: f64,
@@ -26,22 +30,27 @@ struct DelayValue<T: PartialEq + Clone> {
 	entered: Instant,
 }
 
-impl<T> DelayLine<T>
+pub fn new_realtime<T>(startval: T, delay: Duration) ->
+    DelayLine<T, impl Fn() -> Instant>
 where
     T: PartialEq + Clone,
 {
-	pub fn new(startval: T, delay: Duration) -> Self {
-		Self::new_custom(startval, delay, Instant::now)
-	}
-	pub fn new_custom(start_value: T, delay: Duration,
-	    now_func: fn() -> Instant) -> Self {
+	DelayLine::new(startval, delay, || Instant::now())
+}
+
+impl<T,F> DelayLine<T, F>
+where
+    T: PartialEq + Clone,
+    F: Fn() -> Instant,
+{
+	pub fn new(start_value: T, delay: Duration, now_closure: F) -> Self {
 		let curval = DelayValue {
 		    value: start_value,
-		    entered: (now_func)(),
+		    entered: (now_closure)(),
 		};
 		Self {
 		    values: vec![curval],
-		    now_func,
+		    now_closure,
 		    delay_cur: delay,
 		    delay_base: delay,
 		    delay_rand: 0.0,
@@ -53,7 +62,7 @@ where
 		if latest.value != newval {
 			self.values.push(DelayValue {
 			    value: newval,
-			    entered: (self.now_func)(),
+			    entered: (self.now_closure)(),
 			});
 		}
 		self.pull()
@@ -61,12 +70,12 @@ where
 	pub fn push_imm(&mut self, newval: T) -> T {
 		self.values = vec![DelayValue {
 		    value: newval.clone(),
-		    entered: (self.now_func)(),
+		    entered: (self.now_closure)(),
 		}];
 		newval
 	}
 	pub fn pull(&mut self) -> T {
-		let now = (self.now_func)();
+		let now = (self.now_closure)();
 		assert!(!self.values.is_empty());
 		/*
 		 * While we have more than 1 value in the value stack, check
@@ -110,7 +119,7 @@ where
 	pub fn get_time_since_change(&self) -> Duration {
 		assert!(!self.values.is_empty());
 		let latest = &self.values[self.values.len() - 1];
-		(self.now_func)().duration_since(latest.entered)
+		(self.now_closure)().duration_since(latest.entered)
 	}
 	fn recomp_delay(delay: Duration, rand_fact: f64) -> Duration {
 		if rand_fact != 0.0 {
@@ -130,10 +139,9 @@ mod tests {
 	#[test]
 	fn delayline_test() {
 		use std::time::Duration;
-		use crate::delay::DelayLine;
+		use crate::delay;
 
-		let mut dl: DelayLine<i32> = DelayLine::new(0,
-		    Duration::from_millis(100));
+		let mut dl = delay::new_realtime(0, Duration::from_millis(100));
 		for i in 1..=5 {
 			println!("pushing {}, cur: {}", i, dl.push(i));
 			std::thread::sleep(Duration::from_millis(50));
