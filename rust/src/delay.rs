@@ -11,48 +11,44 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::cmp::PartialEq;
 use crate::crc64;
 
-#[derive(Clone, Debug)]
-pub struct DelayLine<T, F>
+pub struct DelayLine<T>
 where
     T: PartialEq + Clone,
-    F: Fn() -> f64,
 {
 	values: Vec<DelayValue<T>>,
-	now_closure: F,
+	now_closure: Box<dyn Fn() -> f64>,
 	delay_cur: Duration,
 	delay_base: Duration,
 	delay_rand: f64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct DelayValue<T: PartialEq + Clone> {
 	value: T,
 	entered: f64,
 }
 
-pub fn new_realtime<T: PartialEq + Clone>(startval: T, delay: Duration) ->
-    DelayLine<T, impl Fn() -> f64> {
-	DelayLine::new(startval, delay, || {
-	    SystemTime::now()
-		.duration_since(UNIX_EPOCH)
-		.expect("System time earlier than Jan 1 1970?")
-		.as_secs_f64()
-	})
-}
-
-impl<T,F> DelayLine<T, F>
+impl<T> DelayLine<T>
 where
     T: PartialEq + Clone,
-    F: Fn() -> f64,
 {
-	pub fn new(start_value: T, delay: Duration, now_closure: F) -> Self {
+	pub fn new(startval: T, delay: Duration) -> Self {
+		DelayLine::new_custom(startval, delay, || {
+		    SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.expect("System time earlier than Jan 1 1970?")
+			.as_secs_f64()
+		})
+	}
+	pub fn new_custom<F: Fn() -> f64 + 'static>(start_value: T,
+	    delay: Duration, now_closure: F) -> Self {
 		let curval = DelayValue {
 		    value: start_value,
-		    entered: (now_closure)(),
+		    entered: now_closure(),
 		};
 		Self {
 		    values: vec![curval],
-		    now_closure,
+		    now_closure: Box::new(now_closure),
 		    delay_cur: delay,
 		    delay_base: delay,
 		    delay_rand: 0.0,
@@ -138,13 +134,26 @@ where
 	}
 }
 
+impl<T> std::fmt::Debug for DelayLine<T>
+where
+    T: PartialEq + Clone,
+{
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.debug_struct("DelayLine")
+		    .field("delay_cur", &self.delay_cur)
+		    .field("delay_base", &self.delay_base)
+		    .field("delay_rand", &self.delay_rand)
+		    .finish()
+	}
+}
+
 mod tests {
 	#[test]
 	fn delayline_test() {
 		use std::time::Duration;
-		use crate::delay;
+		use crate::delay::DelayLine;
 
-		let mut dl = delay::new_realtime(0, Duration::from_millis(100));
+		let mut dl = DelayLine::new(0, Duration::from_millis(100));
 		for i in 1..=5 {
 			println!("pushing {}, cur: {}", i, dl.push(i));
 			std::thread::sleep(Duration::from_millis(50));
