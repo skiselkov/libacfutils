@@ -4,9 +4,7 @@
 
 This is a general purpose library of utility functions designed to make
 it easier to develop addons for the X-Plane flight simulator. It comes
-with everything needed to build it on Linux or macOS. No build support
-for Windows currently, sorry. The Linux version produces the Windows
-version of the library through a MinGW cross-compile.
+with everything needed to build it on Linux or macOS. Windows builds must be performed with MinGW.
 
 ## LICENSE
 
@@ -23,13 +21,10 @@ The top level of this source tree includes the dependencies organized
 into their individual sub-directories + build scripts. The source code of
 the library itself is located under `src`. The documentation is part of
 the `.c` files. The headers listing all the functions are under
-`src/acfutils`. To make the includes work properly, direct your compiler
-to include from the `src` sub-directory. Then include library headers
-using the following path:
+`include/acfutils`.
 
-```
-#include <acfutils/filename.h>
-```
+When the library is properly used, includes are in the format of `#include <acfutils/filename.h>`.
+See [the usage file.](USAGE.md)
 
 ## What's included
 

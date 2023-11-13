@@ -20,7 +20,6 @@
 
 #include "acfutils/glew.h"
 
-THREAD_LOCAL GLEWContext lacf_glew_per_thread_ctx;
 
 #if	APL || LIN
 

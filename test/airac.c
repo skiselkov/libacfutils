@@ -38,7 +38,7 @@ main(void)
 		char exp_date[32];
 
 		strftime(buf, sizeof (buf), "%Y-%m-%d", gmtime(&now));
-		airac_cycle2exp_date(airac, exp_date);
+		airac_cycle2exp_date(airac, exp_date, NULL);
 		printf("%-24s %d %16s %16s\n", buf, airac,
 		    airac_cycle2eff_date(airac), exp_date);
 	}

@@ -1,0 +1,23 @@
+{
+  "name": "libacfutils",
+  "version": "0.37",
+  "dependencies": [
+    "7zip",
+    "cairo",
+    "cglm",
+    "curl",
+    "freetype",
+    "geographiclib",
+    "glew",
+    "glfw3",
+    "jsmn",
+    "libclipboard",
+    "libpng",
+    "libxml2",
+    "openal-soft",
+    "opus",
+    "opusfile",
+    "xplane-sdk",
+    "zlib"
+  ]
+}
