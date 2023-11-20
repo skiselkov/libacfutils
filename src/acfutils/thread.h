@@ -334,6 +334,12 @@ typedef pthread_cond_t condvar_t;
 #define	curthread_id		pthread_self()
 #define	curthread		pthread_self()
 
+static inline bool_t
+thread_equal(thread_id_t t1, thread_id_t t2)
+{
+	return (pthread_equal(t1, t2));
+}
+
 static inline void
 mutex_init(mutex_t *mtx)
 {
@@ -453,8 +459,20 @@ typedef struct {
  */
 typedef CONDITION_VARIABLE condvar_t;
 
-#define	curthread_id	GetCurrentThreadId()
-#define	curthread	GetCurrentThread()
+#define	curthread_id			GetCurrentThreadId()
+#define	curthread			GetCurrentThread()
+
+/*
+ * Compares thread IDs in a platform-independent way.
+ * @return Returns true if thread ID `tid1` is equal to `tid2`. These
+ *	thread IDs are as returned by curthread_id().
+ * @see curthread_id
+ */
+static inline bool_t
+thread_equal(thread_id_t tid1, thread_id_t tid2)
+{
+	return (tid1 == tid2);
+}
 
 /**
  * Initializes a new mutex_t object. The mutex MUST be destroyed using
