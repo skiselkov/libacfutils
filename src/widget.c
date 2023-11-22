@@ -633,10 +633,13 @@ bool_t
 window_follow_VR(XPLMWindowID win)
 {
 	bool_t vr = is_in_VR();
-	XPLMWindowPositioningMode mode =
-	    (vr ? xplm_WindowVR : xplm_WindowPositionFree);
 
 	ASSERT(win != NULL);
+	XPLMWindowPositioningMode mode = (XPLMWindowIsPoppedOut(win) ?
+	    xplm_WindowPopOut : xplm_WindowPositionFree);
+	if (vr) {
+		mode = xplm_WindowVR;
+	}
 	XPLMSetWindowPositioningMode(win, mode, -1);
 
 	return (vr);
