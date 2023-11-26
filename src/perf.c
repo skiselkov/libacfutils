@@ -1307,6 +1307,7 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 	double fl = alt2fl(alt, qnh);
 	double Ps = alt2press(alt, qnh);
 	double oat = isadev2sat(fl, isadev);
+	ASSERT3F(*kcasp, >, 0);
 	double ktas_now = kcas2ktas(*kcasp, Ps, oat);
 	double tas_now = KT2MPS(ktas_now);
 	double tas_targ = KT2MPS(kcas2ktas(kcas_targ, Ps, oat));
@@ -1347,8 +1348,9 @@ spd_chg_step(bool_t accel, double isadev, double tp_alt, double qnh, bool_t gnd,
 	}
 
 	*burnp = burn;
-	(*distp) += MET2NM(tas_now * t + 0.5 * delta_v * POW2(t) +
+	double dist = MET2NM(tas_now * t + 0.5 * delta_v * POW2(t) +
 	    wind_mps * t);
+	(*distp) += MAX(dist, 0);
 }
 
 static void
@@ -1364,8 +1366,10 @@ clb_table_step(const acft_perf_t *acft, double isadev, double qnh, double alt,
 
 	ASSERT(acft != NULL);
 	ASSERT(acft->clb_tables != NULL);
+	ASSERT3F(spd, >, 0);
 	ASSERT(nalt != NULL);
 	ASSERT(nburn != NULL);
+	ASSERT3F(d_t, >=, 0);
 
 	ff = table_lookup_common(acft->clb_tables, isadev, mass, spd, is_mach,
 	    alt, offsetof(perf_table_cell_t, ff));
@@ -1385,7 +1389,7 @@ clb_table_step(const acft_perf_t *acft, double isadev, double qnh, double alt,
 
 	*nalt = alt + vs * d_t;
 	*nburn = ff * d_t;
-	*ndist = (tas_now + wind_mps) * d_t;
+	*ndist = MAX(tas_now + wind_mps, 0) * d_t;
 }
 
 static void
@@ -1501,6 +1505,7 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	double fl = alt2fl(alt, qnh);
 	double Ps = alt2press(alt, qnh);
 	double oat = isadev2sat(fl, isadev);
+	ASSERT3F(*kcasp, >, 0);
 	double ktas_now = kcas2ktas(*kcasp, Ps, oat);
 	double tas_now = KT2MPS(ktas_now);
 	double Pd = dyn_press(ktas_now, Ps, oat);
@@ -1551,8 +1556,9 @@ alt_chg_step(bool_t clb, double isadev, double tp_alt, double qnh,
 	    tp_alt) * (t / SECS_PER_HR);
 
 	*burnp = burn;
-	(*distp) += MET2NM(sqrt(POW2(tas_now * t) +
+	double dist = MET2NM(sqrt(POW2(tas_now * t) +
 	    FEET2MET(POW2((*altp) - alt))) + wind_mps * t);
+	(*distp) += MAX(dist, 0);
 }
 
 static double
@@ -1809,6 +1815,7 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 		*burnp = burn;
 	if (kcas_out != NULL)
 		*kcas_out = kcas;
+	ASSERT3F(dist, >=, 0);
 
 	return (dist);
 }
@@ -1830,6 +1837,7 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 	double vs = 0;
 
 	ASSERT3F(*alt, <=, alt_tgt);
+	ASSERT3F(*kcas, >, 0);
 	ASSERT3F(*kcas, <=, kcas_tgt);
 	ASSERT(!isnan(accel_alt) || type != ACCEL_TAKEOFF);
 	/* ttg_out can be NULL */
@@ -1840,6 +1848,7 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 		double tas_mps = KT2MPS(kcas2ktas(*kcas, alt2press(*alt, qnh),
 		    isadev2sat(alt2fl(*alt, qnh), isadev)));
 		double rmng = NM2MET(dist_tgt - dist);
+		ASSERT3F(tas_mps, >, 0);
 		double t_rmng = MIN(rmng / tas_mps, step);
 		double accel_t, clb_t, oat, Ps, ktas_lim_mach, kcas_lim_mach,
 		    kcas_lim;
