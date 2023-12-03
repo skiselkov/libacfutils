@@ -1826,10 +1826,15 @@ download_metar_taf_common(chartdb_t *cdb, const char *icao, const char *source,
 	char *result;
 	chart_prov_info_login_t login = { .username = NULL };
 
-	snprintf(url, sizeof (url), "https://aviationweather.gov/adds/"
-	    "dataserver_current/httpparam?dataSource=%s&requestType=retrieve&"
-	    "format=xml&stationString=%s&hoursBeforeNow=2",
-	    source, icao);
+	if (strcmp(source, "metars") == 0) {
+		snprintf(url, sizeof (url), "https://aviationweather.gov/api/"
+		    "data/metar?format=xml&ids=%s&taf=false&hours=2", icao);
+	} else if (strcmp(source, "tafs") == 0) {
+		snprintf(url, sizeof (url), "https://aviationweather.gov/api/"
+		    "data/taf?format=xml&ids=%s&metar=false", icao);
+	} else {
+		VERIFY_FAIL();
+	}
 	snprintf(error_reason, sizeof (error_reason), "Error downloading %s",
 	    node_name);
 	snprintf(query, sizeof (query), "/response/data/%s/raw_text",
