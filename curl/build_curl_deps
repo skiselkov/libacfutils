@@ -25,22 +25,53 @@ CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
     -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF \
     -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON -DCURL_USE_OPENSSL=ON"
+CONFOPTS_AUTOCONF="--enable-static --disable-shared --disable-ftp \
+    --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
+    --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
+    --disable-imap --disable-smb --disable-smtp --disable-gopher \
+    --disable-manual --disable-pthreads --disable-unix-sockets \
+    --disable-ipv6 --disable-threaded-resolver --disable-cookies \
+    --disable-ntlm-wb --disable-sspi \
+    --without-winidn --without-libssh2 --without-librtmp \
+    --without-libidn2 --without-nghttp2 --without-zsh-functions-dir \
+    --with-pic --without-zstd  --without-brotli"
 
-export CONFIG_CMAKE=1
+# We must fall back to autoconf in case CMake is too old
+CMAKE_VERSION_STR="$(cmake --version | head -n 1 | awk '{print $3}')"
+CMAKE_VERSION_MAJOR="$(echo "$CMAKE_VERSION_STR" | cut -d . -f 1)"
+CMAKE_VERSION_MINOR="$(echo "$CMAKE_VERSION_STR" | cut -d . -f 2)"
+echo "$CMAKE_VERSION_MAJOR" "$CMAKE_VERSION_MINOR"
+if [ "$CMAKE_VERSION_MAJOR" -gt 3 ] || \
+    ( [ "$CMAKE_VERSION_MAJOR" -ge 3 ] && [ "$CMAKE_VERSION_MINOR" -ge 7 ] );
+    then
+	export CONFIG_CMAKE=1
+fi
 
 case `uname` in
 	Linux)
-		build_dep "linux-64" "$CONFOPTS_COMMON \
-		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-linux-64 \
-		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
-		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" \
-		    "$CURL" "libcurl" "lib/libcurl.a" && \
-		build_dep "win-64" \
-		    "$CONFOPTS_COMMON \
-		    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
-		    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-win-64/include \
-		    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-win-64/lib/libz.a" \
-		    "$CURL" "libcurl" "lib/libcurl.a"
+		if [ -n "$CONFIG_CMAKE" ]; then
+			build_dep "linux-64" "$CONFOPTS_COMMON \
+			    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-linux-64 \
+			    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
+			    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" || exit 1
+			build_dep "win-64" \
+			    "$CONFOPTS_COMMON \
+			    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
+			    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-win-64/include \
+			    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-win-64/lib/libz.a" \
+			    "$CURL" "libcurl" "lib/libcurl.a" || exit 1
+		else
+			LIBS="-lpthread" build_dep "linux-64" \
+			    "$CONFOPTS_AUTOCONF \
+			    --with-ssl=$(pwd)/../ssl/openssl-linux-64 \
+			    --with-zlib=$(pwd)/../zlib/zlib-linux-64" \
+			    "$CURL" "libcurl" "lib/libcurl.a" || exit 1
+			LIBS="-lcrypt32" build_dep "win-64" \
+			    "$CONFOPTS_AUTOCONF --host=x86_64-w64-mingw32 \
+			    --with-ssl=$(pwd)/../ssl/openssl-win-64 \
+			    --with-zlib=$(pwd)/../zlib/zlib-win-64" \
+			    "$CURL" "libcurl" "lib/libcurl.a" || exit 1
+		fi
 		;;
 	Darwin)
 		build_dep "mac-64" "$CONFOPTS_COMMON \
