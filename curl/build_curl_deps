@@ -40,7 +40,6 @@ CONFOPTS_AUTOCONF="--enable-static --disable-shared --disable-ftp \
 CMAKE_VERSION_STR="$(cmake --version | head -n 1 | awk '{print $3}')"
 CMAKE_VERSION_MAJOR="$(echo "$CMAKE_VERSION_STR" | cut -d . -f 1)"
 CMAKE_VERSION_MINOR="$(echo "$CMAKE_VERSION_STR" | cut -d . -f 2)"
-echo "$CMAKE_VERSION_MAJOR" "$CMAKE_VERSION_MINOR"
 if [ "$CMAKE_VERSION_MAJOR" -gt 3 ] || \
     ( [ "$CMAKE_VERSION_MAJOR" -ge 3 ] && [ "$CMAKE_VERSION_MINOR" -ge 7 ] );
     then
