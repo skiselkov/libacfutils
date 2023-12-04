@@ -94,6 +94,8 @@ while [[ $# -gt 0 ]]; do
 	shift
 done
 
+# Careful: the order of libraries mentioned here matters, they must be
+# dependent-provider order, same as on the linker command line.
 if ! [ -f .minimal-deps ]; then
 	if [[ "$TESSERACT" -ne 0 ]] &&
 	    [ -f "ocr/tesseract-$ARCH/lib/pkgconfig/tesseract.pc" ]; then
@@ -110,15 +112,15 @@ if [[ "$SHAPELIB" -ne 0 ]] && \
     [ -f "shapelib/libshape-${ARCH}/lib/pkgconfig/shapelib.pc" ]; then
 	PACKAGES="$PACKAGES shapelib proj"
 fi
+if [[ "$CAIRO" -ne 0 ]] && \
+    [ -f "cairo/cairo-${ARCH}/lib/pkgconfig/cairo.pc" ]; then
+	PACKAGES="$PACKAGES cairo pixman-1"
+fi
 if [ -f "libpng/libpng-${ARCH}/lib/pkgconfig/libpng16.pc" ]; then
 	PACKAGES="$PACKAGES libpng16"
 fi
 if [ -f "freetype/freetype-${ARCH}/lib/pkgconfig/freetype2.pc" ]; then
 	PACKAGES="$PACKAGES freetype2"
-fi
-if [[ "$CAIRO" -ne 0 ]] && \
-    [ -f "cairo/cairo-${ARCH}/lib/pkgconfig/cairo.pc" ]; then
-	PACKAGES="$PACKAGES cairo pixman-1"
 fi
 
 PACKAGES="$PACKAGES libcurl openssl libxml-2.0 libpcre2-8 zlib"
