@@ -1,0 +1,101 @@
+# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+name: Build on multiple platforms
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-20.04, macos-12]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name:  Restore cached libraries 
+      uses: actions/cache/restore@v3
+      id: restore_libs_cache
+      with:
+        path: |
+            ${{github.workspace}}/cairo
+            ${{github.workspace}}/cglm
+            ${{github.workspace}}/curl
+            ${{github.workspace}}/freetype
+            ${{github.workspace}}/geographiclib
+            ${{github.workspace}}/glew
+            ${{github.workspace}}/glfw
+            ${{github.workspace}}/libclipboard
+            ${{github.workspace}}/libiconv
+            ${{github.workspace}}/libjpeg
+            ${{github.workspace}}/libpng
+            ${{github.workspace}}/libxml2
+            ${{github.workspace}}/lzma
+            ${{github.workspace}}/ocr
+            ${{github.workspace}}/openal_soft
+            ${{github.workspace}}/opus
+            ${{github.workspace}}/pcre2
+            ${{github.workspace}}/shapelib
+            ${{github.workspace}}/ssl
+            ${{github.workspace}}/zlib
+        key: ${{ runner.os }}-${{ hashFiles('**/*.tar.*', 'lzma/DOC/*.txt' ) }} 
+    
+    - name: Update git submodules
+      if:  runner.os == 'Linux' 
+      run:  git submodule update --init --recursive   
+    
+    - name:  Install Ubuntu  Packages
+      if: runner.os == 'Linux'    
+      shell: bash
+      run: ./install-ubuntu-packages
+  
+    - name: Build
+      shell: bash
+      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      run:  |
+            if [ "$RUNNER_OS" == "Linux" ]; then
+                   ./build_deps
+                   ./build_redist
+            else
+                   sh build_deps
+                   sh build_redist
+            fi
+ 
+    - name:  Cache libraries  
+      uses: actions/cache/save@v3
+      id: save_libs_cache
+      with:
+        path: |
+            ${{github.workspace}}/cairo
+            ${{github.workspace}}/cglm
+            ${{github.workspace}}/curl
+            ${{github.workspace}}/freetype
+            ${{github.workspace}}/geographiclib
+            ${{github.workspace}}/glew
+            ${{github.workspace}}/glfw
+            ${{github.workspace}}/libclipboard
+            ${{github.workspace}}/libiconv
+            ${{github.workspace}}/libjpeg
+            ${{github.workspace}}/libpng
+            ${{github.workspace}}/libxml2
+            ${{github.workspace}}/lzma
+            ${{github.workspace}}/ocr
+            ${{github.workspace}}/openal_soft
+            ${{github.workspace}}/opus
+            ${{github.workspace}}/pcre2
+            ${{github.workspace}}/shapelib
+            ${{github.workspace}}/ssl
+            ${{github.workspace}}/zlib
+        key:  ${{ steps.restore_libs_cache.outputs.cache-primary-key }}
+
+      
+    - uses: actions/upload-artifact@v3
+      with:
+        name: libacfutils_redist
+        path: ${{github.workspace}}/libacfutils-redist
