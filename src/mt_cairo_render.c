@@ -1222,7 +1222,7 @@ mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size)
  */
 void
 mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos, vect2_t size,
-    const GLfloat *pvm)
+    const float *pvm)
 {
 	mt_cairo_render_draw_subrect_pvm(mtcr, ZERO_VECT2, VECT2(1, 1), pos,
 	    size, pvm);
@@ -1265,7 +1265,7 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 		glm_mat4_mul(proj, mv, pvm);
 	}
 	mt_cairo_render_draw_subrect_pvm(mtcr, src_pos, src_sz, pos, size,
-	    (GLfloat *)pvm);
+	    (float *)pvm);
 }
 
 /**
@@ -1301,7 +1301,7 @@ mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
 void
 mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
-    const GLfloat *pvm)
+    const float *pvm)
 {
 	GLint old_vao = 0;
 	bool_t use_vao;
@@ -1359,7 +1359,7 @@ mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
 		glUseProgram(mtcr->shader);
 
 		glUniformMatrix4fv(mtcr->shader_loc_pvm,
-		    1, GL_FALSE, (const GLfloat *)pvm);
+		    1, GL_FALSE, (const float *)pvm);
 		glUniform1i(mtcr->shader_loc_tex, 0);
 		if (!IS_NULL_VECT(mtcr->monochrome)) {
 			glUniform3f(mtcr->shader_loc_color_in,

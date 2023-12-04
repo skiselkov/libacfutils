@@ -40,7 +40,6 @@
 #include FT_FREETYPE_H
 
 #include "geom.h"
-#include "glew.h"
 #include "log.h"
 #include "font_utils.h"		/* for backwards compat with apps */
 #include "cairo_utils.h"	/* for backwards compat with apps */
@@ -155,16 +154,16 @@ API_EXPORT void mt_cairo_render_draw(mt_cairo_render_t *mtcr, vect2_t pos,
 API_EXPORT void mt_cairo_render_draw_subrect(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size);
 API_EXPORT void mt_cairo_render_draw_pvm(mt_cairo_render_t *mtcr, vect2_t pos,
-    vect2_t size, const GLfloat *pvm);
+    vect2_t size, const float *pvm);
 API_EXPORT void mt_cairo_render_draw_subrect_pvm(mt_cairo_render_t *mtcr,
     vect2_t src_pos, vect2_t src_sz, vect2_t pos, vect2_t size,
-    const GLfloat *pvm);
+    const float *pvm);
 API_EXPORT void mt_cairo_render_set_uploader(mt_cairo_render_t *mtcr,
     mt_cairo_uploader_t *mtul);
 API_EXPORT mt_cairo_uploader_t *mt_cairo_render_get_uploader(
     mt_cairo_render_t *mtcr);
 
-API_EXPORT GLuint mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
+API_EXPORT unsigned mt_cairo_render_get_tex(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_width(mt_cairo_render_t *mtcr);
 API_EXPORT unsigned mt_cairo_render_get_height(mt_cairo_render_t *mtcr);
 typedef struct {
