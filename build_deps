@@ -22,17 +22,113 @@
 #	pkg-config qt5-default qt5-qmake unzip
 
 export minimal=0
-export build_ocr=0
+build_ocr=0
+build_jpeg=1
+build_png=1
+build_freetype=1
+build_cairo=1
+build_opus=1
+build_shape=1
+build_glew=1
+build_openal=1
+build_cglm=1
+build_geographic=1
+build_lzma=1
 
-while getopts "cdmo" opt; do
+while getopts "cdmof:h" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
 	m)
 		export minimal=1
+		build_ocr=0
+		build_jpeg=0
+		build_png=0
+		build_freetype=0
+		build_cairo=0
+		build_opus=0
+		build_shape=0
+		build_glew=0
+		build_openal=0
+		build_cglm=0
+		build_geographic=0
+		build_lzma=0
 		touch .minimal-deps
 		;;
+	f)
+		case $OPTARG in
+		ocr)
+			build_ocr=1
+			;;
+		jpeg)
+			build_png=1
+			;;
+		png)
+			build_png=1
+			;;
+		freetype)
+			build_freetype=1
+			;;
+		cairo)
+			build_png=1
+			build_freetype=1
+			build_cairo=1
+			;;
+		opus)
+			build_opus=1
+			;;
+		shape)
+			build_shape=1
+			;;
+		glew)
+			build_glew=1
+			;;
+		openal)
+			build_openal=1
+			;;
+		cglm)
+			build_cglm=1
+			;;
+		geographic)
+			build_geographic=1
+			;;
+		lzma)
+			build_lzma=1
+			;;
+		*)
+			echo "Unknown feature. Try $0 -h for help." >&2
+			exit 1
+			;;
+		esac
+		;;
 	o) export build_ocr=1 ;;
+	h|*)
+		cat << EOF
+Usage: $0 [-cdm] [-f <feature>]
+    -c : clean dependencies instead of building
+    -d : build DLL versions of dependencies (with exported symbols)
+    -m : minimal build, with lots of features disabled and only
+         built for the current platform instead of cross-compiling.
+         Note that this disables many feature modules. You can re-enable
+         them by specifying `-f <feature>' flags after `-m'.
+    -f <feature> : enable building of feature. This can be used together
+         with -m to enable minimal mode and then selectively only enable
+         desired features. <feature> must be one of:
+	"cairo" - enable building libcairo. Implies "png" and "freetype" below.
+	"cglm" - enable building CGLM.
+	"freetype" - enable building freetype.
+	"geographic" - enable building GeographicLib.
+	"glew" - enable building libGLEW.
+	"jpeg" - enable building libjpeg.
+	"lzma" - enable building LZMA.
+	"ocr" - enable building tesseract and OCR infrastructure.
+	"openal" - enable building openal-soft.
+	"opus" - enable building libopus and libogg.
+	"png" - enable building libpng.
+	"shape" - enable building libshp.
+EOF
+		exit
+		;;
 	esac
 done
 
@@ -57,6 +153,27 @@ function check_brew_install() {
 	return 0
 }
 
+function build_lzma() {
+	cd lzma/qmake
+	if [ $(uname) = Darwin ]; then
+		if [[ "$do_clean" == 1 ]]; then
+			rm -f mac-64/liblzma.a
+		elif ! [ -f mac-64/liblzma.a ]; then
+			echo "Building LZMA ..."
+			./build-mac
+		fi
+	else
+		if [[ "$do_clean" == 1 ]]; then
+			rm -f -f win-64/liblzma.a linux-64/liblzma.a
+		elif ( ! [ -f win-64/liblzma.a ] && [ "$minimal" -eq 0 ] ) || \
+		    ! [ -f linux-64/liblzma.a ];
+		    then
+			echo "Building LZMA ..."
+			./build-win-lin
+		fi
+	fi
+}
+
 case $(uname) in
     Darwin)
 	if [ -z "$do_clean" ]; then
@@ -74,44 +191,29 @@ esac
     ( echo "Building libiconv ..."; cd libiconv && ./build_libiconv_deps ) && \
     ( echo "Building libclipboard ..."; \
     cd libclipboard && ./build_libclipboard_deps ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building libpng ..."; \
+    ( [ $build_png -ne 1 ] || ( echo "Building libpng ..."; \
     cd libpng && ./build_libpng_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building libjpeg ..."; \
+    ( [ $build_jpeg -ne 1 ] || ( echo "Building libjpeg ..."; \
     cd libjpeg && ./build_libjpeg_deps ) ) && \
     ( echo "Building libxml2 ..."; cd libxml2 && ./build_libxml2_deps ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building Freetype ..."; \
+    ( [ $build_freetype -ne 1 ] || ( echo "Building Freetype ..."; \
     cd freetype && ./build_freetype_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building Cairo ..."; \
+    ( [ $build_cairo -ne 1 ] || ( echo "Building Cairo ..."; \
     cd cairo && ./build_cairo_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building Opus ..."; \
+    ( [ $build_opus -ne 1 ] || ( echo "Building Opus ..."; \
     cd opus && ./build_opus_deps ) ) && \
     ( echo "Building OpenSSL ..."; cd ssl && ./build_ssl_deps ) && \
     ( echo "Building cURL ..."; cd curl && ./build_curl_deps ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building shapelib ..."; \
+    ( [ $build_shape -ne 1 ] || ( echo "Building shapelib ..."; \
     cd shapelib && ./build_shapelib_deps ) ) && \
-    ( [ $minimal -eq 1 ] || [ $build_ocr -eq 0 ] || \
+    ( [ $build_ocr -ne 1 ] || \
     ( echo "Building OCR ..."; cd ocr && ./build_ocr_deps ) ) && \
     ( echo "Building PCRE2 ..."; cd pcre2 && ./build_pcre2_deps ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building GLEW ..."; \
+    ( [ $build_glew -ne 1 ] || ( echo "Building GLEW ..."; \
     cd glew && ./build_glew_deps ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building OpenAL ..."; \
+    ( [ $build_openal -ne 1 ] || ( echo "Building OpenAL ..."; \
     cd openal-soft && ./build_openal ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building cglm ..."; cd cglm && ./build_cglm ) ) && \
-    ( [ $minimal -eq 1 ] || ( echo "Building geographiclib ..."; \
+    ( [ $build_cglm -ne 1 ] || ( echo "Building cglm ..."; cd cglm && ./build_cglm ) ) && \
+    ( [ $build_geographic -ne 1 ] || ( echo "Building geographiclib ..."; \
     cd geographiclib && ./build_geographiclib ) ) && \
-    ( echo "Building LZMA ..."; cd lzma/qmake && \
-	if [ $(uname) = Darwin ]; then \
-		if [[ "$do_clean" == 1 ]]; then
-			rm -f mac-64/liblzma.a
-		elif ! [ -f mac-64/liblzma.a ]; then
-			./build-mac
-		fi
-	else
-		if [[ "$do_clean" == 1 ]]; then
-			rm -f -f win-64/liblzma.a linux-64/liblzma.a
-		elif ( ! [ -f win-64/liblzma.a ] && [ "$minimal" -eq 0 ] ) || \
-		    ! [ -f linux-64/liblzma.a ];
-		    then
-			./build-win-lin
-		fi
-	fi )
+    ( [ $build_lzma -ne 1 ] || build_lzma )

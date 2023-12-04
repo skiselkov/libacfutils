@@ -183,7 +183,9 @@ elif [[ "$1" = "--libs" ]]; then
 			OPENAL_EXTRA="-lstdc++"
 		fi
 	fi
-	LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
+	if [ -f "$(pwd)/lzma/qmake/$ARCH/liblzma.a" ]; then
+		LZMA="-L$(pwd)/lzma/qmake/$ARCH -llzma"
+	fi
 	LIBICONV="-L$(pwd)/libiconv/libiconv-$ARCH/lib -liconv"
 
 	if [ "$LINK_ACFUTILS" -ne 0 ]; then

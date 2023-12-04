@@ -194,7 +194,6 @@ HEADERS += \
     ../src/acfutils/delay_line.h \
     ../src/acfutils/dr_cmd_reg.h \
     ../src/acfutils/dr.h \
-    ../src/acfutils/dsf.h \
     ../src/acfutils/except.h \
     ../src/acfutils/geom.h \
     ../src/acfutils/helpers.h \
@@ -225,7 +224,6 @@ HEADERS += \
     ../src/acfutils/tls.h \
     ../src/acfutils/tumbler.h \
     ../src/acfutils/types.h \
-    ../src/acfutils/widget.h \
     ../src/acfutils/wmm.h \
     ../src/acfutils/worker.h \
     ../src/acfutils/xpfail.h
@@ -244,7 +242,6 @@ SOURCES += \
     ../src/crc64.c \
     ../src/dr.c \
     ../src/dr_cmd_reg.c \
-    ../src/dsf.c \
     ../src/except.c \
     ../src/GeomagnetismLibrary.c \
     ../src/geom.c \
@@ -262,7 +259,6 @@ SOURCES += \
     ../src/time.c \
     ../src/thread.c \
     ../src/tumbler.c \
-    ../src/widget.c \
     ../src/wmm.c \
     ../src/worker.c
 
@@ -296,8 +292,17 @@ exists("../cairo/cairo-$$PLAT_LONG/lib/libcairo.a") {
 	SOURCES += ../src/cairo_utils.c
 }
 exists("../cairo/cairo-$$PLAT_LONG/lib/libcairo.a") : exists("$$GLEWMX_LIB") {
-	HEADERS += ../src/acfutils/mt_cairo_render.h
-	SOURCES += ../src/mt_cairo_render.c
+	HEADERS += \
+	    ../src/acfutils/mt_cairo_render.h \
+	    ../src/acfutils/widget.h
+	SOURCES += \
+	    ../src/mt_cairo_render.c
+	    ../src/widget.c
+}
+
+exists("lzma/qmake/$$PLAT_LONG/liblzma.a") {
+	HEADERS += ../src/acfutils/dsf.h
+	HEADERS += ../src/dsf.c
 }
 
 # Optional lib components when building a non-minimal library
