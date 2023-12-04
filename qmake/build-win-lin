@@ -35,11 +35,12 @@ DOCLEAN=1
 LINUXONLY=0
 DEBUG=0
 NOERRORS=0
+NOXPLM=0
 
 rm -rf win32 win64 lin32 lin64
 mkdir -p win64 lin64
 
-while getopts "DdliE" opt; do
+while getopts "DdliEX" opt; do
 	case "$opt" in
 	D)
 		DEBUG=1
@@ -57,9 +58,13 @@ while getopts "DdliE" opt; do
 	E)
 		NOERRORS=1
 		;;
+	X)
+		NOXPLM=1
+		;;
 	esac
 done
 
+qmake -set ACFUTILS_NOXPLM "$NOXPLM"
 
 if [[ "$LINUXONLY" == 0 ]]; then
 	make distclean > /dev/null

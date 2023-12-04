@@ -30,6 +30,7 @@ debug = $$[DEBUG]
 dll = $$[ACFUTILS_DLL]
 noerrors = $$[NOERRORS]
 minimal=$$system("test -f ../.minimal-deps; echo $?")
+noxplm=$$[ACFUTILS_NOXPLM]
 
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
@@ -80,6 +81,10 @@ contains(dll, 1) {
 
 contains(debug, 0) {
 	QMAKE_CFLAGS += -O2
+}
+
+contains(noxplm, 1) {
+	DEFINES += _LACF_WITHOUT_XPLM
 }
 
 win32 {
