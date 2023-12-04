@@ -17,8 +17,10 @@ if [ "$UBUNTU_MAJOR" -lt 14 ]; then
 	exit 1
 elif [ "$UBUNTU_MAJOR" -eq 14 ]; then
 	PACKAGES="$PACKAGES qt4-qmake qt4-dev-tools"
-else
+elif [ "$UBUNTU_MAJOR" -lt 21 ]; then
 	PACKAGES="$PACKAGES qt5-qmake qt5-default"
+else
+	PACKAGES="$PACKAGES qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools"
 fi
 
 MINIMAL=0
