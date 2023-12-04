@@ -52,7 +52,8 @@ case `uname` in
 			build_dep "linux-64" "$CONFOPTS_COMMON \
 			    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-linux-64 \
 			    -DZLIB_INCLUDE_DIR=$(pwd)/../zlib/zlib-linux-64/include \
-			    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" || exit 1
+			    -DZLIB_LIBRARY=$(pwd)/../zlib/zlib-linux-64/lib/libz.a" \
+			    "$CURL" "libcurl" "lib/libcurl.a" || exit 1
 			build_dep "win-64" \
 			    "$CONFOPTS_COMMON \
 			    -DOPENSSL_ROOT_DIR=$(pwd)/../ssl/openssl-win-64 \
