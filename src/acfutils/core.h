@@ -85,7 +85,10 @@ extern "C" {
 #define	WARN_UNUSED_RES_ATTR
 #define	PACKED_ATTR
 #endif
+#ifndef	UNUSED
 #define	UNUSED(x)	(void)(x)
+#endif
+#define	LACF_UNUSED(x)	(void)(x)
 
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
 

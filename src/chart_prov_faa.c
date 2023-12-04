@@ -311,7 +311,7 @@ errout:
 void
 chart_faa_fini(chartdb_t *cdb)
 {
-	UNUSED(cdb);
+	LACF_UNUSED(cdb);
 }
 
 bool_t

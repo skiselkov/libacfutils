@@ -889,7 +889,7 @@ avl_create(avl_tree_t *tree, int (*compar) (const void *, const void *),
 void
 avl_destroy(avl_tree_t *tree)
 {
-	UNUSED(tree);
+	LACF_UNUSED(tree);
 	ASSERT(tree);
 	ASSERT(tree->avl_numnodes == 0);
 	ASSERT(tree->avl_root == NULL);

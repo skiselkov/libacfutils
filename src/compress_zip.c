@@ -94,14 +94,14 @@ mem_seek(JZFile *file, size_t offset, int whence)
 static int
 mem_error(JZFile *file)
 {
-	UNUSED(file);
+	LACF_UNUSED(file);
 	return (0);
 }
 
 static void
 mem_close(JZFile *file)
 {
-	UNUSED(file);
+	LACF_UNUSED(file);
 }
 
 static void
@@ -130,8 +130,8 @@ rec_cb(JZFile *zip, int idx, JZFileHeader *header, char *filename,
 {
 	long offset;
 
-	UNUSED(idx);
-	UNUSED(filename);
+	LACF_UNUSED(idx);
+	LACF_UNUSED(filename);
 
 	/* store current position */
 	offset = zip->tell(zip);

@@ -91,7 +91,7 @@ tt_draw_cb(XPLMWindowID win, void *refcon)
 	int left, top, right, bottom;
 
 	ASSERT(win != NULL);
-	UNUSED(refcon);
+	LACF_UNUSED(refcon);
 
 	ASSERT(cur_tt_mtcr != NULL);
 	XPLMGetWindowGeometry(win, &left, &top, &right, &bottom);
@@ -187,7 +187,7 @@ find_first_monitor(int idx, int left, int top, int right, int bottom,
 {
 	monitor_t *mon = refcon;
 
-	UNUSED(idx);
+	LACF_UNUSED(idx);
 
 	if (mon->left == 0 && mon->right == 0 &&
 	    mon->top == 0 && mon->bottom == 0) {
@@ -540,10 +540,10 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 	tooltip_set_t *hit_tts = NULL;
 	tooltip_t *hit_tt = NULL;
 
-	UNUSED(elapsed_since_last_call);
-	UNUSED(elapsed_since_last_floop);
-	UNUSED(counter);
-	UNUSED(refcon);
+	LACF_UNUSED(elapsed_since_last_call);
+	LACF_UNUSED(elapsed_since_last_floop);
+	LACF_UNUSED(counter);
+	LACF_UNUSED(refcon);
 
 	XPLMGetMouseLocationGlobal(&mouse_x, &mouse_y);
 
@@ -677,7 +677,7 @@ find_window(int idx, int left, int top, int right, int bottom, void *refcon)
 	enum { MARGIN = 50 };
 	find_window_t *info;
 
-	UNUSED(idx);
+	LACF_UNUSED(idx);
 	ASSERT(refcon != NULL);
 	info = refcon;
 

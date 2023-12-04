@@ -93,8 +93,8 @@ lacf_glew_fini(void)
 BOOL WINAPI
 DllMain(HINSTANCE hinst, DWORD reason, LPVOID resvd)
 {
-	UNUSED(hinst);
-	UNUSED(resvd);
+	LACF_UNUSED(hinst);
+	LACF_UNUSED(resvd);
 	lacf_glew_dllmain_hook(reason);
 	return (TRUE);
 }

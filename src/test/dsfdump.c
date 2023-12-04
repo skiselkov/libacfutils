@@ -45,7 +45,7 @@ logfunc(const char *str)
 static void
 cmd_cb(dsf_cmd_t cmd, const void *arg, const dsf_cmd_parser_t *parser)
 {
-	UNUSED(arg);
+	LACF_UNUSED(arg);
 
 	if (!(uintptr_t)parser->userinfo) {
 		printf("cmd: %s (%x)\n", dsf_cmd2str(cmd),

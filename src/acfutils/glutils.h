@@ -592,8 +592,8 @@ glutils_debug_pop(void)
 ALWAYS_INLINE_ATTR PRINTF_ATTR(2) static inline void
 glutils_debug_push(GLuint msgid, const char *format, ...)
 {
-	UNUSED(msgid);
-	UNUSED(format);
+	LACF_UNUSED(msgid);
+	LACF_UNUSED(format);
 	/* no-op */
 }
 

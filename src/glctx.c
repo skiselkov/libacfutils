@@ -249,7 +249,7 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	glctx_t *ctx;
 
 	ASSERT(share_ctx == NULL || share_ctx->hgl != NULL);
-	UNUSED(win_ptr);
+	LACF_UNUSED(win_ptr);
 
 	/* Get the required extensions */
 	wglCreateContextAttribsARB = (wglCreateContextAttribsProc)
@@ -325,10 +325,10 @@ glctx_create_invisible(void *win_ptr, glctx_t *share_ctx, int major_ver,
 	CGLError error;
 	glctx_t *ctx = safe_calloc(1, sizeof (*ctx));
 
-	UNUSED(win_ptr);
-	UNUSED(minor_ver);
-	UNUSED(fwd_compat);
-	UNUSED(debug);
+	LACF_UNUSED(win_ptr);
+	LACF_UNUSED(minor_ver);
+	LACF_UNUSED(fwd_compat);
+	LACF_UNUSED(debug);
 	ASSERT(share_ctx == NULL || share_ctx->cgl != NULL);
 
 	ctx->created = B_TRUE;

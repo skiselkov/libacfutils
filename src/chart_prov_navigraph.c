@@ -126,7 +126,7 @@ chart_sort_func_navigraph(const void *a, const void *b, void *c)
 	char page_a_str[8] = {}, page_b_str[8] = {};
 	int sect_a, sect_b, page_a, page_b, cmp;
 
-	UNUSED(c);
+	LACF_UNUSED(c);
 
 	if (idx_a == NULL || idx_a < &na[1] || idx_a[-1] != '#' ||
 	    idx_b == NULL || idx_b < &nb[1] || idx_b[-1] != '#') {

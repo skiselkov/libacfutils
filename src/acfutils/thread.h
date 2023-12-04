@@ -776,8 +776,8 @@ thread_set_prio(thread_t thr, int prio)
 static inline void
 thread_set_prio(thread_t thr, int prio)
 {
-	UNUSED(thr);
-	UNUSED(prio);
+	LACF_UNUSED(thr);
+	LACF_UNUSED(prio);
 }
 
 #endif	/* APL */
@@ -846,7 +846,7 @@ thread_join(thread_t *thrp)
 static inline void
 thread_set_name(const char *name)
 {
-	UNUSED(name);
+	LACF_UNUSED(name);
 }
 
 /**
@@ -930,7 +930,7 @@ cv_init(condvar_t *cv)
 static inline void
 cv_destroy(condvar_t *cv)
 {
-	UNUSED(cv);
+	LACF_UNUSED(cv);
 }
 
 /**

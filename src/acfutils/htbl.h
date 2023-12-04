@@ -105,7 +105,7 @@ API_EXPORT char *htbl_dump(const htbl_t *htbl, bool_t printable_keys);
 UNUSED_ATTR static void
 htbl_free(void *obj, void *unused)
 {
-	UNUSED(unused);
+	LACF_UNUSED(unused);
 	free(obj);
 }
 

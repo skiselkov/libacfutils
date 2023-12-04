@@ -215,7 +215,7 @@ parse_chart(chartdb_t *cdb, CURL *curl, const char *path)
 	chart_arpt_t *arpt;
 	chart_t *chart;
 
-	UNUSED(curl);
+	LACF_UNUSED(curl);
 
 	comps = strsplit(path, "/", B_TRUE, &n_comps);
 	if (n_comps < 5)
@@ -315,7 +315,7 @@ parse_airport(chartdb_t *cdb, CURL *curl, const char *path)
 	char *arpt_name, *country;
 	chart_arpt_t *arpt;
 
-	UNUSED(curl);
+	LACF_UNUSED(curl);
 
 	comps = strsplit(path, "/", B_TRUE, &n_comps);
 	if (n_comps < 3)
@@ -396,7 +396,7 @@ errout:
 void
 chart_autorouter_fini(chartdb_t *cdb)
 {
-	UNUSED(cdb);
+	LACF_UNUSED(cdb);
 }
 
 bool_t

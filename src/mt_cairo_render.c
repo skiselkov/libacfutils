@@ -1523,9 +1523,9 @@ void
 mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
     const mtcr_rect_t *rects, size_t num)
 {
-	UNUSED(mtcr);
-	UNUSED(rects);
-	UNUSED(num);
+	LACF_UNUSED(mtcr);
+	LACF_UNUSED(rects);
+	LACF_UNUSED(num);
 }
 
 /**
