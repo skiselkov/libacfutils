@@ -339,7 +339,7 @@ worker_render_once(mt_cairo_render_t *mtcr)
 			mtul_submit_mtcr(mtul, mtcr);
 			mutex_enter(&mtcr->lock);
 		} else {
-			mtcr->present_rs = !mtcr->render_rs;
+			mtcr->present_rs = mtcr->render_rs;
 			cv_broadcast(&mtcr->render_done_cv);
 		}
 		mtcr->render_rs = !mtcr->render_rs;
@@ -1598,7 +1598,7 @@ mtul_try_complete_ul(mt_cairo_render_t *mtcr, list_t *ul_inprog_list)
 	ASSERT(mtcr->dirty);
 	mtcr->dirty = B_FALSE;
 	mtcr->texed = B_FALSE;
-	mtcr->present_rs = !mtcr->render_rs;
+	mtcr->present_rs = mtcr->render_rs;
 	cv_broadcast(&mtcr->render_done_cv);
 	mutex_exit(&mtcr->lock);
 
