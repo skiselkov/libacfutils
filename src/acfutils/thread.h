@@ -33,7 +33,7 @@
 #endif	/* !APL && !LIN */
 
 #if	__STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__) && \
-    !(defined(__GNUC__) || __GNUC__ >= 7)
+    (!defined(__GNUC__) || __GNUC__ >= 7)
 #include <stdatomic.h>
 #elif	APL
 #include <libkern/OSAtomic.h>
