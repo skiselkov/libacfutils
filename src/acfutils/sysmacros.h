@@ -166,7 +166,8 @@ extern "C" {
  * TYPE_ASSERT is a compile-time assertion, but which checks that
  * the type of `x' is `type'.
  */
-#if	__STDC_VERSION__ >= 201112L && (!defined(__GNUC__) || __GNUC__ > 7)
+#if	__STDC_VERSION__ >= 201112L && \
+    (!defined(__GNUC__) || __GNUC__ > 7 || defined(__clang__))
 #define	CTASSERT(x) _Static_assert((x), #x)
 #define	TYPE_ASSERT(x, type) \
 	CTASSERT(_Generic((x), type: 1, default: 0) != 0)
