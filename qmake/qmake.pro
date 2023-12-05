@@ -296,7 +296,7 @@ exists("../cairo/cairo-$$PLAT_LONG/lib/libcairo.a") : exists("$$GLEWMX_LIB") {
 	    ../src/acfutils/mt_cairo_render.h \
 	    ../src/acfutils/widget.h
 	SOURCES += \
-	    ../src/mt_cairo_render.c
+	    ../src/mt_cairo_render.c \
 	    ../src/widget.c
 }
 
