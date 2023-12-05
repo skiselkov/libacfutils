@@ -340,7 +340,6 @@ contains(minimal, 1) {
 	    ../src/minimp3.c \
 	    ../src/odb.c \
 	    ../src/paste.c \
-	    ../src/png.c \
 	    ../src/riff.c \
 	    ../src/shader.c \
 	    ../src/wav.c
