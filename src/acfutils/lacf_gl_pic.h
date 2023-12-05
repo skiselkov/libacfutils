@@ -32,6 +32,7 @@
 
 #include "core.h"
 #include "geom.h"
+#include "glew.h"
 
 #include <cglm/cglm.h>
 
