@@ -300,9 +300,9 @@ exists("../cairo/cairo-$$PLAT_LONG/lib/libcairo.a") : exists("$$GLEWMX_LIB") {
 	    ../src/widget.c
 }
 
-exists("lzma/qmake/$$PLAT_LONG/liblzma.a") {
+exists("../lzma/qmake/$$PLAT_LONG/liblzma.a") {
 	HEADERS += ../src/acfutils/dsf.h
-	HEADERS += ../src/dsf.c
+	SOURCES += ../src/dsf.c
 }
 
 # Optional lib components when building a non-minimal library
