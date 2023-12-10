@@ -7,3 +7,9 @@ edition = "2021"
 
 [build-dependencies]
 build-target = "*"
+
+[dependencies]
+serde = { version = "1.0.192", features = ["derive"] }
+
+[dev-dependencies]
+serde_json = "1.0.108"
