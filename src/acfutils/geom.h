@@ -218,8 +218,12 @@ typedef struct {
 #define	NULL_VECT3L		((vect3l_t){NAN, NAN, NAN})
 /** @return A \ref geo_pos3_t with all coordinates set to `NAN`. */
 #define	NULL_GEO_POS3		((geo_pos3_t){NAN, NAN, NAN})
+/** @return A \ref geo_pos3_32_t with all coordinates set to `NAN`. */
+#define	NULL_GEO_POS3_32	((geo_pos3_32_t){NAN, NAN, NAN})
 /** @return A \ref geo_pos2_t with all coordinates set to `NAN`. */
 #define	NULL_GEO_POS2		((geo_pos2_t){NAN, NAN})
+/** @return A \ref geo_pos2_32_t with all coordinates set to `NAN`. */
+#define	NULL_GEO_POS2_32	((geo_pos2_32_t){NAN, NAN})
 /** @return True if the X coordinate of vector `a` is `NAN`. */
 #define	IS_NULL_VECT(a)		(isnan((a).x))
 /** @return True if either the X or Y coordinate of vector `a` is `NAN`. */
