@@ -22,6 +22,9 @@
 /*
  * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
+/**
+ * \file
+ */
 
 #ifndef	_ACF_UTILS_SYSMACROS_H_
 #define	_ACF_UTILS_SYSMACROS_H_
@@ -288,6 +291,88 @@ highbit64(unsigned long long x)
 
 #define	SCANF_STR_AUTOLEN_IMPL(_str_)	#_str_
 #define	SCANF_STR_AUTOLEN(_str_)	SCANF_STR_AUTOLEN_IMPL(_str_)
+
+/**
+ * \def REQ_PTR
+ * Marks a pointer argument as a required (i.e. non-NULL'able). This uses
+ * C11's `[static 1]` syntax to declare a pointer, which must point to
+ * allocated memory. The way to use this macro is as follows:
+ * ```
+ * int foo(object_t REQ_PTR(arg));
+ * ```
+ * This declares a pointer argument named `arg` to be non-NULL'able. When
+ * compiling for C11 or higher, this expands into:
+ * ```
+ * int foo(object_t arg[static 1]);
+ * ```
+ * The code in the function can then manipulate this pointer as more-or-less
+ * a normal pointer, with the exception that you may not call `free()` on it,
+ * as that violates the guarantee that the pointer always point to allocated
+ * memory. The code may, however, freely read and write to the object. There
+ * is an additional constraint, in that the compiler now treats this as a
+ * pointer to a single object, rather than an indexable array. To declare a
+ * non-NULL'able pointer to an array of known size, use the REQ_ARR() macro.
+ *
+ * If the caller doesn't support C11 constructs (e.g. it is C++ or Rust),
+ * this macro expands to a plain pointer, so this safety aspect is only
+ * available for C11 or newer code.
+ *
+ * Please also note that this doesn't guarantee that there is no combination
+ * of factors possible where this pointer may be NULL even in pure C11 code.
+ * If the caller is simply passing through a plain pointer from their own
+ * arguments (the caller function just serving as an intermediary), then the
+ * ultimate origin of the pointer might still have passed NULL. For this
+ * guarantee to hold fully, all code up the stack would need to support C11
+ * constructs and/or provide rubust integrity checks against stray NULLs.
+ */
+#ifndef	REQ_PTR
+#if	__STDC_VERSION__ >= 201112L
+#define	REQ_PTR(x)	x[static 1]
+#else
+#define	REQ_PTR(x)	*x
+#endif
+#endif	// !defined(REQ_PTR)
+
+/**
+ * \def REQ_ARR
+ * Same as REQ_PTR(), except allows specifying a number of elements in a
+ * fixed-size array. This will allow you to treat the pointer as an array
+ * while letting the compiler perform static bounds checking where possible.
+ * If the caller passes a fixed-size array, the compiler will also perform
+ * bounds checking on the calling side.
+ *
+ * The way to use this macro is as follows:
+ * ```
+ * int foo(object_t REQ_ARR(arg, 5));
+ * ```
+ * This declares a pointer argument named `arg` to be a non-NULL'able
+ * reference to an array of at least 5 elements. When compiling for C11
+ * or higher, this expands into:
+ * ```
+ * int foo(object_t arg[static 5]);
+ * ```
+ * Please note that this doesn't imply any kind of runtime bounds checks.
+ * If you use a runtime variable to perform array indexing, this is still
+ * not guaranteed to catch out-of-bounds array access bugs.
+ *
+ * Another method to use this macro is to pass a dynamic size, such as:
+ * ```
+ * int foo(size_t n, object_t REQ_ARR(arg, n));
+ * ```
+ * This lets the callee accept variable-length arrays, while still letting
+ * the caller perform compile-time bounds checks, such that a mismatched
+ * size argument and actual static array size can be detected and flagged.
+ * Once again, this doesn't provide dynamic bounds checks, so its function
+ * is simply to serve as additional type annotations for checks which can
+ * be performed at compile time.
+ */
+#ifndef	REQ_ARR
+#if	__STDC_VERSION__ >= 201112L
+#define	REQ_ARR(x, n)	x[static (n)]
+#else
+#define	REQ_ARR(x)	x[n]
+#endif
+#endif	// !defined(REQ_ARR)
 
 #ifdef	__cplusplus
 }
