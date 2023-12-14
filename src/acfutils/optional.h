@@ -601,8 +601,10 @@ IMPL_OPTIONAL_EXPLICIT(uint32_t, uint32_t)
 IMPL_OPTIONAL_EXPLICIT(int64_t, int64_t)
 /// An optional type for wrapping a `uint64_t` value.
 IMPL_OPTIONAL_EXPLICIT(uint64_t, uint64_t)
+#if	!APL
 /// An optional type for wrapping a `size_t` value.
 IMPL_OPTIONAL_ALIAS(uint64_t, size_t, size_t)
+#endif	// !APL
 
 /**
  * \brief An optional type for wrapping a non-NAN `float` value.
