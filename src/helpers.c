@@ -1512,17 +1512,20 @@ DIR *
 opendir(const char *path)
 {
 	DIR	*dirp = safe_calloc(1, sizeof (*dirp));
-	TCHAR	pathT[strlen(path) + 3];	/* For '\*' at the end */
+	unsigned l = strlen(path) + 3;	/* For '\*' at the end */
+	TCHAR	*pathT = safe_calloc(l, sizeof (pathT));
 
-	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, sizeof (pathT));
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, l);
 	StringCchCat(pathT, sizeof (pathT), TEXT("\\*"));
 	dirp->handle = FindFirstFile(pathT, &dirp->find_data);
 	if (dirp->handle == INVALID_HANDLE_VALUE) {
 		win_perror(GetLastError(), "Cannot open directory %s", path);
 		free(dirp);
+		free(pathT);
 		return (NULL);
 	}
 	dirp->first = B_TRUE;
+	free(pathT);
 	return (dirp);
 }
 
