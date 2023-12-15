@@ -393,7 +393,7 @@ static cairo_text_extents_t
 tts_measure_string(const tooltip_set_t *tts, const char *text, unsigned len)
 {
 	cairo_text_extents_t ts;
-	char buf[len + 1];
+	char *buf = safe_calloc(len + 1, sizeof (*buf));
 
 	ASSERT(tts != NULL);
 	ASSERT(tts->cr != NULL);
@@ -401,6 +401,7 @@ tts_measure_string(const tooltip_set_t *tts, const char *text, unsigned len)
 
 	strlcpy(buf, text, len + 1);
 	cairo_text_extents(tts->cr, buf, &ts);
+	free(buf);
 
 	return (ts);
 }

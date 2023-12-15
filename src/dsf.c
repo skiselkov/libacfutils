@@ -798,7 +798,8 @@ dsf_fini(dsf_t *dsf)
 static void
 dump_prop_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 {
-	char indent[(depth * INDENT_DEPTH) + 1];
+	char *indent = safe_calloc((depth * INDENT_DEPTH) + 1,
+	    sizeof (*indent));
 
 	VERIFY3U(atom->id, ==, DSF_ATOM_PROP);
 
@@ -810,12 +811,14 @@ dump_prop_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 		append_format(str, len, "%s\"%s\" = \"%s\"\n",
 		    indent, prop->name, prop->value);
 	}
+	free(indent);
 }
 
 static void
 dump_planar_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 {
-	char indent[(depth * INDENT_DEPTH) + 1];
+	char *indent = safe_calloc((depth * INDENT_DEPTH) + 1,
+	    sizeof (*indent));
 
 	memset(indent, ' ', depth * INDENT_DEPTH);
 	indent[depth * INDENT_DEPTH] = '\0';
@@ -826,12 +829,14 @@ dump_planar_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 	    indent, data_type2str(atom->planar_atom.data_type),
 	    indent, atom->planar_atom.data_count,
 	    indent, atom->planar_atom.plane_count);
+	free(indent);
 }
 
 static void
 dump_demi_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 {
-	char indent[(depth * INDENT_DEPTH) + 1];
+	char *indent = safe_calloc((depth * INDENT_DEPTH) + 1,
+	    sizeof (*indent));
 	const char *data_type;
 
 	memset(indent, ' ', depth * INDENT_DEPTH);
@@ -871,12 +876,14 @@ dump_demi_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 	    indent, atom->demi_atom.height,
 	    indent, atom->demi_atom.scale,
 	    indent, atom->demi_atom.offset);
+	free(indent);
 }
 
 static void
 dump_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 {
-	char indent[(depth * INDENT_DEPTH) + 1];
+	char *indent = safe_calloc((depth * INDENT_DEPTH) + 1,
+	    sizeof (*indent));
 
 	memset(indent, ' ', depth * INDENT_DEPTH);
 	indent[depth * INDENT_DEPTH] = '\0';
@@ -900,8 +907,10 @@ dump_atom(const dsf_atom_t *atom, char **str, size_t *len, int depth)
 		dump_demi_atom(atom, str, len, depth + 1);
 
 	for (dsf_atom_t *subatom = list_head(&atom->subatoms); subatom != NULL;
-	    subatom = list_next(&atom->subatoms, subatom))
+	    subatom = list_next(&atom->subatoms, subatom)) {
 		dump_atom(subatom, str, len, depth + 1);
+	}
+	free(indent);
 }
 
 /**

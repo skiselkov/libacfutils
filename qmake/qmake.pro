@@ -36,7 +36,7 @@ INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
 INCLUDEPATH += ../junzip
-QMAKE_CFLAGS += -std=c11 -g -W -Wall -Wextra -fvisibility=hidden
+QMAKE_CFLAGS += -std=c11 -g -W -Wall -Wextra -Werror=vla -fvisibility=hidden
 contains(noerrors, 0) {
 	QMAKE_CFLAGS += -Werror
 }

@@ -175,12 +175,13 @@ glutils_disable_all_vtx_attrs(void)
 API_EXPORT GLuint
 glutils_make_quads_IBO(size_t num_vtx)
 {
-	GLuint idx_data[num_vtx * 2];
 	size_t i, n;
 	GLuint buf;
 
 	ASSERT0(num_vtx & 3);
 
+	size_t n_idx = num_vtx + num_vtx / 2;
+	GLuint *idx_data = safe_malloc(n_idx * sizeof (*idx_data));
 	for (i = 0, n = 0; i < num_vtx; i += 4, n += 6) {
 		idx_data[n + 0] = i + 0;
 		idx_data[n + 1] = i + 1;
@@ -190,12 +191,15 @@ glutils_make_quads_IBO(size_t num_vtx)
 		idx_data[n + 4] = i + 2;
 		idx_data[n + 5] = i + 3;
 	}
+	ASSERT3U(n, ==, n_idx);
 
 	glGenBuffers(1, &buf);
 	VERIFY(buf != 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buf);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, n * sizeof (*idx_data),
 	    idx_data, GL_STATIC_DRAW);
+
+	free(idx_data);
 
 	return (buf);
 }
@@ -662,13 +666,12 @@ API_EXPORT void
 glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
     int line, const vect3_t *p, size_t num_pts)
 {
-	vtx_t vtx_data[num_pts];
+	vtx_t *vtx_data = safe_calloc(num_pts, sizeof (*vtx_data));
 	GLint old_vao = 0;
 
 	ASSERT(p != NULL);
 
 	memset(lines, 0, sizeof (*lines));
-	memset(vtx_data, 0, sizeof (vtx_data));
 	for (size_t i = 0; i < num_pts; i++) {
 		vtx_data[i].pos[0] = p[i].x;
 		vtx_data[i].pos[1] = p[i].y;
@@ -702,6 +705,8 @@ glutils_init_3D_lines_impl(glutils_lines_t *lines, const char *filename,
 		glBindVertexArray(old_vao);
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	free(vtx_data);
 }
 
 /**

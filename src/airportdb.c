@@ -783,12 +783,12 @@ normalize_name(iconv_t *cd_p, char *str_in, char *str_out, size_t cap)
 	ASSERT(str_in != NULL);
 	ASSERT(str_out != NULL);
 
-	char str_conv[strlen(str_in) + 1];
+	unsigned l = strlen(str_in) + 1;
+	char *str_conv = safe_calloc(l, sizeof (*str_conv));
 	char *conv_in = str_in, *conv_out = str_conv;
 	size_t conv_in_sz = strlen(str_in);
-	size_t conv_out_sz = sizeof (str_conv);
+	size_t conv_out_sz = l;
 
-	memset(str_conv, 0, sizeof (str_conv));
 	iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
 	for (size_t i = 0, j = 0; str_conv[i] != '\0' && j + 1 < cap; i++) {
 		if (str_conv[i] != '\'' && str_conv[i] != '`' &&
@@ -797,6 +797,7 @@ normalize_name(iconv_t *cd_p, char *str_in, char *str_out, size_t cap)
 			str_out[j++] = str_conv[i];
 		}
 	}
+	free(str_conv);
 }
 
 static char *
@@ -1914,8 +1915,8 @@ static bool_t
 load_CIFP_dir(airportdb_t *db, const char *dirpath)
 {
 	int dirpath_len = strlen(dirpath);
-	TCHAR dirnameT[dirpath_len + 1];
-	TCHAR srchnameT[dirpath_len + 4];
+	TCHAR *dirnameT = safe_calloc(dirpath_len + 1, sizeof (*dirnameT));
+	TCHAR *srchnameT = safe_calloc(dirpath_len + 4, sizeof (*srchnameT));
 	WIN32_FIND_DATA find_data;
 	HANDLE h_find;
 
@@ -1925,21 +1926,30 @@ load_CIFP_dir(airportdb_t *db, const char *dirpath)
 	MultiByteToWideChar(CP_UTF8, 0, dirpath, -1, dirnameT, dirpath_len + 1);
 	StringCchPrintf(srchnameT, dirpath_len + 4, TEXT("%s\\*"), dirnameT);
 	h_find = FindFirstFile(srchnameT, &find_data);
-	if (h_find == INVALID_HANDLE_VALUE)
-		return (B_FALSE);
-
+	if (h_find == INVALID_HANDLE_VALUE) {
+		goto errout;
+	}
 	do {
 		if (wcscmp(find_data.cFileName, TEXT(".")) == 0 ||
-		    wcscmp(find_data.cFileName, TEXT("..")) == 0)
+		    wcscmp(find_data.cFileName, TEXT("..")) == 0) {
 			continue;
-		char filename[wcslen(find_data.cFileName) + 1];
+		}
+		unsigned l = wcslen(find_data.cFileName) + 1;
+		char *filename = safe_calloc(l, sizeof (*filename));
 		WideCharToMultiByte(CP_UTF8, 0, find_data.cFileName, -1,
-		    filename, sizeof (filename), NULL, NULL);
+		    filename, l, NULL, NULL);
 		(void) load_CIFP_file(db, dirpath, filename);
+		free(filename);
 	} while (FindNextFile(h_find, &find_data));
 
 	FindClose(h_find);
+	free(dirnameT);
+	free(srchnameT);
 	return (B_TRUE);
+errout:
+	free(dirnameT);
+	free(srchnameT);
+	return (B_FALSE);
 }
 
 #else	/* !IBM */
