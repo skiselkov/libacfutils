@@ -24,6 +24,7 @@
  */
 
 #include <XPLMGraphics.h>
+#include <XPLMUtilities.h>
 
 #include "acfutils/assert.h"
 #include "acfutils/dr.h"
