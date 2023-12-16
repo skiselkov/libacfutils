@@ -322,7 +322,6 @@ typedef enum {
 	opt_none_ ## type_name() { \
 		opt_ ## type_name value = { \
 		    .state = OPT_NONE, \
-		    .value = (c_type){0} \
 		}; \
 		return (value); \
 	} \
@@ -338,7 +337,7 @@ typedef enum {
 			*out_value = opt.value; \
 			return (OPT_SOME); \
 		case OPT_NONE: \
-			*out_value = (c_type){0}; \
+			memset(out_value, 0, sizeof (*out_value)); \
 			return (OPT_NONE); \
 		} \
 		VERIFY_FAIL(); \
