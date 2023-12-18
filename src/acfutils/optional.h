@@ -342,12 +342,64 @@ typedef enum {
 		} \
 		VERIFY_FAIL(); \
 	} \
+	static inline optional_state_t \
+	opt_match_as_ref_ ## type_name(opt_ ## type_name const REQ_PTR(opt), \
+	    c_type const *REQ_PTR(out_value)) { \
+		switch (opt->state) { \
+		case OPT_SOME: \
+			*out_value = &opt->value; \
+			return (OPT_SOME); \
+		case OPT_NONE: \
+			*out_value = NULL; \
+			return (OPT_NONE); \
+		} \
+		VERIFY_FAIL(); \
+	} \
+	static inline optional_state_t \
+	opt_match_as_mut_ ## type_name(opt_ ## type_name REQ_PTR(opt), \
+	    c_type *REQ_PTR(out_value)) { \
+		switch (opt->state) { \
+		case OPT_SOME: \
+			*out_value = &opt->value; \
+			return (OPT_SOME); \
+		case OPT_NONE: \
+			*out_value = NULL; \
+			return (OPT_NONE); \
+		} \
+		VERIFY_FAIL(); \
+	} \
 	static inline c_type \
 	opt_unwrap_ ## type_name(opt_ ## type_name opt, const char *filename, \
 	    int line, const char *expr) { \
 		switch (opt.state) { \
 		case OPT_SOME: \
 			return (opt.value); \
+		case OPT_NONE: \
+			logMsg("%s:%d: Attempted to unwrap None value in %s", \
+			    filename, line, expr); \
+			VERIFY_FAIL(); \
+		} \
+		VERIFY_FAIL(); \
+	} \
+	static inline c_type const * \
+	opt_unwrap_as_ref_ ## type_name(opt_ ## type_name const REQ_PTR(opt), \
+	    const char *filename, int line, const char *expr) { \
+		switch (opt->state) { \
+		case OPT_SOME: \
+			return (&opt->value); \
+		case OPT_NONE: \
+			logMsg("%s:%d: Attempted to unwrap None value in %s", \
+			    filename, line, expr); \
+			VERIFY_FAIL(); \
+		} \
+		VERIFY_FAIL(); \
+	} \
+	static inline c_type * \
+	opt_unwrap_as_mut_ ## type_name(opt_ ## type_name REQ_PTR(opt), \
+	    const char *filename, int line, const char *expr) { \
+		switch (opt->state) { \
+		case OPT_SOME: \
+			return (&opt->value); \
 		case OPT_NONE: \
 			logMsg("%s:%d: Attempted to unwrap None value in %s", \
 			    filename, line, expr); \
@@ -468,12 +520,60 @@ typedef enum {
 			return (OPT_NONE); \
 		} \
 	} \
+	static inline optional_state_t \
+	opt_match_as_ref_ ## type_name(opt_ ## type_name const REQ_PTR(opt), \
+	    c_type const *REQ_PTR(out_value)) { \
+		c_type x = opt->value; \
+		if (!(none_check)) { \
+			*out_value = &opt->value; \
+			return (OPT_SOME); \
+		} else { \
+			*out_value = NULL; \
+			return (OPT_NONE); \
+		} \
+	} \
+	static inline optional_state_t \
+	opt_match_as_mut_ ## type_name(opt_ ## type_name REQ_PTR(opt), \
+	    c_type *REQ_PTR(out_value)) { \
+		c_type x = opt->value; \
+		if (!(none_check)) { \
+			*out_value = &opt->value; \
+			return (OPT_SOME); \
+		} else { \
+			*out_value = NULL; \
+			return (OPT_NONE); \
+		} \
+	} \
 	static inline c_type \
 	opt_unwrap_ ## type_name(opt_ ## type_name opt, const char *filename, \
 	    int line, const char *expr) { \
 		c_type x = opt.value; \
 		if (!(none_check)) { \
 			return (opt.value); \
+		} else { \
+			logMsg("%s:%d: Attempted to unwrap None value in %s", \
+			    filename, line, expr); \
+			VERIFY_FAIL(); \
+		} \
+	} \
+	static inline c_type const * \
+	opt_unwrap_as_ref_ ## type_name(opt_ ## type_name const REQ_PTR(opt), \
+	    const char *filename, int line, const char *expr) { \
+		c_type x = opt->value; \
+		if (!(none_check)) { \
+			return (&opt->value); \
+		} else { \
+			logMsg("%s:%d: Attempted to unwrap None value in %s", \
+			    filename, line, expr); \
+			VERIFY_FAIL(); \
+		} \
+	} \
+	static inline c_type * \
+	opt_unwrap_as_mut_ ## type_name(opt_ ## type_name REQ_PTR(opt), \
+	    const char *filename, int line, const char *expr) { \
+		c_type x = opt->value; \
+		if (!(none_check)) { \
+			return (&opt->value); \
 		} else { \
 			logMsg("%s:%d: Attempted to unwrap None value in %s", \
 			    filename, line, expr); \
@@ -556,10 +656,33 @@ typedef enum {
 	    alias_c_type REQ_PTR(out_value)) { \
 		return (opt_match_ ## orig_type_name(opt, out_value)); \
 	} \
+	static inline optional_state_t \
+	opt_match_as_ref_ ## alias_type_name(opt_ ## alias_type_name const \
+	    REQ_PTR(opt), alias_c_type const *REQ_PTR(out_value)) { \
+		return (opt_match_as_ref_ ## orig_type_name(opt, out_value)); \
+	} \
+	static inline optional_state_t \
+	opt_match_as_mut_ ## alias_type_name(opt_ ## alias_type_name \
+	    REQ_PTR(opt), alias_c_type *REQ_PTR(out_value)) { \
+		return (opt_match_as_mut_ ## orig_type_name(opt, out_value)); \
+	} \
 	static inline alias_c_type \
 	opt_unwrap_ ## alias_type_name(opt_ ## alias_type_name opt, \
 	    const char *filename, int line, const char *expr) { \
 		return (opt_unwrap_ ## orig_type_name(opt, \
+		    filename, line, expr)); \
+	} \
+	static inline alias_c_type const * \
+	opt_unwrap_as_ref_ ## alias_type_name(opt_ ## alias_type_name \
+	    const REQ_PTR(opt), const char *filename, int line, \
+	    const char *expr) { \
+		return (opt_unwrap_as_ref_ ## orig_type_name(opt, \
+		    filename, line, expr)); \
+	} \
+	static inline alias_c_type * \
+	opt_unwrap_as_mut_ ## alias_type_name(opt_ ## alias_type_name \
+	    REQ_PTR(opt), const char *filename, int line, const char *expr) { \
+		return (opt_unwrap_as_mut_ ## orig_type_name(opt, \
 		    filename, line, expr)); \
 	} \
 	static inline alias_c_type \
@@ -913,6 +1036,86 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 #endif	// !defined(MATCH)
 
 /**
+ * \def MATCH_AS_REF
+ * \brief Extracts an immutable reference to the value embedded in the
+ * optional and returns the `optional_state_t` enum corresponding to
+ * the state.
+ *
+ * This is similar to MATCH(), except the second argument is a reference
+ * to an immutable pointer. If the optional value is OPT_SOME, the pointer
+ * is filled with a reference to the value contained internally in the
+ * optional value. If the optional value is OPT_NONE, the pointer is set
+ * to NULL.
+ *
+ * The purpose of this macro is to facilitate returning an internal value
+ * by immutable reference. This may be necessary, in case a stack-allocated
+ * copy of the object cannot be returned from the calling function.
+ *
+ * @note If you need a mutable reference to the value contained inside
+ *	of the optional, use MATCH_AS_MUT() instead.
+ *
+ * ```
+ * float *my_value_ptr;
+ * switch (MATCH(my_opt_float, &my_value)) {
+ * case OPT_SOME:
+ *     printf("my_value is %f\n", *my_value_ptr);
+ *     break;
+ * case OPT_NONE:
+ *     // my_value_ptr is now NULL
+ *     break;
+ * }
+ * ```
+ * @see MATCH_AS_MUT()
+ */
+#ifndef	MATCH_AS_REF
+#if	__STDC_VERSION__ >= 201112L || defined(__DOXYGEN__)
+#define	MATCH_AS_REF(opt, out_value_p) \
+	OPTIONAL_TYPE_SELECTOR(opt_match_as_ref_, (*(opt)).value)\
+	    ((opt), (out_value_p))
+#else	// !(__STDC_VERSION__ >= 201112L)
+#define	MATCH_AS_REF(type_name, opt, out_value_p) \
+	opt_match_as_ref_ ## type_name((opt), (out_value_p))
+#endif	// !(__STDC_VERSION__ >= 201112L)
+#endif	// !defined(MATCH_AS_REF)
+
+/**
+ * \def MATCH_AS_MUT
+ * \brief Extracts a reference to the value embedded in the optional
+ * and returns the `optional_state_t` enum corresponding to the state.
+ *
+ * This is similar to MATCH(), except the second argument is a reference
+ * to a pointer. If the optional value is OPT_SOME, the pointer is filled
+ * with a reference to the value contained internally in the optional
+ * value. If the optional value is OPT_NONE, the pointer is set to NULL.
+ *
+ * The purpose of this macro is to facilitate returning an internal value
+ * by reference. This may be necessary, in case a stack-allocated
+ * copy of the object cannot be returned from the calling function.
+ *
+ * ```
+ * float *my_value_ptr;
+ * switch (MATCH(my_opt_float, &my_value)) {
+ * case OPT_SOME:
+ *     printf("my_value is %f\n", *my_value_ptr);
+ *     break;
+ * case OPT_NONE:
+ *     // my_value_ptr is now NULL
+ *     break;
+ * }
+ * ```
+ */
+#ifndef	MATCH_AS_MUT
+#if	__STDC_VERSION__ >= 201112L || defined(__DOXYGEN__)
+#define	MATCH_AS_MUT(opt, out_value_p) \
+	OPTIONAL_TYPE_SELECTOR(opt_match_as_mut_, (*(opt)).value)\
+	    ((opt), (out_value_p))
+#else	// !(__STDC_VERSION__ >= 201112L)
+#define	MATCH_AS_MUT(type_name, opt, out_value_p) \
+	opt_match_as_mut_ ## type_name((opt), (out_value_p))
+#endif	// !(__STDC_VERSION__ >= 201112L)
+#endif	// !defined(MATCH_AS_MUT)
+
+/**
  * \def UNWRAP
  * \brief Extracts the value of the optional unconditionally.
  *
@@ -937,6 +1140,62 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 	opt_unwrap_ ## type_name((opt), log_basename(__FILE__), __LINE__, #opt)
 #endif	// !(__STDC_VERSION__ >= 201112L)
 #endif	// !defined(UNWRAP)
+
+/**
+ * \def UNWRAP_AS_REF
+ * \brief Extracts an immutable reference to the value of the optional
+ * unconditionally.
+ *
+ * If the optional was in the SOME state, returns a pointer to the
+ * wrapped value. If the optional was in the NONE state, causes a runtime
+ * assertion failure and panic. You should only use this macro during
+ * testing, or after you have made sure using other means that the
+ * optional is in the SOME state.
+ *
+ * Example usage:
+ * ```
+ * const float *my_value_ref = UNWRAP_AS_REF(&my_opt_float);
+ * ```
+ */
+#ifndef	UNWRAP_AS_REF
+#if	__STDC_VERSION__ >= 201112L || defined(__DOXYGEN__)
+#define	UNWRAP_AS_REF(opt)	\
+	OPTIONAL_TYPE_SELECTOR(opt_unwrap_as_ref_, (*(opt)).value)((opt), \
+	    log_basename(__FILE__), __LINE__, #opt)
+#else	// !(__STDC_VERSION__ >= 201112L)
+#define	UNWRAP_AS_REF(type_name, opt)	\
+	opt_unwrap_as_ref_ ## type_name((opt), \
+	    log_basename(__FILE__), __LINE__, #opt)
+#endif	// !(__STDC_VERSION__ >= 201112L)
+#endif	// !defined(UNWRAP_AS_REF)
+
+/**
+ * \def UNWRAP_AS_MUT
+ * \brief Extracts a mutable reference to the value of the optional
+ * unconditionally.
+ *
+ * If the optional was in the SOME state, returns a pointer to the
+ * wrapped value. If the optional was in the NONE state, causes a runtime
+ * assertion failure and panic. You should only use this macro during
+ * testing, or after you have made sure using other means that the
+ * optional is in the SOME state.
+ *
+ * Example usage:
+ * ```
+ * float *my_value_ref = UNWRAP_AS_REF(&my_opt_float);
+ * ```
+ */
+#ifndef	UNWRAP_AS_MUT
+#if	__STDC_VERSION__ >= 201112L || defined(__DOXYGEN__)
+#define	UNWRAP_AS_MUT(opt)	\
+	OPTIONAL_TYPE_SELECTOR(opt_unwrap_as_mut_, (*(opt)).value)((opt), \
+	    log_basename(__FILE__), __LINE__, #opt)
+#else	// !(__STDC_VERSION__ >= 201112L)
+#define	UNWRAP_AS_MUT(type_name, opt)	\
+	opt_unwrap_as_mut_ ## type_name((opt), \
+	    log_basename(__FILE__), __LINE__, #opt)
+#endif	// !(__STDC_VERSION__ >= 201112L)
+#endif	// !defined(UNWRAP_AS_MUT)
 
 /**
  * \def UNWRAP_OR
