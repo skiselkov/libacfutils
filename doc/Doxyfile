@@ -983,7 +983,8 @@ EXCLUDE_SYMBOLS        = \
     OPTIONAL_TYPE_SELECTOR, \
     opt_some_*, opt_none_*, opt_is_some_*, opt_is_none_*, opt_match_*, \
     opt_unwrap_*, opt_or_*, \
-    _unknown_optional_type_you_need_to_include_your_custom_optional_h_
+    _unknown_optional_type_you_need_to_include_your_custom_optional_h_, \
+    IF_LET_ELSE, IF_LET_END
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include

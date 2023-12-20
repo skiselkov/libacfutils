@@ -1335,6 +1335,78 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 #endif	// !(__STDC_VERSION__ >= 201112L)
 #endif	// !defined(OPT_OR)
 
+/**
+ * \def IF_LET
+ * \brief Allows constructing Rust-like if-let statements in C.
+ *
+ * This macro helps in assembling Rust-like if-let statements, which scope
+ * their variables to prevent inadvertently leaking them outside of the
+ * properly matched scope (as might otherwise happen with the MATCH() macro).
+ *
+ * This macro, along with its accompanying IF_LET_END and IF_LET_ELSE macros
+ * replaces the normal control flow constructs, to provide automatic scoping.
+ *
+ * ```
+ * opt_float my_option;
+ * IF_LET(float, foo, my_option)
+ *     // place your condition-met code into this block
+ *     // `foo' is available here (and only here) to contain the
+ *     // SOME state value of `my_option'
+ *     use_foo(foo);
+ * IF_LET_END
+ * ```
+ * In the above example, `foo` is prevented from leaking outside of the
+ * if block scope, thus stopping accidentally using it when no value was
+ * contained in the optional type. To add an else block to this kind of
+ * block, use:
+ * ```
+ * IF_LET(float, foo, my_option)
+ *     use_foo(foo);
+ * IF_LET_ELSE
+ *     // `foo' doesn't exist here
+ *     do_something_else();
+ * IF_LET_END
+ * ```
+ */
+#ifndef	IF_LET
+#define	IF_LET(vartype, varname, opt) \
+	{ \
+		vartype __if_let_tmp_##varname; \
+		/* \
+		 * The void pointer cast here gets rid of a C language quirk \
+		 * where const and non-const pointers aren't technically \
+		 * compatible for referencing. Thus to avoid having to force \
+		 * the caller to use a mutable reference when all they want \
+		 * is an immutable reference, we perform type erasure here. \
+		 */ \
+		if (MATCH((opt), (void *)&__if_let_tmp_##varname) == \
+		    OPT_SOME) { \
+			vartype varname = __if_let_tmp_##varname;
+/**
+ * \def IF_LET_AS_REF
+ * \brief Same as IF_LET() macro, but returns reference to the value.
+ *
+ * This macro works in a similar manner as IF_LET(), but instead returning
+ * the optional in the SOME case by value, the optional is returned by
+ * reference (as in MATCH_AS_REF()). Example:
+ * ```
+ * opt_object_t maybe_obj;
+ * IF_LET_AS_REF(object_t *, obj, maybe_obj)
+ *     // `obj' points into `maybe_obj'
+ *     use_obj_ref(obj);
+ * IF_LET_END
+ * ```
+ */
+#define	IF_LET_AS_REF(vartype, varname, opt) \
+	{ \
+		vartype __if_let_tmp_##varname; \
+		if (MATCH_AS_REF((opt), (void *)&__if_let_tmp_##varname) == \
+		    OPT_SOME) { \
+			vartype varname = __if_let_tmp_##varname;
+#define	IF_LET_ELSE	} else {
+#define	IF_LET_END	}}
+#endif	// !defined(IF_LET)
+
 #ifdef	__cplusplus
 }
 #endif
