@@ -420,11 +420,12 @@ highbit64(unsigned long long x)
 		} \
 	} while (0)
 #define	ENUM_BIT_WIDTH_CHECK_VARIANT(variant_name) \
-	case variant_name: \
+	case variant_name: { \
 		CTASSERT((int)variant_name >= 0); \
 		CTASSERT((unsigned long long)variant_name <= \
 		    (unsigned long long)__enum_check_max_value__); \
-		break
+	    } \
+	    break
 #endif	// !defined(ENUM_BIT_WIDTH_CHECK)
 
 #ifdef	__cplusplus
