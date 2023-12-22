@@ -1513,10 +1513,10 @@ opendir(const char *path)
 {
 	DIR	*dirp = safe_calloc(1, sizeof (*dirp));
 	unsigned l = strlen(path) + 3;	/* For '\*' at the end */
-	TCHAR	*pathT = safe_calloc(l, sizeof (pathT));
+	TCHAR	*pathT = safe_calloc(l, sizeof (*pathT));
 
 	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, l);
-	StringCchCat(pathT, sizeof (pathT), TEXT("\\*"));
+	StringCchCat(pathT, l, TEXT("\\*"));
 	dirp->handle = FindFirstFile(pathT, &dirp->find_data);
 	if (dirp->handle == INVALID_HANDLE_VALUE) {
 		win_perror(GetLastError(), "Cannot open directory %s", path);
@@ -1563,13 +1563,10 @@ stat(const char *pathname, struct stat *buf)
 	bool_t		isdir;
 
 	if (!file_exists(pathname, &isdir)) {
-		logMsg("Cannot stat %s: no such file or directory", pathname);
 		errno = ENOENT;
 		goto errout;
 	}
-
-	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT,
-	    sizeof (pathnameT));
+	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT, l);
 	fh = CreateFile(pathnameT, (!isdir ? FILE_READ_ATTRIBUTES : 0) |
 	    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (fh == INVALID_HANDLE_VALUE ||
