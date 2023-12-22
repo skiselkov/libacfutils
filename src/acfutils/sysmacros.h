@@ -374,6 +374,59 @@ highbit64(unsigned long long x)
 #endif
 #endif	// !defined(REQ_ARR)
 
+/**
+ * \def ENUM_BIT_WIDTH_CHECK
+ * \brief Compile-time macro for checking whether an enum can be represented
+ *	in a fixed number of bits.
+ *
+ * This macro lets you perform a simple compile-time check to validate that
+ * all variants of an enum fit into a fixed bit space representation. This
+ * way you can validate that no variant accidentally exceeds the amount of
+ * bit space allocated in a bit field.
+ *
+ * This macro is used in conjunction with the ENUM_BIT_WIDTH_CHECK_VARIANT
+ * macro as follows:
+ * ```
+ * enum foo {
+ *     foo_a,
+ *     foo_b,
+ *     foo_c,
+ *     foo_d,
+ * };
+ * uint8_t encode_enum_foo(enum foo bar) {
+ *      // check to make sure all of enum foo fits into 2 bits
+ *      ENUM_BIT_WIDTH_CHECK(enum foo, 2,
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_a);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_b);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_c);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_d);
+ *      );
+ * }
+ * ```
+ * This macro performs no runtime computation and thus is complete inert
+ * from a runtime standpoint. All checking is performed at compile time.
+ * While you must manually list all enum variants in the macro to perform
+ * all checks, your compiler should warn you about unhandled variants, in
+ * case you forgot some, or added some variants later.
+ */
+#ifndef	ENUM_BIT_WIDTH_CHECK
+#define	ENUM_BIT_WIDTH_CHECK(enum_type, num_bits, ...) \
+	do { \
+		enum_type __enum_check_value__ = 0; \
+		CTASSERT(num_bits > 0); \
+		enum { __enum_check_max_value__ = (1 << (num_bits)) - 1 }; \
+		switch (__enum_check_value__) { \
+		    __VA_ARGS__ \
+		} \
+	} while (0)
+#define	ENUM_BIT_WIDTH_CHECK_VARIANT(variant_name) \
+	case variant_name: \
+		CTASSERT((int)variant_name >= 0); \
+		CTASSERT((unsigned long long)variant_name <= \
+		    (unsigned long long)__enum_check_max_value__); \
+		break
+#endif	// !defined(ENUM_BIT_WIDTH_CHECK)
+
 #ifdef	__cplusplus
 }
 #endif
