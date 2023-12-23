@@ -673,7 +673,7 @@ errout:
 bool_t
 conf_write(const conf_t *conf, FILE *fp)
 {
-	return (conf_write_impl(conf, fp, 0, B_FALSE, B_TRUE));
+	return (conf_write_impl(conf, fp, 0, B_FALSE, B_FALSE));
 }
 
 /**
