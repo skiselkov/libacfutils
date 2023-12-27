@@ -660,13 +660,11 @@ pub mod conv {
 	/* feet -> meters */
 	pub fn feet2met(ft: f64) -> f64 {
 		assert!(ft.is_finite());
-		assert!(ft >= 0.0);
 		ft * 0.3048
 	}
 	/* meters -> feet */
 	pub fn met2feet(m: f64) -> f64 {
 		assert!(m.is_finite());
-		assert!(m >= 0.0);
 		m * 3.2808398950131
 	}
 	/* nautical miles -> meters */
