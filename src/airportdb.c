@@ -3430,7 +3430,7 @@ adb_airport_lookup_global(airportdb_t *db, const char *icao)
  *	simply returning the number of airports in the index.
  */
 size_t
-adb_airport_index_walk(airportdb_t *db,
+adb_airport_index_walk(const airportdb_t *db,
     void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo)
 {
 	ASSERT(db != NULL);

@@ -388,7 +388,7 @@ API_EXPORT size_t adb_airport_lookup_by_iata(airportdb_t *db, const char *iata,
     void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo);
 
 #define	airport_index_walk	adb_airport_index_walk
-API_EXPORT size_t adb_airport_index_walk(airportdb_t *db,
+API_EXPORT size_t adb_airport_index_walk(const airportdb_t *db,
     void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo);
 /*
  * Querying information about a particular airport.
