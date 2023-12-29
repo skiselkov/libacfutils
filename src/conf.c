@@ -657,8 +657,8 @@ conf_write_impl(const conf_t *conf, void *fp, size_t bufsz,
 	curl_easy_cleanup(curl);
 	/* Add room for the terminating NUL byte */
 	if (is_buf)
-		req_total++;
-	return (req_total);
+		return(req_total++);
+	return (1);
 errout:
 	free(data_buf);
 	curl_easy_cleanup(curl);

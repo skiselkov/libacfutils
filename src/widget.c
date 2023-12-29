@@ -269,6 +269,7 @@ tooltip_set_new_native(XPLMWindowID window)
 	tts->surf = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
 	tts->cr = cairo_create(tts->surf);
 	tts->font_size = TT_FONT_SIZE;
+	tts->font_face = NULL;
 	cairo_set_font_size(tts->cr, tts->font_size);
 	memcpy(tts->bg_color, (double[4]){TT_BACKGROUND_RGBA},
 	    sizeof (tts->bg_color));
@@ -526,11 +527,11 @@ set_cur_tt(const tooltip_set_t *tts, tooltip_t *tt, int mouse_x, int mouse_y)
 	cur_tt_win = XPLMCreateWindowEx(&cr);
 }
 
-static bool
+/*static bool
 tooltip_invalid(void)
 {
 	return (cur_tts != NULL && !XPLMIsWindowInFront(cur_tts->window));
-}
+}*/
 
 static float
 tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
@@ -548,8 +549,8 @@ tooltip_floop_cb(float elapsed_since_last_call, float elapsed_since_last_floop,
 
 	XPLMGetMouseLocationGlobal(&mouse_x, &mouse_y);
 
-	if (last_mouse_x != mouse_x || last_mouse_y != mouse_y ||
-	    tooltip_invalid()) {
+	if (last_mouse_x != mouse_x || last_mouse_y != mouse_y /*||
+	    tooltip_invalid()*/) {
 		last_mouse_x = mouse_x;
 		last_mouse_y = mouse_y;
 		mouse_moved_time = now;
