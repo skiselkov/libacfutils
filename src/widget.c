@@ -13,7 +13,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2022 Saso Kiselkov. All rights reserved.
+ * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
 #include <ctype.h>
@@ -257,7 +257,7 @@ tooltip_set_new_native(XPLMWindowID window)
 	int left, top, right, bottom;
 	cairo_text_extents_t te;
 
-	tooltip_set_t *tts = safe_malloc(sizeof (*tts));
+	tooltip_set_t *tts = safe_calloc(1, sizeof (*tts));
 	tts->window = window;
 	list_create(&tts->tooltips, sizeof (tooltip_t),
 	    offsetof(tooltip_t, node));
@@ -372,7 +372,7 @@ tooltip_new(tooltip_set_t *tts, int x, int y, int w, int h, const char *text)
 {
 	ASSERT(text != NULL);
 
-	tooltip_t *tt = safe_malloc(sizeof (*tt));
+	tooltip_t *tt = safe_calloc(1, sizeof (*tt));
 	tt->x = x;
 	tt->y = y;
 	tt->w = w;
