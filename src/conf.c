@@ -542,7 +542,10 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 size_t
 conf_write_buf(const conf_t *conf, void *buf, size_t cap)
 {
-	return (conf_write_impl(conf, buf, cap, B_FALSE, B_TRUE));
+	int res = conf_write_impl(conf, buf, cap, B_FALSE, B_TRUE);
+	// buffer writing must never fail, as it does no I/O
+	ASSERT3S(res, >=, 0);
+	return ((size_t)res);
 }
 
 static bool_t
