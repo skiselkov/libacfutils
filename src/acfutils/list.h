@@ -85,7 +85,7 @@ API_EXPORT void *list_head(const list_t *);
 API_EXPORT void *list_tail(const list_t *);
 API_EXPORT void *list_next(const list_t *, const void *);
 API_EXPORT void *list_prev(const list_t *, const void *);
-API_EXPORT void *list_get_i(const list_t *, unsigned);
+API_EXPORT void *list_get_i(const list_t *, size_t);
 API_EXPORT int list_is_empty(const list_t *);
 
 API_EXPORT void list_link_init(list_node_t *);
