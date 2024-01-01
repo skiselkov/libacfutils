@@ -29,16 +29,15 @@
 
 #include "acfutils/crc64.h"
 #include "acfutils/helpers.h"
+#define	__INCLUDED_FROM_HTBL_C__
 #include "acfutils/htbl.h"
 
 typedef struct {
 	list_node_t	bucket_node;
+	size_t		value_sz;
 	union {
-		void		*value;
-		struct {
-			list_t	list;
-			size_t	num;
-		} multi;
+		void	*value;
+		list_t	multi;
 	};
 	uint8_t		key[1];	/* variable length, depends on htbl->key_sz */
 } htbl_bucket_item_t;
@@ -53,6 +52,54 @@ static inline uint64_t
 H(const void *p, size_t l)
 {
 	return (crc64(p, l));
+}
+
+static inline void
+htbl2_check_key_type(const htbl2_t REQ_PTR(htbl), size_t key_sz)
+{
+	ASSERT_MSG(key_sz == htbl->h.key_sz,
+	    "Invalid hash table operation with key_sz %x, whereas the "
+	    "hash table was created with key_sz %x. This most likely "
+	    "indicates a data type error.",
+	    (unsigned)key_sz, (unsigned)htbl->h.key_sz);
+}
+
+static inline void
+htbl2_check_value_type(size_t htbl_value_sz, size_t value_sz)
+{
+	ASSERT_MSG(value_sz == htbl_value_sz,
+	    "Invalid hash table operation with value_sz %x, whereas "
+	    "the hash table was created with value_sz %x. This most "
+	    "likely indicates a data type error.",
+	    (unsigned)value_sz, (unsigned)htbl_value_sz);
+}
+
+static inline void
+htbl2_check_types(const htbl2_t REQ_PTR(htbl), size_t key_sz, size_t value_sz)
+{
+	htbl2_check_key_type(htbl, key_sz);
+	htbl2_check_value_type(htbl->value_sz, value_sz);
+}
+
+static void
+htbl_create_impl(htbl_t *htbl, size_t tbl_sz, size_t key_sz, bool multi_value)
+{
+	ASSERT(htbl != NULL);
+	ASSERT(key_sz != 0);
+	ASSERT(tbl_sz != 0);
+	ASSERT(tbl_sz <= ((size_t)1 << ((sizeof(size_t) * 8) - 1)));
+
+	memset(htbl, 0, sizeof (*htbl));
+	/* round table size up to nearest multiple of 2 */
+	htbl->tbl_sz = P2ROUNDUP(tbl_sz);
+	htbl->buckets = safe_malloc(sizeof (*htbl->buckets) * htbl->tbl_sz);
+	ASSERT(htbl->buckets != NULL);
+	for (size_t i = 0; i < htbl->tbl_sz; i++) {
+		list_create(&htbl->buckets[i], sizeof (htbl_bucket_item_t),
+		    offsetof(htbl_bucket_item_t, bucket_node));
+	}
+	htbl->key_sz = key_sz;
+	htbl->multi_value = multi_value;
 }
 
 /**
@@ -77,23 +124,18 @@ H(const void *p, size_t l)
  *	htbl_lookup_multi()).
  */
 void
-htbl_create(htbl_t *htbl, size_t tbl_sz, size_t key_sz, bool_t multi_value)
+htbl_create(htbl_t REQ_PTR(htbl), size_t tbl_sz, size_t key_sz,
+    bool_t multi_value)
 {
-	ASSERT(htbl != NULL);
-	ASSERT(key_sz != 0);
-	ASSERT(tbl_sz != 0);
-	ASSERT(tbl_sz <= ((size_t)1 << ((sizeof(size_t) * 8) - 1)));
+	htbl_create_impl(htbl, tbl_sz, key_sz, multi_value);
+}
 
-	memset(htbl, 0, sizeof (*htbl));
-	/* round table size up to nearest multiple of 2 */
-	htbl->tbl_sz = P2ROUNDUP(tbl_sz);
-	htbl->buckets = malloc(sizeof (*htbl->buckets) * htbl->tbl_sz);
-	ASSERT(htbl->buckets != NULL);
-	for (size_t i = 0; i < htbl->tbl_sz; i++)
-		list_create(&htbl->buckets[i], sizeof (htbl_bucket_item_t),
-		    offsetof(htbl_bucket_item_t, bucket_node));
-	htbl->key_sz = key_sz;
-	htbl->multi_value = multi_value;
+void
+htbl2_create(htbl2_t REQ_PTR(htbl), size_t tbl_sz, size_t key_sz,
+    size_t value_sz, bool multi_value)
+{
+	htbl_create_impl(&htbl->h, tbl_sz, key_sz, multi_value);
+	htbl->value_sz = value_sz;
 }
 
 /**
@@ -109,7 +151,7 @@ htbl_create(htbl_t *htbl, size_t tbl_sz, size_t key_sz, bool_t multi_value)
  * @see htbl_create()
  */
 void
-htbl_destroy(htbl_t *htbl)
+htbl_destroy(htbl_t REQ_PTR(htbl))
 {
 	ASSERT(htbl != NULL);
 	ASSERT(htbl->num_values == 0);
@@ -119,18 +161,24 @@ htbl_destroy(htbl_t *htbl)
 	free(htbl->buckets);
 }
 
+void
+htbl2_destroy(htbl2_t REQ_PTR(htbl))
+{
+	htbl_destroy(&htbl->h);
+}
+
 static void
 htbl_empty_multi_item(htbl_bucket_item_t *item, void (*func)(void *, void *),
     void *arg)
 {
-	for (htbl_multi_value_t *mv = list_head(&item->multi.list); mv;
-	    mv = list_head(&item->multi.list)) {
+	for (htbl_multi_value_t *mv = list_head(&item->multi); mv;
+	    mv = list_head(&item->multi)) {
 		if (func != NULL)
 			func(mv->value, arg);
-		list_remove_head(&item->multi.list);
+		list_remove_head(&item->multi);
 		free(mv);
 	}
-	list_destroy(&item->multi.list);
+	list_destroy(&item->multi);
 }
 
 /**
@@ -152,11 +200,9 @@ htbl_empty_multi_item(htbl_bucket_item_t *item, void (*func)(void *, void *),
  *	callback above in the second argument.
  */
 void
-htbl_empty(htbl_t *htbl, void (*func)(void *value, void *userinfo),
+htbl_empty(htbl_t REQ_PTR(htbl), void (*func)(void *value, void *userinfo),
     void *userinfo)
 {
-	ASSERT(htbl != NULL);
-
 	if (htbl->num_values == 0)
 		return;
 	for (size_t i = 0; i < htbl->tbl_sz; i++) {
@@ -173,6 +219,14 @@ htbl_empty(htbl_t *htbl, void (*func)(void *value, void *userinfo),
 	htbl->num_values = 0;
 }
 
+void
+htbl2_empty(htbl2_t REQ_PTR(htbl), size_t value_sz,
+    void (*func)(void *value, void *userinfo), void *userinfo)
+{
+	htbl2_check_value_type(htbl->value_sz, value_sz);
+	htbl_empty(&htbl->h, func, userinfo);
+}
+
 /**
  * @return The number of values stored in the hash table.
  */
@@ -183,15 +237,56 @@ htbl_count(const htbl_t *htbl)
 	return (htbl->num_values);
 }
 
+size_t
+htbl2_count(const htbl2_t *htbl)
+{
+	ASSERT(htbl != NULL);
+	return (htbl->h.num_values);
+}
+
 static void
 htbl_multi_value_add(htbl_t *htbl, htbl_bucket_item_t *item, void *value)
 {
-	htbl_multi_value_t *mv = malloc(sizeof (*mv));
+	htbl_multi_value_t *mv = safe_malloc(sizeof (*mv));
 	ASSERT(htbl->multi_value);
 	mv->value = value;
 	mv->item = item;
-	list_insert_head(&item->multi.list, mv);
-	item->multi.num++;
+	list_insert_head(&item->multi, mv);
+	htbl->num_values++;
+}
+
+static void
+htbl_set_impl(htbl_t REQ_PTR(htbl), const void *key, void *value,
+    size_t value_sz)
+{
+	ASSERT(key != NULL);
+
+	list_t *bucket = &htbl->buckets[H(key, htbl->key_sz) &
+	    (htbl->tbl_sz - 1)];
+	htbl_bucket_item_t *item;
+
+	ASSERT(key != NULL);
+	ASSERT(value != NULL);
+	for (item = list_head(bucket); item; item = list_next(bucket, item)) {
+		if (memcmp(item->key, key, htbl->key_sz) == 0) {
+			if (htbl->multi_value)
+				htbl_multi_value_add(htbl, item, value);
+			else
+				item->value = value;
+			return;
+		}
+	}
+	item = safe_calloc(sizeof (*item) + htbl->key_sz - 1, 1);
+	item->value_sz = value_sz;
+	memcpy(item->key, key, htbl->key_sz);
+	if (htbl->multi_value) {
+		list_create(&item->multi, sizeof (htbl_multi_value_t),
+		    offsetof(htbl_multi_value_t, node));
+		htbl_multi_value_add(htbl, item, value);
+	} else {
+		item->value = value;
+	}
+	list_insert_head(bucket, item);
 	htbl->num_values++;
 }
 
@@ -215,37 +310,17 @@ htbl_multi_value_add(htbl_t *htbl, htbl_bucket_item_t *item, void *value)
  *	dereference the stored pointer.
  */
 void
-htbl_set(htbl_t *htbl, const void *key, void *value)
+htbl_set(htbl_t REQ_PTR(htbl), const void *key, void *value)
 {
-	ASSERT(htbl != NULL);
-	ASSERT(key != NULL);
+	htbl_set_impl(htbl, key, value, SIZE_MAX);
+}
 
-	list_t *bucket = &htbl->buckets[H(key, htbl->key_sz) &
-	    (htbl->tbl_sz - 1)];
-	htbl_bucket_item_t *item;
-
-	ASSERT(key != NULL);
-	ASSERT(value != NULL);
-	for (item = list_head(bucket); item; item = list_next(bucket, item)) {
-		if (memcmp(item->key, key, htbl->key_sz) == 0) {
-			if (htbl->multi_value)
-				htbl_multi_value_add(htbl, item, value);
-			else
-				item->value = value;
-			return;
-		}
-	}
-	item = calloc(sizeof (*item) + htbl->key_sz - 1, 1);
-	memcpy(item->key, key, htbl->key_sz);
-	if (htbl->multi_value) {
-		list_create(&item->multi.list, sizeof (htbl_multi_value_t),
-		    offsetof(htbl_multi_value_t, node));
-		htbl_multi_value_add(htbl, item, value);
-	} else {
-		item->value = value;
-	}
-	list_insert_head(bucket, item);
-	htbl->num_values++;
+void
+htbl2_set(htbl2_t REQ_PTR(htbl), const void *key, size_t key_sz,
+    void *value, size_t value_sz)
+{
+	htbl2_check_types(htbl, key_sz, value_sz);
+	htbl_set_impl(&htbl->h, key, value, value_sz);
 }
 
 /**
@@ -263,7 +338,7 @@ htbl_set(htbl_t *htbl, const void *key, void *value)
  *	is triggered.
  */
 void
-htbl_remove(htbl_t *htbl, const void *key, bool_t nil_ok)
+htbl_remove(htbl_t REQ_PTR(htbl), const void *key, bool_t nil_ok)
 {
 	ASSERT(htbl != NULL);
 	ASSERT(key != NULL);
@@ -277,8 +352,9 @@ htbl_remove(htbl_t *htbl, const void *key, bool_t nil_ok)
 			list_remove(bucket, item);
 			if (htbl->multi_value) {
 				htbl_empty_multi_item(item, NULL, NULL);
-				ASSERT(htbl->num_values >= item->multi.num);
-				htbl->num_values -= item->multi.num;
+				ASSERT3U(htbl->num_values, >=,
+				    list_count(&item->multi));
+				htbl->num_values -= list_count(&item->multi);
 			} else {
 				free(item);
 				ASSERT(htbl->num_values != 0);
@@ -288,6 +364,14 @@ htbl_remove(htbl_t *htbl, const void *key, bool_t nil_ok)
 		}
 	}
 	ASSERT(nil_ok);
+}
+
+void
+htbl2_remove(htbl2_t REQ_PTR(htbl), const void *key, size_t key_sz,
+    bool nil_ok)
+{
+	htbl2_check_key_type(htbl, key_sz);
+	htbl_remove(&htbl->h, key, nil_ok);
 }
 
 /**
@@ -315,7 +399,8 @@ htbl_remove(htbl_t *htbl, const void *key, bool_t nil_ok)
  *```
  */
 void
-htbl_remove_multi(htbl_t *htbl, const void *key, htbl_multi_value_t *list_item)
+htbl_remove_multi(htbl_t REQ_PTR(htbl), const void *key,
+    htbl_multi_value_t *list_item)
 {
 	ASSERT(htbl != NULL);
 	ASSERT(htbl->multi_value);
@@ -325,19 +410,25 @@ htbl_remove_multi(htbl_t *htbl, const void *key, htbl_multi_value_t *list_item)
 
 	htbl_bucket_item_t *item = list_item->item;
 	ASSERT(item != NULL);
-	ASSERT(item->multi.num != 0);
 
-	list_remove(&item->multi.list, list_item);
-	item->multi.num--;
+	list_remove(&item->multi, list_item);
 	htbl->num_values--;
 	free(list_item);
-	if (item->multi.num == 0) {
+	if (list_count(&item->multi) == 0) {
 		list_t *bucket =
 		    &htbl->buckets[H(key, htbl->key_sz) & (htbl->tbl_sz - 1)];
 		list_remove(bucket, item);
-		list_destroy(&item->multi.list);
+		list_destroy(&item->multi);
 		free(item);
 	}
+}
+
+void
+htbl2_remove_multi(htbl2_t REQ_PTR(htbl), const void *key, size_t key_sz,
+    htbl2_multi_value_t *list_item)
+{
+	htbl2_check_key_type(htbl, key_sz);
+	htbl_remove_multi(&htbl->h, key, list_item);
 }
 
 static htbl_bucket_item_t *
@@ -368,12 +459,20 @@ htbl_lookup_common(const htbl_t *htbl, const void *key)
  *	`key`, this returns NULL instead.
  */
 void *
-htbl_lookup(const htbl_t *htbl, const void *key)
+htbl_lookup(const htbl_t REQ_PTR(htbl), const void *key)
 {
 	htbl_bucket_item_t *item;
 	ASSERT(!htbl->multi_value);
 	item = htbl_lookup_common(htbl, key);
 	return (item != NULL ? item->value : NULL);
+}
+
+void *
+htbl2_lookup(const htbl2_t REQ_PTR(htbl), const void *key,
+    size_t key_sz, size_t value_sz)
+{
+	htbl2_check_types(htbl, key_sz, value_sz);
+	return (htbl_lookup(&htbl->h, key));
 }
 
 /**
@@ -390,12 +489,20 @@ htbl_lookup(const htbl_t *htbl, const void *key)
  * @return If no values are stored under `key`, returns NULL.
  */
 const list_t *
-htbl_lookup_multi(const htbl_t *htbl, const void *key)
+htbl_lookup_multi(const htbl_t REQ_PTR(htbl), const void *key)
 {
 	htbl_bucket_item_t *item;
 	ASSERT(htbl->multi_value);
 	item = htbl_lookup_common(htbl, key);
-	return (item != NULL ? &item->multi.list : NULL);
+	return (item != NULL ? &item->multi : NULL);
+}
+
+const list_t *
+htbl2_lookup_multi(const htbl2_t REQ_PTR(htbl), const void *key,
+    size_t key_sz)
+{
+	htbl2_check_key_type(htbl, key_sz);
+	return (htbl_lookup_multi(&htbl->h, key));
 }
 
 /**
@@ -426,7 +533,7 @@ htbl_foreach(const htbl_t *htbl,
 			 */
 			next_item = list_next(bucket, item);
 			if (htbl->multi_value) {
-				const list_t *ml = &item->multi.list;
+				const list_t *ml = &item->multi;
 				for (htbl_multi_value_t *mv = list_head(ml),
 				    *mv_next = NULL; mv != NULL; mv = mv_next) {
 					mv_next = list_next(ml, mv);
@@ -437,6 +544,15 @@ htbl_foreach(const htbl_t *htbl,
 			}
 		}
 	}
+}
+
+void
+htbl2_foreach(const htbl2_t REQ_PTR(htbl),
+    size_t key_sz, size_t value_sz,
+    void (*func)(const void *key, void *value, void *userinfo), void *userinfo)
+{
+	htbl2_check_types(htbl, key_sz, value_sz);
+	htbl_foreach(&htbl->h, func, userinfo);
 }
 
 /**
@@ -459,9 +575,19 @@ htbl_foreach(const htbl_t *htbl,
  *```
  */
 void *
-htbl_value_multi(htbl_multi_value_t *mv)
+htbl_value_multi(const htbl_multi_value_t *mv)
 {
 	ASSERT(mv != NULL);
+	// To check against accidentally crossing over from htbl2_t
+	htbl2_check_value_type(mv->item->value_sz, SIZE_MAX);
+	return (mv->value);
+}
+
+void *
+htbl2_value_multi(const htbl2_multi_value_t *mv, size_t value_sz)
+{
+	ASSERT(mv != NULL);
+	htbl2_check_value_type(mv->item->value_sz, value_sz);
 	return (mv->value);
 }
 

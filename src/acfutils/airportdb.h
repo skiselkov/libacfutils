@@ -157,8 +157,8 @@ typedef struct {
 	avl_tree_t	apt_dat;
 	avl_tree_t	geo_table;
 	avl_tree_t	arpt_index;
-	htbl_t		icao_index;
-	htbl_t		iata_index;
+	htbl2_t		icao_index;
+	htbl2_t		iata_index;
 } airportdb_t;
 
 typedef struct airport airport_t;

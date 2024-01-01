@@ -368,15 +368,15 @@ recreate_icao_iata_tables(airportdb_t *db, unsigned cap)
 {
 	ASSERT(db != NULL);
 
-	htbl_empty(&db->icao_index, NULL, NULL);
-	htbl_destroy(&db->icao_index);
-	htbl_empty(&db->iata_index, NULL, NULL);
-	htbl_destroy(&db->iata_index);
+	htbl2_empty(&db->icao_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->icao_index);
+	htbl2_empty(&db->iata_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->iata_index);
 
-	htbl_create(&db->icao_index, MAX(P2ROUNDUP(cap), 16),
-	    AIRPORTDB_ICAO_LEN, B_TRUE);
-	htbl_create(&db->iata_index, MAX(P2ROUNDUP(cap), 16),
-	    AIRPORTDB_IATA_LEN, B_TRUE);
+	htbl2_create(&db->icao_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_ICAO_LEN, sizeof (arpt_index_t), B_TRUE);
+	htbl2_create(&db->iata_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_IATA_LEN, sizeof (arpt_index_t), B_TRUE);
 }
 
 /*
@@ -2300,11 +2300,14 @@ create_arpt_index(airportdb_t *db, const airport_t *arpt)
 	idx->TL = arpt->TL;
 
 	avl_add(&db->arpt_index, idx);
-	if (idx->icao[0] != '\0')
-		htbl_set(&db->icao_index, idx->icao, idx);
-	if (idx->iata[0] != '\0')
-		htbl_set(&db->iata_index, idx->iata, idx);
-
+	if (idx->icao[0] != '\0') {
+		htbl2_set(&db->icao_index, idx->icao, sizeof (idx->icao),
+		    idx, sizeof (*idx));
+	}
+	if (idx->iata[0] != '\0') {
+		htbl2_set(&db->iata_index, idx->iata, sizeof (idx->iata),
+		    idx, sizeof (*idx));
+	}
 	return (idx);
 }
 
@@ -2357,9 +2360,12 @@ read_index_dat(airportdb_t *db)
 		}
 		if (avl_find(&db->arpt_index, idx, &where) == NULL) {
 			avl_insert(&db->arpt_index, idx, where);
-			htbl_set(&db->icao_index, idx->icao, idx);
-			if (strcmp(idx->iata, "-") != 0)
-				htbl_set(&db->iata_index, idx->iata, idx);
+			htbl2_set(&db->icao_index, idx->icao,
+			    sizeof (idx->icao), idx, sizeof (*idx));
+			if (strcmp(idx->iata, "-") != 0) {
+				htbl2_set(&db->iata_index, idx->iata,
+				    sizeof (idx->iata), idx, sizeof (*idx));
+			}
 		} else {
 			logMsg("WARNING: found duplicate airport ident %s "
 			    "in index. Skipping it. This shouldn't happen "
@@ -3170,8 +3176,10 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	 * Just some defaults - we'll resize the tables later when
 	 * we actually read the index file.
 	 */
-	htbl_create(&db->icao_index, 16, AIRPORTDB_ICAO_LEN, B_TRUE);
-	htbl_create(&db->iata_index, 16, AIRPORTDB_IATA_LEN, B_TRUE);
+	htbl2_create(&db->icao_index, 16, AIRPORTDB_ICAO_LEN,
+	    sizeof (arpt_index_t), B_TRUE);
+	htbl2_create(&db->iata_index, 16, AIRPORTDB_IATA_LEN,
+	    sizeof (arpt_index_t), B_TRUE);
 }
 
 /**
@@ -3201,10 +3209,10 @@ airportdb_destroy(airportdb_t *db)
 	avl_destroy(&db->geo_table);
 	avl_destroy(&db->apt_dat);
 
-	htbl_empty(&db->icao_index, NULL, NULL);
-	htbl_destroy(&db->icao_index);
-	htbl_empty(&db->iata_index, NULL, NULL);
-	htbl_destroy(&db->iata_index);
+	htbl2_empty(&db->icao_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->icao_index);
+	htbl2_empty(&db->iata_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->iata_index);
 
 	mutex_destroy(&db->lock);
 
@@ -3275,7 +3283,7 @@ airport_lookup_htbl_multi(airportdb_t *db, const list_t *list,
 
 	for (void *mv = list_head(list); mv != NULL;
 	    mv = list_next(list, mv)) {
-		arpt_index_t *idx = HTBL_VALUE_MULTI(mv);
+		arpt_index_t *idx = htbl2_value_multi(mv, sizeof (*idx));
 
 		if (found_cb != NULL) {
 			airport_t *apt = adb_airport_lookup(db, idx->ident,
@@ -3327,7 +3335,8 @@ adb_airport_lookup_by_icao(airportdb_t *db, const char *icao,
 	ASSERT(icao != NULL);
 
 	strlcpy(icao_srch, icao, sizeof (icao_srch));
-	list = htbl_lookup_multi(&db->icao_index, icao_srch);
+	list = htbl2_lookup_multi(&db->icao_index, icao_srch,
+	    sizeof (icao_srch));
 	if (list != NULL) {
 		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
 		return (list_count(list));
@@ -3353,7 +3362,8 @@ adb_airport_lookup_by_iata(airportdb_t *db, const char *iata,
 	ASSERT(iata != NULL);
 
 	strlcpy(iata_srch, iata, sizeof (iata_srch));
-	list = htbl_lookup_multi(&db->iata_index, iata_srch);
+	list = htbl2_lookup_multi(&db->iata_index, iata_srch,
+	    sizeof (iata_srch));
 	if (list != NULL) {
 		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
 		return (list_count(list));
