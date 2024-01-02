@@ -1199,11 +1199,11 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 
 /**
  * \def UNWRAP_OR
- * \brief Extracts the value of the optional, or returns a fallback value.
+ * \brief Extracts the value of the optional, or evaluates to a fallback value.
  *
- * If `opt` is in the SOME state, returns the wrapped value. If `opt` is
- * in the NONE state, returns the `dfl_value` argument. This can be used
- * to safely unwrap an optional, providing a default value in case the
+ * If `opt` is in the SOME state, evaluates to the wrapped value. If `opt`
+ * is in the NONE state, evaluates to the `dfl_value` argument. This can be
+ * used to safely unwrap an optional, providing a default value in case the
  * optional was in the NONE state.
  *
  * Example usage:
@@ -1229,13 +1229,13 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 
 /**
  * \def UNWRAP_OR_ELSE
- * \brief Extracts the value of the optional, or returns a fallback value
+ * \brief Extracts the value of the optional, or yields a fallback value
  * with lazy evaluation.
  *
- * If `opt` is in the SOME state, returns the wrapped value. If `opt` is
- * in the NONE state, calls `dfl_func` with `dfl_arg` in its argument
- * and returns the return value of this call.. The function must have a
- * signature conforming to:
+ * If `opt` is in the SOME state, evaluates to the wrapped value. If `opt`
+ * is in the NONE state, calls `dfl_func` with `dfl_arg` in its argument
+ * and evaluates to the return value of this call. The function must have
+ * a signature conforming to:
  * ```
  * c_type func(void *);
  * ```
@@ -1266,6 +1266,39 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 	opt_unwrap_or_else_ ## type_name((opt), (dfl_func), (dfl_arg))
 #endif	// !(__STDC_VERSION__ >= 201112L)
 #endif	// !defined(UNWRAP_OR)
+
+/**
+ * \def UNWRAP_OR_RET
+ * \brief Unwraps a SOME value, or in case of a NONE value, returns from
+ * the current function.
+ *
+ * This macro lets you emulate the Rust '?' operator.
+ * 1. If the first argument is in the SOME state, the contained value is
+ *	yielded.
+ * 2. If the first argument is in the NONE state, returns from the current
+ *	function, optionally with a return value of your choosing.
+ *
+ * The way to use this macro is as follows:
+ * ```
+ * bool my_func(opt_float wrapped_value) {
+ *     // if `wrapped_value` is NONE, we return from `my_func` with `false`:
+ *     float value = UNWRAP_OR_RET(wrapped_value, false);
+ *     // ... do something with `value`, it is guaranteed to be valid ...
+ *     return true;
+ * }
+ * ```
+ * To return with no value from the current function, simply invoke the
+ * macro with just one argument:
+ * ```
+ * float foo = UNWRAP_OR_RET(wrapped_foo);
+ * ```
+ */
+#ifndef	UNWRAP_OR_RET
+#define	UNWRAP_OR_RET(opt, ...) \
+	({ __typeof(opt) __tmp = (opt); \
+	    if (IS_NONE(__tmp)) { return __VA_ARGS__; } \
+	    UNWRAP(__tmp); })
+#endif	// !defined(UNWRAP_OR_RET)
 
 /**
  * \def OPT_OR
