@@ -27,6 +27,7 @@
 #define	_ACF_UTILS_PERF_H_
 
 #include "geom.h"
+#include "optional.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -236,12 +237,12 @@ API_EXPORT double accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft,
     double flap_ratio, double mach_lim, accelclb_t type, double *burnp,
     double *kcas_out);
 #define	dist2accelclb	ACFSYM(dist2accelclb)
-API_EXPORT double dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
-    double isadev, double qnh, double tp_alt, double accel_alt,
-    double fuel, vect2_t dir,
-    double flap_ratio, double *alt, double *kcas, vect2_t wind,
-    double alt_tgt, double kcas_tgt, double mach_lim, double dist_tgt,
-    accelclb_t type, double *burnp, double *ttg_out);
+API_EXPORT opt_double dist2accelclb(const flt_perf_t REQ_PTR(flt),
+    const acft_perf_t REQ_PTR(acft), double isadev, double qnh, double tp_alt,
+    double accel_alt, double fuel, vect2_t dir,
+    double flap_ratio, double REQ_PTR(alt_p), double REQ_PTR(kcas_p),
+    vect2_t wind, double alt_tgt, double kcas_tgt, double mach_lim,
+    double dist_tgt, accelclb_t type, double *burnp, double *ttg_out);
 #define	decel2dist	ACFSYM(decel2dist)
 API_EXPORT double decel2dist(const flt_perf_t *flt, const acft_perf_t *acft,
     double isadev, double qnh, double tp_alt, double fuel,
