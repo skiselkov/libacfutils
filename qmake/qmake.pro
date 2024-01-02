@@ -11,7 +11,7 @@
 #
 # CDDL HEADER END
 
-# Copyright 2021 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 # Shared library without any Qt functionality
 TEMPLATE = lib
@@ -224,6 +224,8 @@ HEADERS += \
     ../src/acfutils/tls.h \
     ../src/acfutils/tumbler.h \
     ../src/acfutils/types.h \
+    ../src/acfutils/vector.h \
+    ../src/acfutils/vector_impl.h \
     ../src/acfutils/wmm.h \
     ../src/acfutils/worker.h \
     ../src/acfutils/xpfail.h
@@ -259,6 +261,7 @@ SOURCES += \
     ../src/time.c \
     ../src/thread.c \
     ../src/tumbler.c \
+    ../src/vector.c \
     ../src/wmm.c \
     ../src/worker.c
 
