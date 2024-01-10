@@ -448,6 +448,10 @@ typedef enum {
 			return (func_b(arg_b)); \
 		} \
 		VERIFY_FAIL(); \
+	} \
+	static inline opt_ ## type_name \
+	opt_into_ ## type_name(void) { \
+		return (opt_none_ ## type_name()); \
 	}
 
 /**
@@ -617,6 +621,14 @@ typedef enum {
 		} else { \
 			return (func_b(arg_b)); \
 		} \
+	} \
+	static inline opt_ ## type_name \
+	opt_into_ ## type_name(c_type x) { \
+		if (!(none_check)) { \
+			return (opt_some_ ## type_name(x)); \
+		} else { \
+			return (opt_none_ ## type_name()); \
+		} \
 	}
 
 /**
@@ -705,6 +717,10 @@ typedef enum {
 	opt_or_else_ ## alias_type_name(opt_ ## alias_type_name a, \
 	    opt_ ## alias_type_name (*func_b)(void *), void *arg_b) { \
 		return (opt_or_else_ ## orig_type_name(a, func_b, arg_b)); \
+	} \
+	static inline opt_ ## alias_type_name \
+	opt_into_ ## alias_type_name(alias_c_type value) { \
+		return (opt_into_ ## orig_type_name(value)); \
 	}
 
 /// An optional type for wrapping an `int8_t` value.
@@ -1301,6 +1317,81 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 #endif	// !defined(UNWRAP_OR_RET)
 
 /**
+ * \def UNWRAP_OR_GOTO
+ * \brief Unwraps a SOME value, or in case of a NONE value, goes to the label.
+ *
+ * This macro helps with unwinding when a NONE variant is encountered,
+ * requiring cleanup of the current function.
+ *
+ * Example usage:
+ * ```
+ * opt_float foo(void);	// can return NONE variant
+ *
+ * void bar() {
+ *     // setup some resources that need cleanup
+ *     ...
+ *     float need_valid_value_here = UNWRAP_OR_GOTO(foo(), out);
+ *     ...
+ *     // use need_valid_value_here
+ *     ...
+ * out:
+ *     // perform cleanup of resources acquired during setup
+ * }
+ * ```
+ */
+#ifndef	UNWRAP_OR_GOTO
+#define	UNWRAP_OR_GOTO(opt, label) \
+	({ __typeof(opt) __tmp = (opt); \
+	    if (IS_NONE(__tmp)) { goto label; } UNWRAP(__tmp); })
+#endif	// !defined(UNWRAP_OR_GOTO)
+
+/**
+ * \def UNWRAP_OR_BREAK
+ * \brief Unwraps a SOME value, or in case of a NONE value, breaks out of
+ * the current loop or switch case (invokes the `break` keyword).
+ *
+ * This macro helps with flow control when a NONE variant is encountered.
+ *
+ * Example usage:
+ * ```
+ * for (int i = 0; i < 10; i++) {
+ *     ...
+ *     // break out of loop if we get a NONE variant here
+ *     float need_valid_value_here = UNWRAP_OR_BREAK(this_can_be_NONE());
+ *     ...
+ * }
+ * ```
+ */
+#ifndef	UNWRAP_OR_BREAK
+#define	UNWRAP_OR_BREAK(opt) \
+	({ __typeof(opt) __tmp = (opt); \
+	    if (IS_NONE(__tmp)) { break; } UNWRAP(__tmp); })
+#endif	// !defined(UNWRAP_OR_BREAK)
+
+/**
+ * \def UNWRAP_OR_CONTINUE
+ * \brief Unwraps a SOME value, or in case of a NONE value, restarts the
+ * current loop iteration (invokes the `continue` keyword).
+ *
+ * This macro helps with flow control when a NONE variant is encountered.
+ *
+ * Example usage:
+ * ```
+ * for (int i = 0; i < 10; i++) {
+ *     ...
+ *     // continue to next loop iteration if we get a NONE variant here
+ *     float need_valid_value_here = UNWRAP_OR_CONTINUE(this_can_be_NONE());
+ *     ...
+ * }
+ * ```
+ */
+#ifndef	UNWRAP_OR_CONTINUE
+#define	UNWRAP_OR_CONTINUE(opt) \
+	({ __typeof(opt) __tmp = (opt); \
+	    if (IS_NONE(__tmp)) { continue; } UNWRAP(__tmp); })
+#endif	// !defined(UNWRAP_OR_CONTINUE)
+
+/**
  * \def OPT_OR
  * \brief Selects between two optional values based on whether the
  * first optional is in the SOME state.
@@ -1439,6 +1530,41 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 #define	IF_LET_ELSE	} else {
 #define	IF_LET_END	}}
 #endif	// !defined(IF_LET)
+
+/**
+ * \def OPT_INTO
+ * \brief Allows wrapping an implicitly representable value into a suitable
+ * optional.
+ *
+ * This macro works by performing a NONE-check on the value itself, to then
+ * determine whether the value should be wrapped in a SOME variant, or a
+ * NONE variant.
+ *
+ * \note This *only* works for values which can be implicitly represented
+ * in an optional (i.e. they are defined using IMPL_OPTIONAL_IMPLICIT).
+ * This is because we rely on the value itself containing enough information
+ * to convey its state. Only the following types implemented in libacfutils
+ * support implicit conversion into an optional type:
+ * - floating point types `opt_float` and `opt_double`
+ * - string types `opt_str` and `opt_str_const`
+ * - vector geometric types `opt_vect*_t`
+ * - geographic coordinate types `opt_geo_pos*_t`
+ *
+ * Example usage:
+ * ```
+ * float foo();		// may return NAN to indicate an invalid value
+ * IF_LET(float, valid_value, OPT_INTO(foo()))
+ *	// valid_value is guaranteed to be non-NAN here
+ * IF_LET_END
+ * ```
+ */
+#ifndef	OPT_INTO
+#if	__STDC_VERSION__ >= 201112L || defined(__DOXYGEN__)
+#define	OPT_INTO(value)	OPTIONAL_TYPE_SELECTOR(opt_into_, (value))(value)
+#else	// !(__STDC_VERSION__ >= 201112L)
+#define	OPT_INTO(type_name, opt)	opt_into_ ## type_name(value)
+#endif	// !(__STDC_VERSION__ >= 201112L)
+#endif	// !defined(OPT_INTO)
 
 #ifdef	__cplusplus
 }
