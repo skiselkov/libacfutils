@@ -449,10 +449,18 @@ typedef enum {
 		} \
 		VERIFY_FAIL(); \
 	} \
-	static inline opt_ ## type_name \
-	opt_into_ ## type_name(void) { \
-		return (opt_none_ ## type_name()); \
-	}
+	/* \
+	 * This function cannot exist for explicit optional types, but in \
+	 * order for this to work for aliases to implicit optional types, \
+	 * to make the same aliasing function work for all, we fake that \
+	 * there is an explicit type equivalent somewhere. We don't actually \
+	 * ever provide an implementation, so attempting to call this with \
+	 * an explicit optional type is still safe and won't link, but it \
+	 * will not throw a compile-time error due to a call to a \
+	 * non-existent function, or a runtime error if we did have an \
+	 * non-functional faux implementation. \
+	 */ \
+	opt_ ## type_name opt_into_ ## type_name(c_type);
 
 /**
  * \brief Declares a custom optional type with implicit NONE encoding.
