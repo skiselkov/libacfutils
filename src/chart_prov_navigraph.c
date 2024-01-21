@@ -909,7 +909,7 @@ parse_arpt_json(chartdb_t *cdb, const char *icao, const void *json, size_t len)
 {
 	jsmn_parser parser;
 	size_t max_toks = MAX(len / 4, 10000);
-	jsmntok_t toks[max_toks];
+	jsmntok_t *toks = safe_calloc(max_toks, sizeof (*toks));
 	int n_toks;
 	chart_arpt_t *arpt;
 	char name[128] = {}, city[128] = {}, state[8] = {};
@@ -923,6 +923,7 @@ parse_arpt_json(chartdb_t *cdb, const char *icao, const void *json, size_t len)
 	if (n_toks < 0) {
 		logMsg("Error parsing airport %s: airport data doesn't "
 		    "look like well-formed JSON", icao);
+		free(toks);
 		return (NULL);
 	}
 	jsmn_get_tok_data_path(json, toks, n_toks, "name", name, sizeof (name));
@@ -932,6 +933,7 @@ parse_arpt_json(chartdb_t *cdb, const char *icao, const void *json, size_t len)
 
 	arpt = chartdb_add_arpt(cdb, icao, name, city, state);
 	arpt->load_complete = B_TRUE;
+	free(toks);
 
 	return (arpt);
 }
@@ -1045,7 +1047,7 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 {
 	jsmn_parser parser;
 	size_t max_toks = MAX(len / 4, 10000);
-	jsmntok_t toks[max_toks];
+	jsmntok_t *toks = safe_calloc(max_toks, sizeof (*toks));
 	int n_toks;
 	const jsmntok_t *charts_tok;
 
@@ -1057,13 +1059,13 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 	if (n_toks < 0) {
 		logMsg("Error parsing airport %s: chart data doesn't "
 		    "look like well-formed JSON", arpt->icao);
-		return (B_FALSE);
+		goto errout;
 	}
 	charts_tok = jsmn_path_lookup(json, toks, n_toks, "charts");
 	if (charts_tok == NULL) {
 		logMsg("Error parsing airport %s: chart data JSON "
 		    "has invalid structure", arpt->icao);
-		return (B_FALSE);
+		goto errout;
 	}
 	for (int i = 0; i < charts_tok->size; i++) {
 		char idx_nr[32], name[128], cat[8];
@@ -1142,8 +1144,11 @@ parse_chart_json(const void *json, size_t len, chart_arpt_t *arpt)
 			chartdb_chart_destroy(chart);
 		}
 	}
-
+	free(toks);
 	return (B_TRUE);
+errout:
+	free(toks);
+	return (B_FALSE);
 }
 
 chart_arpt_t *

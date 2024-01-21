@@ -34,9 +34,11 @@
 #ifndef	_ACFUTILS_HTBL_H_
 #define	_ACFUTILS_HTBL_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 
+#include "sysmacros.h"
 #include "types.h"
 #include "list.h"
 
@@ -65,29 +67,70 @@ typedef struct {
 	bool_t		multi_value;
 } htbl_t;
 
+typedef struct {
+	htbl_t		h;
+	size_t		value_sz;
+} htbl2_t;
+
 typedef struct htbl_multi_value_s htbl_multi_value_t;
+#ifndef	__INCLUDED_FROM_HTBL_C__
+typedef struct htbl2_multi_value_s htbl2_multi_value_t;
+#else
+typedef struct htbl_multi_value_s htbl2_multi_value_t;
+#endif
 
-API_EXPORT void htbl_create(htbl_t *htbl, size_t tbl_sz, size_t key_sz,
-    bool_t multi_value);
-void htbl_destroy(htbl_t *htbl);
-API_EXPORT void htbl_empty(htbl_t *htbl,
+API_EXPORT void htbl_create(htbl_t REQ_PTR(htbl), size_t tbl_sz,
+    size_t key_sz, bool_t multi_value);
+void htbl_destroy(htbl_t REQ_PTR(htbl));
+
+API_EXPORT void htbl2_create(htbl2_t REQ_PTR(htbl), size_t tbl_sz,
+    size_t key_sz, size_t value_sz, bool multi_value);
+void htbl2_destroy(htbl2_t REQ_PTR(htbl));
+
+API_EXPORT void htbl_empty(htbl_t REQ_PTR(htbl),
     void (*func)(void *value, void *userinfo), void *userinfo);
+API_EXPORT void htbl2_empty(htbl2_t REQ_PTR(htbl), size_t value_sz,
+    void (*func)(void *value, void *userinfo), void *userinfo);
+
 API_EXPORT size_t htbl_count(const htbl_t *htbl);
+API_EXPORT size_t htbl2_count(const htbl2_t *htbl);
 
-API_EXPORT void htbl_set(htbl_t *htbl, const void *key, void *value);
-API_EXPORT void htbl_remove(htbl_t *htbl, const void *key, bool_t nil_ok);
-API_EXPORT void htbl_remove_multi(htbl_t *htbl, const void *key,
-    htbl_multi_value_t *list_item);
+API_EXPORT void htbl_set(htbl_t REQ_PTR(htbl), const void *key, void *value);
+API_EXPORT void htbl2_set(htbl2_t REQ_PTR(htbl), const void *key,
+    size_t key_sz, void *value, size_t value_sz);
 
-API_EXPORT void *htbl_lookup(const htbl_t *htbl, const void *key);
-API_EXPORT const list_t *htbl_lookup_multi(const htbl_t *htbl, const void *key);
-API_EXPORT void *htbl_value_multi(htbl_multi_value_t *mv);
+API_EXPORT void htbl_remove(htbl_t REQ_PTR(htbl),
+    const void *key, bool_t nil_ok);
+API_EXPORT void htbl2_remove(htbl2_t REQ_PTR(htbl),
+    const void *key, size_t key_sz, bool nil_ok);
+
+API_EXPORT void htbl_remove_multi(htbl_t REQ_PTR(htbl),
+    const void *key, htbl_multi_value_t *list_item);
+API_EXPORT void htbl2_remove_multi(htbl2_t REQ_PTR(htbl),
+    const void *key, size_t key_sz, htbl2_multi_value_t *list_item);
+
+API_EXPORT void *htbl_lookup(const htbl_t REQ_PTR(htbl), const void *key);
+API_EXPORT void *htbl2_lookup(const htbl2_t REQ_PTR(htbl), const void *key,
+    size_t key_sz, size_t value_sz);
+
+API_EXPORT const list_t *htbl_lookup_multi(const htbl_t REQ_PTR(htbl),
+    const void *key);
+API_EXPORT const list_t *htbl2_lookup_multi(const htbl2_t REQ_PTR(htbl),
+    const void *key, size_t key_sz);
+
+API_EXPORT void *htbl_value_multi(const htbl_multi_value_t *mv);
+API_EXPORT void *htbl2_value_multi(const htbl2_multi_value_t *mv,
+    size_t value_sz);
 /**
  * Legacy backwards compatibility macro that just invokes htbl_value_multi().
  */
 #define	HTBL_VALUE_MULTI(x)	htbl_value_multi(x)
 
 API_EXPORT void htbl_foreach(const htbl_t *htbl,
+    void (*func)(const void *key, void *value, void *userinfo),
+    void *userinfo);
+API_EXPORT void htbl2_foreach(const htbl2_t REQ_PTR(htbl),
+    size_t key_sz, size_t value_sz,
     void (*func)(const void *key, void *value, void *userinfo), void *userinfo);
 
 API_EXPORT char *htbl_dump(const htbl_t *htbl, bool_t printable_keys);

@@ -1820,15 +1820,17 @@ accelclb2dist(const flt_perf_t *flt, const acft_perf_t *acft, double isadev,
 	return (dist);
 }
 
-double
-dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
+opt_double
+dist2accelclb(const flt_perf_t REQ_PTR(flt), const acft_perf_t REQ_PTR(acft),
     double isadev, double qnh, double tp_alt, double accel_alt,
-    double fuel, vect2_t dir, double flap_ratio, double *alt,
-    double *kcas, vect2_t wind, double alt_tgt, double kcas_tgt,
+    double fuel, vect2_t dir, double flap_ratio, double REQ_PTR(alt_ft_p),
+    double REQ_PTR(kcas_p), vect2_t wind, double alt_tgt_ft, double kcas_tgt,
     double mach_lim, double dist_tgt, accelclb_t type, double *burnp,
     double *ttg_out)
 {
-	double alt1_ft = *alt;
+	ASSERT3F(*alt_ft_p, <=, alt_tgt_ft);
+	double alt_ft = *alt_ft_p;
+	double alt1_ft = alt_ft;
 	double dist = 0, burn = 0;
 	double wind_mps = KT2MPS(vect2_dotprod(wind, dir));
 	double step = select_step(type);
@@ -1836,92 +1838,107 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 	int iter_counter = 0;
 	double vs = 0;
 
-	ASSERT3F(*alt, <=, alt_tgt);
-	ASSERT3F(*kcas, >, 0);
-	ASSERT3F(*kcas, <=, kcas_tgt);
+	ASSERT3F(*kcas_p, >, 0);
+	ASSERT3F(*kcas_p, <=, kcas_tgt);
+	double kcas = *kcas_p;
 	ASSERT(!isnan(accel_alt) || type != ACCEL_TAKEOFF);
-	/* ttg_out can be NULL */
-	if (ttg_out != NULL)
-		*ttg_out = 0;
-
-	while (dist < dist_tgt && alt_tgt - (*alt) > ALT_THRESH) {
-		double tas_mps = KT2MPS(kcas2ktas(*kcas, alt2press(*alt, qnh),
-		    isadev2sat(alt2fl(*alt, qnh), isadev)));
+	double ttg = 0;
+	/*
+	 * If the dist_tgt is very large, or we're flying very slowly, we
+	 * might run up against MAX_ITER_STEPS too early. So allow adjusting
+	 * the step size to hopefully make sure we reach the target before
+	 * running up against the iteration limit.
+	 */
+	{
+		double oat_guess = isadev2sat(alt2fl(alt_tgt_ft,
+		    ISA_SL_PRESS), 0);
+		double pressure_guess = alt2press(alt_tgt_ft, ISA_SL_PRESS);
+		double ktas_guess = kcas2ktas(kcas_tgt, pressure_guess,
+		    oat_guess);
+		double min_step = ((dist_tgt / ktas_guess) * 3600) /
+		    MAX_ITER_STEPS;
+		step = MAX(step, min_step * 2);
+	}
+	while (dist < dist_tgt && alt_tgt_ft - alt_ft > ALT_THRESH) {
+		double tas_mps = KT2MPS(kcas2ktas(kcas, alt2press(alt_ft, qnh),
+		    isadev2sat(alt2fl(alt_ft, qnh), isadev)));
 		double rmng = NM2MET(dist_tgt - dist);
 		ASSERT3F(tas_mps, >, 0);
 		double t_rmng = MIN(rmng / tas_mps, step);
 		double accel_t, clb_t, oat, Ps, ktas_lim_mach, kcas_lim_mach,
 		    kcas_lim;
 		/* step debug support */
-		double old_alt = *alt;
-		double old_kcas = *kcas;
+		double old_alt = alt_ft;
+		double old_kcas = kcas;
 		bool_t table = B_FALSE;
 
-		ASSERT3S(iter_counter, <, MAX_ITER_STEPS);
-
-		oat = isadev2sat(alt2fl(*alt, qnh), isadev);
-		Ps = alt2press(*alt, qnh);
+		if (iter_counter >= MAX_ITER_STEPS) {
+			// Solution didn't converge, abort
+			return (NONE(double));
+		}
+		oat = isadev2sat(alt2fl(alt_ft, qnh), isadev);
+		Ps = alt2press(alt_ft, qnh);
 		ktas_lim_mach = mach2ktas(mach_lim, oat);
 		kcas_lim_mach = ktas2kcas(ktas_lim_mach, Ps, oat);
 
 		kcas_lim = kcas_tgt;
 		for (int i = 0; i < FLT_PERF_NUM_SPD_LIMS; i++) {
-			if (*alt < flt->clb_spd_lim[i].alt_ft) {
+			if (alt_ft < flt->clb_spd_lim[i].alt_ft) {
 				kcas_lim = MIN(kcas_lim,
 				    flt->clb_spd_lim[i].kias);
 			}
 		}
 		if (kcas_lim > kcas_lim_mach)
 			kcas_lim = kcas_lim_mach;
-		if (alt_tgt - (*alt) < ALT_THRESH && kcas_lim < kcas_tgt)
+		if (alt_tgt_ft - alt_ft < ALT_THRESH && kcas_lim < kcas_tgt)
 			kcas_tgt = kcas_lim;
 		/*
 		 * Swap to accel-and-climb tabulated profiles when we're
 		 * 1000ft above the acceleration altitude.
 		 */
-		if (type == ACCEL_TAKEOFF && *alt > accel_alt + 1000)
+		if (type == ACCEL_TAKEOFF && alt_ft > accel_alt + 1000)
 			type = ACCEL_AND_CLB;
 		/*
 		 * ACCEL_THEN_CLB and ACCEL_TAKEOFF first accelerate to kcas2
 		 * and then climb. ACCEL_AND_CLB does a 50/50 time split.
 		 */
-		accel_t = accel_time_split(type, *kcas, flt->clb_ias_init,
-		    *alt, accel_alt, t_rmng, flap_ratio, flt->to_flap,
+		accel_t = accel_time_split(type, kcas, flt->clb_ias_init,
+		    alt_ft, accel_alt, t_rmng, flap_ratio, flt->to_flap,
 		    &flap_ratio_act);
 
-		if (should_use_clb_tables(acft, type, *kcas, kcas_lim)) {
+		if (should_use_clb_tables(acft, type, kcas, kcas_lim)) {
 			bool_t is_mach = (kcas_tgt >= kcas_lim_mach);
 			double spd = (is_mach ? mach_lim :
 			    KT2MPS(kcas_tgt));
 			double nalt, nburn, ndist;
 
-			clb_table_step(acft, isadev, qnh, FEET2MET(*alt),
+			clb_table_step(acft, isadev, qnh, FEET2MET(alt_ft),
 			    spd, is_mach, flt->zfw + fuel - burn, wind_mps,
 			    step, &nalt, &nburn, &ndist);
-			*alt = MET2FEET(nalt);
+			alt_ft = MET2FEET(nalt);
 			burn += nburn;
 			dist += MET2NM(ndist);
 			clb_t = step - accel_t;
 			if (is_mach)
-				*kcas = kcas_lim_mach;
+				kcas = kcas_lim_mach;
 			else
-				*kcas = kcas_lim;
+				kcas = kcas_lim;
 			if (step_debug)
 				table = B_TRUE;
 		} else {
 			if (accel_t > 0) {
 				spd_chg_step(B_TRUE, isadev, tp_alt,
 				    qnh, type == ACCEL_TAKEOFF &&
-				    (*alt) == alt1_ft,
-				    *alt, kcas, kcas_lim, wind_mps,
-				    flt->zfw + fuel - burn, flap_ratio_act,
-				    acft, flt, &dist, &accel_t, &burn);
+				    alt_ft == alt1_ft, alt_ft, &kcas, kcas_lim,
+				    wind_mps, flt->zfw + fuel - burn,
+				    flap_ratio_act, acft, flt, &dist,
+				    &accel_t, &burn);
 			}
 
 			clb_t = t_rmng - accel_t;
-			if (clb_t > 0 && alt_tgt - (*alt) > ALT_THRESH) {
+			if (clb_t > 0 && alt_tgt_ft - alt_ft > ALT_THRESH) {
 				alt_chg_step(B_TRUE, isadev, tp_alt, qnh,
-				    alt, &vs, kcas, alt_tgt, wind_mps,
+				    &alt_ft, &vs, &kcas, alt_tgt_ft, wind_mps,
 				    flt->zfw + fuel - burn, flap_ratio_act,
 				    acft, flt, &dist, &clb_t, &burn);
 			}
@@ -1931,26 +1948,31 @@ dist2accelclb(const flt_perf_t *flt, const acft_perf_t *acft,
 			double total_t;
 
 			total_t = accel_t + clb_t;
-			oat = isadev2sat(alt2fl(*alt, qnh), isadev);
+			oat = isadev2sat(alt2fl(alt_ft, qnh), isadev);
 
 			printf("V:%5.01lf  +V:%5.02lf  H:%5.0lf  fpm:%4.0lf  "
-			    "s:%6.0lf  M:%5.03lf  tab:%d\n", *kcas,
-			    ((*kcas) - old_kcas) / total_t, *alt,
-			    (((*alt) - old_alt) / total_t) * 60,
-			    NM2MET(dist), ktas2mach(kcas2ktas(*kcas,
-			    alt2press(*alt, qnh), oat), oat), table);
+			    "s:%6.0lf  M:%5.03lf  tab:%d\n", kcas,
+			    ((kcas) - old_kcas) / total_t, alt_ft,
+			    (((alt_ft) - old_alt) / total_t) * 60,
+			    NM2MET(dist), ktas2mach(kcas2ktas(kcas,
+			    alt2press(alt_ft, qnh), oat), oat), table);
 		}
+		ttg += step;
 		iter_counter++;
-		if (ttg_out != NULL)
-			(*ttg_out) += step;
 	}
+	// write out state variables
+	*alt_ft_p = alt_ft;
+	*kcas_p = kcas;
 	if (burnp != NULL)
 		*burnp = burn;
+	/* ttg_out can be NULL */
+	if (ttg_out != NULL)
+		*ttg_out = ttg;
 
 	ASSERT(!isnan(dist));
 	ASSERT(isfinite(dist));
 	ASSERT3F(dist, >=, 0);
-	return (dist);
+	return (SOME(dist));
 }
 
 double

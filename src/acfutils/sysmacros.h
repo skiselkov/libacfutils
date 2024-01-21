@@ -22,6 +22,9 @@
 /*
  * Copyright 2018 Saso Kiselkov. All rights reserved.
  */
+/**
+ * \file
+ */
 
 #ifndef	_ACF_UTILS_SYSMACROS_H_
 #define	_ACF_UTILS_SYSMACROS_H_
@@ -166,7 +169,8 @@ extern "C" {
  * TYPE_ASSERT is a compile-time assertion, but which checks that
  * the type of `x' is `type'.
  */
-#if	__STDC_VERSION__ >= 201112L && (!defined(__GNUC__) || __GNUC__ > 7)
+#if	__STDC_VERSION__ >= 201112L && \
+    (!defined(__GNUC__) || __GNUC__ > 7 || defined(__clang__))
 #define	CTASSERT(x) _Static_assert((x), #x)
 #define	TYPE_ASSERT(x, type) \
 	CTASSERT(_Generic((x), type: 1, default: 0) != 0)
@@ -287,6 +291,142 @@ highbit64(unsigned long long x)
 
 #define	SCANF_STR_AUTOLEN_IMPL(_str_)	#_str_
 #define	SCANF_STR_AUTOLEN(_str_)	SCANF_STR_AUTOLEN_IMPL(_str_)
+
+/**
+ * \def REQ_PTR
+ * Marks a pointer argument as a required (i.e. non-NULL'able). This uses
+ * C11's `[static 1]` syntax to declare a pointer, which must point to
+ * allocated memory. The way to use this macro is as follows:
+ * ```
+ * int foo(object_t REQ_PTR(arg));
+ * ```
+ * This declares a pointer argument named `arg` to be non-NULL'able. When
+ * compiling for C11 or higher, this expands into:
+ * ```
+ * int foo(object_t arg[static 1]);
+ * ```
+ * The code in the function can then manipulate this pointer as more-or-less
+ * a normal pointer, with the exception that you may not call `free()` on it,
+ * as that violates the guarantee that the pointer always point to allocated
+ * memory. The code may, however, freely read and write to the object. There
+ * is an additional constraint, in that the compiler now treats this as a
+ * pointer to a single object, rather than an indexable array. To declare a
+ * non-NULL'able pointer to an array of known size, use the REQ_ARR() macro.
+ *
+ * If the caller doesn't support C11 constructs (e.g. it is C++ or Rust),
+ * this macro expands to a plain pointer, so this safety aspect is only
+ * available for C11 or newer code.
+ *
+ * Please also note that this doesn't guarantee that there is no combination
+ * of factors possible where this pointer may be NULL even in pure C11 code.
+ * If the caller is simply passing through a plain pointer from their own
+ * arguments (the caller function just serving as an intermediary), then the
+ * ultimate origin of the pointer might still have passed NULL. For this
+ * guarantee to hold fully, all code up the stack would need to support C11
+ * constructs and/or provide rubust integrity checks against stray NULLs.
+ */
+#ifndef	REQ_PTR
+#if	__STDC_VERSION__ >= 201112L
+#define	REQ_PTR(x)	x[static 1]
+#else
+#define	REQ_PTR(x)	*x
+#endif
+#endif	// !defined(REQ_PTR)
+
+/**
+ * \def REQ_ARR
+ * Same as REQ_PTR(), except allows specifying a number of elements in a
+ * fixed-size array. This will allow you to treat the pointer as an array
+ * while letting the compiler perform static bounds checking where possible.
+ * If the caller passes a fixed-size array, the compiler will also perform
+ * bounds checking on the calling side.
+ *
+ * The way to use this macro is as follows:
+ * ```
+ * int foo(object_t REQ_ARR(arg, 5));
+ * ```
+ * This declares a pointer argument named `arg` to be a non-NULL'able
+ * reference to an array of at least 5 elements. When compiling for C11
+ * or higher, this expands into:
+ * ```
+ * int foo(object_t arg[static 5]);
+ * ```
+ * Please note that this doesn't imply any kind of runtime bounds checks.
+ * If you use a runtime variable to perform array indexing, this is still
+ * not guaranteed to catch out-of-bounds array access bugs.
+ *
+ * Another method to use this macro is to pass a dynamic size, such as:
+ * ```
+ * int foo(size_t n, object_t REQ_ARR(arg, n));
+ * ```
+ * This lets the callee accept variable-length arrays, while still letting
+ * the caller perform compile-time bounds checks, such that a mismatched
+ * size argument and actual static array size can be detected and flagged.
+ * Once again, this doesn't provide dynamic bounds checks, so its function
+ * is simply to serve as additional type annotations for checks which can
+ * be performed at compile time.
+ */
+#ifndef	REQ_ARR
+#if	__STDC_VERSION__ >= 201112L
+#define	REQ_ARR(x, n)	x[static (n)]
+#else
+#define	REQ_ARR(x)	x[n]
+#endif
+#endif	// !defined(REQ_ARR)
+
+/**
+ * \def ENUM_BIT_WIDTH_CHECK
+ * \brief Compile-time macro for checking whether an enum can be represented
+ *	in a fixed number of bits.
+ *
+ * This macro lets you perform a simple compile-time check to validate that
+ * all variants of an enum fit into a fixed bit space representation. This
+ * way you can validate that no variant accidentally exceeds the amount of
+ * bit space allocated in a bit field.
+ *
+ * This macro is used in conjunction with the ENUM_BIT_WIDTH_CHECK_VARIANT
+ * macro as follows:
+ * ```
+ * enum foo {
+ *     foo_a,
+ *     foo_b,
+ *     foo_c,
+ *     foo_d,
+ * };
+ * uint8_t encode_enum_foo(enum foo bar) {
+ *      // check to make sure all of enum foo fits into 2 bits
+ *      ENUM_BIT_WIDTH_CHECK(enum foo, 2,
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_a);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_b);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_c);
+ *          ENUM_BIT_WIDTH_CHECK_VARIANT(foo_d);
+ *      );
+ * }
+ * ```
+ * This macro performs no runtime computation and thus is complete inert
+ * from a runtime standpoint. All checking is performed at compile time.
+ * While you must manually list all enum variants in the macro to perform
+ * all checks, your compiler should warn you about unhandled variants, in
+ * case you forgot some, or added some variants later.
+ */
+#ifndef	ENUM_BIT_WIDTH_CHECK
+#define	ENUM_BIT_WIDTH_CHECK(enum_type, num_bits, ...) \
+	do { \
+		enum_type __enum_check_value__ = 0; \
+		CTASSERT(num_bits > 0); \
+		enum { __enum_check_max_value__ = (1 << (num_bits)) - 1 }; \
+		switch (__enum_check_value__) { \
+		    __VA_ARGS__ \
+		} \
+	} while (0)
+#define	ENUM_BIT_WIDTH_CHECK_VARIANT(variant_name) \
+	case variant_name: { \
+		CTASSERT((int)variant_name >= 0); \
+		CTASSERT((unsigned long long)variant_name <= \
+		    (unsigned long long)__enum_check_max_value__); \
+	    } \
+	    break
+#endif	// !defined(ENUM_BIT_WIDTH_CHECK)
 
 #ifdef	__cplusplus
 }

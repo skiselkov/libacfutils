@@ -43,6 +43,7 @@
 #include "acfutils/helpers.h"
 #include "acfutils/list.h"
 #include "acfutils/math.h"
+#include "acfutils/optional.h"
 #include "acfutils/perf.h"
 #include "acfutils/safe_alloc.h"
 #include "acfutils/types.h"
@@ -55,7 +56,7 @@
 /* precomputed, since it doesn't change */
 #define	RWY_APCH_PROXIMITY_LAT_DISPL	(RWY_APCH_PROXIMITY_LON_DISPL * \
 	__builtin_tan(DEG2RAD(RWY_APCH_PROXIMITY_LAT_ANGLE)))
-#define	ARPTDB_CACHE_VERSION		20
+#define	ARPTDB_CACHE_VERSION		21
 
 #define	VGSI_LAT_DISPL_FACT		2	/* rwy width multiplier */
 #define	VGSI_HDG_MATCH_THRESH		5	/* degrees */
@@ -367,15 +368,15 @@ recreate_icao_iata_tables(airportdb_t *db, unsigned cap)
 {
 	ASSERT(db != NULL);
 
-	htbl_empty(&db->icao_index, NULL, NULL);
-	htbl_destroy(&db->icao_index);
-	htbl_empty(&db->iata_index, NULL, NULL);
-	htbl_destroy(&db->iata_index);
+	htbl2_empty(&db->icao_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->icao_index);
+	htbl2_empty(&db->iata_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->iata_index);
 
-	htbl_create(&db->icao_index, MAX(P2ROUNDUP(cap), 16),
-	    AIRPORTDB_ICAO_LEN, B_TRUE);
-	htbl_create(&db->iata_index, MAX(P2ROUNDUP(cap), 16),
-	    AIRPORTDB_IATA_LEN, B_TRUE);
+	htbl2_create(&db->icao_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_ICAO_LEN, sizeof (arpt_index_t), B_TRUE);
+	htbl2_create(&db->iata_index, MAX(P2ROUNDUP(cap), 16),
+	    AIRPORTDB_IATA_LEN, sizeof (arpt_index_t), B_TRUE);
 }
 
 /*
@@ -783,12 +784,12 @@ normalize_name(iconv_t *cd_p, char *str_in, char *str_out, size_t cap)
 	ASSERT(str_in != NULL);
 	ASSERT(str_out != NULL);
 
-	char str_conv[strlen(str_in) + 1];
+	unsigned l = strlen(str_in) + 1;
+	char *str_conv = safe_calloc(l, sizeof (*str_conv));
 	char *conv_in = str_in, *conv_out = str_conv;
 	size_t conv_in_sz = strlen(str_in);
-	size_t conv_out_sz = sizeof (str_conv);
+	size_t conv_out_sz = l;
 
-	memset(str_conv, 0, sizeof (str_conv));
 	iconv(*cd_p, &conv_in, &conv_in_sz, &conv_out, &conv_out_sz);
 	for (size_t i = 0, j = 0; str_conv[i] != '\0' && j + 1 < cap; i++) {
 		if (str_conv[i] != '\'' && str_conv[i] != '`' &&
@@ -797,6 +798,7 @@ normalize_name(iconv_t *cd_p, char *str_in, char *str_out, size_t cap)
 			str_out[j++] = str_conv[i];
 		}
 	}
+	free(str_conv);
 }
 
 static char *
@@ -880,6 +882,12 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	 * that the code listed in the ident here is the ICAO code.
 	 */
 	strlcpy(arpt->icao, arpt->ident, sizeof (arpt->icao));
+	const char *cc = extract_icao_country_code(arpt->icao);
+	if (cc != NULL) {
+		lacf_strlcpy(arpt->cc, cc, sizeof (arpt->cc));
+	} else {
+		lacf_strlcpy(arpt->cc, "ZZ", sizeof (arpt->cc));
+	}
 
 	avl_create(&arpt->ramp_starts, ramp_start_compar,
 	    sizeof (ramp_start_t), offsetof(ramp_start_t, node));
@@ -1381,38 +1389,61 @@ out:
 	free_strlist(comps, n_comps);
 }
 
-static void
-extract_TA(airport_t *arpt, char *const*comps)
+static opt_float
+extract_TA_TL_ft(char *const*comps, size_t n_comps)
 {
-	int TA;
-
-	ASSERT(arpt != NULL);
 	ASSERT(comps != NULL);
-
-	TA = atoi(comps[2]);
-	if (is_valid_elev(TA)) {
-		arpt->TA = TA;
-		arpt->TA_m = FEET2MET(TA);
-	}
-}
-
-static void
-extract_TL(airport_t *arpt, char *const*comps)
-{
-	int TL;
-	ASSERT(arpt != NULL);
-	ASSERT(comps != NULL);
-
-	TL = atoi(comps[2]);
+	ASSERT3U(n_comps, >=, 3);
 	/*
-	 * Some "intelligent" people put in a flight level here, instead of
-	 * a number in feet. Detect that flip over to feet.
+	 * This field comes extremely mangled in the apt.dat data.
+	 * It seems WED performs no input validation on this, so users
+	 * are allowed to throw just any old junk in there.
 	 */
-	if (TL < 600)
-		TL *= 100;
-	if (is_valid_elev(TL)) {
-		arpt->TL = TL;
-		arpt->TL_m = FEET2MET(TL);
+	ASSERT(strlen(comps[2]) != 0);
+	// sometimes there's a 'm' suffix as a separate word
+	bool metric = false;
+	if (n_comps >= 4) {
+		ASSERT(strlen(comps[3]) != 0);
+		metric = (tolower(comps[3][0]) == 'm');
+	// sometimes the units are appended to the end of the number
+	} else if (tolower(comps[2][strlen(comps[2]) - 1]) == 'm') {
+		metric = true;
+	}
+	char *buf = NULL;
+	bool is_fl = false;
+	// sometimes they write 'FL 123', so read the next field
+	if (lacf_strcasecmp(comps[2], "FL") == 0 && n_comps > 3) {
+		buf = safe_strdup(comps[3]);
+		is_fl = true;
+	} else {
+		buf = safe_strdup(comps[2]);
+	}
+	// strip a leading 'FL'
+	if (lacf_strcasestr(buf, "FL") == buf) {
+		memmove(buf, &buf[2], strlen(&buf[2]) + 1);
+		is_fl = true;
+	}
+	// go through the buffer and drop any piece of non-numeric junk
+	// in there, to hopefully reconstitute something parseable
+	for (unsigned i = 0, n = strlen(buf); i < n; i++) {
+		if (!isdigit(buf[i])) {
+			memmove(&buf[i], &buf[i + 1], strlen(&buf[i + 1]) + 1);
+		}
+	}
+	float alt = 0;
+	if (sscanf(buf, "%f", &alt) == 1) {
+		if (is_fl || (alt < 600 && !metric)) {
+			alt *= 100;
+		}
+		// sometimes they write '21700 m' when they meant 21700 ft
+		// in a metric country (China), so ignore the 'm' tag there
+		if (metric && MET2FEET(alt) < 60000) {
+			alt = MET2FEET(alt);
+		}
+		return (SOME(alt));
+	} else {
+		free(buf);
+		return (NONE(float));
 	}
 }
 
@@ -1445,10 +1476,16 @@ fill_dup_arpt_info(airport_t *arpt, const char *line, int row_code)
 			lacf_strlcpy(arpt->iata, comps[2], sizeof (arpt->iata));
 		} else if (strcmp(comps[1], "transition_alt") == 0 &&
 		    ncomps >= 3 && arpt->TA == 0) {
-			extract_TA(arpt, comps);
+			IF_LET(float, TA_ft, extract_TA_TL_ft(comps, ncomps))
+				arpt->TA = TA_ft;
+				arpt->TA_m = FEET2MET(TA_ft);
+			IF_LET_END
 		} else if (strcmp(comps[1], "transition_level") == 0 &&
 		    ncomps >= 3 && arpt->TL == 0) {
-			extract_TL(arpt, comps);
+			IF_LET(float, TL_ft, extract_TA_TL_ft(comps, ncomps))
+				arpt->TL = TL_ft;
+				arpt->TL_m = FEET2MET(TL_ft);
+			IF_LET_END
 		} else if (strcmp(comps[1], "region_code") == 0 &&
 		    ncomps >= 3 && strcmp(comps[2], "-") != 0) {
 			lacf_strlcpy(arpt->cc, comps[2], sizeof (arpt->cc));
@@ -1617,9 +1654,17 @@ read_apt_dat(airportdb_t *db, const char *apt_dat_fname, bool_t fail_ok,
 				arpt->name_orig = concat_comps(&comps[2],
 				    ncomps - 2);
 			} else if (strcmp(comps[1], "transition_alt") == 0) {
-				extract_TA(arpt, comps);
+				IF_LET(float, TA_ft, extract_TA_TL_ft(comps,
+				    ncomps))
+					arpt->TA = TA_ft;
+					arpt->TA_m = FEET2MET(TA_ft);
+				IF_LET_END
 			} else if (strcmp(comps[1], "transition_level") == 0) {
-				extract_TL(arpt, comps);
+				IF_LET(float, TL_ft, extract_TA_TL_ft(comps,
+				    ncomps))
+					arpt->TL = TL_ft;
+					arpt->TL_m = FEET2MET(TL_ft);
+				IF_LET_END
 			} else if (strcmp(comps[1], "datum_lat") == 0) {
 				double lat = atof(comps[2]);
 				if (is_valid_lat(lat)) {
@@ -1914,8 +1959,8 @@ static bool_t
 load_CIFP_dir(airportdb_t *db, const char *dirpath)
 {
 	int dirpath_len = strlen(dirpath);
-	TCHAR dirnameT[dirpath_len + 1];
-	TCHAR srchnameT[dirpath_len + 4];
+	TCHAR *dirnameT = safe_calloc(dirpath_len + 1, sizeof (*dirnameT));
+	TCHAR *srchnameT = safe_calloc(dirpath_len + 4, sizeof (*srchnameT));
 	WIN32_FIND_DATA find_data;
 	HANDLE h_find;
 
@@ -1925,21 +1970,30 @@ load_CIFP_dir(airportdb_t *db, const char *dirpath)
 	MultiByteToWideChar(CP_UTF8, 0, dirpath, -1, dirnameT, dirpath_len + 1);
 	StringCchPrintf(srchnameT, dirpath_len + 4, TEXT("%s\\*"), dirnameT);
 	h_find = FindFirstFile(srchnameT, &find_data);
-	if (h_find == INVALID_HANDLE_VALUE)
-		return (B_FALSE);
-
+	if (h_find == INVALID_HANDLE_VALUE) {
+		goto errout;
+	}
 	do {
 		if (wcscmp(find_data.cFileName, TEXT(".")) == 0 ||
-		    wcscmp(find_data.cFileName, TEXT("..")) == 0)
+		    wcscmp(find_data.cFileName, TEXT("..")) == 0) {
 			continue;
-		char filename[wcslen(find_data.cFileName) + 1];
+		}
+		unsigned l = wcslen(find_data.cFileName) + 1;
+		char *filename = safe_calloc(l, sizeof (*filename));
 		WideCharToMultiByte(CP_UTF8, 0, find_data.cFileName, -1,
-		    filename, sizeof (filename), NULL, NULL);
+		    filename, l, NULL, NULL);
 		(void) load_CIFP_file(db, dirpath, filename);
+		free(filename);
 	} while (FindNextFile(h_find, &find_data));
 
 	FindClose(h_find);
+	free(dirnameT);
+	free(srchnameT);
 	return (B_TRUE);
+errout:
+	free(dirnameT);
+	free(srchnameT);
+	return (B_FALSE);
 }
 
 #else	/* !IBM */
@@ -2231,7 +2285,7 @@ create_arpt_index(airportdb_t *db, const airport_t *arpt)
 	if (arpt->cc[0] != '\0')
 		lacf_strlcpy(idx->cc, arpt->cc, sizeof (idx->cc));
 	else
-		lacf_strlcpy(idx->cc, "-", sizeof (idx->cc));
+		lacf_strlcpy(idx->cc, "ZZ", sizeof (idx->cc));
 	idx->pos = TO_GEO3_32(arpt->refpt);
 	for (const runway_t *rwy = avl_first(&arpt->rwys); rwy != NULL;
 	    rwy = AVL_NEXT(&arpt->rwys, rwy)) {
@@ -2246,11 +2300,14 @@ create_arpt_index(airportdb_t *db, const airport_t *arpt)
 	idx->TL = arpt->TL;
 
 	avl_add(&db->arpt_index, idx);
-	if (idx->icao[0] != '\0')
-		htbl_set(&db->icao_index, idx->icao, idx);
-	if (idx->iata[0] != '\0')
-		htbl_set(&db->iata_index, idx->iata, idx);
-
+	if (idx->icao[0] != '\0') {
+		htbl2_set(&db->icao_index, idx->icao, sizeof (idx->icao),
+		    idx, sizeof (*idx));
+	}
+	if (idx->iata[0] != '\0') {
+		htbl2_set(&db->iata_index, idx->iata, sizeof (idx->iata),
+		    idx, sizeof (*idx));
+	}
 	return (idx);
 }
 
@@ -2303,9 +2360,12 @@ read_index_dat(airportdb_t *db)
 		}
 		if (avl_find(&db->arpt_index, idx, &where) == NULL) {
 			avl_insert(&db->arpt_index, idx, where);
-			htbl_set(&db->icao_index, idx->icao, idx);
-			if (strcmp(idx->iata, "-") != 0)
-				htbl_set(&db->iata_index, idx->iata, idx);
+			htbl2_set(&db->icao_index, idx->icao,
+			    sizeof (idx->icao), idx, sizeof (*idx));
+			if (strcmp(idx->iata, "-") != 0) {
+				htbl2_set(&db->iata_index, idx->iata,
+				    sizeof (idx->iata), idx, sizeof (*idx));
+			}
 		} else {
 			logMsg("WARNING: found duplicate airport ident %s "
 			    "in index. Skipping it. This shouldn't happen "
@@ -3116,8 +3176,10 @@ airportdb_create(airportdb_t *db, const char *xpdir, const char *cachedir)
 	 * Just some defaults - we'll resize the tables later when
 	 * we actually read the index file.
 	 */
-	htbl_create(&db->icao_index, 16, AIRPORTDB_ICAO_LEN, B_TRUE);
-	htbl_create(&db->iata_index, 16, AIRPORTDB_IATA_LEN, B_TRUE);
+	htbl2_create(&db->icao_index, 16, AIRPORTDB_ICAO_LEN,
+	    sizeof (arpt_index_t), B_TRUE);
+	htbl2_create(&db->iata_index, 16, AIRPORTDB_IATA_LEN,
+	    sizeof (arpt_index_t), B_TRUE);
 }
 
 /**
@@ -3147,10 +3209,10 @@ airportdb_destroy(airportdb_t *db)
 	avl_destroy(&db->geo_table);
 	avl_destroy(&db->apt_dat);
 
-	htbl_empty(&db->icao_index, NULL, NULL);
-	htbl_destroy(&db->icao_index);
-	htbl_empty(&db->iata_index, NULL, NULL);
-	htbl_destroy(&db->iata_index);
+	htbl2_empty(&db->icao_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->icao_index);
+	htbl2_empty(&db->iata_index, sizeof (arpt_index_t), NULL, NULL);
+	htbl2_destroy(&db->iata_index);
 
 	mutex_destroy(&db->lock);
 
@@ -3221,7 +3283,7 @@ airport_lookup_htbl_multi(airportdb_t *db, const list_t *list,
 
 	for (void *mv = list_head(list); mv != NULL;
 	    mv = list_next(list, mv)) {
-		arpt_index_t *idx = HTBL_VALUE_MULTI(mv);
+		arpt_index_t *idx = htbl2_value_multi(mv, sizeof (*idx));
 
 		if (found_cb != NULL) {
 			airport_t *apt = adb_airport_lookup(db, idx->ident,
@@ -3273,7 +3335,8 @@ adb_airport_lookup_by_icao(airportdb_t *db, const char *icao,
 	ASSERT(icao != NULL);
 
 	strlcpy(icao_srch, icao, sizeof (icao_srch));
-	list = htbl_lookup_multi(&db->icao_index, icao_srch);
+	list = htbl2_lookup_multi(&db->icao_index, icao_srch,
+	    sizeof (icao_srch));
 	if (list != NULL) {
 		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
 		return (list_count(list));
@@ -3299,7 +3362,8 @@ adb_airport_lookup_by_iata(airportdb_t *db, const char *iata,
 	ASSERT(iata != NULL);
 
 	strlcpy(iata_srch, iata, sizeof (iata_srch));
-	list = htbl_lookup_multi(&db->iata_index, iata_srch);
+	list = htbl2_lookup_multi(&db->iata_index, iata_srch,
+	    sizeof (iata_srch));
 	if (list != NULL) {
 		airport_lookup_htbl_multi(db, list, found_cb, userinfo);
 		return (list_count(list));
@@ -3376,7 +3440,7 @@ adb_airport_lookup_global(airportdb_t *db, const char *icao)
  *	simply returning the number of airports in the index.
  */
 size_t
-adb_airport_index_walk(airportdb_t *db,
+adb_airport_index_walk(const airportdb_t *db,
     void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo)
 {
 	ASSERT(db != NULL);

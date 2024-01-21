@@ -33,7 +33,11 @@
 #endif	/* !APL && !LIN */
 
 #if	__STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__) && \
-    !(defined(__GNUC__) || __GNUC__ >= 7)
+    (!defined(__GNUC__) || __GNUC__ >= 7 || defined(__clang__))
+#define	_USE_STDATOMICS
+#endif
+
+#ifdef	_USE_STDATOMICS
 #include <stdatomic.h>
 #elif	APL
 #include <libkern/OSAtomic.h>
@@ -273,7 +277,7 @@ typedef struct {
  * @see VERIFY_MUTEX_NOT_HELD()
  * @see ASSERT_MUTEX_HELD()
  */
-#if	__STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#ifdef	_USE_STDATOMICS
 #define	atomic32_t		_Atomic int32_t
 #define	atomic_inc_32(x)	atomic_fetch_add((x), 1)
 #define	atomic_dec_32(x)	atomic_fetch_add((x), -1)

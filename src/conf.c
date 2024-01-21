@@ -542,7 +542,10 @@ conf_write_file2(const conf_t *conf, const char *filename, bool_t compressed)
 size_t
 conf_write_buf(const conf_t *conf, void *buf, size_t cap)
 {
-	return (conf_write_impl(conf, buf, cap, B_FALSE, B_TRUE));
+	int res = conf_write_impl(conf, buf, cap, B_FALSE, B_TRUE);
+	// buffer writing must never fail, as it does no I/O
+	ASSERT3S(res, >=, 0);
+	return ((size_t)res);
 }
 
 static bool_t
@@ -673,7 +676,7 @@ errout:
 bool_t
 conf_write(const conf_t *conf, FILE *fp)
 {
-	return (conf_write_impl(conf, fp, 0, B_FALSE, B_TRUE));
+	return (conf_write_impl(conf, fp, 0, B_FALSE, B_FALSE));
 }
 
 /**
@@ -684,11 +687,12 @@ conf_write(const conf_t *conf, FILE *fp)
 static conf_key_t *
 conf_find(const conf_t *conf, const char *key, avl_index_t *where)
 {
-	char buf[strlen(key) + 1];
-	const conf_key_t srch = { .key = buf };
-	lacf_strlcpy(buf, key, sizeof (buf));
+	char *buf = safe_strdup(key);
 	strtolower(buf);
-	return (avl_find(&conf->tree, &srch, where));
+	const conf_key_t srch = { .key = buf };
+	conf_key_t *result = avl_find(&conf->tree, &srch, where);
+	free(buf);
+	return (result);
 }
 
 /**

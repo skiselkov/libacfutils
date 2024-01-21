@@ -93,7 +93,9 @@ case $(uname) in
 			    -DALSOFT_REQUIRE_ALSA=ON \
 			    -DALSOFT_REQUIRE_PULSEAUDIO=ON \
 			    -DCMAKE_C_FLAGS=-fPIC \
+			    -DCMAKE_C_FLAGS=-fno-gnu-unique \
 			    -DCMAKE_CXX_FLAGS=-fPIC \
+			    -DCMAKE_CXX_FLAGS=-fno-gnu-unique \
 			    $CONFOPTS_COMMON"
 		fi
 		;;

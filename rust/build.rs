@@ -7,6 +7,7 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
+#[allow(dead_code)]
 fn add_test_config() {
 	use build_target::*;
 	let (plat_short, plat_long) = match target_os().unwrap() {
@@ -33,7 +34,8 @@ fn add_test_config() {
 }
 
 fn main() {
-	if cfg!(feature = "test") {
-		add_test_config();
-	}
+	// Uncomment to allow running "cargo test"
+	// This is needed because cargo currently doesn't support some
+	// kind of elegant #[cfg(test)] attribute inside of build.rs
+	//add_test_config();
 }

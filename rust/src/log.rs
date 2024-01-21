@@ -29,7 +29,7 @@ macro_rules! logMsg {
 		let c_message = CString::new(format!($($x,)*))
 		    .expect("passed log message contained stray NUL byte");
 		unsafe {
-			crate::log::log_impl(c_filename.as_ptr(),
+			$crate::log::log_impl(c_filename.as_ptr(),
 			    line!(), c_format.as_ptr(), c_message.as_ptr());
 		}
 	}

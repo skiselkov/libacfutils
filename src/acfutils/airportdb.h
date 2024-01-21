@@ -157,8 +157,8 @@ typedef struct {
 	avl_tree_t	apt_dat;
 	avl_tree_t	geo_table;
 	avl_tree_t	arpt_index;
-	htbl_t		icao_index;
-	htbl_t		iata_index;
+	htbl2_t		icao_index;
+	htbl2_t		iata_index;
 } airportdb_t;
 
 typedef struct airport airport_t;
@@ -388,7 +388,7 @@ API_EXPORT size_t adb_airport_lookup_by_iata(airportdb_t *db, const char *iata,
     void (*found_cb)(airport_t *airport, void *userinfo), void *userinfo);
 
 #define	airport_index_walk	adb_airport_index_walk
-API_EXPORT size_t adb_airport_index_walk(airportdb_t *db,
+API_EXPORT size_t adb_airport_index_walk(const airportdb_t *db,
     void (*found_cb)(const arpt_index_t *idx, void *userinfo), void *userinfo);
 /*
  * Querying information about a particular airport.

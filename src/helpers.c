@@ -1222,8 +1222,8 @@ bool_t
 file_exists(const char *filename, bool_t *isdir)
 {
 #if	IBM
-	int len = strlen(filename);
-	TCHAR filenameT[len + 1];
+	unsigned len = strlen(filename);
+	TCHAR *filenameT = safe_calloc(len + 1, sizeof (*filenameT));
 	DWORD attr;
 
 	MultiByteToWideChar(CP_UTF8, 0, filename, -1, filenameT, len + 1);
@@ -1232,8 +1232,10 @@ file_exists(const char *filename, bool_t *isdir)
 		*isdir = !!(attr & FILE_ATTRIBUTE_DIRECTORY);
 	if (attr == INVALID_FILE_ATTRIBUTES) {
 		errno = ENOENT;	/* fake an errno value */
+		free(filenameT);
 		return (B_FALSE);
 	}
+	free(filenameT);
 	return (B_TRUE);
 #else	/* !IBM */
 	struct stat st;
@@ -1261,15 +1263,17 @@ create_directory(const char *dirname)
 	ASSERT(dirname != NULL);
 #if	IBM
 	DWORD err;
-	int len = strlen(dirname);
-	WCHAR dirnameW[len + 1];
+	unsigned len = strlen(dirname);
+	WCHAR *dirnameW = safe_calloc(len + 1, sizeof (*dirnameW));
 
 	MultiByteToWideChar(CP_UTF8, 0, dirname, -1, dirnameW, len + 1);
 	if (!CreateDirectory(dirnameW, NULL) &&
 	    (err = GetLastError()) != ERROR_ALREADY_EXISTS) {
 		win_perror(err, "Error creating directory %s", dirname);
+		free(dirnameW);
 		return (B_FALSE);
 	}
+	free(dirnameW);
 #else	/* !IBM */
 	if (mkdir(dirname, 0777) != 0 && errno != EEXIST) {
 		logMsg("Error creating directory %s: %s", dirname,
@@ -1307,9 +1311,9 @@ static bool_t
 win_rmdir(const LPTSTR dirnameT)
 {
 	WIN32_FIND_DATA find_data;
-	HANDLE h_find;
-	int dirname_len = wcslen(dirnameT);
-	TCHAR srchnameT[dirname_len + 4];
+	HANDLE h_find = INVALID_HANDLE_VALUE;
+	unsigned dirname_len = wcslen(dirnameT);
+	TCHAR *srchnameT = safe_calloc(dirname_len + 4, sizeof (*srchnameT));
 
 	StringCchPrintf(srchnameT, dirname_len + 4, TEXT("%s\\*"), dirnameT);
 	h_find = FindFirstFile(srchnameT, &find_data);
@@ -1319,7 +1323,7 @@ win_rmdir(const LPTSTR dirnameT)
 		WideCharToMultiByte(CP_UTF8, 0, dirnameT, -1, dirname,
 		    sizeof (dirname), NULL, NULL);
 		win_perror(err, "Error listing directory %s", dirname);
-		return (B_FALSE);
+		goto errout;
 	}
 	do {
 		TCHAR filepathT[MAX_PATH];
@@ -1347,7 +1351,6 @@ win_rmdir(const LPTSTR dirnameT)
 			}
 		}
 	} while (FindNextFile(h_find, &find_data));
-	FindClose(h_find);
 
 	if (!RemoveDirectory(dirnameT)) {
 		char dirname[MAX_PATH];
@@ -1355,12 +1358,17 @@ win_rmdir(const LPTSTR dirnameT)
 		    dirname, sizeof (dirname), NULL, NULL);
 		win_perror(GetLastError(), "Error removing directory %s",
 		    dirname);
-		return (B_FALSE);
+		goto errout;
 	}
+	free(srchnameT);
+	FindClose(h_find);
 
 	return (B_TRUE);
 errout:
-	FindClose(h_find);
+	if (h_find != INVALID_HANDLE_VALUE) {
+		FindClose(h_find);
+	}
+	free(srchnameT);
 	return (B_FALSE);
 }
 
@@ -1374,11 +1382,13 @@ bool_t
 remove_directory(const char *dirname)
 {
 #if	IBM
-	TCHAR dirnameT[strlen(dirname) + 1];
+	unsigned l = strlen(dirname) + 1;
+	TCHAR *dirnameT = safe_calloc(l + 1, sizeof (*dirnameT));
 
-	MultiByteToWideChar(CP_UTF8, 0, dirname, -1, dirnameT,
-	    sizeof (dirnameT));
-	return (win_rmdir(dirnameT));
+	MultiByteToWideChar(CP_UTF8, 0, dirname, -1, dirnameT, l);
+	bool_t result = win_rmdir(dirnameT);
+	free(dirnameT);
+	return (result);
 #else	/* !IBM */
 	DIR *dp;
 	struct dirent *de;
@@ -1449,16 +1459,18 @@ bool_t
 remove_file(const char *filename, bool_t notfound_ok)
 {
 #if	IBM
-	TCHAR filenameT[strlen(filename) + 1];
+	unsigned l = strlen(filename) + 1;
+	TCHAR *filenameT = safe_calloc(l, sizeof (*filenameT));
 	DWORD error;
 
-	MultiByteToWideChar(CP_UTF8, 0, filename, -1, filenameT,
-	    sizeof (filenameT));
+	MultiByteToWideChar(CP_UTF8, 0, filename, -1, filenameT, l);
 	if (!DeleteFile(filenameT) && ((error = GetLastError()) !=
 	    ERROR_FILE_NOT_FOUND || !notfound_ok)) {
 		win_perror(error, "Cannot remove file %s", filename);
+		free(filenameT);
 		return (B_FALSE);
 	}
+	free(filenameT);
 	return (B_TRUE);
 #else	/* !IBM */
 	if (unlink(filename) < 0 && (errno != ENOENT || !notfound_ok)) {
@@ -1500,17 +1512,20 @@ DIR *
 opendir(const char *path)
 {
 	DIR	*dirp = safe_calloc(1, sizeof (*dirp));
-	TCHAR	pathT[strlen(path) + 3];	/* For '\*' at the end */
+	unsigned l = strlen(path) + 3;	/* For '\*' at the end */
+	TCHAR	*pathT = safe_calloc(l, sizeof (*pathT));
 
-	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, sizeof (pathT));
-	StringCchCat(pathT, sizeof (pathT), TEXT("\\*"));
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, pathT, l);
+	StringCchCat(pathT, l, TEXT("\\*"));
 	dirp->handle = FindFirstFile(pathT, &dirp->find_data);
 	if (dirp->handle == INVALID_HANDLE_VALUE) {
 		win_perror(GetLastError(), "Cannot open directory %s", path);
 		free(dirp);
+		free(pathT);
 		return (NULL);
 	}
 	dirp->first = B_TRUE;
+	free(pathT);
 	return (dirp);
 }
 
@@ -1540,20 +1555,18 @@ int
 stat(const char *pathname, struct stat *buf)
 {
 	FILETIME	wtime, atime;
-	HANDLE		fh;
-	TCHAR		pathnameT[strlen(pathname) + 1];
+	HANDLE		fh = INVALID_HANDLE_VALUE;
+	unsigned	l = strlen(pathname) + 1;
+	TCHAR		*pathnameT = safe_calloc(l, sizeof (*pathnameT));
 	LARGE_INTEGER	sz;
 	ULARGE_INTEGER	ftime;
 	bool_t		isdir;
 
 	if (!file_exists(pathname, &isdir)) {
-		logMsg("Cannot stat %s: no such file or directory", pathname);
 		errno = ENOENT;
-		return (-1);
+		goto errout;
 	}
-
-	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT,
-	    sizeof (pathnameT));
+	MultiByteToWideChar(CP_UTF8, 0, pathname, -1, pathnameT, l);
 	fh = CreateFile(pathnameT, (!isdir ? FILE_READ_ATTRIBUTES : 0) |
 	    GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (fh == INVALID_HANDLE_VALUE ||
@@ -1561,7 +1574,7 @@ stat(const char *pathname, struct stat *buf)
 	    (!isdir && !GetFileSizeEx(fh, &sz))) {
 		win_perror(GetLastError(), "Cannot stat %s", pathname);
 		errno = EACCES;
-		return (-1);
+		goto errout;
 	}
 	if (isdir)
 		buf->st_size = 0;
@@ -1577,8 +1590,14 @@ stat(const char *pathname, struct stat *buf)
 	buf->st_mtime = ftime.QuadPart / 10000000ull - 11644473600ull;
 
 	CloseHandle(fh);
-
+	free(pathnameT);
 	return (0);
+errout:
+	if (fh != INVALID_HANDLE_VALUE) {
+		CloseHandle(fh);
+	}
+	free(pathnameT);
+	return (-1);
 }
 
 #endif	/* IBM */
@@ -1589,13 +1608,13 @@ qsort_partition(void *base, long lo, long hi, size_t size,
 {
 #define	SWAP(i, j) \
 	do { \
-		uint8_t tmp[size]; \
 		memcpy(tmp, base + size * (i), size); \
 		memcpy(base + size * (i), base + size * (j), size); \
 		memcpy(base + size * (j), tmp, size); \
 	} while (0)
 	void *pivot = base + hi * size;
 	long i = lo;
+	uint8_t *tmp = safe_malloc(size * sizeof (*tmp));
 
 	for (long j = lo; j < hi; j++) {
 		if (compar(base + j * size, pivot, arg) < 0) {
@@ -1604,6 +1623,7 @@ qsort_partition(void *base, long lo, long hi, size_t size,
 		}
 	}
 	SWAP(i, hi);
+	free(tmp);
 
 	return (i);
 #undef	SWAP

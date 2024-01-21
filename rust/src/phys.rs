@@ -11,6 +11,7 @@
 
 pub mod units {
 	use crate::phys::conv::*;
+	use serde::{Serialize, Deserialize};
 
 	macro_rules! impl_units_ops {
 	    ($type: ty, $field:ident) => {
@@ -116,7 +117,8 @@ pub mod units {
 	    };
 	}
 
-	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize,
+	    Deserialize)]
 	pub struct Temperature {
 		T: f64,		/* Kelvin */
 	}
@@ -179,7 +181,8 @@ pub mod units {
 		}
 	}
 
-	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize,
+	    Deserialize)]
 	pub struct TemperatureRelative {
 		dT: f64,	/* Kelvin */
 	}
@@ -216,7 +219,8 @@ pub mod units {
 		}
 	}
 
-	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize,
+	    Deserialize)]
 	pub struct Pressure {
 		p: f64,		/* Pascals, CANNOT be negative */
 	}
@@ -277,7 +281,8 @@ pub mod units {
 	}
 	impl_units_scalar_ops!(Pressure, p);
 
-	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize,
+	    Deserialize)]
 	pub struct PressureRelative {
 		dP: f64,	/* Pascals, CAN be negative */
 	}
@@ -318,7 +323,8 @@ pub mod units {
 		}
 	}
 
-	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd,
+	    Serialize, Deserialize)]
 	pub struct Distance {
 		d: f64,		/* meters */
 	}
@@ -374,7 +380,8 @@ pub mod units {
 	impl_units_ops_non_neg!(Distance, d);
 	impl_units_scalar_ops!(Distance, d);
 
-	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd,
+	    Serialize, Deserialize)]
 	pub struct Mass {
 		m: f64,		/* kg */
 	}
@@ -410,7 +417,8 @@ pub mod units {
 	impl_units_ops_non_neg!(Mass, m);
 	impl_units_scalar_ops!(Mass, m);
 
-	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd,
+	    Serialize, Deserialize)]
 	pub struct Angvel {
 		r: f64,		/* rad/sec */
 	}
@@ -456,7 +464,8 @@ pub mod units {
 	impl_units_ops!(Angvel, r);
 	impl_units_scalar_ops!(Angvel, r);
 
-	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd,
+	    Serialize, Deserialize)]
 	pub struct Speed {
 		s: f64,		/* m/s */
 	}
@@ -506,7 +515,8 @@ pub mod units {
 	impl_units_ops!(Speed, s);
 	impl_units_scalar_ops!(Speed, s);
 
-	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd)]
+	#[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd,
+	    Serialize, Deserialize)]
 	pub struct MassRate {
 		mr: f64,	/* kg/s */
 	}
@@ -650,13 +660,11 @@ pub mod conv {
 	/* feet -> meters */
 	pub fn feet2met(ft: f64) -> f64 {
 		assert!(ft.is_finite());
-		assert!(ft >= 0.0);
 		ft * 0.3048
 	}
 	/* meters -> feet */
 	pub fn met2feet(m: f64) -> f64 {
 		assert!(m.is_finite());
-		assert!(m >= 0.0);
 		m * 3.2808398950131
 	}
 	/* nautical miles -> meters */

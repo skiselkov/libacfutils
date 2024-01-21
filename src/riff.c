@@ -231,7 +231,7 @@ riff_dump_impl(const riff_chunk_t *chunk, int indent)
 	    chunk->listcc & 0xff, (chunk->listcc >> 8) & 0xff,
 	    (chunk->listcc >> 16) & 0xff, (chunk->listcc >> 24) & 0xff, 0
 	};
-	char indent_str[indent + 1];
+	char *indent_str = safe_calloc(indent + 1, sizeof (*indent_str));
 	int len;
 	char *buf;
 
@@ -246,19 +246,20 @@ riff_dump_impl(const riff_chunk_t *chunk, int indent)
 	snprintf(buf, len + 1, DUMP_FMT_ARGS);
 #undef	DUMP_FMT_ARGS
 
-	if (!IS_LIST(chunk))
+	if (!IS_LIST(chunk)) {
+		free(indent_str);
 		return (buf);
-
+	}
 	for (const riff_chunk_t *sc = list_head(&chunk->subchunks); sc != NULL;
 	    sc = list_next(&chunk->subchunks, sc)) {
 		char *subbuf = riff_dump_impl(sc, indent + 2);
 
 		len += strlen(subbuf);
-		buf = realloc(buf, len + 1);
+		buf = safe_realloc(buf, len + 1);
 		strcat(buf, subbuf);
 		free(subbuf);
 	}
-
+	free(indent_str);
 	return (buf);
 }
 

@@ -409,7 +409,7 @@ list_prev(const list_t *list, const void *object)
  * @return The i'th object inside of the list.
  */
 void *
-list_get_i(const list_t *list, unsigned i)
+list_get_i(const list_t *list, size_t i)
 {
 	void *obj;
 
