@@ -17,31 +17,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
-    - name:  Restore cached libraries 
+    - name:  Restore cached build 
       uses: actions/cache/restore@v3
-      id: restore_libs_cache
+      id: restore_cache
       with:
-        path: |
-            ${{github.workspace}}/cairo
-            ${{github.workspace}}/cglm
-            ${{github.workspace}}/curl
-            ${{github.workspace}}/freetype
-            ${{github.workspace}}/geographiclib
-            ${{github.workspace}}/glew
-            ${{github.workspace}}/glfw
-            ${{github.workspace}}/libclipboard
-            ${{github.workspace}}/libiconv
-            ${{github.workspace}}/libjpeg
-            ${{github.workspace}}/libpng
-            ${{github.workspace}}/libxml2
-            ${{github.workspace}}/lzma
-            ${{github.workspace}}/ocr
-            ${{github.workspace}}/openal_soft
-            ${{github.workspace}}/opus
-            ${{github.workspace}}/pcre2
-            ${{github.workspace}}/shapelib
-            ${{github.workspace}}/ssl
-            ${{github.workspace}}/zlib
+        path: ${{github.workspace}}/
         key: ${{ runner.os }}-${{ hashFiles('**/*.tar.*', 'lzma/DOC/*.txt' ) }} 
     
     - name: Update git submodules
@@ -56,42 +36,16 @@ jobs:
     - name: Build
       shell: bash
       run:  |
-            if [ "$RUNNER_OS" == "Linux" ]; then
-                   ./build_deps
-                   ./build_redist
-            else
-                   sh build_deps
-                   sh build_redist
-            fi
+              ./build_deps
+              ./build_redist
  
-    - name:  Cache libraries  
+    - name:  Save build cache
       uses: actions/cache/save@v3
-      id: save_libs_cache
+      id: save_cache
       with:
-        path: |
-            ${{github.workspace}}/cairo
-            ${{github.workspace}}/cglm
-            ${{github.workspace}}/curl
-            ${{github.workspace}}/freetype
-            ${{github.workspace}}/geographiclib
-            ${{github.workspace}}/glew
-            ${{github.workspace}}/glfw
-            ${{github.workspace}}/libclipboard
-            ${{github.workspace}}/libiconv
-            ${{github.workspace}}/libjpeg
-            ${{github.workspace}}/libpng
-            ${{github.workspace}}/libxml2
-            ${{github.workspace}}/lzma
-            ${{github.workspace}}/ocr
-            ${{github.workspace}}/openal_soft
-            ${{github.workspace}}/opus
-            ${{github.workspace}}/pcre2
-            ${{github.workspace}}/shapelib
-            ${{github.workspace}}/ssl
-            ${{github.workspace}}/zlib
-        key:  ${{ steps.restore_libs_cache.outputs.cache-primary-key }}
+        path: ${{github.workspace}}/
+        key:  ${{ steps.restore_cache.outputs.cache-primary-key }}
 
-      
     - uses: actions/upload-artifact@v3
       with:
         name: libacfutils-full
