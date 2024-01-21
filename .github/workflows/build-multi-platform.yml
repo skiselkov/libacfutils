@@ -94,5 +94,5 @@ jobs:
       
     - uses: actions/upload-artifact@v3
       with:
-        name: libacfutils-redist
-        path: ${{github.workspace}}/libacfutils-redist
+        name: libacfutils-full
+        path: ${{github.workspace}}/
