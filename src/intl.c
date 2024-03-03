@@ -290,7 +290,7 @@ acfutils_xplang2code(int lang)
 	case xplm_Language_Japanese:
 		return ("ja");
 	case xplm_Language_Chinese:
-		return ("ch");
+		return ("zh");
 	default:
 		return ("xx");
 	}
