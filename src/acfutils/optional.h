@@ -129,7 +129,8 @@
  *
  * 1. Most sized standard C integer types: `opt_int8_t`, `opt_uint8_t`,
  *	etc. through to `opt_uint64_t`. The type `opt_size_t` is
- *	a type alias, which can be used for wrapping a `size_t`.
+ *	a type alias, which can be used for wrapping a `size_t` (except
+ *	on macOS, where it is a full type, same as uint64_t and friends).
  * 2. Single-precision and double-precision floating point types:
  *	`opt_float` and `opt_double`. These types are explicitly
  *	disallow `NAN` values in the SOME state.
@@ -233,7 +234,8 @@
  *	which implementation to call. If you want you can however
  *	add a type alias to an existing known optional type using
  *	the IMPL_OPTIONAL_ALIAS() macro. This is how `opt_size_t`
- *	is implemented (it is an alias for `opt_uint64_t`).
+ *	is implemented on non-macOS platforms (it is an alias for
+ *	`opt_uint64_t`).
  * - You must only define the `OPTIONAL_TYPE_LIST` macro once.
  *	You cannot spread its definition over multiple files, each
  *	adding its own optional types. Only the last definition of
@@ -750,7 +752,10 @@ IMPL_OPTIONAL_EXPLICIT(uint64_t, uint64_t)
 #if	!APL
 /// An optional type for wrapping a `size_t` value.
 IMPL_OPTIONAL_ALIAS(uint64_t, size_t, size_t)
-#endif	// !APL
+#else	// APL
+/// An optional type for wrapping a `size_t` value.
+IMPL_OPTIONAL_EXPLICIT(size_t, size_t)
+#endif	// APL
 
 /**
  * \brief An optional type for wrapping a non-NAN `float` value.
@@ -902,6 +907,13 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
     default: _unknown_optional_type_you_need_to_include_your_custom_optional_h_
 #endif
 
+#if	!APL
+#define	SIZE_T_OPTIONAL_LIST_ENTRY(op_name)
+#else	// APL
+#define	SIZE_T_OPTIONAL_LIST_ENTRY(op_name) \
+	OPTIONAL_TYPE_LIST_ADD(size_t, size_t, op_name),
+#endif	// APL
+
 #define	OPTIONAL_TYPE_SELECTOR(op_name, expr)	\
 	_Generic((expr), \
 	OPTIONAL_TYPE_LIST_ADD(int8_t, int8_t, op_name), \
@@ -912,6 +924,7 @@ _unknown_optional_type_you_need_to_include_your_custom_optional_h_(void)
 	OPTIONAL_TYPE_LIST_ADD(uint32_t, uint32_t, op_name), \
 	OPTIONAL_TYPE_LIST_ADD(int64_t, int64_t, op_name), \
 	OPTIONAL_TYPE_LIST_ADD(uint64_t, uint64_t, op_name), \
+	SIZE_T_OPTIONAL_LIST_ENTRY(op_name) \
 	OPTIONAL_TYPE_LIST_ADD(float, float, op_name), \
 	OPTIONAL_TYPE_LIST_ADD(double, double, op_name), \
 	OPTIONAL_TYPE_LIST_ADD(str, char *, op_name), \
