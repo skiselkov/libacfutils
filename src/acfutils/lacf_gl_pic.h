@@ -52,6 +52,7 @@ API_EXPORT void lacf_gl_pic_unload(lacf_gl_pic_t *pic);
 
 API_EXPORT int lacf_gl_pic_get_width(lacf_gl_pic_t *pic);
 API_EXPORT int lacf_gl_pic_get_height(lacf_gl_pic_t *pic);
+API_EXPORT GLuint lacf_gl_pic_get_tex(lacf_gl_pic_t *pic);
 
 API_EXPORT void lacf_gl_pic_draw(lacf_gl_pic_t *pic, vect2_t pos,
     vect2_t size, float alpha);
