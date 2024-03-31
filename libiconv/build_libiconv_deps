@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2020 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-LIBICONV="libiconv-1.16.tar.xz"
+LIBICONV="libiconv-1.16.tar.bz2"
 LIBICONV_PRODUCT="lib/libiconv.a"
 LIBICONV_CONFOPTS_COMMON="--enable-static --disable-shared"
 

@@ -13,10 +13,10 @@
 #
 # CDDL HEADER END
 
-# Copyright 2019 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 LIBCLIPBOARD="libclipboard-linux-64"
-LIBCLIPBOARD_ARCHIVE="libclipboard-1.0.tar.xz"
+LIBCLIPBOARD_ARCHIVE="libclipboard-1.0.tar.bz2"
 
 set -e
 
@@ -30,7 +30,7 @@ fi
 
 if ! [ -f "$LIBCLIPBOARD/install/lib/libclipboard.a" ]; then
 	rm -rf "$LIBCLIPBOARD"
-	tar xJf "$LIBCLIPBOARD_ARCHIVE"
+	tar xjf "$LIBCLIPBOARD_ARCHIVE"
 	mv "libclipboard-1.0" "$LIBCLIPBOARD"
 	cd "$LIBCLIPBOARD"
 	cmake -DCMAKE_C_FLAGS="-fPIC" \

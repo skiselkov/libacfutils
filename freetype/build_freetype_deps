@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2014 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-FREETYPE="freetype-2.8.1.tar.xz"
+FREETYPE="freetype-2.8.1.tar.bz2"
 FREETYPE_CONFOPTS_COMMON="--disable-shared --enable-static \
     --with-zlib=yes --with-bzip2=no --with-png=no \
     --with-harfbuzz=no --with-old-mac-fonts=no --with-fsspec=no \

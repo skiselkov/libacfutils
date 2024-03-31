@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2021 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-GEOGRAPHICLIB="GeographicLib-1.51.tar.xz"
+GEOGRAPHICLIB="GeographicLib-1.51.tar.bz2"
 
 case `uname` in
 	Linux)

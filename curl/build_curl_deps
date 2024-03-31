@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2023 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-CURL="curl-8.4.0.tar.xz"
+CURL="curl-8.4.0.tar.bz2"
 
 CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DBUILD_STATIC_LIBS=ON -DHTTP_ONLY=ON -DENABLE_UNIX_SOCKETS=OFF \

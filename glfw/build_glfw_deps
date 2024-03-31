@@ -13,12 +13,12 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
 GLFW_VERSION="3.3.8"
-GLFW="glfw-${GLFW_VERSION}.tar.xz"
+GLFW="glfw-${GLFW_VERSION}.tar.bz2"
 
 function build_platform() {
 	PLATFORM="$1"
@@ -52,7 +52,7 @@ function build_platform() {
 }
 
 if ! [ -d "glfw-${GLFW_VERSION}" ]; then
-	tar xJf "$GLFW"
+	tar xjf "$GLFW"
 fi
 
 case `uname` in

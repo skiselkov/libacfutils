@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-LIBJPEG="jpegsrc.v9c.tar.xz"
+LIBJPEG="jpegsrc.v9c.tar.bz2"
 
 case `uname` in
 	Linux)

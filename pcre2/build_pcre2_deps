@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2018 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-PCRE2="pcre2-10.42.tar.xz"
+PCRE2="pcre2-10.42.tar.bz2"
 
 case `uname` in
 	Linux)

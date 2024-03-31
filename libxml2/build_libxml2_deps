@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-LIBXML2="libxml2-2.9.14.tar.xz"
+LIBXML2="libxml2-2.9.14.tar.bz2"
 
 CONFOPTS_COMMON="--enable-static --disable-shared --enable-silent-rules \
     --with-pic --without-lzma --without-zlib --without-iconv --without-python \

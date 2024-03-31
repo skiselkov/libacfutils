@@ -13,11 +13,11 @@
 #
 # CDDL HEADER END
 
-# Copyright 2022 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 # Copyright 2022 Amy Parent. All rights reserved.
 
 GLEW="glew-1.13.0"
-GLEW_ARCHIVE="glew-1.13.0.tar.xz"
+GLEW_ARCHIVE="glew-1.13.0.tar.bz2"
 
 MAKE_FLAGS_COMMON="GLEW_NO_GLU=-DGLEW_NO_GLU"
 
@@ -75,7 +75,7 @@ function do_build() {
 	    LDFLAGS.CMDLINE=\"$ADD_CFLAGS\" \
 	    $MAKE_FLAGS_COMMON"
 	if ! [ -f "$GLEW-$ARCH/install/lib/libGLEWmx.a" ]; then
-		rm -rf "$GLEW-$ARCH" && tar xJf "$GLEW_ARCHIVE" && \
+		rm -rf "$GLEW-$ARCH" && tar xjf "$GLEW_ARCHIVE" && \
 		    mv "$GLEW" "$GLEW-$ARCH" && \
 		    cp -r "auto" "$GLEW-$ARCH" && \
 		    ( cd "$GLEW-$ARCH" && \
@@ -120,7 +120,7 @@ Linux)
 		# to avoid fetching the github-hosted registry, as that
 		# breaks the build. Instead, use only the local files
 		# to generate the library.
-		rm -rf "$GLEW-linux-64" && tar xJf "$GLEW_ARCHIVE" && \
+		rm -rf "$GLEW-linux-64" && tar xjf "$GLEW_ARCHIVE" && \
 		    mv "$GLEW" "$GLEW-linux-64" && \
 		    cp -r "auto" "$GLEW-linux-64" && \
 		    ( cd "$GLEW-linux-64" && \
@@ -140,7 +140,7 @@ Linux)
 	    $MAKE_FLAGS_COMMON"
 	if ! [ -f "$GLEW-win-64/install/lib/libglew32mx.a" ] && \
 	    [ "$minimal" -ne 1 ]; then
-		rm -rf "$GLEW-win-64" && tar xJf "$GLEW_ARCHIVE"
+		rm -rf "$GLEW-win-64" && tar xjf "$GLEW_ARCHIVE"
 		mv "$GLEW" "$GLEW-win-64"
 		cp -r "auto" "$GLEW-win-64"
 		(
