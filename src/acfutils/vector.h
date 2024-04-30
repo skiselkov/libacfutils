@@ -50,6 +50,7 @@
 #ifndef	_ACF_UTILS_VECTOR_H_
 #define	_ACF_UTILS_VECTOR_H_
 
+#include <acfutils/optional.h>
 #include <acfutils/sysmacros.h>
 
 #include "vector_impl.h"
@@ -119,6 +120,14 @@ void *vector_head(const vector_t REQ_PTR(v));
  * NULL instead.
  */
 void *vector_tail(const vector_t REQ_PTR(v));
+/**
+ * \brief Locates an element in the vector by value.
+ *
+ * Attempts to locate an element by pointer value. If the element was
+ * found, its index is returned, wrapped in a SOME() type. Otherwise,
+ * NONE is returned.
+ */
+opt_size_t vector_find(const vector_t REQ_PTR(v), const void *item);
 /**
  * \brief Inserts a new element into the vector at a given index.
  *

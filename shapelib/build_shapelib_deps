@@ -13,17 +13,21 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-PROJ4="proj-4.9.3.tar.xz"
-SHAPELIB="shapelib-1.4.1.tar.xz"
+PROJ4="proj-4.9.3.tar.bz2"
+SHAPELIB="shapelib-1.4.1.tar.bz2"
 
 if [[ "$do_clean" != 1 ]]; then
 	PKG_CONFIG="pkg-config"
 else
 	PKG_CONFIG="true"
+fi
+
+if [ -z "$minimal" ]; then
+	minimal=0
 fi
 
 case `uname` in

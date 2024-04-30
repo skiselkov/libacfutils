@@ -87,6 +87,27 @@ while [[ $# -gt 0 ]]; do
 	--openal-version=1.19.1)
 		OPENAL_VERSION="1.19.1"
 		;;
+	--no-libcurl)
+		NO_LIBCURL=1
+		;;
+	--no-openssl)
+		NO_OPENSSL=1
+		;;
+	--no-libxml2)
+		NO_LIBXML2=1
+		;;
+	--no-pcre2)
+		NO_PCRE2=1
+		;;
+	--no-libpng)
+		NO_LIBPNG=1
+		;;
+	--no-freetype)
+		NO_FREETYPE=1
+		;;
+	--no-libclipboard)
+		NO_LIBCLIPBOARD=1
+		;;
 	*)
 		break
 		;;
@@ -112,18 +133,32 @@ if [[ "$SHAPELIB" -ne 0 ]] && \
     [ -f "shapelib/libshape-${ARCH}/lib/pkgconfig/shapelib.pc" ]; then
 	PACKAGES="$PACKAGES shapelib proj"
 fi
-if [[ "$CAIRO" -ne 0 ]] && \
+if [[ "$CAIRO" -ne 0 ]] && [ -z "$NO_FREETYPE" ] && \
     [ -f "cairo/cairo-${ARCH}/lib/pkgconfig/cairo.pc" ]; then
 	PACKAGES="$PACKAGES cairo pixman-1"
 fi
-if [ -f "libpng/libpng-${ARCH}/lib/pkgconfig/libpng16.pc" ]; then
+if [ -z "$NO_LIBPNG" ] && \
+    [ -f "libpng/libpng-${ARCH}/lib/pkgconfig/libpng16.pc" ]; then
 	PACKAGES="$PACKAGES libpng16"
 fi
-if [ -f "freetype/freetype-${ARCH}/lib/pkgconfig/freetype2.pc" ]; then
+if [ -z "$NO_FREETYPE" ] && \
+    [ -f "freetype/freetype-${ARCH}/lib/pkgconfig/freetype2.pc" ]; then
 	PACKAGES="$PACKAGES freetype2"
 fi
+if [ -z "$NO_OPENSSL" ]; then
+	if [ -z "$NO_LIBCURL" ]; then
+		PACKAGES="$PACKAGES libcurl"
+	fi
+	PACKAGES="$PACKAGES openssl"
+fi
+if [ -z "$DISABLE_LIBXML2" ]; then
+	PACKAGES="$PACKAGES libxml-2.0 libpcre2-8 zlib"
+fi
+if [ -z "$DISABLE_PCRE2" ]; then
+	PACKAGES="$PACKAGES libpcre2-8 zlib"
+fi
 
-PACKAGES="$PACKAGES libcurl openssl libxml-2.0 libpcre2-8 zlib"
+PACKAGES="$PACKAGES zlib"
 
 PKG_CONFIG_PATH="\
 $(pwd)/opus/opusfile-$ARCH/lib/pkgconfig:\
@@ -150,7 +185,9 @@ if [[ "$ARCH" == "linux-64" ]]; then
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
 $(pwd)/glew/glew-1.13.0-$ARCH/install/lib64/pkgconfig:\
 $(pwd)/libclipboard/libclipboard-$ARCH/install/lib/pkgconfig"
-	PACKAGES="$PACKAGES libclipboard"
+	if [ -z "$NO_LIBCLIPBOARD" ]; then
+		PACKAGES="$PACKAGES libclipboard"
+	fi
 else
 	PKG_CONFIG_PATH="$PKG_CONFIG_PATH:\
 $(pwd)/glew/glew-1.13.0-$ARCH/install/lib/pkgconfig"

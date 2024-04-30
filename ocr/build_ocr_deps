@@ -13,12 +13,12 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-LEPTONICA="leptonica-1.75.1.tar.xz"
-TESSERACT="tesseract-3.05.00.tar.xz"
+LEPTONICA="leptonica-1.75.1.tar.bz2"
+TESSERACT="tesseract-3.05.00.tar.bz2"
 
 CONFOPTS_LEPTONICA="--enable-static --disable-shared \
     --without-zlib --without-jpeg --without-giflib \

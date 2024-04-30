@@ -229,6 +229,41 @@ normalize_hdg(double hdg)
 	}
 	return (hdg);
 }
+
+/**
+ * Renormalizes a heading value that lies outside of the 0-2PI inclusive
+ * range. Basically this takes care of undoing "angle wrapping".
+ *
+ * #### Example:
+ *```
+ * normalize_hdg(M_PI / 2)  => M_PI / 2
+ * normalize_hdg(-M_PI / 2) => M_PI / 2
+ * normalize_hdg(2.5 * M_PI) => 0.5 * M_PI
+ * normalize_hdg(NAN) => NAN
+ *```
+ */
+static inline double
+normalize_hdg_rad(double hdg_rad)
+{
+	if (isnan(hdg_rad)) {
+		return (hdg_rad);
+	}
+	hdg_rad = fmod(hdg_rad, 360);
+	/* Flip negative into positive */
+	if (hdg_rad < 0.0) {
+		hdg_rad += 2.0 * M_PI;
+	}
+	/* Necessary to avoid FP rounding errors */
+	if (hdg_rad <= 0.0 || hdg_rad > 2.0 * M_PI) {
+		hdg_rad = clamp(hdg_rad, 0, 2.0 * M_PI);
+		/* Avoid negative zero */
+		if (hdg_rad == -0.0) {
+			hdg_rad = 0.0;
+		}
+	}
+	return (hdg_rad);
+}
+
 /**
  * Renormalizes a longitude value. This is similar to normalize_hdg(), but
  * instead of resolving angle wrapping into the 0-360 range, this resolves

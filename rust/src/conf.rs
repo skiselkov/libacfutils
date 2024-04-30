@@ -22,6 +22,11 @@ impl Conf {
 			Conf{ conf: conf_create_empty() }
 		}
 	}
+	pub fn new_from_raw_conf_t(conf: &conf_t) -> Self {
+		Self {
+		    conf: unsafe { conf_create_copy(conf) },
+		}
+	}
 	pub unsafe fn to_raw_conf_t(&self) -> *mut conf_t {
 		self.conf
 	}

@@ -142,7 +142,7 @@ lacf_gl_pic_destroy(lacf_gl_pic_t *pic)
 		return;
 	lacf_gl_pic_unload(pic);
 	free(pic->path);
-	free(pic);
+	ZERO_FREE(pic);
 }
 
 /**
@@ -217,6 +217,21 @@ lacf_gl_pic_get_height(lacf_gl_pic_t *pic)
 	if (pic->h == 0)
 		load_image(pic);
 	return (pic->h);
+}
+
+/**
+ * @return The texture holding the image data on the GPU. This may need
+ *	to perform disk I/O to load the image and upload it to the GPU.
+ *	If loading the image failed, returns 0.
+ */
+GLuint
+lacf_gl_pic_get_tex(lacf_gl_pic_t *pic)
+{
+	ASSERT(pic != NULL);
+	if (pic->tex == 0) {
+		load_image(pic);
+	}
+	return (pic->tex);
 }
 
 /**

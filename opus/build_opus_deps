@@ -13,18 +13,22 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-OPUS="opus-1.2.1.tar.xz"
-LIBOGG="libogg-1.3.2.tar.xz"
-OPUSFILE="opusfile-0.7.tar.xz"
+OPUS="opus-1.2.1.tar.bz2"
+LIBOGG="libogg-1.3.2.tar.bz2"
+OPUSFILE="opusfile-0.7.tar.bz2"
 
 OPUS_CONFOPTS_COMMON="--enable-static --disable-shared \
     --disable-extra-programs --with-pic --disable-silent-rules"
 LIBOGG_CONFOPTS_COMMON="--enable-static --disable-shared --with-pic \
     --disable-silent-rules"
+
+if [ -z "$minimal" ]; then
+	minimal=0
+fi
 
 if [[ "$(uname)" = "Darwin" ]]; then
 	CFLAGS_COMMON="-mmacosx-version-min=10.6"
@@ -34,8 +38,8 @@ fi
 OPUS_CFLAGS_COMMON="$CFLAGS_COMMON\\ -DOPUS_EXPORT=''"
 
 if [[ "$do_clean" = "1" ]]; then
-	rm -fr "${OPUSFILE/%.tar.xz//}" "${OPUS/%.tar.xz//}" \
-	    "${LIBOGG/%.tar.xz//}" \
+	rm -fr "${OPUSFILE/%.tar.bz2//}" "${OPUS/%.tar.bz2//}" \
+	    "${LIBOGG/%.tar.bz2//}" \
 	    opusfile-{linux,win,mac}-{32,64} \
 	    opus-{linux,win,mac}-{32,64} \
 	    libogg-{linux,win,mac}-{32,64}

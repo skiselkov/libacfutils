@@ -13,16 +13,15 @@
 #
 # CDDL HEADER END
 
-# Copyright 2021 Saso Kiselkov. All rights reserved.
+# Copyright 2024 Saso Kiselkov. All rights reserved.
 
 source ../build_dep.common
 
-CGLM="cglm-0.7.9.tar.xz"
+CGLM="cglm-0.7.9.tar.bz2"
 CGLM_DIR="cglm-0.7.9"
 
 if [[ "$do_clean" = "1" ]]; then
 	rm -rf "${CGLM_DIR}"
 elif ! [ -d "${CGLM_DIR}" ]; then
-	tar xJf "${CGLM}"
-#	( cd "${CGLM_DIR}" && patch -p1 < ../cglm.patch )
+	tar xjf "${CGLM}"
 fi

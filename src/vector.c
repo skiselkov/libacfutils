@@ -86,6 +86,17 @@ vector_tail(const vector_t REQ_PTR(v))
 	return (NULL);
 }
 
+opt_size_t
+vector_find(const vector_t REQ_PTR(v), const void *item)
+{
+	for (size_t i = 0; i < v->fill; i++) {
+		if (v->buf[i] == item) {
+			return (SOME(i));
+		}
+	}
+	return (NONE(size_t));
+}
+
 void
 vector_insert(vector_t REQ_PTR(v), void *elem, size_t index)
 {

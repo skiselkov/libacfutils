@@ -215,7 +215,6 @@ dsf_init(const char *filename)
 	} else {
 		goto errout;
 	}
-
 	dsf = dsf_parse(buf, bufsz, reason);
 	if (dsf == NULL) {
 		logMsg("Error parsing DSF %s: %s", filename, reason);
@@ -386,8 +385,8 @@ diff_decode(dsf_atom_t *atom, unsigned plane, const uint8_t *start,
 	do { \
 		ctype prev = 0; \
 		ctype *out_type = out; \
-		for (size_t i = 0; start + i * sizeof (ctype) < end; i++) { \
-			ctype val = *(ctype *)(start + i * sizeof (ctype)); \
+		for (uint32_t i = 0; i < num_values; i++) { \
+			ctype val = ((ctype *)start)[i]; \
 			prev += val; \
 			out_type[i] = prev; \
 		} \

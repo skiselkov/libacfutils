@@ -144,8 +144,10 @@ static inline void
 delay_line_set_delay(delay_line_t *line, uint64_t delay_us)
 {
 	ASSERT(line != NULL);
-	line->delay_base_us = delay_us;
-	delay_line_refresh_delay(line);
+	if (line->delay_base_us != delay_us) {
+		line->delay_base_us = delay_us;
+		delay_line_refresh_delay(line);
+	}
 }
 
 /**
