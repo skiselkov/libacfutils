@@ -4,32 +4,26 @@ on:
   workflow_dispatch
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
-      fail-fast: false
-
-      matrix:
-        os: [ubuntu-20.04, macos-12]
-
-    steps:
-    - uses: actions/checkout@v3
+  build_ubuntu:
+    runs-on: ubuntu-20.04
     
-    - name:  Restore cached build 
-      uses: actions/cache/restore@v3
-      id: restore_cache
+    steps:    
+    - uses: actions/checkout@v3   
+    
+    - name:  Cache
+      uses: actions/cache@v3
       with:
-        path: ${{github.workspace}}/
-        key: ${{ runner.os }}-${{ hashFiles('**/*.tar.*', 'lzma/DOC/*.txt' ) }} 
+        path: ./*
+        key: cache-${{ github.run_id }}-${{ runner.os }} 
+        restore-keys: |
+          cache-${{ github.run_id }}-
+          cache-
+        enableCrossOsArchive: true
     
     - name: Update git submodules
-      if:  runner.os == 'Linux' 
       run:  git submodule update --init --recursive   
     
     - name:  Install Ubuntu  Packages
-      if: runner.os == 'Linux'    
       shell: bash
       run: ./install-ubuntu-packages
   
@@ -38,15 +32,50 @@ jobs:
       run:  |
               ./build_deps
               ./build_redist
- 
-    - name:  Save build cache
-      uses: actions/cache/save@v3
-      id: save_cache
+        
+  build_macos:
+    needs:
+      - build_ubuntu
+    runs-on: macos-12
+    
+    steps:    
+    - uses: actions/checkout@v3 
+    
+    - name:  Cache 
+      uses: actions/cache@v3
       with:
-        path: ${{github.workspace}}/
-        key:  ${{ steps.restore_cache.outputs.cache-primary-key }}
+        path: ./*
+        key: cache-${{ github.run_id }}-${{ runner.os }} 
+        restore-keys: |
+          cache-${{ github.run_id }}-
+          cache-
+        enableCrossOsArchive: true  
 
+    - name: Build
+      shell: bash
+      run:  |
+              ./build_deps
+              ./build_redist
+        
+  finish:
+    needs:
+      - build_ubuntu
+      - build_macos
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3 
+    
+    - name:  Restore cached build 
+      uses: actions/cache/restore@v3
+      with:
+        path: ./*
+        key: unused
+        restore-keys: |
+          cache-
+        enableCrossOsArchive: true  
+    - name: Zip artifact for deployment
+      run: zip -r libacfutils.zip ./* 
     - uses: actions/upload-artifact@v3
       with:
         name: libacfutils-full
-        path: ${{github.workspace}}/
+        path: libacfutils.zip    
