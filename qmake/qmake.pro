@@ -130,8 +130,7 @@ win32:contains(CROSS_COMPILE, x86_64-w64-mingw32-) {
 
 		contains(dll, 1) {
 			LIBS += $$system("../pkg-config-deps win-64 \
-			    --whole-archive --static-openal \
-			    --no-link-acfutils --libs")
+			    --static-openal --no-link-acfutils --libs")
 		}
 		contains(dll, 0) {
 			LIBS += $$system("../pkg-config-deps win-64 \
