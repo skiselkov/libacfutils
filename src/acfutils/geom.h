@@ -491,6 +491,8 @@ API_EXPORT vect2_t geo2fpp(geo_pos2_t pos, const fpp_t *fpp) PURE_ATTR;
 API_EXPORT geo_pos2_t fpp2geo(vect2_t pos, const fpp_t *fpp) PURE_ATTR;
 API_EXPORT void fpp_set_scale(fpp_t *fpp, vect2_t scale);
 API_EXPORT vect2_t fpp_get_scale(const fpp_t *fpp);
+API_EXPORT double fpp_get_gc_distance(vect2_t p1, vect2_t p2,
+    const fpp_t REQ_PTR(fpp)) PURE_ATTR;
 
 /*
  * Lambert conformal conic projection

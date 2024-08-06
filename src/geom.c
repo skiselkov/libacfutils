@@ -1867,6 +1867,18 @@ fpp_get_scale(const fpp_t *fpp)
 }
 
 /**
+ * @return The great-circle distance between two projection points. The
+ *	projection must have been created with the `allow_inv` argument
+ *	set to `true`.
+ */
+double
+fpp_get_gc_distance(vect2_t p1, vect2_t p2, const fpp_t REQ_PTR(fpp))
+{
+	ASSERT(fpp->allow_inv);
+	return (gc_distance(fpp2geo(p1, fpp), fpp2geo(p2, fpp)));
+}
+
+/**
  * Prepares a set of Lambert conformal conic projection parameters.
  *
  * @param reflat Reference latitude in degrees.
