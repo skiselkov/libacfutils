@@ -35,7 +35,6 @@ noxplm=$$[ACFUTILS_NOXPLM]
 INCLUDEPATH += ../src ../SDK/CHeaders/XPLM
 INCLUDEPATH += ../SDK/CHeaders/Widgets
 INCLUDEPATH += ../lzma/C
-INCLUDEPATH += ../junzip
 QMAKE_CFLAGS += -std=c11 -g -W -Wall -Wextra -Werror=vla -fvisibility=hidden
 contains(noerrors, 0) {
 	QMAKE_CFLAGS += -Werror
@@ -266,7 +265,6 @@ SOURCES += \
 
 # Dependency headers & sources
 HEADERS +=  \
-    ../junzip/junzip.h \
     ../ucpp/nhash.h \
     ../ucpp/tune.h \
     ../ucpp/arith.h \
@@ -276,7 +274,7 @@ HEADERS +=  \
     ../ucpp/ucppi.h
 
 SOURCES += \
-    ../junzip/junzip.c \
+    ../src/zip/zip.c \
     ../ucpp/mem.c \
     ../ucpp/nhash.c \
     ../ucpp/cpp.c \

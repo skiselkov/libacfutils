@@ -18,164 +18,63 @@
 
 #include <string.h>
 
-#include <zlib.h>
-#include <junzip.h>
-
 #include "acfutils/assert.h"
 #include "acfutils/compress.h"
 #include "acfutils/helpers.h"
 #include "acfutils/safe_alloc.h"
 
-typedef struct {
-	JZFile		ops;
-	void		*buf;
-	size_t		cap;
-	uint64_t	off;
-} memfile_t;
+#include "zip/zip.h"
 
 typedef struct {
 	void		*buf;
 	size_t		len;
 } outbuf_t;
 
-static size_t mem_read(JZFile *file, void *buf, size_t size);
-static size_t mem_tell(JZFile *file);
-static int mem_seek(JZFile *file, size_t offset, int whence);
-static int mem_error(JZFile *file);
-static void mem_close(JZFile *file);
-
-static struct JZFile mem_ops = {
-    .read = mem_read,
-    .tell = mem_tell,
-    .seek = mem_seek,
-    .error = mem_error,
-    .close = mem_close
-};
-
 static size_t
-mem_read(JZFile *file, void *buf, size_t size)
+read_cb(void *arg, uint64_t offset, const void *data, size_t size)
 {
-	memfile_t *mf = (memfile_t *)file;
+	ASSERT(arg != NULL);
+	outbuf_t *buf = arg;
+	UNUSED(offset);
+	ASSERT(data != NULL || size != 0);
 
-	size = MIN(mf->cap - mf->off, size);
-	memcpy(buf, mf->buf + mf->off, size);
-	mf->off += size;
+	buf->buf = safe_realloc(buf->buf, buf->len + size);
+	memcpy(buf->buf + buf->len, data, size);
+	buf->len += size;
 
 	return (size);
 }
 
-static size_t
-mem_tell(JZFile *file)
-{
-	memfile_t *mf = (memfile_t *)file;
-	return (mf->off);
-}
-
-static int
-mem_seek(JZFile *file, size_t offset, int whence)
-{
-	memfile_t *mf = (memfile_t *)file;
-
-	switch (whence) {
-	case SEEK_SET:
-		mf->off = MIN(offset, mf->cap);
-		break;
-	case SEEK_CUR:
-		mf->off = MIN(mf->off + (int)offset, mf->cap);
-		break;
-	case SEEK_END:
-		mf->off = (offset <= mf->cap ? mf->cap - offset : 0);
-		break;
-	}
-
-	return (0);
-}
-
-static int
-mem_error(JZFile *file)
-{
-	LACF_UNUSED(file);
-	return (0);
-}
-
-static void
-mem_close(JZFile *file)
-{
-	LACF_UNUSED(file);
-}
-
-static void
-proc_file(JZFile *zip, outbuf_t *buf)
-{
-	JZFileHeader header;
-	char filename[1024];
-
-	VERIFY3P(buf->buf, ==, NULL);
-
-	if (jzReadLocalFileHeader(zip, &header, filename, sizeof(filename)))
-		return;
-
-	buf->buf = safe_malloc(header.uncompressedSize);
-	buf->len = header.uncompressedSize;
-
-	if (jzReadData(zip, &header, buf->buf) != Z_OK) {
-		free(buf->buf);
-		memset(buf, 0, sizeof (*buf));
-	}
-}
-
-int
-rec_cb(JZFile *zip, int idx, JZFileHeader *header, char *filename,
-    void *userinfo)
-{
-	long offset;
-
-	LACF_UNUSED(idx);
-	LACF_UNUSED(filename);
-
-	/* store current position */
-	offset = zip->tell(zip);
-	zip->seek(zip, header->offset, SEEK_SET);
-	/* alters file offset */
-	proc_file(zip, userinfo);
-	zip->seek(zip, offset, SEEK_SET);
-
-	/* Don't continue extracting files, we only support 1 subfile */
-	return (0);
-}
-
-/**
- * Decompresses the first file contained in a .zip archive and returns its
- * contents.
- *
- * @param in_buf A memory buffer containing the entire .zip file.
- * @param len Number of bytes in `in_buf`.
- * @param out_len Return argument, which will be filled with the amount of
- *	bytes contained in the returned decompressed buffer.
- *
- * @return A buffer containing the decompressed file data, or NULL if
- *	decompression failed.
- * @return Free the returned data using lacf_free().
- */
 void *
 decompress_zip(void *in_buf, size_t len, size_t *out_len)
 {
-	memfile_t mf = {
-	    .ops = mem_ops,
-	    .buf = in_buf,
-	    .cap = len
-	};
-	outbuf_t buf = { .buf = NULL };
-	JZFile *zip = (JZFile *)&mf;
-	JZEndRecord endrec;
-
-	if (jzReadEndRecord(zip, &endrec) != 0)
+	ASSERT(in_buf != NULL || len == 0);
+	ASSERT(out_len != NULL);
+	*out_len = 0;
+	if (len == 0) {
 		return (NULL);
+	}
 
-	if (jzReadCentralDirectory(zip, &endrec, rec_cb, &buf) != 0)
+	struct zip_t *zip = zip_stream_open(in_buf, len, 0, 'r');
+	if (zip == NULL) {
 		return (NULL);
+	}
+	if (zip_entries_total(zip) <= 0) {
+		goto errout;
+	}
+	outbuf_t buf = {};
+	if (zip_entry_extract(zip, read_cb, &buf) != 0) {
+		goto errout;
+	}
+	zip_stream_close(zip);
 
 	*out_len = buf.len;
-
 	return (buf.buf);
+
+errout:
+	zip_stream_close(zip);
+	if (buf.buf != NULL) {
+		free(buf.buf);
+	}
+	return (NULL);
 }

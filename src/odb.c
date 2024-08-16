@@ -22,8 +22,6 @@
 
 #include <curl/curl.h>
 
-#include <junzip.h>
-
 #include "acfutils/assert.h"
 #include "acfutils/avl.h"
 #include "acfutils/compress.h"
@@ -562,8 +560,6 @@ odb_refresh_us_decompress(odb_t *odb, dl_info_t *dl_info)
 		odb->refresh_times[ODB_REGION_US] = time(NULL);
 
 		mutex_exit(&odb->tiles_lock);
-
-		logMsg("Obstacle database update successful");
 	} else {
 		logMsg("Error updating obstacle database from %s: "
 		    "failed to decompress downloaded ZIP file", FAA_DOF_URL);
