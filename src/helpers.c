@@ -739,7 +739,7 @@ append_format(char **str, size_t *sz, const char *format, ...)
 
 	va_start(ap, format);
 	*str = safe_realloc(*str, *sz + needed + 1);
-	(void) vsnprintf(*str + *sz, *sz + needed + 1, format, ap);
+	(void) vsnprintf(*str + *sz, needed + 1, format, ap);
 	*sz += needed;
 	va_end(ap);
 }
