@@ -1160,7 +1160,7 @@ parse_apt_dat_freq_line(airport_t *arpt, char *line, bool_t use833)
 	comps = strsplit(line, " ", B_TRUE, &ncomps);
 	if (ncomps < 3)
 		goto out;
-	freq = calloc(1, sizeof (*freq));
+	freq = safe_calloc(1, sizeof (*freq));
 	/*
 	 * When `use833' is provided, the line types start at 1050 instead
 	 * of 50. Also, the frequencies are specified in thousands of Hertz,
@@ -1183,10 +1183,10 @@ parse_apt_dat_freq_line(airport_t *arpt, char *line, bool_t use833)
 		}
 		if (freq->name[0] != '\0') {
 			strncat(&freq->name[strlen(freq->name)], " ",
-			    sizeof (freq->name) - strlen(freq->name));
+			    sizeof (freq->name) - strlen(freq->name) - 1);
 		}
 		strncat(&freq->name[strlen(freq->name)], comps[i],
-		    sizeof (freq->name) - strlen(freq->name));
+		    sizeof (freq->name) - strlen(freq->name) - 1);
 	}
 	list_insert_tail(&arpt->freqs, freq);
 
