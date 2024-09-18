@@ -18,7 +18,7 @@
 source ../build_dep.common
 
 PROJ4="proj-4.9.3.tar.bz2"
-SHAPELIB="shapelib-1.4.1.tar.bz2"
+SHAPELIB="shapelib-1.6.1.tar.bz2"
 
 if [[ "$do_clean" != 1 ]]; then
 	PKG_CONFIG="pkg-config"

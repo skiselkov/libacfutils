@@ -22,7 +22,6 @@
 #	pkg-config qt5-default qt5-qmake unzip
 
 export minimal=0
-build_ocr=0
 build_jpeg=1
 build_png=1
 build_freetype=1
@@ -35,13 +34,12 @@ build_cglm=1
 build_geographic=1
 build_lzma=1
 
-while getopts "cdmof:h" opt; do
+while getopts "cdmf:h" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
 	m)
 		export minimal=1
-		build_ocr=0
 		build_jpeg=0
 		build_png=0
 		build_freetype=0
@@ -57,9 +55,6 @@ while getopts "cdmof:h" opt; do
 		;;
 	f)
 		case $OPTARG in
-		ocr)
-			build_ocr=1
-			;;
 		jpeg)
 			build_png=1
 			;;
@@ -101,7 +96,6 @@ while getopts "cdmof:h" opt; do
 			;;
 		esac
 		;;
-	o) export build_ocr=1 ;;
 	h|*)
 		cat << EOF
 Usage: $0 [-cdm] [-f <feature>]
@@ -121,7 +115,6 @@ Usage: $0 [-cdm] [-f <feature>]
 	"glew" - enable building libGLEW.
 	"jpeg" - enable building libjpeg.
 	"lzma" - enable building LZMA.
-	"ocr" - enable building tesseract and OCR infrastructure.
 	"openal" - enable building openal-soft.
 	"opus" - enable building libopus and libogg.
 	"png" - enable building libpng.
@@ -206,8 +199,6 @@ esac
     ( echo "Building cURL ..."; cd curl && ./build_curl_deps ) && \
     ( [ $build_shape -ne 1 ] || ( echo "Building shapelib ..."; \
     cd shapelib && ./build_shapelib_deps ) ) && \
-    ( [ $build_ocr -ne 1 ] || \
-    ( echo "Building OCR ..."; cd ocr && ./build_ocr_deps ) ) && \
     ( echo "Building PCRE2 ..."; cd pcre2 && ./build_pcre2_deps ) && \
     ( [ $build_glew -ne 1 ] || ( echo "Building GLEW ..."; \
     cd glew && ./build_glew_deps ) ) && \

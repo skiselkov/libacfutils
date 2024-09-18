@@ -59,10 +59,18 @@ case $(uname) in
 		elif ! [ -f "$PRODUCT" ]; then
 			rm -fr "$DIR-win-64"
 			tar xjvf "$FILE" && mv "$DIR" "$DIR-win-64"
-			( cd "$DIR-win-64" && ln -s ../../mingw-std-threads \
-			    mingw_stdthreads )
-			( cd "$DIR-win-64" && \
-			    patch -p1 < ../mingw_stdthreads.patch )
+			# On Ubuntu 24.04, MinGW includes C++11 standard
+			# threading support, so on platforms with native
+			# C++11 threading, we want to avoid using our custom
+			# std-threads implementation.
+			if x86_64-w64-mingw32-gcc -E -o /dev/null \
+			    threads_test.cc &> /dev/null; then
+				( cd "$DIR-win-64" && \
+				    ln -s ../../mingw-std-threads \
+				    mingw_stdthreads )
+				( cd "$DIR-win-64" && \
+				    patch -p1 < ../mingw_stdthreads.patch )
+			fi
 			sed -i '/CMAKE_INSTALL_PREFIX/ d;' \
 			    "$DIR-win-64/XCompile.txt"
 			sed -i ' /dllexport/ d;' \
