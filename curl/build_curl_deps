@@ -72,6 +72,17 @@ case `uname` in
 			    --with-zlib=$(pwd)/../zlib/zlib-win-64" \
 			    "$CURL" "libcurl" "lib/libcurl.a" || exit 1
 		fi
+
+		# Strip away the -lc and -lgcc_s flags from the pkg-config
+		# files, because those cause dynamic linking of glibc and
+		# libgcc_s, irrespective of the -static-libgcc and similar
+		# flags.
+		if [[ "$do_clean" != "1" ]]; then
+			for FILE in libcurl-*/lib/pkgconfig/*.pc; do
+				sed -i 's/[[:space:]]-lc[[:space:]]/ /g;
+				    s/[[:space:]]-lgcc_s[[:space:]]/ /g' "$FILE"
+			done
+		fi
 		;;
 	Darwin)
 		build_dep "mac-64" "$CONFOPTS_COMMON \
@@ -86,13 +97,3 @@ case `uname` in
 		exit 1
 		;;
 esac
-
-# Strip away the -lc and -lgcc_s flags from the pkg-config files, because
-# those cause dynamic linking of glibc and libgcc_s, irrespective of
-# the -static-libgcc and similar flags.
-if [[ "$do_clean" != "1" ]]; then
-	for FILE in libcurl-*/lib/pkgconfig/*.pc; do
-		sed -i 's/[[:space:]]-lc[[:space:]]/ /g;
-		    s/[[:space:]]-lgcc_s[[:space:]]/ /g' "$FILE"
-	done
-fi
