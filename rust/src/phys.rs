@@ -581,6 +581,54 @@ pub mod util {
 	{
 		Speed::from_mps((gamma * R * T.as_K()).sqrt())
 	}
+	pub fn baro_alt2press(alt_m: f64, p0: Pressure, T0: Temperature,
+	    g_mss: f64) -> f64 {
+		/*
+		 * Standard barometric formula:
+		 *                       g.M
+		 *           /    L.h \^ ----
+		 * p = p0 * ( 1 - ---  ) R0.L
+		 *           \     T0 /
+		 * Where:
+		 * p    current outside pressure [Pa]
+		 * p0   reference sea level pressure [Pa] (NOT QNH!)
+		 * L    temperature lapse rate [K/m]
+		 * h    height above mean sea level [m]
+		 * T0   reference sea level temperature [K]
+		 * g    gravitational acceleration [m/s^2]
+		 * M    molar mass of dry air [kg/mol]
+		 * R0   universal gas constant [J/(mol.K)]
+		 */
+		p0.as_pa() *
+		    (1.0 - ((ISA_TLR_PER_1M * alt_m) / T0.as_K()))
+		    .powf((g_mss * DRY_AIR_MOL) /
+		    (R_UNIV * ISA_TLR_PER_1M))
+	}
+	pub fn press2baro_alt(p: Pressure, p0: Pressure, T0: Temperature,
+	    g_mss: f64) -> f64 {
+		/*
+		 * This is the barometric formula, solved for 'h':
+		 *                          R0.L
+		 *           /      / p  \^ ---- \
+		 *     T0 * (  1 - ( ---- ) g.M   )
+		 *           \      \ p0 /       /
+		 * h = ----------------------------
+		 *                 L
+		 * Where:
+		 * h    height above mean sea level [m]
+		 * p    current outside pressure [Pa]
+		 * p0   reference sea level pressure [Pa] (NOT QNH!)
+		 * R0   universal gas constant [J/(mol.K)]
+		 * L    temperature lapse rate [K/m]
+		 * g    gravitational acceleration [m/s^2]
+		 * M    molar mass of dry air [kg/mol]
+		 * T0   reference sea level temperature [K]
+		 */
+		(T0.as_K() *
+		    (1.0 - (p.as_pa() / p0.as_pa())
+		    .powf((R_UNIV * ISA_TLR_PER_1M) / (g_mss * DRY_AIR_MOL)))) /
+		    ISA_TLR_PER_1M
+	}
 }
 
 pub mod consts {
