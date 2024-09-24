@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-API_EXPORT void crc64_init();
+API_EXPORT void crc64_init(void);
 
 /**
  * Initializes the starting CRC64 value for subsequent calls to crc64_append().
