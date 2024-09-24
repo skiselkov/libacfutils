@@ -16,6 +16,7 @@ pub mod log;
 pub mod math;
 pub mod panic;
 pub mod path;
+pub mod pid_ctl;
 pub mod phys;
 pub mod sync;
 pub mod validation;
