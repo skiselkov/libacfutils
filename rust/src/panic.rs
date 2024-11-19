@@ -8,7 +8,7 @@
  */
 
 use std::sync::Mutex;
-use std::panic::PanicInfo;
+use std::panic::PanicHookInfo;
 use crate::logMsg;
 
 static INITED: Mutex<Option<()>> = Mutex::new(None);
@@ -21,7 +21,7 @@ pub fn install_panic_handler() {
 	}
 }
 
-fn panic_handler(pi: &PanicInfo) {
+fn panic_handler(pi: &PanicHookInfo) {
 	logMsg!("{}\nBacktrace:\n{}",
 	    pi, std::backtrace::Backtrace::force_capture());
 }
