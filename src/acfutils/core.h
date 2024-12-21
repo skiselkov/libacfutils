@@ -72,23 +72,46 @@ extern "C" {
  * for functions which take a count-of-elements argument.
  */
 
-#if	defined(__GNUC__) || defined(__clang__)
+#if	__STDC_VERSION__ >= 202311L
+
+#define	UNUSED_ATTR		[[maybe_unused]]
+#define	WARN_UNUSED_RES_ATTR	[[nodiscard]]
+#define	DEPRECATED_ATTR		[[deprecated]]
+
+#elif	defined(__GNUC__) || defined(__clang__)
+
 #define	UNUSED_ATTR		__attribute__((unused))
 #define	WARN_UNUSED_RES_ATTR	__attribute__((warn_unused_result))
+#define	DEPRECATED_ATTR		__attribute__((deprecated))
+
 #if	IBM && defined(__GNUC__) && __GNUC__ < 11
 #define	PACKED_ATTR		__attribute__((__packed__, gcc_struct))
 #else
 #define	PACKED_ATTR		__attribute__((__packed__))
 #endif
-#else
+
+#else	// !defined(__GNUC__) && !defined(__clang__)
+
 #define	UNUSED_ATTR
 #define	WARN_UNUSED_RES_ATTR
 #define	PACKED_ATTR
-#endif
+#define	DEPRECATED_ATTR
+
+#endif	// !defined(__GNUC__) && !defined(__clang__)
+
 #ifndef	UNUSED
 #define	UNUSED(x)	(void)(x)
 #endif
+
 #define	LACF_UNUSED(x)	(void)(x)
+
+#if	__STDC_VERSION__ >= 202311L
+#define	NODISCARD		[[nodiscard]]
+#define	NODISCARD_R(reason)	[[nodiscard(reason)]]
+#else	// !(__STDC_VERSION__ >= 202311L)
+#define	NODISCARD		WARN_UNUSED_RES_ATTR
+#define	NODISCARD_R(reason)	WARN_UNUSED_RES_ATTR
+#endif	// !(__STDC_VERSION__ >= 202311L)
 
 #define	ACFSYM(__sym__)	__libacfutils_ ## __sym__
 

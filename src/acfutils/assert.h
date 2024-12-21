@@ -188,7 +188,23 @@ extern "C" {
 #define	ASSERT3P(x, op, y)	VERIFY3P(x, op, y)
 #define	ASSERT0(x)		VERIFY0(x)
 #define	ASSERT_MSG(x, fmt, ...)	VERIFY_MSG(x, fmt, __VA_ARGS__)
-#else	/* !DEBUG */
+#elif	__STDC_VERSION__ >= 202311L
+/*
+ * Invoking the condition without checking can still end up compiling code.
+ * That's less than ideal, as it still ends up having a runtime cost. In
+ * C23, we have a native [[maybe_unused]] attribute, as well as our own
+ * generic UNUSED_ATTR substitute. You should really just use those to mark
+ * anything used by an ASSERT macro only as potentially unused, thus removing
+ * any runtime cost of disabled ASSERTs.
+ */
+#define	ASSERT(x)
+#define	ASSERT3S(x, op, y)
+#define	ASSERT3U(x, op, y)
+#define	ASSERT3F(x, op, y)
+#define	ASSERT3P(x, op, y)
+#define	ASSERT0(x)
+#define	ASSERT_MSG(x, fmt, ...)
+#else	/* !(__STDC_VERSION >= 202311L) */
 #define	ASSERT(x)		LACF_UNUSED(x)
 #define	ASSERT3S(x, op, y)	do { LACF_UNUSED(x); LACF_UNUSED(y); } while (0)
 #define	ASSERT3U(x, op, y)	do { LACF_UNUSED(x); LACF_UNUSED(y); } while (0)
@@ -196,7 +212,7 @@ extern "C" {
 #define	ASSERT3P(x, op, y)	do { LACF_UNUSED(x); LACF_UNUSED(y); } while (0)
 #define	ASSERT0(x)		LACF_UNUSED(x)
 #define	ASSERT_MSG(x, fmt, ...)	LACF_UNUSED(x)
-#endif	/* !DEBUG */
+#endif	/* !(__STDC_VERSION >= 202311L) */
 
 #ifdef	__cplusplus
 }
