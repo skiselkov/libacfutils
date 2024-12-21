@@ -7,9 +7,9 @@
  * Copyright 2023 Saso Kiselkov. All rights reserved.
  */
 
-use std::sync::RwLock;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
+use std::sync::RwLock;
 
 #[macro_export]
 // No need to include a trailing newline, it will be appended.
@@ -45,74 +45,71 @@ type CustomLogFunc = fn(&str);
 pub static LOG_FUNC_CB: RwLock<Option<CustomLogFunc>> = RwLock::new(None);
 
 pub fn init(log_func: Option<CustomLogFunc>, prefix: &str) {
-	let mut log_func_cb = LOG_FUNC_CB.write()
-	    .expect("LOG_FUNC_CB mutex is panicked");
-	*log_func_cb = log_func;
-	unsafe {
-		let c_prefix = CString::new(prefix)
-		    .expect("`prefix` contains a stray NUL byte");
-		log_init(my_log_func, c_prefix.as_ptr());
-	}
+    let mut log_func_cb = LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
+    *log_func_cb = log_func;
+    unsafe {
+        let c_prefix = CString::new(prefix).expect("`prefix` contains a stray NUL byte");
+        log_init(my_log_func, c_prefix.as_ptr());
+    }
 }
 
 pub fn fini() {
-	let mut log_func_cb = LOG_FUNC_CB.write()
-	    .expect("LOG_FUNC_CB mutex is panicked");
-	*log_func_cb = None;
-	unsafe { log_fini(); }
+    let mut log_func_cb = LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
+    *log_func_cb = None;
+    unsafe {
+        log_fini();
+    }
 }
 
 extern "C" fn my_log_func(c_message: *const c_char) {
-	use std::ops::Deref;
-	let log_func_cb = LOG_FUNC_CB.read()
-	    .expect("LOG_FUNC_CB mutex is panicked");
-	assert!(!c_message.is_null());
-	let cs_message = unsafe { CStr::from_ptr(c_message) };
-	let message = cs_message.to_string_lossy().into_owned();
-	if let Some(log_func) = log_func_cb.deref() {
-		log_func(&message);
-	} else {
-		// `c_message` already contains a trailing newline
-		print!("{}", &message);
-	}
+    use std::ops::Deref;
+    let log_func_cb = LOG_FUNC_CB.read().expect("LOG_FUNC_CB mutex is panicked");
+    assert!(!c_message.is_null());
+    let cs_message = unsafe { CStr::from_ptr(c_message) };
+    let message = cs_message.to_string_lossy().into_owned();
+    if let Some(log_func) = log_func_cb.deref() {
+        log_func(&message);
+    } else {
+        // `c_message` already contains a trailing newline
+        print!("{}", &message);
+    }
 }
 
 type LogFuncC = extern "C" fn(*const c_char);
 extern "C" {
-	fn log_init(log_func: LogFuncC, prefix: *const c_char);
-	fn log_fini();
-	pub fn log_impl(filename: *const c_char, line: u32,
-	    fmt: *const c_char, arg: *const c_char);
+    fn log_init(log_func: LogFuncC, prefix: *const c_char);
+    fn log_fini();
+    pub fn log_impl(filename: *const c_char, line: u32, fmt: *const c_char, arg: *const c_char);
 }
 
 mod tests {
-	use std::sync::RwLock;
+    use std::sync::RwLock;
 
-	static CUSTOM_LOGGER_CALLED: RwLock<bool> = RwLock::new(false);
-	/*
-	 * N.B. we can't define more than 1 test, because cargo will
-	 * attempt to run them all in parallel and libacfutils' log.h
-	 * subsystem initialization state is shared.
-	 */
-	#[test]
-	fn log_msg_test() {
-		use crate::log;
-		let stock = "stock";
-		let custom = "custom";
+    static CUSTOM_LOGGER_CALLED: RwLock<bool> = RwLock::new(false);
+    /*
+     * N.B. we can't define more than 1 test, because cargo will
+     * attempt to run them all in parallel and libacfutils' log.h
+     * subsystem initialization state is shared.
+     */
+    #[test]
+    fn log_msg_test() {
+        use crate::log;
+        let stock = "stock";
+        let custom = "custom";
 
-		log::init(None, "Test");
-		logMsg!("message for {} logger", stock);
-		log::fini();
-		assert!(!*CUSTOM_LOGGER_CALLED.read().unwrap());
+        log::init(None, "Test");
+        logMsg!("message for {} logger", stock);
+        log::fini();
+        assert!(!*CUSTOM_LOGGER_CALLED.read().unwrap());
 
-		log::init(Some(custom_logger), "Test");
-		logMsg!("message for {} logger", custom);
-		log::fini();
-		assert!(*CUSTOM_LOGGER_CALLED.read().unwrap());
-	}
-	#[allow(dead_code)]
-	fn custom_logger(msg: &str) {
-		*CUSTOM_LOGGER_CALLED.write().unwrap() = true;
-		print!("Custom logger says: {}", msg);
-	}
+        log::init(Some(custom_logger), "Test");
+        logMsg!("message for {} logger", custom);
+        log::fini();
+        assert!(*CUSTOM_LOGGER_CALLED.read().unwrap());
+    }
+    #[allow(dead_code)]
+    fn custom_logger(msg: &str) {
+        *CUSTOM_LOGGER_CALLED.write().unwrap() = true;
+        print!("Custom logger says: {}", msg);
+    }
 }
