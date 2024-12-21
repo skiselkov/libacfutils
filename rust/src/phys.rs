@@ -106,6 +106,17 @@ pub mod units {
 				}
 			}
 		}
+		// We can actually implement the opposite version as well,
+		// since scalar multiplication is commutative
+		impl std::ops::$trait<$type> for $scalar_type {
+			type Output = $type;
+			fn $op(self, rhs: $type) -> Self::Output {
+				assert!(self.is_finite());
+				Self::Output {
+				    $field: rhs.$field.$op(self as f64)
+				}
+			}
+		}
 	    };
 	}
 	macro_rules! impl_units_scalar_ops {
