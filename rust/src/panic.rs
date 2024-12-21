@@ -22,6 +22,14 @@ pub fn install_panic_handler() {
 }
 
 fn panic_handler(pi: &PanicHookInfo) {
-	logMsg!("{}\nBacktrace:\n{}",
-	    pi, std::backtrace::Backtrace::force_capture());
+	if let Some(s) = pi.payload().downcast_ref::<&str>() {
+		logMsg!("{}\nBacktrace:\n{}",
+		    s, std::backtrace::Backtrace::force_capture());
+	} else if let Some(s) = pi.payload().downcast_ref::<String>() {
+		logMsg!("{}\nBacktrace:\n{}",
+		    s, std::backtrace::Backtrace::force_capture());
+	} else {
+		logMsg!("(unknown panic type)\nBacktrace:\n{}",
+		    std::backtrace::Backtrace::force_capture());
+	}
 }
