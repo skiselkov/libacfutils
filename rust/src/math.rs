@@ -64,6 +64,38 @@ where
     x + (y - x) * w
 }
 
+/*
+ * Implements a .linearstep() function for f32 and f64. This does the
+ * same as GLSL's smoothstep() function, except the interpolation between
+ * the two edge values is linear, instead of a Hermite interpolation.
+ */
+pub trait LinearStep {
+    fn linearstep(self, edge0: Self, edge1: Self) -> Self;
+}
+
+macro_rules! impl_linearstep {
+    ($t:ty) => {
+        impl LinearStep for $t {
+            fn linearstep(self, edge0: $t, edge1: $t) -> $t {
+                clamp((self - edge0) / (edge1 - edge0), 0.0 as $t, 1.0 as $t)
+            }
+        }
+    };
+}
+
+impl_linearstep!(f32);
+impl_linearstep!(f64);
+
+pub fn clamp<T: PartialOrd>(x: T, minval: T, maxval: T) -> T {
+    if x < minval {
+        minval
+    } else if x > maxval {
+        maxval
+    } else {
+        x
+    }
+}
+
 mod tests {
     #[test]
     fn test_lerp() {
