@@ -55,6 +55,7 @@ extern "C" {
 
 #if	defined(__GNUC__) || defined(__clang__)
 #define	DEPRECATED_FUNC(f)	f __attribute__((deprecated))
+#define	DEPRECATED_ATTR		__attribute__((deprecated))
 #define	PRINTF_ATTR(x)		__attribute__((format(printf, x, x + 1)))
 #define	PRINTF_ATTR2(x,y)	__attribute__((format(printf, x, y)))
 #define	PRINTF_FORMAT(f)	f
@@ -75,6 +76,7 @@ extern "C" {
 
 #else	/* !__GNUC__ && !__clang__ */
 
+#define	DEPRECATED_ATTR
 #define	PRINTF_ATTR(x)
 #define	PRINTF_ATTR2(x,y)
 #define	SENTINEL_ATTR

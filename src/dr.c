@@ -1,4 +1,4 @@
-/*
+/*OH
  * CDDL HEADER START
  *
  * This file and its contents are supplied under the terms of the
@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2017 Saso Kiselkov. All rights reserved.
+ * Copyright 2025 Saso Kiselkov. All rights reserved.
  */
 
 #include <XPLMPlugin.h>
@@ -22,9 +22,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <acfutils/assert.h>
-#include <acfutils/dr.h>
-#include <acfutils/safe_alloc.h>
+#include "acfutils/assert.h"
+#define	__INCLUDED_FROM_DR_C__
+#include "acfutils/dr.h"
+#include "acfutils/safe_alloc.h"
 
 #define	DRE_MSG_ADD_DATAREF	0x01000000
 #define	DR_TYPE_CHECK(__check_type, __type)	\
@@ -44,6 +45,8 @@ dr_find(dr_t *dr, const char *fmt, ...)
 {
 	va_list ap;
 
+	memset(dr, 0, sizeof (*dr));
+
 	va_start(ap, fmt);
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 	va_end(ap);
@@ -58,9 +61,6 @@ dr_find(dr_t *dr, const char *fmt, ...)
 	    xplmType_IntArray | xplmType_FloatArray | xplmType_Data),
 	    "dataref \"%s\" has bad type %x", dr->name, dr->type);
 	dr->writable = XPLMCanWriteDataRef(dr->dr);
-	dr->read_cb = NULL;
-	dr->write_cb = NULL;
-	dr->cb_userinfo = NULL;
 	return (B_TRUE);
 }
 
@@ -630,8 +630,8 @@ dr_array_set_stride(dr_t *dr, size_t stride)
 }
 
 static void
-dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
-    bool_t writable, bool_t wide_type, const char *fmt, va_list ap)
+dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value,
+    dr_cfg_t cfg, bool_t wide_type, const char *fmt, va_list ap)
 {
 	ASSERT(dr != NULL);
 	/*
@@ -644,7 +644,7 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 
 	vsnprintf(dr->name, sizeof (dr->name), fmt, ap);
 
-	dr->dr = XPLMRegisterDataAccessor(dr->name, type, writable,
+	dr->dr = XPLMRegisterDataAccessor(dr->name, type, cfg.writable,
 	    read_int_cb, write_int_cb, read_float_cb, write_float_cb,
 	    NULL, NULL, read_int_array_cb, write_int_array_cb,
 	    wide_type ? read_double_array_cb : read_float_array_cb,
@@ -653,11 +653,17 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 
 	VERIFY(dr->dr != NULL);
 	dr->type = type;
-	dr->writable = writable;
+	dr->writable = cfg.writable;
 	dr->value = value;
-	dr->count = count;
-	dr->read_cb = NULL;
-	dr->write_cb = NULL;
+	dr->count = cfg.count;
+	dr->stride = cfg.stride;
+	dr->read_cb = cfg.read_cb;
+	dr->write_cb = cfg.write_cb;
+	dr->read_scalar_cb = cfg.read_scalar_cb;
+	dr->write_scalar_cb = cfg.write_scalar_cb;
+	dr->read_array_cb = cfg.read_array_cb;
+	dr->write_array_cb = cfg.write_array_cb;
+	dr->cb_userinfo = cfg.cb_userinfo;
 	dr->wide_type = wide_type;
 
 	if (!dre_plug_lookup_done) {
@@ -684,10 +690,23 @@ dr_create_common(dr_t *dr, XPLMDataTypeID type, void *value, size_t count,
 void
 dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Int, value, 1, writable, B_FALSE,
-	    fmt, ap);
+	dr_create_common(dr, xplmType_Int, value,
+	    (dr_cfg_t){ .count = 1, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_i_cfg(dr_t *dr, int *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Int, value, cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -698,10 +717,23 @@ dr_create_i(dr_t *dr, int *value, bool_t writable, const char *fmt, ...)
 void
 dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Float, value, 1, writable, B_FALSE,
-	    fmt, ap);
+	dr_create_common(dr, xplmType_Float, value,
+	    (dr_cfg_t){ .count = 1, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_f_cfg(dr_t *dr, float *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float, value, cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -712,10 +744,23 @@ dr_create_f(dr_t *dr, float *value, bool_t writable, const char *fmt, ...)
 void
 dr_create_f64(dr_t *dr, double *value, bool_t writable, const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Float, value, 1, writable, B_TRUE,
-	    fmt, ap);
+	dr_create_common(dr, xplmType_Float, value,
+	    (dr_cfg_t){ .count = 1, .writable = writable }, B_TRUE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_f64_cfg(dr_t *dr, double *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float, value, cfg, B_TRUE, fmt, ap);
 	va_end(ap);
 }
 
@@ -723,10 +768,24 @@ void
 dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_IntArray, value, n,
-	    writable, B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_IntArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vi_cfg(dr_t *dr, int *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_IntArray, value,
+	    cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -734,10 +793,23 @@ void
 dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_FloatArray, value, n,
-	    writable, B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_FloatArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf_cfg(dr_t *dr, float *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_FloatArray, value, cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -745,10 +817,23 @@ void
 dr_create_vf64(dr_t *dr, double *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_FloatArray, value, n,
-	    writable, B_TRUE, fmt, ap);
+	dr_create_common(dr, xplmType_FloatArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_TRUE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf64_cfg(dr_t *dr, double *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_FloatArray, value, cfg, B_TRUE, fmt, ap);
 	va_end(ap);
 }
 
@@ -756,10 +841,25 @@ void
 dr_create_vi_autoscalar(dr_t *dr, int *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value, n,
-	    writable, B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vi_autoscalar_cfg(dr_t *dr, int *value, dr_cfg_t cfg,
+    const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Int | xplmType_IntArray, value,
+	    cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -767,10 +867,25 @@ void
 dr_create_vf_autoscalar(dr_t *dr, float *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value, n,
-	    writable, B_FALSE, fmt, ap);
+	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf_autoscalar_cfg(dr_t *dr, float *value, dr_cfg_t cfg,
+    const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Float | xplmType_FloatArray, value,
+	    cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -778,10 +893,25 @@ void
 dr_create_vf64_autoscalar(dr_t *dr, double *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Double | xplmType_FloatArray, value, n,
-	    writable, B_TRUE, fmt, ap);
+	dr_create_common(dr, xplmType_Double | xplmType_FloatArray, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_TRUE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_vf64_autoscalar_cfg(dr_t *dr, double *value, dr_cfg_t cfg,
+    const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Double | xplmType_FloatArray, value,
+	    cfg, B_TRUE, fmt, ap);
 	va_end(ap);
 }
 
@@ -789,10 +919,23 @@ void
 dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     const char *fmt, ...)
 {
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
 	va_list ap;
 	va_start(ap, fmt);
-	dr_create_common(dr, xplmType_Data, value, n, writable, B_FALSE,
-	    fmt, ap);
+	dr_create_common(dr, xplmType_Data, value,
+	    (dr_cfg_t){ .count = n, .writable = writable }, B_FALSE, fmt, ap);
+	va_end(ap);
+}
+
+void
+dr_create_b_cfg(dr_t *dr, void *value, dr_cfg_t cfg, const char *fmt, ...)
+{
+	ASSERT(dr != NULL);
+	ASSERT(fmt != NULL);
+	va_list ap;
+	va_start(ap, fmt);
+	dr_create_common(dr, xplmType_Data, value, cfg, B_FALSE, fmt, ap);
 	va_end(ap);
 }
 
@@ -806,4 +949,10 @@ dr_delete(dr_t *dr)
 		XPLMUnregisterDataAccessor(dr->dr);
 		memset(dr, 0, sizeof (*dr));
 	}
+}
+
+void *
+dr_get_cb_userinfo(const dr_t REQ_PTR(dr))
+{
+	return (dr->cb_userinfo);
 }

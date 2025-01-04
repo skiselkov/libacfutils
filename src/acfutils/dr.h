@@ -13,7 +13,7 @@
  * CDDL HEADER END
 */
 /*
- * Copyright 2023 Saso Kiselkov. All rights reserved.
+ * Copyright 2025 Saso Kiselkov. All rights reserved.
  */
 /**
  * \file
@@ -42,6 +42,7 @@
 #ifndef	_ACFUTILS_DR_H_
 #define	_ACFUTILS_DR_H_
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -58,6 +59,12 @@ extern "C" {
 #define	DR_MAX_NAME_LEN	128
 
 typedef struct dr_s dr_t;
+
+#ifdef	__INCLUDED_FROM_DR_C__
+#define	DR_EXT_DEPRECATED
+#else
+#define	DR_EXT_DEPRECATED	DEPRECATED_ATTR
+#endif
 
 /**
  * This is the object representing a dataref. It is a convenience
@@ -89,6 +96,124 @@ struct dr_s {
 	ssize_t		count;
 	size_t		stride;
 	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * read_cb field instead.
+	 */
+	DR_EXT_DEPRECATED void (*read_cb)(dr_t *dr, void *value_out);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * write_cb field instead.
+	 */
+	DR_EXT_DEPRECATED void (*write_cb)(dr_t *dr, void *value_in);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * read_scalar_cb field instead.
+	 */
+	DR_EXT_DEPRECATED bool_t (*read_scalar_cb)(dr_t *dr, void *value_out);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * write_scalar_cb field instead.
+	 */
+	DR_EXT_DEPRECATED bool_t (*write_scalar_cb)(dr_t *dr, void *value_in);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * read_array_cb field instead.
+	 */
+	DR_EXT_DEPRECATED int (*read_array_cb)(dr_t *dr, void *values_out,
+	    int offset, int count);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * write_array_cb field instead.
+	 */
+	DR_EXT_DEPRECATED void (*write_array_cb)(dr_t *dr, void *values_in,
+	    int offset, int count);
+	/**
+	 * @deprecated
+	 * Do not set this field. Use the dr_cfg_t structure's
+	 * cb_userinfo field and dr_get_cb_userinfo() instead.
+	 */
+	DR_EXT_DEPRECATED void *cb_userinfo;
+};
+
+/**
+ * Specifies additional configuration parameters for a dataref.
+ *
+ * This data structure is used by the `dr_create_*_cfg()` functions to
+ * specify additional configurable features of owned datarefs. See the
+ * description of the individual fields for their purpose. The structure
+ * is designed in such a way that you can simply ignore the fields you
+ * don't need and thus leave them at 0 or NULL (which is valid). Example
+ * of using this configuration structure in code:
+ * ```
+ * int my_data = 0;
+ * dr_t my_dataref = {};
+ * bool_t my_read_callback(dr_t *dr, void *value_out);
+ *
+ * dr_create_i_cfg(&my_dataref, &my_data,
+ *     (dr_cfg_t){
+ *         .writable = true,
+ *         .read_scalar_cb = my_read_callback,
+ *         .cb_userinfo = get_some_userinfo(),
+ *     }, "my_plugin/my_data");
+ * ```
+ * @see dr_create_i_cfg()
+ * @see dr_create_f_cfg()
+ * @see dr_create_f64_cfg()
+ * @see dr_create_vi_cfg()
+ * @see dr_create_vf_cfg()
+ * @see dr_create_vf64_cfg()
+ * @see dr_create_vi_autoscalar_cfg()
+ * @see dr_create_vf_autoscalar_cfg()
+ * @see dr_create_vf64_autoscalar_cfg()
+ * @see dr_create_b_cfg()
+ * @see dr_get_cb_userinfo()
+ */
+typedef struct {
+	/// Defines whether this dataref will be writable or read-only.
+	bool	writable;
+	/// The number of elements in the `value` array for array datarefs.
+	/// Ignored for scalar datarefs.
+	size_t	count;
+	/**
+	 * Used by array datarefs to define the distance between successive
+	 * elements of the array in memory. If left at zero, the default
+	 * is to use the size of the native data type (e.g. sizeof(int) for
+	 * integer datarefs). You can set this to a non-zero value in case
+	 * your data is contained in an array of data structures, which
+	 * themselves contain multiple fields. In that case, the stride is
+	 * used to skip to the correct offset in the array. For example:
+	 * ```
+	 * struct my_data {
+	 *     int foo;
+	 *     float bar;
+	 * };
+	 *
+	 * static struct my_data my_array[32] = {};
+	 * // this exposes just the `foo' fields in `my_array` above
+	 * static dr_t foo_dataref = {};
+	 * // this exposes just the `bar' fields in `my_array` above
+	 * static dr_t bar_dataref = {};
+	 *
+	 * dr_create_vi_cfg(&foo_dataref, &my_array[0].foo,
+	 *     (dr_cfg_t){
+	 *         .count = ARRAY_NUM_ELEM(my_array),
+	 *         .stride = sizeof (struct my_data),
+	 *     }, "my_plugin/foo_data");
+	 * dr_create_vf_cfg(&bar_dataref, &my_array[0].bar,
+	 *     (dr_cfg_t){
+	 *         .count = ARRAY_NUM_ELEM(my_array),
+	 *         .stride = sizeof (struct my_data),
+	 *     }, "my_plugin/bar_data");
+	 * ```
+	 */
+	size_t	stride;
+	/**
 	 * For scalar datarefs we expose, setting this field to a callback
 	 * will make that callback be called *after* a read attempt to the
 	 * dataref is made. The dr machinery first reads the dataref from
@@ -110,13 +235,13 @@ struct dr_s {
 	 * dataref values on the fly, use the `read_scalar_cb`, and
 	 * `read_array_cb` callbacks.
 	 */
-	void		(*read_cb)(dr_t *dr, void *value_out);
+	void	(*read_cb)(dr_t *dr, void *value_out);
 	/**
 	 * Same as the `read_cb` callback, but called *before* a new value
 	 * is written into the memory location referenced from the dataref.
 	 * You can use this callback to modify the value to be written.
 	 */
-	void		(*write_cb)(dr_t *dr, void *value_in);
+	void	(*write_cb)(dr_t *dr, void *value_in);
 	/**
 	 * If not NULL, this callback gets called *before* a scalar read
 	 * is attempted from the dataref's memory location. The `value_out`
@@ -133,7 +258,7 @@ struct dr_s {
 	 * `B_FALSE`, the dr machinery will read the memory pointed to
 	 * by the `value` field in the dataref.
 	 */
-	bool_t		(*read_scalar_cb)(dr_t *dr, void *value_out);
+	bool_t	(*read_scalar_cb)(dr_t *dr, void *value_out);
 	/**
 	 * Same as read_scalar_cb, but instead is called before any attempt
 	 * is made to write to the dataref's `value` memory location. The
@@ -144,29 +269,28 @@ struct dr_s {
 	 * is written as normal. You can still use this callback to alter
 	 * the value being written though.
 	 */
-	bool_t		(*write_scalar_cb)(dr_t *dr, void *value_in);
+	bool_t	(*write_scalar_cb)(dr_t *dr, void *value_in);
 	/**
 	 * Same as `read_scalar_cb`, but for array datarefs. To take over
 	 * the dataref read, return a value >= 0 from this callback. If you
 	 * return a value <0, the normal array read functions get executed.
 	 */
-	int		(*read_array_cb)(dr_t *dr, void *values_out,
-	    int offset, int count);
+	int	(*read_array_cb)(dr_t *dr, void *values_out, int off, int cnt);
 	/**
 	 * Same as `write_scalar_cb`, but for array datarefs. If this
 	 * callback is present, the write is aborted after it is called.
 	 * There is no facility provided to "continue" the regular array
 	 * dataref write path as normal.
 	 */
-	void		(*write_array_cb)(dr_t *dr, void *values_in,
-	    int offset, int count);
+	void	(*write_array_cb)(dr_t *dr, void *values_in, int off, int cnt);
 	/**
 	 * Optional user info field that you can set to whatever you want.
 	 * Use it to stash any extra information you need in your
-	 * callbacks and read it from the `dr` argument.
+	 * callbacks and read it using dr_get_cb_userinfo().
 	 */
-	void		*cb_userinfo;
-};
+	void	*cb_userinfo;
+} dr_cfg_t;
+
 /**
  * Attempts to find a dataref in the X-Plane dataref system and store
  * a handle to it in `dr'. The dataref must exist (have been created)
@@ -490,16 +614,37 @@ API_EXPORT void dr_setbytes_impl(const dr_t *dr, DR_DEBUG_VARS, void *data,
 API_EXPORT void dr_create_i(dr_t *dr, int *value, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
+ * Same as dr_create_i(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_i_cfg(dr_t *dr, int *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
  * Same as dr_create_i(), but creates a single-precision floating point
  * dataref and takes a `float *` data pointer argument.
  */
 API_EXPORT void dr_create_f(dr_t *dr, float *value, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
+ * Same as dr_create_f(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_f_cfg(dr_t *dr, float *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
  * Same as dr_create_i(), but creates a double-precision floating point
  * dataref and takes a `double *` data pointer argument.
  */
 API_EXPORT void dr_create_f64(dr_t *dr, double *value, bool_t writable,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
+ * Same as dr_create_f64(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_f64_cfg(dr_t *dr, double *value, dr_cfg_t cfg,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
  * Creates an integer array ("vi" = vector of int's) dataref. In general
@@ -526,11 +671,25 @@ API_EXPORT void dr_create_f64(dr_t *dr, double *value, bool_t writable,
 API_EXPORT void dr_create_vi(dr_t *dr, int *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 /**
+ * Same as dr_create_vi(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vi_cfg(dr_t *dr, int *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
  * Same as dr_create_vi(), but creates a single-precision floating point
  * array dataref and takes a `float *` array pointer argument.
  */
 API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+/**
+ * Same as dr_create_vf(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vf_cfg(dr_t *dr, float *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
  * Same as dr_create_vi(), but creates a double-precision floating point
  * array dataref and takes a `double *` array pointer argument.
@@ -545,6 +704,13 @@ API_EXPORT void dr_create_vf(dr_t *dr, float *value, size_t n, bool_t writable,
  */
 API_EXPORT void dr_create_vf64(dr_t *dr, double *value, size_t n,
     bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+/**
+ * Same as dr_create_vf64(), but provides a configuration structure to
+ * specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vf64_cfg(dr_t *dr, double *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
  * Similar to dr_create_vi(), but creates a combo dataref that holds both
  * a single scalar integer value, as well as an array of integers. Internally
@@ -563,12 +729,26 @@ API_EXPORT void dr_create_vf64(dr_t *dr, double *value, size_t n,
 API_EXPORT void dr_create_vi_autoscalar(dr_t *dr, int *value, size_t n,
     bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 /**
+ * Same as dr_create_vi_autoscalar(), but provides a configuration
+ * structure to specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vi_autoscalar_cfg(dr_t *dr, int *value,
+    dr_cfg_t cfg, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
  * Same as dr_create_vi_autoscalar(), but creates a single-precision
  * floating point combo scalar/array dataref and takes a `float *` array
  * pointer argument.
  */
 API_EXPORT void dr_create_vf_autoscalar(dr_t *dr, float *value, size_t n,
     bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
+/**
+ * Same as dr_create_vf_autoscalar(), but provides a configuration
+ * structure to specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vf_autoscalar_cfg(dr_t *dr, float *value,
+    dr_cfg_t cfg, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
 /**
  * Same as dr_create_vi_autoscalar(), but creates a double-precision
  * floating point combo scalar/array dataref and takes a `double *` array
@@ -578,12 +758,33 @@ API_EXPORT void dr_create_vf_autoscalar(dr_t *dr, float *value, size_t n,
 API_EXPORT void dr_create_vf64_autoscalar(dr_t *dr, double *value, size_t n,
     bool_t writable, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 /**
+ * Same as dr_create_vf64_autoscalar(), but provides a configuration
+ * structure to specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_vf64_autoscalar_cfg(dr_t *dr, double *value,
+    dr_cfg_t cfg, PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
  * Same as dr_create_vi(), but creates an arbitrary byte array dataref
  * and takes an anonymous `void *` buffer pointer argument.
  */
 API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
     PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(5);
 /**
+ * Same as dr_create_b(), but provides a configuration
+ * structure to specify additional parameters and custom callbacks.
+ * @see dr_cfg_t
+ */
+API_EXPORT void dr_create_b_cfg(dr_t *dr, void *value, dr_cfg_t cfg,
+    PRINTF_FORMAT(const char *fmt), ...) PRINTF_ATTR(4);
+/**
+ * @deprecated
+ *
+ * This function is deprecated. Use `dr_create_*_cfg()` functions which
+ * specify the stride in the configuration structure argument.
+ *
+ * @see dr_cfg_t
+ *
  * For array datarefs you create, you can specify a data access stride
  * value. if set to non-zero after creation, the built-in array read
  * functions of the `dr.h` machinery will use the stride calculate the
@@ -604,7 +805,7 @@ API_EXPORT void dr_create_b(dr_t *dr, void *value, size_t n, bool_t writable,
  *	dr_array_set_stride(&baz_dr, sizeof (struct my_struct));
  *```
  */
-API_EXPORT void dr_array_set_stride(dr_t *dr, size_t stride);
+DEPRECATED_ATTR API_EXPORT void dr_array_set_stride(dr_t *dr, size_t stride);
 /**
  * Destroys a dataref previously created using one of the `dr_create_*`
  * functions. You MUST destroy every dataref you create prior to your
@@ -615,6 +816,13 @@ API_EXPORT void dr_array_set_stride(dr_t *dr, size_t stride);
  * information.
  */
 API_EXPORT void dr_delete(dr_t *dr);
+/**
+ * Returns the cb_userinfo pointer initially set in the configuration
+ * structure to the `dr_create_*_cfg()` functions used to create the
+ * dataref.
+ * @see dr_cfg_t
+ */
+API_EXPORT void *dr_get_cb_userinfo(const dr_t REQ_PTR(dr));
 
 #ifdef	__cplusplus
 }

@@ -20,7 +20,7 @@
  * CDDL HEADER END
  */
 /*
- * Copyright 2023 Saso Kiselkov. All rights reserved.
+ * Copyright 2025 Saso Kiselkov. All rights reserved.
  */
 /**
  * \file
@@ -91,7 +91,7 @@ API_EXPORT void dcr_insert_rdr(void *token);
 	do { \
 		void *__rdr = dcr_alloc_rdr(); \
 		dr_t *__dr = dcr_get_dr(__rdr); \
-		dr_create_ ## type(__dr, __VA_ARGS__); \
+		dr_create_ ## type ## _cfg(__dr, __VA_ARGS__); \
 		dcr_insert_rdr(__rdr); \
 		if ((dr_ptr) != NULL) \
 			*(dr_t **)(dr_ptr) = __dr; \
@@ -113,62 +113,89 @@ API_EXPORT void dcr_insert_rdr(void *token);
  * printf-style name creation.
  */
 #define	DCR_CREATE_I(dr_p, __value, __writable, ...)		\
-	DCR_CREATE_COMMON(i, dr_p, __value, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(i, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable) }, __VA_ARGS__)
+#define	DCR_CREATE_I_CFG(dr_p, __value, __cfg, ...)		\
+	DCR_CREATE_COMMON(i, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_I(), except creates a dataref using dr_create_f().
  */
 #define	DCR_CREATE_F(dr_p, __value, __writable, ...)		\
-	DCR_CREATE_COMMON(f, dr_p, __value, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(f, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable) }, __VA_ARGS__)
+#define	DCR_CREATE_F_CFG(dr_p, __value, __cfg, ...)		\
+	DCR_CREATE_COMMON(f, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_I(), except creates a dataref using dr_create_f64().
  */
 #define	DCR_CREATE_F64(dr_p, __value, __writable, ...)	\
-	DCR_CREATE_COMMON(f64, dr_p, __value, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(f64, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable) }, __VA_ARGS__)
+#define	DCR_CREATE_F64_CFG(dr_p, __value, __cfg, ...)	\
+	DCR_CREATE_COMMON(f64, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_I(), except creates an array dataref using dr_create_vi()
  * and takes an additional number-of-elements argument in `__n`.
  */
 #define	DCR_CREATE_VI(dr_p, __value, __n, __writable, ...)	\
-	DCR_CREATE_COMMON(vi, dr_p, __value, __n, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(vi, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_VI_CFG(dr_p, __value, __cfg, ...)	\
+	DCR_CREATE_COMMON(vi, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates an array dataref using
  * dr_create_vf().
  */
 #define	DCR_CREATE_VF(dr_p, __value, __n, __writable, ...)	\
-	DCR_CREATE_COMMON(vf, dr_p, __value, __n, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(vf, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n)}, __VA_ARGS__)
+#define	DCR_CREATE_VF_CFG(dr_p, __value, __cfg, ...)	\
+	DCR_CREATE_COMMON(vf, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates an array dataref using
  * dr_create_vf64().
  */
 #define	DCR_CREATE_VF64(dr_p, __value, __n, __writable, ...)	\
-	DCR_CREATE_COMMON(vf64, dr_p, __value, __n, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(vf64, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_VF64_CFG(dr_p, __value, __cfg, ...)	\
+	DCR_CREATE_COMMON(vf64, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates an auto-scalar array dataref
  * using dr_create_vi_autoscalar().
  */
 #define	DCR_CREATE_VI_AUTOSCALAR(dr_p, __value, __n, __writable, ...) \
-	DCR_CREATE_COMMON(vi_autoscalar, dr_p, __value, __n, __writable, \
-	    __VA_ARGS__)
+	DCR_CREATE_COMMON(vi_autoscalar, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_VI_AUTOSCALAR_CFG(dr_p, __value, __cfg, ...) \
+	DCR_CREATE_COMMON(vi_autoscalar, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates an auto-scalar array dataref
  * using dr_create_vf_autoscalar().
  */
 #define	DCR_CREATE_VF_AUTOSCALAR(dr_p, __value, __n, __writable, ...) \
-	DCR_CREATE_COMMON(vf_autoscalar, dr_p, __value, __n, __writable, \
-	    __VA_ARGS__)
+	DCR_CREATE_COMMON(vf_autoscalar, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_VF_AUTOSCALAR_CFG(dr_p, __value, __cfg, ...) \
+	DCR_CREATE_COMMON(vf_autoscalar, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates an auto-scalar array dataref
  * using dr_create_vf64_autoscalar().
  */
 #define	DCR_CREATE_VF64_AUTOSCALAR(dr_p, __value, __n, __writable, ...) \
-	DCR_CREATE_COMMON(vf64_autoscalar, dr_p, __value, __n, __writable, \
-	    __VA_ARGS__)
+	DCR_CREATE_COMMON(vf64_autoscalar, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_VF64_AUTOSCALAR_CFG(dr_p, __value, __cfg, ...) \
+	DCR_CREATE_COMMON(vf64_autoscalar, dr_p, __value, __cfg, __VA_ARGS__)
 /**
  * Same as DCR_CREATE_VI(), except creates a byte array dataref using
  * dr_create_b().
  */
 #define	DCR_CREATE_B(dr_p, __value, __n, __writable, ...)		\
-	DCR_CREATE_COMMON(b, dr_p, __value, __n, __writable, __VA_ARGS__)
+	DCR_CREATE_COMMON(b, dr_p, __value, \
+	    (dr_cfg_t){ .writable = (__writable), .count = (__n) }, __VA_ARGS__)
+#define	DCR_CREATE_B_CFG(dr_p, __value, __cfg, ...)		\
+	DCR_CREATE_COMMON(b, dr_p, __value, __cfg, __VA_ARGS__)
 
 #ifdef	__clang
 #pragma	GCC	diagnostic	pop
