@@ -123,7 +123,8 @@ wmm_get_start(const wmm_t *wmm)
 double
 wmm_get_end(const wmm_t *wmm)
 {
-	return (wmm->timed_model->CoefficientFileEndDate);
+	// Add 0.999 to the year, so we cover the whole last year
+	return (wmm->timed_model->CoefficientFileEndDate + 0.999);
 }
 
 /*
