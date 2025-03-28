@@ -48,6 +48,8 @@ static struct sigaction old_sigfpe = {};
 static struct sigaction old_sigint = {};
 static struct sigaction old_sigill = {};
 static struct sigaction old_sigterm = {};
+static struct sigaction old_sigbus = {};
+static struct sigaction old_sigpipe = {};
 
 static const char *
 sigfpe2str(int si_code)
@@ -193,6 +195,8 @@ signal_handler_init(void)
 	VERIFY0(sigaction(SIGINT, &sig_action, &old_sigint));
 	VERIFY0(sigaction(SIGILL, &sig_action, &old_sigill));
 	VERIFY0(sigaction(SIGTERM, &sig_action, &old_sigterm));
+	VERIFY0(sigaction(SIGBUS, &sig_action, &old_sigbus));
+	VERIFY0(sigaction(SIGPIPE, &sig_action, &old_sigpipe));
 }
 
 static void
@@ -204,6 +208,8 @@ signal_handler_fini(void)
 	VERIFY0(sigaction(SIGINT, &old_sigint, NULL));
 	VERIFY0(sigaction(SIGILL, &old_sigill, NULL));
 	VERIFY0(sigaction(SIGTERM, &old_sigterm, NULL));
+	VERIFY0(sigaction(SIGBUS, &old_sigbus, NULL));
+	VERIFY0(sigaction(SIGPIPE, &old_sigpipe, NULL));
 #if	LIN
 	free(alternate_stack);
 	alternate_stack = NULL;
