@@ -13,17 +13,17 @@
 #
 # CDDL HEADER END
 
-# Copyright 2017 Saso Kiselkov. All rights reserved.
+# Copyright 2025 Saso Kiselkov. All rights reserved.
 
 # OpenSSL uses a fairly custom build infrastructure, so we can't
 # use build_dep
 
-OPENSSL="openssl-1.1.1w"
+OPENSSL="openssl-3.5.0"
 
 function make_macOS_fat() {
 	PLATFORM="$1"
 	PLATFORM_ARM="$2"
-    
+
 	if [[ "$do_clean" = 1 ]]; then
 		return
 	fi
@@ -57,11 +57,11 @@ function build_ssl() {
 			return
 		fi
 		if [[ $(uname) = "Darwin" ]]; then
-			CONFOPTS="$CONFOPTS -mmacosx-version-min=10.9"
+			CONFOPTS="$CONFOPTS -mmacosx-version-min=11.0"
 		fi
 		if ! [ -f "$OUTDIR/lib/libssl.a" ]; then
 			rm -rf "$OUTDIR" "$OPENSSL"
-			tar xzf "${OPENSSL}.tar.gz" || exit 1
+			tar xjf "${OPENSSL}.tar.bz2" || exit 1
 			( cd "$OPENSSL" ;
 				patch -p1 < ../atexit.patch ) || exit 1
 			mkdir -p "$OUTDIR"
