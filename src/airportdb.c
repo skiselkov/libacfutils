@@ -1371,7 +1371,7 @@ parse_apt_dat_1300_line(airport_t *arpt, const char *line,
 	rs = safe_calloc(1, sizeof (*rs));
 	lacf_strlcpy(rs->name, srch.name, sizeof (rs->name));
 	rs->pos = GEO_POS2(atof(comps[1]), atof(comps[2]));
-	rs->hdgt = atof(comps[3]);
+	rs->hdgt = normalize_hdg(atof(comps[3]));
 	if (!is_valid_lat(rs->pos.lat) || !is_valid_lon(rs->pos.lon) ||
 	    !is_valid_hdg(rs->hdgt)) {
 		free(rs);
