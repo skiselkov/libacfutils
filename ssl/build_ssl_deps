@@ -19,6 +19,18 @@
 # use build_dep
 
 OPENSSL="openssl-3.5.0"
+case $(uname) in
+    Linux)
+	NCPUS=$(( $(nproc) + 1 ))
+	;;
+    Darwin)
+	NCPUS=$(( $(sysctl -n hw.ncpu) + 1 ))
+	;;
+    *)
+	NCPUS=8
+	;;
+esac
+
 
 function make_macOS_fat() {
 	PLATFORM="$1"
@@ -66,11 +78,14 @@ function build_ssl() {
 				patch -p1 < ../atexit.patch ) || exit 1
 			mkdir -p "$OUTDIR"
 			cd "$OPENSSL"
-			./Configure no-shared no-dso \
-				--prefix="$OUTDIR" $CONFOPTS && \
-				make clean && \
-				make -j 8 && \
-				make install
+			./Configure no-shared no-dso no-tests \
+			    --prefix="$OUTDIR" $CONFOPTS && \
+			    make clean && \
+			    make -j "$NCPUS" && \
+			    make -j "$NCPUS" install_sw install_ssldirs
+			if ! [ -d "OUTDIR/lib64" ]; then
+				( cd "$OUTDIR" ; ln -s lib64 lib )
+			fi
 		fi
 	)
 }
