@@ -82,7 +82,8 @@ typedef enum {
     XPJOY_AXIS_THROTTLE_VERTICAL =	40,
     XPJOY_AXIS_VIEW_LEFT_RIGHT =	41,
     XPJOY_AXIS_VIEW_UP_DOWN =		42,
-    XPJOY_AXIS_VIEW_ZOOM =		43
+    XPJOY_AXIS_VIEW_ZOOM =		43,
+    XPJOY_AXIS_WHEELBRAKE =		78,	// From XP12.1
 } xpjoy_axis_t;
 
 #ifdef	__cplusplus
