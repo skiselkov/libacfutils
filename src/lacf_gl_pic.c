@@ -71,7 +71,9 @@ load_image(lacf_gl_pic_t *pic)
 	ASSERT0(pic->tex);
 	ASSERT(pic->path != NULL);
 
-	buf = png_load_from_file_rgba(pic->path, &pic->w, &pic->h);
+	int color_type = 0, bit_depth = 0;
+	buf = png_load_from_file_rgba_auto(pic->path, &pic->w, &pic->h,
+	    &color_type, &bit_depth);
 	if (buf == NULL)
 		return (B_FALSE);
 
