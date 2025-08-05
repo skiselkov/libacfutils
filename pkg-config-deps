@@ -173,6 +173,7 @@ $(pwd)/curl/libcurl-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libproj-$ARCH/lib/pkgconfig:\
 $(pwd)/shapelib/libshape-$ARCH/lib/pkgconfig:\
 $(pwd)/ssl/openssl-$ARCH/lib/pkgconfig:\
+$(pwd)/ssl/openssl-$ARCH/lib64/pkgconfig:\
 $(pwd)/ocr/liblept-$ARCH/lib/pkgconfig:\
 $(pwd)/ocr/tesseract-$ARCH/lib/pkgconfig:\
 $(pwd)/libxml2/libxml2-$ARCH/lib/pkgconfig:\

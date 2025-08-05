@@ -62,7 +62,7 @@ API_EXPORT const char *ft_err2str(FT_Error err);
  *	fontfile = NULL.
  * @param ft FreeType library handle.
  * @param font Return FreeType font face object pointer. Release this after
- *	the cairo font face object using FT_DoneFace.
+ *	the cairo font face object using FT_Done_Face.
  * @param cr_font Return cairo font face object pointer. Release this before
  *	the freetype font face using cairo_font_face_destroy.
  *

@@ -649,6 +649,10 @@ explode_line(char *line, char delim, char **comps, size_t capacity)
 char **
 strsplit(const char *input, const char *sep, bool_t skip_empty, size_t *num)
 {
+	ASSERT(input != NULL);
+	ASSERT(sep != NULL);
+	ASSERT(num != NULL);
+
 	char **result;
 	size_t i = 0, n = 0;
 	size_t seplen = strlen(sep);
@@ -664,6 +668,15 @@ strsplit(const char *input, const char *sep, bool_t skip_empty, size_t *num)
 		if (a == b && skip_empty)
 			continue;
 		n++;
+	}
+	// IMPORTANT: make sure we always return at least 1 element!
+	// Even if no separators were found, an empty line still counts
+	// as a single element.
+	if (n == 0) {
+		*num = 1;
+		result = safe_malloc(sizeof (char *));
+		result[0] = safe_calloc(1, sizeof (char));
+		return (result);
 	}
 
 	result = safe_calloc(n, sizeof (char *));
@@ -686,9 +699,7 @@ strsplit(const char *input, const char *sep, bool_t skip_empty, size_t *num)
 		memcpy(result[i], a, b - a);
 		i++;
 	}
-
-	if (num != NULL)
-		*num = n;
+	*num = n;
 
 	return (result);
 }

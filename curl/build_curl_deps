@@ -17,14 +17,15 @@
 
 source ../build_dep.common
 
-CURL="curl-8.4.0.tar.bz2"
+CURL="curl-8.13.0.tar.bz2"
 
 CONFOPTS_COMMON="-DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF \
     -DBUILD_STATIC_LIBS=ON -DHTTP_ONLY=ON -DENABLE_UNIX_SOCKETS=OFF \
     -DCURL_DISABLE_COOKIES=ON -DCURL_DISABLE_NTLM=ON \
     -DCURL_WINDOWS_SSPI=OFF -DUSE_LIBIDN2=OFF -DUSE_WIN32_IDN=OFF \
     -DCURL_USE_LIBSSH2=OFF -DUSE_NGHTTP2=OFF -DCURL_ZSTD=OFF \
-    -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON -DCURL_USE_OPENSSL=ON"
+    -DCURL_USE_LIBPSL=OFF -DCURL_STATIC_CRT=ON -DCURL_USE_OPENSSL=ON \
+    -DCURL_BROTLI=OFF -DCURL_ZSTD=OFF"
 CONFOPTS_AUTOCONF="--enable-static --disable-shared --disable-ftp \
     --disable-file --disable-ldap --disable-ldaps --disable-rtsp \
     --disable-dict --disable-telnet --disable-tftp --disable-pop3 \

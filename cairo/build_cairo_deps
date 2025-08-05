@@ -24,7 +24,7 @@ PIXMAN_PRODUCT="lib/libpixman-1.a"
 PIXMAN_CONFOPTS_COMMON="--enable-static --disable-shared --disable-gtk \
     --disable-static-testprogs"
 
-CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.34.0/pixman"
+CAIRO_CFLAGS_COMMON="-I$(pwd)/pixman-0.36.0/pixman"
 CAIRO_PRODUCT="lib/libcairo.a"
 CAIRO_CONFOPTS_COMMON="--enable-static --enable-gl=no --enable-ft=yes \
     --disable-shared --enable-xlib=no --enable-xlib-xrender=no \
@@ -53,8 +53,10 @@ PIXMAN_PATCHES="pixman-test-prng.patch pixman-visibility.patch"
 case `uname` in
 	Linux)
 		CFLAGS="-m64\\ -g" LDFLAGS="-m64\\ -L$(pwd)/../freetype/freetype-linux-64/lib" \
+		    CUSTPREMAKECMD="sed -i 's/^all:.*\$/all:/; s/^install:.*\$/install:/' test/Makefile" \
 		    build_dep "linux-64" "$PIXMAN_CONFOPTS_COMMON" "$PIXMAN" \
 		    "pixman" "$PIXMAN_PRODUCT" "$PIXMAN_PATCHES" && \
+		    CUSTPREMAKECMD="sed -i 's/^all:.*\$/all:/; s/^install:.*\$/install:/' test/Makefile" \
 		    build_dep "win-64" "$PIXMAN_CONFOPTS_COMMON \
 		    --host=x86_64-w64-mingw32" \
 		    "$PIXMAN" "pixman" "$PIXMAN_PRODUCT" "$PIXMAN_PATCHES" && \

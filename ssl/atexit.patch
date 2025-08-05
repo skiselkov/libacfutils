@@ -1,11 +1,11 @@
---- openssl-1.1.1i-old/crypto/init.c	2021-01-21 01:59:38.720154118 +0000
-+++ openssl-1.1.1i/crypto/init.c	2021-01-21 02:00:05.460215091 +0000
-@@ -131,7 +131,7 @@
- #ifdef OPENSSL_INIT_DEBUG
+--- openssl-3.5.0-old/crypto/init.c	2025-04-08 21:12:36.000000000 +0200
++++ openssl-3.5.0/crypto/init.c	2025-04-08 21:12:57.000000000 +0200
+@@ -103,7 +103,7 @@
+ # ifdef OPENSSL_INIT_DEBUG
      fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
- #endif
--#ifndef OPENSSL_SYS_UEFI
-+#if	0
- # ifdef _WIN32
+ # endif
+-# ifndef OPENSSL_SYS_UEFI
++# if 0
+ #  if defined(_WIN32) && !defined(__BORLANDC__)
      /* We use _onexit() in preference because it gets called on DLL unload */
      if (_onexit(win32atexit) == NULL)

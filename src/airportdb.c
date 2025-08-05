@@ -846,10 +846,12 @@ parse_apt_dat_1_line(airportdb_t *db, const char *line, iconv_t *cd_p,
 	if (dup_arpt_p != NULL)
 		*dup_arpt_p = NULL;
 
-	ASSERT(strcmp(comps[0], "1") == 0);
-	if (ncomps < 5)
+	// CAUTION: don't hard-assert the first component is "1" here. The
+	// caller uses sscanf to read the row code, which may accept junk
+	// like "1abc". In those cases, we still want to skip the row code.
+	if (strcmp(comps[0], "1") != 0 || ncomps < 5) {
 		goto out;
-
+	}
 	new_ident = comps[4];
 	pos.elev = atof(comps[1]);
 	if (!is_valid_elev(pos.elev))
