@@ -16,26 +16,17 @@ fn add_test_config() {
         Os::MacOs => ("mac64", "mac-64"),
         _ => unreachable!(),
     };
-    println!("cargo:rustc-link-search=native=../qmake/{}", plat_short);
+    println!("cargo:rustc-link-search=native=../qmake/{plat_short}");
     println!("cargo:rustc-link-lib=static=acfutils");
 
-    println!(
-        "cargo:rustc-link-search=native=../curl/libcurl-{}/lib",
-        plat_long
-    );
+    println!("cargo:rustc-link-search=native=../curl/libcurl-{plat_long}/lib");
     println!("cargo:rustc-link-lib=static=curl");
 
-    println!(
-        "cargo:rustc-link-search=native=../ssl/openssl-{}/lib",
-        plat_long
-    );
+    println!("cargo:rustc-link-search=native=../ssl/openssl-{plat_long}/lib");
     println!("cargo:rustc-link-lib=static=crypto");
     println!("cargo:rustc-link-lib=static=ssl");
 
-    println!(
-        "cargo:rustc-link-search=native=../zlib/zlib-{}/lib",
-        plat_long
-    );
+    println!("cargo:rustc-link-search=native=../zlib/zlib-{plat_long}/lib",);
     println!("cargo:rustc-link-lib=static=z");
 }
 

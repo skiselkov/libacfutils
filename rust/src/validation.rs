@@ -18,7 +18,9 @@ macro_rules! impl_altitude_validation {
     ($t:ty) => {
         impl AltitudeValidation for $t {
             fn validate_alt_m(self) -> Option<Self> {
-                if self >= feet2met(-2000.0) as $t && self <= feet2met(100000.0) as $t {
+                if self >= feet2met(-2000.0) as $t
+                    && self <= feet2met(100000.0) as $t
+                {
                     Some(self)
                 } else {
                     None
@@ -49,7 +51,7 @@ macro_rules! impl_course_validation {
     ($t:ty) => {
         impl CourseValidation for $t {
             fn validate_crs_deg(self) -> Option<Self> {
-                if self >= 0.0 && self <= 360.0 {
+                if (0.0..=360.0).contains(&self) {
                     Some(self)
                 } else {
                     None

@@ -45,16 +45,19 @@ type CustomLogFunc = fn(&str);
 pub static LOG_FUNC_CB: RwLock<Option<CustomLogFunc>> = RwLock::new(None);
 
 pub fn init(log_func: Option<CustomLogFunc>, prefix: &str) {
-    let mut log_func_cb = LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
+    let mut log_func_cb =
+        LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
     *log_func_cb = log_func;
     unsafe {
-        let c_prefix = CString::new(prefix).expect("`prefix` contains a stray NUL byte");
+        let c_prefix =
+            CString::new(prefix).expect("`prefix` contains a stray NUL byte");
         log_init(my_log_func, c_prefix.as_ptr());
     }
 }
 
 pub fn fini() {
-    let mut log_func_cb = LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
+    let mut log_func_cb =
+        LOG_FUNC_CB.write().expect("LOG_FUNC_CB mutex is panicked");
     *log_func_cb = None;
     unsafe {
         log_fini();
@@ -63,7 +66,8 @@ pub fn fini() {
 
 extern "C" fn my_log_func(c_message: *const c_char) {
     use std::ops::Deref;
-    let log_func_cb = LOG_FUNC_CB.read().expect("LOG_FUNC_CB mutex is panicked");
+    let log_func_cb =
+        LOG_FUNC_CB.read().expect("LOG_FUNC_CB mutex is panicked");
     assert!(!c_message.is_null());
     let cs_message = unsafe { CStr::from_ptr(c_message) };
     let message = cs_message.to_string_lossy().into_owned();
@@ -79,7 +83,12 @@ type LogFuncC = extern "C" fn(*const c_char);
 extern "C" {
     fn log_init(log_func: LogFuncC, prefix: *const c_char);
     fn log_fini();
-    pub fn log_impl(filename: *const c_char, line: u32, fmt: *const c_char, arg: *const c_char);
+    pub fn log_impl(
+        filename: *const c_char,
+        line: u32,
+        fmt: *const c_char,
+        arg: *const c_char,
+    );
 }
 
 mod tests {
@@ -110,6 +119,6 @@ mod tests {
     #[allow(dead_code)]
     fn custom_logger(msg: &str) {
         *CUSTOM_LOGGER_CALLED.write().unwrap() = true;
-        print!("Custom logger says: {}", msg);
+        print!("Custom logger says: {msg}");
     }
 }

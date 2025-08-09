@@ -72,6 +72,7 @@ pub mod units {
             use std::f64::consts::PI;
             let a1 = Self::normalize_0_2(rhs.a);
             let a2 = Self::normalize_0_2(self.a);
+            #[allow(clippy::collapsible_else_if)]
             if a1 > a2 {
                 if a1 > a2 + PI {
                     Self {
@@ -93,7 +94,10 @@ pub mod units {
     }
     impl std::cmp::PartialEq for Angle {
         fn eq(&self, other: &Self) -> bool {
-            (self.as_rad(Normalize::Norm_0_2) - other.as_rad(Normalize::Norm_0_2)).abs() < 1e-12
+            (self.as_rad(Normalize::Norm_0_2)
+                - other.as_rad(Normalize::Norm_0_2))
+            .abs()
+                < 1e-12
         }
     }
 }

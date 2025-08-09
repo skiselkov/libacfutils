@@ -106,7 +106,11 @@ mod tests {
 
 pub fn fx_lin<Tx, Ty>(x: Tx, x1: Tx, y1: Ty, x2: Tx, y2: Ty) -> Ty
 where
-    Tx: Copy + PartialEq + Sub<Output = Tx> + Mul<Ty, Output = Ty> + Div<Output = Tx>,
+    Tx: Copy
+        + PartialEq
+        + Sub<Output = Tx>
+        + Mul<Ty, Output = Ty>
+        + Div<Output = Tx>,
     Ty: Copy + Add<Output = Ty> + Sub<Output = Ty>,
 {
     assert!(x1 != x2);
@@ -115,7 +119,12 @@ where
 
 pub fn fx_lin_multi<Tx, Ty>(x: Tx, points: &[(Tx, Ty)]) -> Ty
 where
-    Tx: Copy + PartialOrd + PartialEq + Sub<Output = Tx> + Mul<Ty, Output = Ty> + Div<Output = Tx>,
+    Tx: Copy
+        + PartialOrd
+        + PartialEq
+        + Sub<Output = Tx>
+        + Mul<Ty, Output = Ty>
+        + Div<Output = Tx>,
     Ty: Copy + Add<Output = Ty> + Sub<Output = Ty>,
 {
     assert!(points.len() >= 2);

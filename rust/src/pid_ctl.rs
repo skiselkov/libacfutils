@@ -65,7 +65,9 @@ impl PidCtl {
         self.v_prev = Some(v);
     }
     pub fn get(&self) -> Option<f64> {
-        if let (Some(e_prev), Some(integ), Some(deriv)) = (self.e_prev, self.integ, self.deriv) {
+        if let (Some(e_prev), Some(integ), Some(deriv)) =
+            (self.e_prev, self.integ, self.deriv)
+        {
             Some(
                 self.k_p_gain * self.k_p * e_prev
                     + self.k_i_gain * self.k_i * integ

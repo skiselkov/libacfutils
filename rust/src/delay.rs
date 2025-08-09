@@ -92,12 +92,14 @@ where
          * While we have more than 1 value in the value stack, check
          * to see if the newer values have become active yet.
          */
-        while self.values.len() > 1 && now - self.values[1].entered >= self.delay_cur.as_secs_f64()
+        while self.values.len() > 1
+            && now - self.values[1].entered >= self.delay_cur.as_secs_f64()
         {
             // value in slot [1] has become the new current value,
             // so shift it over by removing value in slot [0]
             self.values.remove(0);
-            self.delay_cur = Self::recomp_delay(self.delay_base, self.delay_rand);
+            self.delay_cur =
+                Self::recomp_delay(self.delay_base, self.delay_rand);
         }
         self.values[0].value.clone()
     }
@@ -108,7 +110,8 @@ where
     pub fn set_delay(&mut self, delay: Duration) {
         if self.delay_base != delay {
             self.delay_base = delay;
-            self.delay_cur = Self::recomp_delay(self.delay_base, self.delay_rand);
+            self.delay_cur =
+                Self::recomp_delay(self.delay_base, self.delay_rand);
         }
     }
     pub fn get_delay(&self) -> Duration {
@@ -131,10 +134,10 @@ where
     }
     fn recomp_delay(delay: Duration, rand_fact: f64) -> Duration {
         if rand_fact != 0.0 {
-            assert!(rand_fact >= 0.0 && rand_fact <= 1.0);
+            assert!((0.0..=1.0).contains(&rand_fact));
             let rand_us = rand_fact * delay.as_micros() as f64;
-            let delay_us =
-                delay.as_micros() as f64 + ((crc64::rand_fract() - 0.5) * rand_us).round();
+            let delay_us = delay.as_micros() as f64
+                + ((crc64::rand_fract() - 0.5) * rand_us).round();
             assert!(delay_us >= 0.0);
             Duration::from_micros(delay_us as u64)
         } else {
@@ -189,22 +192,22 @@ where
             })
             .collect();
         Self {
-            values: values,
+            values,
             delay_cur: self.delay_cur,
             delay_base: self.delay_base,
             delay_rand: self.delay_rand,
-            now_closure: now_closure,
+            now_closure,
         }
     }
 }
 
-impl<T> Into<SerializedDelayLine<T>> for DelayLine<T>
+impl<T> From<DelayLine<T>> for SerializedDelayLine<T>
 where
     T: PartialEq + Clone,
 {
-    fn into(self) -> SerializedDelayLine<T> {
-        let time_base = (self.now_closure.0)();
-        let values = self
+    fn from(val: DelayLine<T>) -> Self {
+        let time_base = (val.now_closure.0)();
+        let values = val
             .values
             .into_iter()
             .map(|v| DelayDataValue {
@@ -213,10 +216,10 @@ where
             })
             .collect();
         SerializedDelayLine {
-            values: values,
-            delay_cur: self.delay_cur,
-            delay_base: self.delay_base,
-            delay_rand: self.delay_rand,
+            values,
+            delay_cur: val.delay_cur,
+            delay_base: val.delay_base,
+            delay_rand: val.delay_rand,
         }
     }
 }
@@ -237,11 +240,11 @@ where
             })
             .collect();
         Self {
-            values: values,
+            values,
             delay_cur: ser.delay_cur,
             delay_base: ser.delay_base,
             delay_rand: ser.delay_rand,
-            now_closure: now_closure,
+            now_closure,
         }
     }
 }
@@ -259,10 +262,11 @@ mod tests {
         }
         assert_ne!(dl.peek(), 0);
 
-        let serialized = serde_json::to_string(&dl).expect("Serialization failed");
+        let serialized =
+            serde_json::to_string(&dl).expect("Serialization failed");
         println!("Serialized JSON: {}", serialized);
-        let mut dl_deserd =
-            serde_json::from_str::<DelayLine<i32>>(&serialized).expect("Deserialization failed");
+        let mut dl_deserd = serde_json::from_str::<DelayLine<i32>>(&serialized)
+            .expect("Deserialization failed");
         // Wait for 500ms to make sure the delay line has
         // fully progressed through its value set
         std::thread::sleep(Duration::from_millis(500));

@@ -18,10 +18,18 @@ pub fn new() -> u64 {
     crc
 }
 pub fn append(crc: u64, input: &[u8]) -> u64 {
-    unsafe { c_intf::crc64_append(crc, input.as_ptr() as *const c_void, input.len()) }
+    unsafe {
+        c_intf::crc64_append(crc, input.as_ptr() as *const c_void, input.len())
+    }
 }
 pub fn calc(input: &[u8]) -> u64 {
-    unsafe { c_intf::crc64_append(new(), input.as_ptr() as *const c_void, input.len()) }
+    unsafe {
+        c_intf::crc64_append(
+            new(),
+            input.as_ptr() as *const c_void,
+            input.len(),
+        )
+    }
 }
 pub fn srand(seed: u64) {
     unsafe { c_intf::crc64_srand(seed) }

@@ -23,7 +23,7 @@ pub trait RwLockForceOps<T> {
      * panicked state. Basically saves you the need to call unwrap()
      * or expect() on the lock result.
      * @return The RwLockReadGuard, which allows you to access the
-     *	protected data structure safely.
+     *     protected data structure safely.
      */
     fn f_read(&self) -> RwLockReadGuard<'_, T>;
     /**
@@ -32,7 +32,7 @@ pub trait RwLockForceOps<T> {
      * panicked state. Basically saves you the need to call unwrap()
      * or expect() on the lock result.
      * @return The RwLockWriteGuard, which allows you to access the
-     *	protected data structure safely.
+     *     protected data structure safely.
      */
     fn f_write(&self) -> RwLockWriteGuard<'_, T>;
 }
@@ -59,7 +59,7 @@ pub trait MutexForceOps<T> {
      * panicks if the underlying lock is in a panicked state. Basically
      * saves you the need to call unwrap() or expect() on the lock result.
      * @return The MutexGuard, which allows you to access the protected
-     *	data structure safely.
+     *     data structure safely.
      */
     fn f_lock(&self) -> MutexGuard<'_, T>;
 }

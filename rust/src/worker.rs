@@ -159,7 +159,8 @@ impl<T: Clone + Send + 'static> Drop for Worker<T> {
     fn drop(&mut self) {
         {
             /* Notify the worker thread to shut down immediately */
-            let mut data = self.data.0.lock().expect("mutex is in a panicked state");
+            let mut data =
+                self.data.0.lock().expect("mutex is in a panicked state");
             data.shutdown = true;
             self.data.1.notify_one();
         }
@@ -202,7 +203,10 @@ mod tests {
             {
                 let ctr = counter.lock().unwrap();
                 if *ctr >= 4 {
-                    println!(concat!("Control: reached ", "limit ({}), exiting"), *ctr);
+                    println!(
+                        concat!("Control: reached ", "limit ({}), exiting"),
+                        *ctr
+                    );
                     break;
                 }
                 println!("Control: counter = {}", ctr);

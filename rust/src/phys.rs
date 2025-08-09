@@ -128,7 +128,9 @@ pub mod units {
         };
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize,
+    )]
     pub struct Temperature {
         T: f64, /* Kelvin */
     }
@@ -194,7 +196,9 @@ pub mod units {
         }
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize,
+    )]
     pub struct TemperatureRelative {
         dT: f64, /* Kelvin */
     }
@@ -234,7 +238,9 @@ pub mod units {
         }
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize,
+    )]
     pub struct Pressure {
         p: f64, /* Pascals, CANNOT be negative */
     }
@@ -294,7 +300,9 @@ pub mod units {
     }
     impl_units_scalar_ops!(Pressure, p);
 
-    #[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize,
+    )]
     pub struct PressureRelative {
         dP: f64, /* Pascals, CAN be negative */
     }
@@ -334,7 +342,16 @@ pub mod units {
         }
     }
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
     pub struct Distance {
         d: f64, /* meters */
     }
@@ -391,21 +408,30 @@ pub mod units {
     impl_units_ops_non_neg!(Distance, d);
     impl_units_scalar_ops!(Distance, d);
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
     pub struct Mass {
         m: f64, /* kg */
     }
     impl Mass {
         pub fn from_kg(kg: f64) -> Self {
-            assert!(kg >= 0.0 && kg < 1e12);
+            assert!((0.0..1e12).contains(&kg));
             Self { m: kg }
         }
         pub fn from_mt(mt: f64) -> Self {
-            assert!(mt >= 0.0 && mt < 1e9);
+            assert!((0.0..1e9).contains(&mt));
             Self { m: mt * 1000.0 }
         }
         pub fn from_lbs(lbs: f64) -> Self {
-            assert!(lbs >= 0.0 && lbs < 1e12);
+            assert!((0.0..1e12).contains(&lbs));
             Self { m: lbs2kg(lbs) }
         }
         pub fn as_kg(&self) -> f64 {
@@ -426,7 +452,16 @@ pub mod units {
     impl_units_ops_non_neg!(Mass, m);
     impl_units_scalar_ops!(Mass, m);
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
     pub struct Angvel {
         r: f64, /* rad/sec */
     }
@@ -475,7 +510,16 @@ pub mod units {
     impl_units_ops!(Angvel, r);
     impl_units_scalar_ops!(Angvel, r);
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
     pub struct Speed {
         s: f64, /* m/s */
     }
@@ -524,7 +568,16 @@ pub mod units {
     impl_units_ops!(Speed, s);
     impl_units_scalar_ops!(Speed, s);
 
-    #[derive(Clone, Copy, Debug, Default, PartialEq, PartialOrd, Serialize, Deserialize)]
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
     pub struct MassRate {
         mr: f64, /* kg/s */
     }
@@ -588,7 +641,12 @@ pub mod util {
     pub fn speed_sound(T: Temperature, gamma: f64, R: f64) -> Speed {
         Speed::from_mps((gamma * R * T.as_K()).sqrt())
     }
-    pub fn baro_alt2press(alt_m: f64, p0: Pressure, T0: Temperature, g_mss: f64) -> f64 {
+    pub fn baro_alt2press(
+        alt_m: f64,
+        p0: Pressure,
+        T0: Temperature,
+        g_mss: f64,
+    ) -> f64 {
         /*
          * Standard barometric formula:
          *                       g.M
@@ -609,7 +667,12 @@ pub mod util {
             * (1.0 - ((ISA_TLR_PER_1M * alt_m) / T0.as_K()))
                 .powf((g_mss * DRY_AIR_MOL) / (R_UNIV * ISA_TLR_PER_1M))
     }
-    pub fn press2baro_alt(p: Pressure, p0: Pressure, T0: Temperature, g_mss: f64) -> f64 {
+    pub fn press2baro_alt(
+        p: Pressure,
+        p0: Pressure,
+        T0: Temperature,
+        g_mss: f64,
+    ) -> f64 {
         /*
          * This is the barometric formula, solved for 'h':
          *                          R0.L
@@ -630,7 +693,8 @@ pub mod util {
          */
         (T0.as_K()
             * (1.0
-                - (p.as_pa() / p0.as_pa()).powf((R_UNIV * ISA_TLR_PER_1M) / (g_mss * DRY_AIR_MOL))))
+                - (p.as_pa() / p0.as_pa())
+                    .powf((R_UNIV * ISA_TLR_PER_1M) / (g_mss * DRY_AIR_MOL))))
             / ISA_TLR_PER_1M
     }
 }
@@ -771,23 +835,23 @@ pub mod conv {
     /* psi -> Pascals */
     pub fn psi2pa(psi: f64) -> f64 {
         assert!(psi.is_finite());
-        psi * 6894.73326075122482308111
+        psi * 6894.733260751224
     }
     #[macro_export]
     macro_rules! psi2pa {
         ($psi: expr) => {
-            $psi * 6894.73326075122482308111
+            $psi * 6894.733260751224
         };
     }
     /* Pascals -> psi */
     pub fn pa2psi(pa: f64) -> f64 {
         assert!(pa.is_finite());
-        pa / 6894.73326075122482308111
+        pa / 6894.733260751224
     }
     #[macro_export]
     macro_rules! pa2psi {
         ($pa: expr) => {
-            $pa / 6894.73326075122482308111
+            $pa / 6894.733260751224
         };
     }
     /* In.Hg -> pa */
