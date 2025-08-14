@@ -16,7 +16,7 @@
  * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Copyright 2023 Saso Kiselkov. All rights reserved.
+ * Copyright 2025 Saso Kiselkov. All rights reserved.
  */
 
 #include <math.h>
@@ -89,7 +89,13 @@ crc64_append(uint64_t crc, const void *input, size_t sz)
 {
 	const uint8_t *in_bytes = input;
 
-	ASSERT3U(crc64_table[128], ==, CRC64_POLY);
+	// Caller didn't explicitly initialize us. No matter, just do it now.
+	// We used to assert here, but that was causing issues when novice
+	// users didn't know to do this, so we just take the extra branch
+	// here and be done with it.
+	if (COND_UNLIKELY(crc64_table[128] != CRC64_POLY)) {
+		crc64_init();
+	}
 	for (size_t i = 0; i < sz; i++)
 		crc = (crc >> 8) ^ crc64_table[(crc ^ in_bytes[i]) & 0xFF];
 
