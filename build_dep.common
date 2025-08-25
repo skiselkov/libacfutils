@@ -117,11 +117,11 @@ function build_dep() {
 			    ${XCOMPILE_OPTIONS} \
 			    ${CONFOPTS} "../$SRCDIR" || exit 1
 		else
-			eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CFLAGS}\\ \
+			eval CFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ \"${CFLAGS}\"\\ \
 $CFLAGS_ADDTL" \
-			CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ ${CXXFLAGS}\\ \
+			CXXFLAGS="-fvisibility=hidden\\ -O2\\ $FPIC\\ \"${CXXFLAGS}\"\\ \
 $CXXFLAGS_ADDTL" \
-			LDFLAGS="-fvisibility=hidden\\ $FPIC\\ ${LDFLAGS}\\ \
+			LDFLAGS="-fvisibility=hidden\\ $FPIC\\ \"${LDFLAGS}\"\\ \
 $LDFLAGS_ADDTL" \
 			    "../$SRCDIR/configure" --prefix="$(pwd)/$INSTALL_DIR" \
 			    ${CONFOPTS} || exit 1
