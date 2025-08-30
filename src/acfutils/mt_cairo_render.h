@@ -172,6 +172,7 @@ typedef struct {
 } mtcr_rect_t;
 API_EXPORT void mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
     const mtcr_rect_t *rects, size_t num);
+API_EXPORT cairo_t *mt_cairo_render_get_last_renderer(mt_cairo_render_t *mtcr);
 
 #ifdef	LACF_MTCR_DEBUG
 API_EXPORT void mt_cairo_render_set_ctx_checking_enabled(

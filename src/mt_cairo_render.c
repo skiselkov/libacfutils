@@ -1529,6 +1529,18 @@ mt_cairo_render_blit_back2front(mt_cairo_render_t *mtcr,
 	LACF_UNUSED(num);
 }
 
+API_EXPORT cairo_t *
+mt_cairo_render_get_last_renderer(mt_cairo_render_t *mtcr)
+{
+	ASSERT(mtcr != NULL);
+	ASSERT(mtcr->fg_mode);
+	if (mtcr->coherent_data != NULL) {
+		return (mtcr->rs[0].cr);
+	} else {
+		return (mtcr->rs[!mtcr->render_rs].cr);
+	}
+}
+
 /**
  * Enables context integrity checking for the mt_cairo_render_t internals.
  * @note This is an internal development option for libacfutils, so unless
