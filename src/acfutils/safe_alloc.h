@@ -304,6 +304,33 @@ safe_append_realloc(char *buf, const char *str)
 			BZERO(data); \
 	} while (0)
 
+#if	!defined(BOX_NEW) && \
+    (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER) || \
+    __STDC_VERSION__ >= 202311L)
+
+#if	__STDC_VERSION__ >= 202311L
+// C23 supports the `typeof()` operator as a built-in feature
+#define	BOX_NEW(...) \
+	(typeof(__VA_ARGS__) *)box_new_impl((void *)&(__VA_ARGS__), \
+	    sizeof (__VA_ARGS__))
+#else	// __STDC_VERSION__ < 202311L
+// Fallback to the GCC/Clang/MSVC __typeof__ operator.
+#define	BOX_NEW(...) \
+	(__typeof__(__VA_ARGS__) *)box_new_impl((void *)&(__VA_ARGS__), \
+	    sizeof (__VA_ARGS__))
+#endif	// __STDC_VERSION__ < 202311L
+
+static inline void *
+box_new_impl(void *value, size_t value_sz) {
+	void *ptr = safe_malloc(value_sz);
+	memcpy(ptr, value, value_sz);
+	return (ptr);
+}
+
+#endif	// !defined(BOX_NEW) &&
+	// (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER) ||
+	// __STDC_VERSION__ >= 202311L)
+
 #ifdef	__cplusplus
 }
 #endif
