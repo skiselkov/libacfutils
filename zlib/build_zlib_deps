@@ -17,7 +17,7 @@
 
 source ../build_dep.common
 
-ZLIB="zlib-1.3.tar.gz"
+ZLIB="zlib-1.3.1.tar.gz"
 
 case `uname` in
 	Linux)
