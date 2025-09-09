@@ -132,6 +132,10 @@ handle_posix_sig(int sig, siginfo_t *siginfo, void *context)
 	case SIGTERM:
 		logMsg("Caught SIGTERM: terminated");
 		break;
+	case SIGPIPE:
+		// Just quietly return on SIGPIPE. That's the dumbest
+		// signal ever invented and should always just be ignored.
+		return;
 	default:
 		logMsg("Caught signal %d", sig);
 		break;
