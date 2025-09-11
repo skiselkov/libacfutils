@@ -1442,6 +1442,7 @@ extract_TA_TL_ft(char *const*comps, size_t n_comps)
 		if (metric && MET2FEET(alt) < 60000) {
 			alt = MET2FEET(alt);
 		}
+		free(buf);
 		return (SOME(alt));
 	} else {
 		free(buf);
