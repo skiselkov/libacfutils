@@ -34,10 +34,11 @@ build_cglm=1
 build_geographic=1
 build_lzma=1
 
-while getopts "cdmf:h" opt; do
+while getopts "cCdmf:h" opt; do
 	case $opt in
 	c) export do_clean=1 ;;
 	d) export do_dll=1 ;;
+	C) export do_cross=1 ;;
 	m)
 		export minimal=1
 		build_jpeg=0
@@ -180,7 +181,7 @@ case $(uname) in
 	;;
 esac
 
-( cd zlib && ./build_zlib_deps ) && \
+( echo "Building zlib ..."; cd zlib && ./build_zlib_deps ) && \
     ( echo "Building libiconv ..."; cd libiconv && ./build_libiconv_deps ) && \
     ( echo "Building libclipboard ..."; \
     cd libclipboard && ./build_libclipboard_deps ) && \

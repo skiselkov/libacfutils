@@ -98,7 +98,7 @@ case `uname` in
 	Linux)
 		build_ssl linux-64 "-fPIC -fvisibility=hidden linux-x86_64" || \
 			exit 1
-		if [[ "$minimal" != 1 ]]; then
+		if [[ "$minimal" != 1 ]] || [[ "$do_cross" = 1 ]]; then
 			build_ssl win-64 \
 				"--cross-compile-prefix=x86_64-w64-mingw32- $VIS mingw64"
 		fi

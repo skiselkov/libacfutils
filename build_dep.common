@@ -23,7 +23,10 @@ function build_dep() {
 	PRODFILE="$5"
 	PATCHFILES="$6"
 
-	if [[ "$PLATFORM" == "win-64" ]] && [[ "$minimal" == 1 ]]; then
+	# Disable cross-compiling if minimal build is specified and
+	# cross-compiling isn't explicitly requested
+	if [[ "$PLATFORM" == "win-64" ]] && [[ "$minimal" == 1 ]] &&
+	    [ -z "$do_cross" ]; then
 		return
 	fi
 
