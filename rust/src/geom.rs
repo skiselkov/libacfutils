@@ -22,11 +22,11 @@ pub mod units {
         a: f64, /* radians */
     }
     impl Angle {
-        pub fn from_rad(rad: f64) -> Self {
+        pub const fn from_rad(rad: f64) -> Self {
             assert!(rad.is_finite());
             Self { a: rad }
         }
-        pub fn from_deg(deg: f64) -> Self {
+        pub const fn from_deg(deg: f64) -> Self {
             assert!(deg.is_finite());
             Self { a: deg2rad(deg) }
         }
@@ -103,11 +103,11 @@ pub mod units {
 }
 
 pub mod conv {
-    pub fn deg2rad(deg: f64) -> f64 {
+    pub const fn deg2rad(deg: f64) -> f64 {
         assert!(deg.is_finite());
         (deg / 360.0) * 2.0 * std::f64::consts::PI
     }
-    pub fn rad2deg(rad: f64) -> f64 {
+    pub const fn rad2deg(rad: f64) -> f64 {
         assert!(rad.is_finite());
         (rad / (2.0 * std::f64::consts::PI)) * 360.0
     }
