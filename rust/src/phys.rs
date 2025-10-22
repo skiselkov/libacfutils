@@ -619,6 +619,80 @@ pub mod units {
     }
     impl_units_ops!(MassRate, mr);
     impl_units_scalar_ops!(MassRate, mr);
+
+    #[derive(
+        Clone,
+        Copy,
+        Debug,
+        Default,
+        PartialEq,
+        PartialOrd,
+        Serialize,
+        Deserialize,
+    )]
+    pub struct VolumeRate {
+        vr: f64, /* m^3/s */
+    }
+    impl VolumeRate {
+        pub const fn from_m3_per_sec(m3ps: f64) -> Self {
+            assert!(m3ps.is_finite());
+            assert!(m3ps.abs() < 1e12);
+            Self { vr: m3ps }
+        }
+        pub const fn from_lit_per_sec(lps: f64) -> Self {
+            assert!(lps.is_finite());
+            assert!(lps.abs() < 1e12);
+            Self { vr: lps / 1000.0 }
+        }
+        pub const fn from_lit_per_min(lpm: f64) -> Self {
+            assert!(lpm.is_finite());
+            assert!(lpm.abs() < 1e12);
+            Self { vr: lpm / 60000.0 }
+        }
+        pub const fn from_lit_per_hour(lph: f64) -> Self {
+            assert!(lph.is_finite());
+            assert!(lph.abs() < 1e12);
+            let lps = lph / 3600000.0;
+            Self { vr: lps }
+        }
+        pub const fn from_usg_per_sec(gps: f64) -> Self {
+            Self::from_lit_per_sec(usg2lit(gps))
+        }
+        pub const fn from_usg_per_min(gps: f64) -> Self {
+            Self::from_lit_per_min(usg2lit(gps))
+        }
+        pub const fn from_usg_per_hour(gps: f64) -> Self {
+            Self::from_lit_per_hour(usg2lit(gps))
+        }
+        pub const fn as_m3_per_sec(&self) -> f64 {
+            self.vr
+        }
+        pub const fn as_lit_per_sec(&self) -> f64 {
+            self.vr * 1000.0
+        }
+        pub const fn as_lit_per_min(&self) -> f64 {
+            self.vr * 60000.0
+        }
+        pub const fn as_lit_per_hour(&self) -> f64 {
+            self.vr * 3600000.0
+        }
+        pub const fn as_usg_per_sec(&self) -> f64 {
+            lit2usg(self.as_lit_per_sec())
+        }
+        pub const fn as_usg_per_min(&self) -> f64 {
+            lit2usg(self.as_lit_per_min())
+        }
+        pub const fn as_usg_per_hour(&self) -> f64 {
+            lit2usg(self.as_lit_per_hour())
+        }
+    }
+    impl std::fmt::Display for VolumeRate {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{:.2} L/min", self.as_lit_per_min())
+        }
+    }
+    impl_units_ops!(VolumeRate, vr);
+    impl_units_scalar_ops!(VolumeRate, vr);
 }
 
 pub mod util {
@@ -740,32 +814,32 @@ pub mod conv {
      * Temperature conversions
      */
     /* celsius -> fahrenheit */
-    pub fn c2fah(celsius: f64) -> f64 {
+    pub const fn c2fah(celsius: f64) -> f64 {
         assert!(celsius.is_finite());
         (celsius * 1.8) + 32.0
     }
     /* fahrenheit -> celsius */
-    pub fn fah2c(fah: f64) -> f64 {
+    pub const fn fah2c(fah: f64) -> f64 {
         assert!(fah.is_finite());
         (fah - 32.0) / 1.8
     }
     /* kelvin -> celsius */
-    pub fn kelvin2c(kelvin: f64) -> f64 {
+    pub const fn kelvin2c(kelvin: f64) -> f64 {
         assert!(kelvin.is_finite());
         kelvin - 273.15
     }
     /* celsius -> kelvin */
-    pub fn c2kelvin(celsius: f64) -> f64 {
+    pub const fn c2kelvin(celsius: f64) -> f64 {
         assert!(celsius.is_finite());
         celsius + 273.15
     }
     /* fahrenheit -> kelvin */
-    pub fn fah2kelvin(fah: f64) -> f64 {
+    pub const fn fah2kelvin(fah: f64) -> f64 {
         assert!(fah.is_finite());
         (fah + 459.67) / 1.8
     }
     /* kelvin -> fahrenheit */
-    pub fn kelvin2fah(kelvin: f64) -> f64 {
+    pub const fn kelvin2fah(kelvin: f64) -> f64 {
         assert!(kelvin.is_finite());
         assert!(kelvin > 0.0);
         (kelvin * 1.8) - 459.67
@@ -774,35 +848,35 @@ pub mod conv {
      * Distance conversions
      */
     /* feet -> meters */
-    pub fn feet2met(ft: f64) -> f64 {
+    pub const fn feet2met(ft: f64) -> f64 {
         assert!(ft.is_finite());
         ft * 0.3048
     }
     /* meters -> feet */
-    pub fn met2feet(m: f64) -> f64 {
+    pub const fn met2feet(m: f64) -> f64 {
         assert!(m.is_finite());
         m * 3.2808398950131
     }
     /* nautical miles -> meters */
-    pub fn nm2met(nm: f64) -> f64 {
+    pub const fn nm2met(nm: f64) -> f64 {
         assert!(nm.is_finite());
         assert!(nm >= 0.0);
         nm * 1852.0
     }
     /* meters -> nautical miles */
-    pub fn met2nm(m: f64) -> f64 {
+    pub const fn met2nm(m: f64) -> f64 {
         assert!(m.is_finite());
         assert!(m >= 0.0);
         m / 1852.0
     }
     /* statute miles -> meters */
-    pub fn sm2met(sm: f64) -> f64 {
+    pub const fn sm2met(sm: f64) -> f64 {
         assert!(sm.is_finite());
         assert!(sm >= 0.0);
         (sm * 5280.0) * 0.3048
     }
     /* meters -> statute miles */
-    pub fn met2sm(m: f64) -> f64 {
+    pub const fn met2sm(m: f64) -> f64 {
         assert!(m.is_finite());
         assert!(m >= 0.0);
         (m / 0.3048) / 5280.0
@@ -811,7 +885,7 @@ pub mod conv {
      * Pressure conversions
      */
     /* Pascals -> Hectopascals */
-    pub fn hpa2pa(hpa: f64) -> f64 {
+    pub const fn hpa2pa(hpa: f64) -> f64 {
         assert!(hpa.is_finite());
         hpa * 100.0
     }
@@ -822,7 +896,7 @@ pub mod conv {
         };
     }
     /* Hectopascals -> Pascals */
-    pub fn pa2hpa(pa: f64) -> f64 {
+    pub const fn pa2hpa(pa: f64) -> f64 {
         assert!(pa.is_finite());
         pa / 100.0
     }
@@ -833,7 +907,7 @@ pub mod conv {
         };
     }
     /* psi -> Pascals */
-    pub fn psi2pa(psi: f64) -> f64 {
+    pub const fn psi2pa(psi: f64) -> f64 {
         assert!(psi.is_finite());
         psi * 6894.733260751224
     }
@@ -844,7 +918,7 @@ pub mod conv {
         };
     }
     /* Pascals -> psi */
-    pub fn pa2psi(pa: f64) -> f64 {
+    pub const fn pa2psi(pa: f64) -> f64 {
         assert!(pa.is_finite());
         pa / 6894.733260751224
     }
@@ -855,7 +929,7 @@ pub mod conv {
         };
     }
     /* In.Hg -> pa */
-    pub fn inhg2pa(inhg: f64) -> f64 {
+    pub const fn inhg2pa(inhg: f64) -> f64 {
         assert!(inhg.is_finite());
         inhg * (101325.0 / 29.92)
     }
@@ -866,7 +940,7 @@ pub mod conv {
         };
     }
     /* pa -> In.Hg */
-    pub fn pa2inhg(pa: f64) -> f64 {
+    pub const fn pa2inhg(pa: f64) -> f64 {
         assert!(pa.is_finite());
         pa * (29.92 / 101325.0)
     }
@@ -880,54 +954,54 @@ pub mod conv {
      * Speed conversions
      */
     /* m/s -> km/h */
-    pub fn mps2kph(mps: f64) -> f64 {
+    pub const fn mps2kph(mps: f64) -> f64 {
         assert!(mps.is_finite());
         mps * 3.6
     }
     /* km/h -> m/s */
-    pub fn kph2mps(kph: f64) -> f64 {
+    pub const fn kph2mps(kph: f64) -> f64 {
         assert!(kph.is_finite());
         kph / 3.6
     }
     /* m/s -> miles/h */
-    pub fn mps2mph(mps: f64) -> f64 {
+    pub const fn mps2mph(mps: f64) -> f64 {
         assert!(mps.is_finite());
         mps / 0.44704
     }
     /* miles/h -> m/s */
-    pub fn mph2mps(mps: f64) -> f64 {
+    pub const fn mph2mps(mps: f64) -> f64 {
         assert!(mps.is_finite());
         mps * 0.44704
     }
     /* ft/min -> m/s */
-    pub fn fpm2mps(fpm: f64) -> f64 {
+    pub const fn fpm2mps(fpm: f64) -> f64 {
         assert!(fpm.is_finite());
         (fpm / 0.3048) * 60.0
     }
     /* m/s -> ft/min */
-    pub fn mps2fpm(mps: f64) -> f64 {
+    pub const fn mps2fpm(mps: f64) -> f64 {
         assert!(mps.is_finite());
         (mps / 0.3048) / 60.0
     }
     /* knots -> m/s */
-    pub fn kt2mps(kt: f64) -> f64 {
+    pub const fn kt2mps(kt: f64) -> f64 {
         assert!(kt.is_finite());
         (kt * 1852.0) / 3600.0
     }
     /* m/s -> knots */
-    pub fn mps2kt(mps: f64) -> f64 {
+    pub const fn mps2kt(mps: f64) -> f64 {
         assert!(mps.is_finite());
         (mps * 3600.0) / 1852.0
     }
     /*
      * Mass conversions
      */
-    pub fn lbs2kg(lbs: f64) -> f64 {
+    pub const fn lbs2kg(lbs: f64) -> f64 {
         assert!(lbs.is_finite());
         assert!(lbs.abs() < 1e12);
         lbs * 0.45359237
     }
-    pub fn kg2lbs(kg: f64) -> f64 {
+    pub const fn kg2lbs(kg: f64) -> f64 {
         assert!(kg.is_finite());
         assert!(kg.abs() < 1e12);
         kg / 0.45359237
@@ -936,13 +1010,13 @@ pub mod conv {
      * Power conversions
      */
     /* Watts to horsepower */
-    pub fn watt2hp(w: f64) -> f64 {
+    pub const fn watt2hp(w: f64) -> f64 {
         assert!(w.is_finite());
         assert!(w.abs() < 1e12);
         w * 0.001341022
     }
     /* horsepower to Watts */
-    pub fn hp2watt(hp: f64) -> f64 {
+    pub const fn hp2watt(hp: f64) -> f64 {
         assert!(hp.is_finite());
         assert!(hp.abs() < 1e12);
         hp / 0.001341022
@@ -950,10 +1024,20 @@ pub mod conv {
     /*
      * Angle and angular velocity conversions
      */
-    pub fn radsec2rpm(radsec: f64) -> f64 {
+    pub const fn radsec2rpm(radsec: f64) -> f64 {
         (radsec / (2.0 * std::f64::consts::PI)) * 60.0
     }
-    pub fn rpm2radsec(rpm: f64) -> f64 {
+    pub const fn rpm2radsec(rpm: f64) -> f64 {
         (rpm / 60.0) * 2.0 * std::f64::consts::PI
+    }
+
+    /*
+     * Volume conversion
+     */
+    pub const fn usg2lit(usg: f64) -> f64 {
+        usg * 3.785411784
+    }
+    pub const fn lit2usg(lit: f64) -> f64 {
+        lit / 3.785411784
     }
 }
