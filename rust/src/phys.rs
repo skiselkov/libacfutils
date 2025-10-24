@@ -135,34 +135,31 @@ pub mod units {
         T: f64, /* Kelvin */
     }
     impl Temperature {
-        pub fn from_K(kelvin: f64) -> Self {
+        pub const fn from_K(kelvin: f64) -> Self {
             assert!(kelvin.is_finite());
             assert!(kelvin > 0.0);
             Self { T: kelvin }
         }
-        pub fn from_C(celsius: f64) -> Self {
+        pub const fn from_C(celsius: f64) -> Self {
             assert!(celsius >= -273.15);
             Self {
                 T: c2kelvin(celsius),
             }
         }
-        pub fn from_F(fahrenheit: f64) -> Self {
+        pub const fn from_F(fahrenheit: f64) -> Self {
             assert!(fahrenheit > -459.67);
             Self {
                 T: fah2kelvin(fahrenheit),
             }
         }
-        pub fn as_K(&self) -> f64 {
+        pub const fn as_K(&self) -> f64 {
             self.T
         }
-        pub fn as_C(&self) -> f64 {
+        pub const fn as_C(&self) -> f64 {
             kelvin2c(self.T)
         }
-        pub fn as_F(&self) -> f64 {
+        pub const fn as_F(&self) -> f64 {
             kelvin2fah(self.T)
-        }
-        pub const fn new_const(kelvin: f64) -> Self {
-            Self { T: kelvin }
         }
     }
     impl std::ops::Add<TemperatureRelative> for Temperature {
@@ -203,31 +200,28 @@ pub mod units {
         dT: f64, /* Kelvin */
     }
     impl TemperatureRelative {
-        pub fn from_K(kelvin: f64) -> Self {
+        pub const fn from_K(kelvin: f64) -> Self {
             assert!(kelvin.is_finite());
             Self { dT: kelvin }
         }
-        pub fn from_C(celsius: f64) -> Self {
+        pub const fn from_C(celsius: f64) -> Self {
             Self {
                 dT: c2kelvin(celsius),
             }
         }
-        pub fn from_F(fahrenheit: f64) -> Self {
+        pub const fn from_F(fahrenheit: f64) -> Self {
             Self {
                 dT: fah2kelvin(fahrenheit),
             }
         }
-        pub fn as_K(&self) -> f64 {
+        pub const fn as_K(&self) -> f64 {
             self.dT
         }
-        pub fn as_C(&self) -> f64 {
+        pub const fn as_C(&self) -> f64 {
             kelvin2c(self.dT)
         }
-        pub fn as_F(&self) -> f64 {
+        pub const fn as_F(&self) -> f64 {
             kelvin2fah(self.dT)
-        }
-        pub const fn new_const(kelvin: f64) -> Self {
-            Self { dT: kelvin }
         }
     }
     impl_units_ops!(TemperatureRelative, dT);
@@ -245,29 +239,26 @@ pub mod units {
         p: f64, /* Pascals, CANNOT be negative */
     }
     impl Pressure {
-        pub fn from_pa(pa: f64) -> Self {
+        pub const fn from_pa(pa: f64) -> Self {
             assert!(pa.is_finite());
             assert!(pa >= 0.0);
             assert!(pa < 1e12);
             Self { p: pa }
         }
-        pub fn from_hpa(hpa: f64) -> Self {
+        pub const fn from_hpa(hpa: f64) -> Self {
             Self::from_pa(hpa / 100.0)
         }
-        pub fn from_psi(psi: f64) -> Self {
+        pub const fn from_psi(psi: f64) -> Self {
             Self::from_pa(psi2pa(psi))
         }
-        pub fn as_pa(&self) -> f64 {
+        pub const fn as_pa(&self) -> f64 {
             self.p
         }
-        pub fn as_hpa(&self) -> f64 {
+        pub const fn as_hpa(&self) -> f64 {
             self.p / 100.0
         }
-        pub fn as_psi(&self) -> f64 {
+        pub const fn as_psi(&self) -> f64 {
             pa2psi(self.p)
-        }
-        pub const fn new_const(pa: f64) -> Self {
-            Self { p: pa }
         }
     }
     impl std::fmt::Display for Pressure {
@@ -356,48 +347,45 @@ pub mod units {
         d: f64, /* meters */
     }
     impl Distance {
-        pub fn from_m(m: f64) -> Self {
+        pub const fn from_m(m: f64) -> Self {
             assert!(m.is_finite());
             assert!(m >= 0.0);
             Self { d: m }
         }
-        pub fn from_km(km: f64) -> Self {
+        pub const fn from_km(km: f64) -> Self {
             Self { d: km * 1000.0 }
         }
-        pub fn from_ft(ft: f64) -> Self {
+        pub const fn from_ft(ft: f64) -> Self {
             Self { d: feet2met(ft) }
         }
-        pub fn from_yrd(yrd: f64) -> Self {
+        pub const fn from_yrd(yrd: f64) -> Self {
             Self {
                 d: feet2met(yrd * 3.0),
             }
         }
-        pub fn from_nm(nm: f64) -> Self {
+        pub const fn from_nm(nm: f64) -> Self {
             Self { d: nm2met(nm) }
         }
-        pub fn from_sm(sm: f64) -> Self {
+        pub const fn from_sm(sm: f64) -> Self {
             Self { d: sm2met(sm) }
         }
-        pub fn as_m(&self) -> f64 {
+        pub const fn as_m(&self) -> f64 {
             self.d
         }
-        pub fn as_km(&self) -> f64 {
+        pub const fn as_km(&self) -> f64 {
             self.d / 1000.0
         }
-        pub fn as_ft(&self) -> f64 {
+        pub const fn as_ft(&self) -> f64 {
             met2feet(self.d)
         }
-        pub fn as_yrd(&self) -> f64 {
+        pub const fn as_yrd(&self) -> f64 {
             met2feet(self.d) / 3.0
         }
-        pub fn as_nm(&self) -> f64 {
+        pub const fn as_nm(&self) -> f64 {
             met2nm(self.d)
         }
-        pub fn as_sm(&self) -> f64 {
+        pub const fn as_sm(&self) -> f64 {
             met2sm(self.d)
-        }
-        pub const fn new_const(m: f64) -> Self {
-            Self { d: m }
         }
     }
     impl std::fmt::Display for Distance {
@@ -524,40 +512,37 @@ pub mod units {
         s: f64, /* m/s */
     }
     impl Speed {
-        pub fn from_mps(mps: f64) -> Self {
+        pub const fn from_mps(mps: f64) -> Self {
             assert!(mps.is_finite());
             assert!(mps.abs() < 1e6);
             Self { s: mps }
         }
-        pub fn from_kph(kph: f64) -> Self {
+        pub const fn from_kph(kph: f64) -> Self {
             Self { s: kph / 3.6 }
         }
-        pub fn from_mph(kph: f64) -> Self {
+        pub const fn from_mph(kph: f64) -> Self {
             Self { s: mph2mps(kph) }
         }
-        pub fn from_kt(kt: f64) -> Self {
+        pub const fn from_kt(kt: f64) -> Self {
             Self { s: kt2mps(kt) }
         }
-        pub fn from_fpm(fpm: f64) -> Self {
+        pub const fn from_fpm(fpm: f64) -> Self {
             Self { s: fpm2mps(fpm) }
         }
-        pub fn as_mps(&self) -> f64 {
+        pub const fn as_mps(&self) -> f64 {
             self.s
         }
-        pub fn as_kph(&self) -> f64 {
+        pub const fn as_kph(&self) -> f64 {
             self.s * 3.6
         }
-        pub fn as_mph(&self) -> f64 {
+        pub const fn as_mph(&self) -> f64 {
             mps2mph(self.s)
         }
-        pub fn as_kt(&self) -> f64 {
+        pub const fn as_kt(&self) -> f64 {
             mps2kt(self.s)
         }
-        pub fn as_fpm(&self) -> f64 {
+        pub const fn as_fpm(&self) -> f64 {
             mps2fpm(self.s)
-        }
-        pub const fn new_const(mps: f64) -> Self {
-            Self { s: mps }
         }
     }
     impl std::fmt::Display for Speed {
@@ -780,9 +765,9 @@ pub mod consts {
      * ISA (International Standard Atmosphere) parameters.
      */
     /* Sea level temperature */
-    pub const ISA_SL_TEMP: Temperature = Temperature::new_const(288.15);
+    pub const ISA_SL_TEMP: Temperature = Temperature::from_K(288.15);
     /* Sea level pressure */
-    pub const ISA_SL_PRESS: Pressure = Pressure::new_const(101325.0);
+    pub const ISA_SL_PRESS: Pressure = Pressure::from_pa(101325.0);
     /* Sea level density in kg/m^3 */
     pub const ISA_SL_DENS: f64 = 1.225;
     /* Temperature lapse rate per 1000ft */
@@ -790,9 +775,9 @@ pub mod consts {
     /* Temperature lapse rate per 1 meter */
     pub const ISA_TLR_PER_1M: f64 = 0.0065;
     /* Speed of sound at sea level */
-    pub const ISA_SPEED_SOUND: Speed = Speed::new_const(340.3);
+    pub const ISA_SPEED_SOUND: Speed = Speed::from_mps(340.3);
     /* Tropopause altitude */
-    pub const ISA_TP_ALT: Distance = Distance::new_const(36089.0 * 0.3048);
+    pub const ISA_TP_ALT: Distance = Distance::from_ft(36089.0);
     /*
      * Physical constants.
      */
