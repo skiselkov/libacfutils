@@ -410,25 +410,28 @@ pub mod units {
         m: f64, /* kg */
     }
     impl Mass {
-        pub fn from_kg(kg: f64) -> Self {
-            assert!((0.0..1e12).contains(&kg));
+        pub const fn from_kg(kg: f64) -> Self {
+            assert!(kg >= 0.0);
+            assert!(kg < 1e15);
             Self { m: kg }
         }
-        pub fn from_mt(mt: f64) -> Self {
-            assert!((0.0..1e9).contains(&mt));
+        pub const fn from_mt(mt: f64) -> Self {
+            assert!(mt >= 0.0);
+            assert!(mt < 1e12);
             Self { m: mt * 1000.0 }
         }
-        pub fn from_lbs(lbs: f64) -> Self {
-            assert!((0.0..1e12).contains(&lbs));
+        pub const fn from_lbs(lbs: f64) -> Self {
+            assert!(lbs >= 0.0);
+            assert!(lbs < 1e15);
             Self { m: lbs2kg(lbs) }
         }
-        pub fn as_kg(&self) -> f64 {
+        pub const fn as_kg(&self) -> f64 {
             self.m
         }
-        pub fn as_mt(&self) -> f64 {
+        pub const fn as_mt(&self) -> f64 {
             self.m / 1000.0
         }
-        pub fn as_lbs(&self) -> f64 {
+        pub const fn as_lbs(&self) -> f64 {
             kg2lbs(self.m)
         }
     }
@@ -454,40 +457,37 @@ pub mod units {
         r: f64, /* rad/sec */
     }
     impl Angvel {
-        pub fn from_radsec(radsec: f64) -> Self {
+        pub const fn from_radsec(radsec: f64) -> Self {
             assert!(radsec.is_finite());
             assert!(radsec.abs() < 1e12);
             Self { r: radsec }
         }
-        pub fn from_degsec(degsec: f64) -> Self {
+        pub const fn from_degsec(degsec: f64) -> Self {
             Self {
                 r: crate::geom::conv::deg2rad(degsec),
             }
         }
-        pub fn from_rps(rps: f64) -> Self {
+        pub const fn from_rps(rps: f64) -> Self {
             assert!(rps.is_finite());
             assert!(rps.abs() < 1e12);
             Self {
                 r: rps * 2.0 * std::f64::consts::PI,
             }
         }
-        pub fn from_rpm(rpm: f64) -> Self {
+        pub const fn from_rpm(rpm: f64) -> Self {
             Self { r: rpm2radsec(rpm) }
         }
-        pub fn as_radsec(&self) -> f64 {
+        pub const fn as_radsec(&self) -> f64 {
             self.r
         }
-        pub fn as_degsec(&self) -> f64 {
+        pub const fn as_degsec(&self) -> f64 {
             crate::geom::conv::rad2deg(self.r)
         }
-        pub fn as_rps(&self) -> f64 {
+        pub const fn as_rps(&self) -> f64 {
             self.r / (2.0 * std::f64::consts::PI)
         }
-        pub fn as_rpm(&self) -> f64 {
+        pub const fn as_rpm(&self) -> f64 {
             radsec2rpm(self.r)
-        }
-        pub const fn new_const(radsec: f64) -> Self {
-            Self { r: radsec }
         }
     }
     impl std::fmt::Display for Angvel {
@@ -567,34 +567,31 @@ pub mod units {
         mr: f64, /* kg/s */
     }
     impl MassRate {
-        pub fn from_kgs(kgs: f64) -> Self {
+        pub const fn from_kgs(kgs: f64) -> Self {
             assert!(kgs.is_finite());
             assert!(kgs.abs() < 1e12);
             Self { mr: kgs }
         }
-        pub fn from_kgh(kgh: f64) -> Self {
+        pub const fn from_kgh(kgh: f64) -> Self {
             assert!(kgh.is_finite());
             assert!(kgh.abs() < 1e9);
             Self { mr: kgh / 3600.0 }
         }
-        pub fn from_pph(pph: f64) -> Self {
+        pub const fn from_pph(pph: f64) -> Self {
             assert!(pph.is_finite());
             assert!(pph.abs() < 1e9);
             Self {
                 mr: lbs2kg(pph) / 3600.0,
             }
         }
-        pub fn as_kgs(&self) -> f64 {
+        pub const fn as_kgs(&self) -> f64 {
             self.mr
         }
-        pub fn as_kgh(&self) -> f64 {
+        pub const fn as_kgh(&self) -> f64 {
             self.mr * 3600.0
         }
-        pub fn as_pph(&self) -> f64 {
+        pub const fn as_pph(&self) -> f64 {
             kg2lbs(self.mr * 3600.0)
-        }
-        pub const fn new_const(kgs: f64) -> Self {
-            Self { mr: kgs }
         }
     }
     impl std::fmt::Display for MassRate {
