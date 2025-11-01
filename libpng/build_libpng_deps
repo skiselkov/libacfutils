@@ -17,7 +17,7 @@
 
 source ../build_dep.common
 
-LIBPNG="libpng-1.6.40.tar.bz2"
+LIBPNG="libpng-1.6.50.tar.bz2"
 
 case `uname` in
 	Linux)
