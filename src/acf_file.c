@@ -142,10 +142,12 @@ acf_file_read(const char *filename)
 		avl_insert(&acf->props, prop, where);
 	}
 
+	free(line);
 	fclose(fp);
 	return (acf);
 errout:
 	acf_file_free(acf);
+	free(line);
 	fclose(fp);
 	return (NULL);
 }
